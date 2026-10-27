@@ -49,6 +49,14 @@
             <button class="display-switch" id="display-status-switch" role="switch" aria-checked="false" aria-label="Clock and battery"></button>
           </div>
         </div>
+        <button class="dropdown-item dropdown-heading dropdown-plain" id="btn-pad-heading">Controller <span id="pad-heading-arrow">▸</span></button>
+        <div id="pad-submenu" style="display:none;">
+          <div class="display-row">
+            <span>Swap A and B<span class="display-note" id="pad-swap-note">A confirms, B goes back</span></span>
+            <button class="display-switch" id="pad-swap-switch" role="switch" aria-checked="false" aria-label="Swap A and B buttons"></button>
+          </div>
+          <p class="pad-help">D-pad or left stick: move<br>Right stick: scroll<br>Select: this menu<br>X: refresh<br>L1 / R1: change console<br>L2 / R2: change tab</p>
+        </div>
         <button class="dropdown-item dropdown-gold" id="btn-about-open">About</button>
       </div>
     </div>
@@ -321,6 +329,7 @@
 <script src="js/gestures.js"></script>
 <script src="js/device-status.js"></script>
 <script src="js/menu.js"></script>
+<script src="js/gamepad.js"></script>
 <script src="js/startup.js"></script>
 <script src="js/rom-patcher.js"></script>
 <script src="js/guides.js"></script>

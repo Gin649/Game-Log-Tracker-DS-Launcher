@@ -69,3 +69,19 @@ One Android app for the AYN Thor (works on other devices too, with one screen).
 - Bottom screen too zoomed or too small: Launcher settings, Screens, Tracker size. The tracker's own Text Size menu also works.
 - Standalone emulators are given read access to the ROM through the ROMs folder you picked, the same way ES-DE does.
 - Written without an Android SDK: the new code was type-checked against stubs and its title matching and ES-DE lookup were run on test data, but the first real build and the standalone launch recipes are untested on a device. Expect a few fixes.
+
+
+## Controller controls
+
+| Button | Action |
+| --- | --- |
+| D-pad / left stick | Move the highlight |
+| Right stick | Scroll up and down (faster the further you push) |
+| A | Confirm (swappable with B in the menu: Controller) |
+| B | Back: closes the game profile, pop-ups, the menu, or the on-screen keyboard |
+| Select | Open or close the hamburger menu |
+| X | Refresh the game profile, or the main screen |
+| L1 / R1 | Previous / next console (Game Library, Beaten by Year, Backlog) |
+| L2 / R2 | Previous / next tab |
+
+Touch works as before. The Android back button and edge-swipe never close the app; use Home for that.

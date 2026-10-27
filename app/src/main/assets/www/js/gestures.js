@@ -100,6 +100,30 @@
     return false;
   };
 
+  // Controller X button: the same refresh a pull-down does, without the pulling.
+  let padRefreshing = false;
+  window.padRefresh = () => {
+    if(padRefreshing || !creds) return;
+    let job;
+    const onProfile = profileOpen() && $('#modal-card').dataset.gameId;
+    if(onProfile){
+      job = refreshOpenGameProfile($('#modal-card').dataset.gameId);
+    }else if(!profileOpen() && $('#dashboard').style.display === 'block'){
+      job = loadAll({ forceRecentPlaytime: true });
+    }else{
+      return;
+    }
+    padRefreshing = true;
+    indicator.classList.toggle('over-profile', !!onProfile);
+    indicator.textContent = 'Refreshing…';
+    indicator.style.height = '44px';
+    Promise.resolve(job).catch(() => {}).finally(() => {
+      padRefreshing = false;
+      indicator.style.height = '0px';
+      indicator.classList.remove('over-profile');
+    });
+  };
+
   document.addEventListener('touchstart', (e) => {
     profileMode = false;
     if(profileOpen()){

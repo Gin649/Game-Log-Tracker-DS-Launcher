@@ -1047,3 +1047,15 @@
 .btn-play-thor .arrow{ color:var(--teal); }
 .thor-play-msg{ margin:6px 0 10px; padding:8px 10px; font-size:13px; color:var(--teal); border:1px solid var(--border); background:var(--panel-2); border-radius:var(--radius); }
 .thor-play-msg.error{ color:var(--danger); }
+
+
+/* Controller highlight: only shows while a controller is being used (see gamepad.js). */
+body.pad-mode .pad-focus{
+  outline:3px solid var(--gold);
+  outline-offset:-3px;
+  box-shadow:0 0 0 4px rgba(228,169,63,0.28);
+  scroll-margin:110px 20px;
+}
+body.pad-mode .pad-focus.display-switch,
+body.pad-mode .pad-focus.chip{outline-offset:2px;}
+.pad-help{margin:6px 14px 10px;font-size:0.6562rem;line-height:1.7;color:var(--muted);}

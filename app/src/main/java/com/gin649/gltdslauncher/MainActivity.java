@@ -11,10 +11,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.Gravity;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.DownloadListener;
+import android.webkit.JavascriptInterface;
 import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -85,6 +89,7 @@ public class MainActivity extends Activity {
         root.addView(splash, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         setContentView(root);
+        PadRouter.attach(this);
 
         SetupActivity.setListener(new SetupActivity.Listener() {
             @Override
@@ -210,6 +215,7 @@ public class MainActivity extends Activity {
                 .build();
 
         webView.addJavascriptInterface(new ThorBridge(this), "ThorBridge");
+        webView.addJavascriptInterface(new PadNative(), "PadNative");
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -309,12 +315,14 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onPause() {
+        PadRouter.reset();
         if (webView != null) webView.onPause();
         super.onPause();
     }
 
     @Override
     protected void onDestroy() {
+        PadRouter.detach(this);
         SetupActivity.setListener(null);
         super.onDestroy();
     }
@@ -345,14 +353,64 @@ public class MainActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
+    /** True while the tracker is on screen and should receive controller input. */
+    boolean padActive() {
+        return webView != null && webView.getVisibility() == View.VISIBLE
+                && splash.getVisibility() != View.VISIBLE && !SetupActivity.running;
+    }
+
+    /** Calls window.GLTPad.<call> on the tracker page. */
+    void runPad(String call) {
+        if (webView != null) webView.evaluateJavascript("window.GLTPad&&GLTPad." + call, null);
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (PadRouter.key(event)) return true;
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    public boolean dispatchGenericMotionEvent(MotionEvent event) {
+        if (PadRouter.motion(event)) return true;
+        return super.dispatchGenericMotionEvent(event);
+    }
+
+    /** Lets the page open and close the on-screen keyboard (the page can't do it on its own). */
+    private final class PadNative {
+        @JavascriptInterface
+        public void showKeyboard() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (webView == null) return;
+                    webView.requestFocus();
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (imm != null) imm.showSoftInput(webView, InputMethodManager.SHOW_IMPLICIT);
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void hideKeyboard() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (webView == null) return;
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (imm != null) imm.hideSoftInputFromWindow(webView.getWindowToken(), 0);
+                }
+            });
+        }
+    }
+
+    /**
+     * The back button and the swipe-from-the-edge gesture only step back inside the tracker
+     * (close the game profile, a pop-up or the menu). They never close the app; Home does that.
+     */
     @Override
     @SuppressWarnings("deprecation")
     public void onBackPressed() {
-        if (webView != null && webView.getVisibility() == View.VISIBLE
-                && splash.getVisibility() != View.VISIBLE && webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
-        }
+        if (padActive()) runPad("back()");
     }
 }

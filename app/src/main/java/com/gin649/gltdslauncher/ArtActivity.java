@@ -5,6 +5,8 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
@@ -101,6 +103,19 @@ public class ArtActivity extends Activity implements ArtBus.Listener {
     protected void onDestroy() {
         alive = false;
         super.onDestroy();
+    }
+
+    // The top screen can hold input focus too; pass controller input on to the tracker.
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (PadRouter.key(event)) return true;
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    public boolean dispatchGenericMotionEvent(MotionEvent event) {
+        if (PadRouter.motion(event)) return true;
+        return super.dispatchGenericMotionEvent(event);
     }
 
     @Override
