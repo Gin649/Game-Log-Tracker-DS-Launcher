@@ -13,7 +13,7 @@
     <application
         android:allowBackup="false"
         android:icon="@drawable/logo"
-        android:label="Game Log Tracker"
+        android:label="${appLabel}"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
 
         <activity
@@ -32,7 +32,7 @@
             android:name=".SetupActivity"
             android:exported="false"
             android:launchMode="singleTask"
-            android:taskAffinity="com.gin649.gltdslauncher.setup"
+            android:taskAffinity="${applicationId}.setup"
             android:resizeableActivity="true"
             android:windowSoftInputMode="adjustResize"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density|keyboardHidden|keyboard|navigation|uiMode" />
@@ -41,7 +41,7 @@
             android:name=".ArtActivity"
             android:exported="false"
             android:launchMode="singleTask"
-            android:taskAffinity="com.gin649.gltdslauncher.art"
+            android:taskAffinity="${applicationId}.art"
             android:resizeableActivity="true"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density|keyboardHidden|keyboard|navigation|uiMode" />
 
