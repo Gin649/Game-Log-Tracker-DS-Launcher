@@ -9,11 +9,11 @@ def keystorePath = System.getenv('KEYSTORE_PATH')
 def updateRepo = System.getenv('GITHUB_REPOSITORY') ?: 'Gin649/Game-Log-Tracker-DS-Launcher'
 
 android {
-    namespace 'com.gin649.gltthor'
+    namespace 'com.gin649.gltdslauncher'
     compileSdk 34
 
     defaultConfig {
-        applicationId 'com.gin649.gltthor'
+        applicationId 'com.gin649.gltdslauncher'
         minSdk 30
         targetSdk 33
         versionCode releaseVersionCode
