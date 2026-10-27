@@ -88,7 +88,10 @@
 
   function candidates(root){
     const out = [];
+    // With the header on the top screen, its hidden copy here is only reachable through the menu.
+    const skipHeader = root === document.body && document.documentElement.classList.contains('top-panel');
     root.querySelectorAll(CLICKABLE).forEach(el => {
+      if(skipHeader && el.closest('.brand')) return;
       if(el.disabled || el.getAttribute('aria-disabled') === 'true') return;
       if(el.getAttribute('tabindex') === '-1') return;
       if(el.tagName === 'INPUT' && /^(hidden|file)$/.test(el.type)) return;
@@ -350,6 +353,18 @@
     padMode = false;
     document.body.classList.remove('pad-mode');
   }, { passive: true, capture: true }));
+
+  // The page redraws often (refreshes, tab changes, pop-ups). Whenever that leaves the highlight
+  // without an element, put it back on the nearest equivalent so it never just disappears.
+  let restoreTimer = 0;
+  new MutationObserver(() => {
+    if(!padMode || restoreTimer) return;
+    restoreTimer = setTimeout(() => {
+      restoreTimer = 0;
+      const ok = focusEl && focusEl.isConnected && getRoot().contains(focusEl) && isVisible(focusEl);
+      if(padMode && !ok) ensureFocus();
+    }, 120);
+  }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
 
   // ---- Controller settings in the hamburger menu ---------------------------------------------
 

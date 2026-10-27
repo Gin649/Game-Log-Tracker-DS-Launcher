@@ -37,7 +37,7 @@ function buildHeart(filled){
       cells += '<rect x="' + x + '" y="' + y + '" width="1" height="1" ' + fill + '/>';
     }
   }
-  return '<svg width="15.6" height="13.2" viewBox="0 0 13 11" shape-rendering="crispEdges" style="display:block" aria-hidden="true">' + cells + '</svg>';
+  return '<svg width="19.5" height="16.5" viewBox="0 0 13 11" shape-rendering="crispEdges" style="display:block" aria-hidden="true">' + cells + '</svg>';
 }
 const HEART_FULL = buildHeart(true);
 const HEART_EMPTY = buildHeart(false);

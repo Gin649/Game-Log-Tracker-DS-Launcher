@@ -17,7 +17,7 @@
     --radius:3px;
     --status-h:0px;
   }
-  body.show-status{--status-h:22px;}
+  body.show-status{--status-h:28px;}
 
   *{box-sizing:border-box;}
   html{font-size:16px;} /* base for all the rem font sizes below, changed at runtime to scale app-wide text size */
@@ -174,14 +174,14 @@
     z-index:2147483000;justify-content:flex-end;align-items:center;gap:7px;pointer-events:none;
     background:var(--bg);border-bottom:1px solid var(--border);
     transform:translateZ(0);-webkit-transform:translateZ(0);will-change:transform;
-    font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:var(--text);
+    font-family:'Space Mono',monospace;font-size:14px;font-weight:700;color:var(--text);
   }
   body.show-status .device-status{display:flex;}
   body.show-status{padding-top:calc(24px + var(--status-h) + env(safe-area-inset-top));}
-  .device-status .ds-hearts{display:flex;align-items:center;gap:2px;}
+  .device-status .ds-hearts{display:flex;align-items:center;gap:3px;}
 
   .pull-refresh-indicator{
-    position:fixed;top:0;left:0;right:0;height:0;overflow:hidden;
+    position:fixed;top:calc(var(--status-h) + env(safe-area-inset-top, 0px));left:0;right:0;height:0;overflow:hidden;
     display:flex;justify-content:center;align-items:center;
     color:var(--gold);font-family:'Space Mono',monospace;font-size:0.7188rem;
     background:var(--bg);z-index:60;transition:height 0.15s ease-out;
@@ -349,7 +349,7 @@
   .tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:18px;}
   .tab-btn{
     background:transparent;border:none;color:var(--muted);
-    padding:10px 16px 10px 0;margin-right:20px;font-size:0.8125rem;
+    padding:10px 12px 10px 8px;margin-right:14px;font-size:0.8125rem;
     border-bottom:2px solid transparent;
   }
   .tab-btn.active{color:var(--text);border-bottom-color:var(--gold);}
@@ -1059,3 +1059,9 @@ body.pad-mode .pad-focus{
 body.pad-mode .pad-focus.display-switch,
 body.pad-mode .pad-focus.chip{outline-offset:2px;}
 .pad-help{margin:6px 14px 10px;font-size:0.6562rem;line-height:1.7;color:var(--muted);}
+
+
+/* With the header on the top screen (mirror.js) this page starts at the tabs. The real header stays
+   laid out, just off to the side, so its buttons and the controller navigation keep working. */
+html.top-panel .brand{position:fixed;left:-10000px;top:0;width:720px;margin:0;visibility:hidden;pointer-events:none;}
+html.top-panel #profile-hero{display:none;}

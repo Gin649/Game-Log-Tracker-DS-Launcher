@@ -48,10 +48,31 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> filePathCallback;
     private boolean hadStorage;
     private WebViewAssetLoader assetLoader;
+    private boolean relaunching;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // The tracker always lives on the bottom screen, whichever screen it was opened from.
+        int bottom = DisplayPicker.bottomDisplayId(this);
+        if (bottom >= 0 && DisplayPicker.displayOf(this) != bottom
+                && !getIntent().getBooleanExtra("movedToBottom", false)) {
+            Intent again = new Intent(this, MainActivity.class);
+            again.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+            again.putExtra("movedToBottom", true);
+            try {
+                ActivityOptions options = ActivityOptions.makeBasic();
+                options.setLaunchDisplayId(bottom);
+                startActivity(again, options.toBundle());
+                relaunching = true;
+                finish();
+                return;
+            } catch (Exception ignored) {
+                // couldn't move it; carry on here
+            }
+        }
+
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         Config.load(this);
         Shared.init(this);
@@ -90,6 +111,7 @@ public class MainActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         setContentView(root);
         PadRouter.attach(this);
+        TopPanel.attachHost(this);
 
         SetupActivity.setListener(new SetupActivity.Listener() {
             @Override
@@ -303,6 +325,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (relaunching) return;
         if (webView != null) webView.onResume();
 
         boolean granted = Environment.isExternalStorageManager();
@@ -322,8 +345,11 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        PadRouter.detach(this);
-        SetupActivity.setListener(null);
+        if (!relaunching) {
+            PadRouter.detach(this);
+            TopPanel.detachHost(this);
+            SetupActivity.setListener(null);
+        }
         super.onDestroy();
     }
 
@@ -355,13 +381,23 @@ public class MainActivity extends Activity {
 
     /** True while the tracker is on screen and should receive controller input. */
     boolean padActive() {
-        return webView != null && webView.getVisibility() == View.VISIBLE
+        return webView != null && splash != null && webView.getVisibility() == View.VISIBLE
                 && splash.getVisibility() != View.VISIBLE && !SetupActivity.running;
     }
 
     /** Calls window.GLTPad.<call> on the tracker page. */
     void runPad(String call) {
         if (webView != null) webView.evaluateJavascript("window.GLTPad&&GLTPad." + call, null);
+    }
+
+    /** Calls window.GLTMirror.<call> on the tracker page (the top screen's header copy). */
+    void runMirror(final String call) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (webView != null) webView.evaluateJavascript("window.GLTMirror&&GLTMirror." + call, null);
+            }
+        });
     }
 
     @Override
@@ -378,6 +414,18 @@ public class MainActivity extends Activity {
 
     /** Lets the page open and close the on-screen keyboard (the page can't do it on its own). */
     private final class PadNative {
+        /** The tracker page sends its header and profile card here for the top screen. */
+        @JavascriptInterface
+        public void pushPanel(String html, String bodyClass) {
+            TopPanel.set(html, bodyClass);
+        }
+
+        /** True while the top screen is showing the header, so the page should hide its own. */
+        @JavascriptInterface
+        public boolean topPanelActive() {
+            return TopPanel.viewAlive();
+        }
+
         @JavascriptInterface
         public void showKeyboard() {
             runOnUiThread(new Runnable() {

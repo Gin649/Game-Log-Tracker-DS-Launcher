@@ -9,13 +9,26 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-/** The top screen: art for the game open in the tracker, or the logo. */
-public class ArtActivity extends Activity implements ArtBus.Listener {
+import androidx.webkit.WebViewAssetLoader;
+
+import org.json.JSONObject;
+
+/**
+ * The top screen: art for the game open in the tracker. Otherwise the tracker's header and profile card
+ * (a live copy, see TopPanel), or the logo when that isn't available.
+ */
+public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.Listener {
 
     static volatile boolean alive;
 
@@ -25,6 +38,11 @@ public class ArtActivity extends Activity implements ArtBus.Listener {
 
     private ImageView art;
     private ImageView logo;
+    private WebView panel;
+    private boolean panelReady;
+    private boolean artShown;
+    private String panelHtml = "";
+    private WebViewAssetLoader assetLoader;
     private LinearLayout caption;
     private TextView titleView;
     private TextView consoleView;
@@ -52,6 +70,8 @@ public class ArtActivity extends Activity implements ArtBus.Listener {
         logoParams.gravity = Gravity.CENTER;
         root.addView(logo, logoParams);
 
+        buildPanel(root);
+
         caption = new LinearLayout(this);
         caption.setOrientation(LinearLayout.VERTICAL);
         caption.setBackgroundColor(Color.argb(200, 21, 18, 31));
@@ -75,7 +95,81 @@ public class ArtActivity extends Activity implements ArtBus.Listener {
         capParams.gravity = Gravity.BOTTOM;
         root.addView(caption, capParams);
 
+        caption.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(View v, int l, int t, int r, int b, int ol, int ot, int or, int ob) {
+                FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) panel.getLayoutParams();
+                int h = b - t;
+                if (lp.bottomMargin != h) {
+                    lp.bottomMargin = h;
+                    panel.setLayoutParams(lp);
+                }
+            }
+        });
+
         setContentView(root);
+        TopPanel.setViewAlive(true);
+    }
+
+    /** The header and profile card, drawn from markup the tracker sends (top.html). */
+    @SuppressWarnings("SetJavaScriptEnabled")
+    private void buildPanel(FrameLayout root) {
+        panel = new WebView(this);
+        panel.setBackgroundColor(Color.TRANSPARENT);
+        panel.setVisibility(View.INVISIBLE);
+        WebSettings ws = panel.getSettings();
+        ws.setJavaScriptEnabled(true);
+        ws.setAllowFileAccess(false);
+
+        assetLoader = new WebViewAssetLoader.Builder()
+                .setDomain(Config.APP_HOST_BUILTIN)
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .build();
+        panel.addJavascriptInterface(new TopBridge(), "TopBridge");
+        panel.setWebViewClient(new WebViewClient() {
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                return assetLoader.shouldInterceptRequest(request.getUrl());
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                panelReady = true;
+                applyPanel();
+            }
+        });
+        root.addView(panel, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        panel.loadUrl(Config.BUILTIN_URL.replace("index.html", "top.html"));
+    }
+
+    /** Taps on the panel are passed to the real header in the tracker. */
+    private final class TopBridge {
+        @JavascriptInterface
+        public void tap(String id) {
+            TopPanel.tap(id);
+        }
+    }
+
+    private void applyPanel() {
+        if (!panelReady) return;
+        panel.evaluateJavascript("GLTTop.set(" + JSONObject.quote(panelHtml) + ","
+                + JSONObject.quote(TopPanel.body()) + ")", null);
+        syncFallback();
+    }
+
+    /** With no game art showing, the header panel fills the screen if there is one, otherwise the logo. */
+    private void syncFallback() {
+        boolean fallback = !artShown;
+        boolean usePanel = fallback && panelReady && !panelHtml.isEmpty();
+        panel.setVisibility(usePanel ? View.VISIBLE : View.INVISIBLE);
+        logo.setVisibility(fallback && !usePanel ? View.VISIBLE : View.GONE);
+    }
+
+    @Override
+    public void onPanel(String html, String bodyClass) {
+        panelHtml = html == null ? "" : html;
+        applyPanel();
     }
 
     @Override
@@ -90,18 +184,24 @@ public class ArtActivity extends Activity implements ArtBus.Listener {
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
         ArtBus.attach(this);
+        TopPanel.attachView(this);
+        panelHtml = TopPanel.html();
+        applyPanel();
         render(ArtBus.get());
     }
 
     @Override
     protected void onPause() {
         ArtBus.attach(null);
+        TopPanel.attachView(null);
         super.onPause();
     }
 
     @Override
     protected void onDestroy() {
         alive = false;
+        TopPanel.setViewAlive(false);
+        if (panel != null) panel.destroy();
         super.onDestroy();
     }
 
@@ -128,7 +228,8 @@ public class ArtActivity extends Activity implements ArtBus.Listener {
 
         if (!s.game) {
             art.setImageDrawable(null);
-            logo.setVisibility(View.VISIBLE);
+            artShown = false;
+            syncFallback();
             titleView.setText("Game Log Tracker");
             consoleView.setText("");
             consoleView.setVisibility(View.GONE);
@@ -157,12 +258,13 @@ public class ArtActivity extends Activity implements ArtBus.Listener {
                     public void run() {
                         if (mine != token || isFinishing()) return;
                         if (bitmap != null) {
-                            logo.setVisibility(View.GONE);
                             art.setImageBitmap(bitmap);
+                            artShown = true;
                         } else {
                             art.setImageDrawable(null);
-                            logo.setVisibility(View.VISIBLE);
+                            artShown = false;
                         }
+                        syncFallback();
                     }
                 });
             }
