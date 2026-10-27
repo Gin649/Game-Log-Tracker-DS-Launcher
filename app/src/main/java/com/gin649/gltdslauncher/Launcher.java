@@ -50,7 +50,7 @@ final class Launcher {
         boolean standalone = recipe != null && pkg != null && !"retroarch".equals(choice);
         if ("standalone".equals(choice) && !standalone) {
             String name = recipe == null ? "the standalone emulator" : recipe.label;
-            return result(false, name + " is not installed. Install it or pick RetroArch for " + sys.folder + " in Thor settings.");
+            return result(false, name + " is not installed. Install it or pick RetroArch for " + sys.folder + " in Launcher settings.");
         }
 
         Intent intent;

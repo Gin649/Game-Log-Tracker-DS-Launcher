@@ -4,11 +4,11 @@ One Android app for the AYN Thor (works on other devices too, with one screen).
 - Bottom screen: the Game Log Tracker, bundled inside the APK (no website to host, works offline).
 - Top screen: art for the game open in the tracker, or the logo on the main menu.
 - Play button in each game profile: starts the game in RetroArch or a standalone emulator on the top screen.
-- Setup wizard on first run (reopen it any time from the tracker menu, "Thor settings").
+- Setup wizard on first run (reopen it any time from the tracker menu, "Launcher settings").
 
 ## Build and install
 1. Create a repo for this project, upload everything here (keep the `.github` folder), open the Actions tab, run "Build APK".
-2. Download the `glt-thor-apk` artifact, unzip, install `app-debug.apk`.
+2. Download the `glt-ds-launcher-apk` artifact, unzip, install `app-debug.apk`.
 3. Open the app on the BOTTOM screen. The wizard opens on the top screen while the bottom screen shows the logo.
 4. Moving from the old website version: the bundled tracker has its own storage. In the old one use Data > Export,
    in this one Data > Import. Do this once.
@@ -66,6 +66,6 @@ One Android app for the AYN Thor (works on other devices too, with one screen).
    System ids per folder are in the same file; add yours there if a folder is missing.
 
 ## Notes
-- Bottom screen too zoomed or too small: Thor settings, Screens, Tracker size. The tracker's own Text Size menu also works.
+- Bottom screen too zoomed or too small: Launcher settings, Screens, Tracker size. The tracker's own Text Size menu also works.
 - Standalone emulators are given read access to the ROM through the ROMs folder you picked, the same way ES-DE does.
 - Written without an Android SDK: the new code was type-checked against stubs and its title matching and ES-DE lookup were run on test data, but the first real build and the standalone launch recipes are untested on a device. Expect a few fixes.

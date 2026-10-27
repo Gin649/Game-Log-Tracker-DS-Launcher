@@ -324,7 +324,7 @@ public class SetupActivity extends Activity {
 
     private void stepWelcome() {
         text("Let's set up Game Log Tracker on this device.", 17, TEXT);
-        text("It takes a minute. Everything can be changed later from the tracker's menu, under Thor settings.", 14, MUTED);
+        text("It takes a minute. Everything can be changed later from the tracker's menu, under Launcher settings.", 14, MUTED);
         text("First, the app needs access to your files so it can find your games and their artwork.", 14, MUTED);
         fileAccessRow();
     }
