@@ -154,6 +154,38 @@ public class MainActivity extends Activity {
         view.evaluateJavascript(js, null);
     }
 
+    /**
+     * Calls the RetroAchievements Web API straight from the app. There is no CORS check outside the
+     * browser, so the tracker does not need the Worker or any public proxy for these requests.
+     */
+    private WebResourceResponse fetchRetroAchievements(Uri u) {
+        String endpoint = u.getPath().substring(4);
+        if (!endpoint.matches("API_[A-Za-z]+\\.php")) return errorResponse(400, "Bad request");
+        String q = u.getEncodedQuery();
+        String target = "https://retroachievements.org/API/" + endpoint + (q == null ? "" : "?" + q);
+        try {
+            java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(target).openConnection();
+            c.setConnectTimeout(8000);
+            c.setReadTimeout(15000);
+            c.setRequestProperty("Accept", "application/json");
+            int code = c.getResponseCode();
+            java.io.InputStream in = code >= 400 ? c.getErrorStream() : c.getInputStream();
+            if (in == null) in = new java.io.ByteArrayInputStream(new byte[0]);
+            if (code >= 300 && code < 400) code = 502;
+            java.util.Map<String, String> headers = new java.util.HashMap<String, String>();
+            headers.put("Cache-Control", "no-store");
+            return new WebResourceResponse("application/json", "UTF-8", code,
+                    code >= 400 ? "Error" : "OK", headers, in);
+        } catch (Exception e) {
+            return errorResponse(502, "Bad gateway");
+        }
+    }
+
+    private WebResourceResponse errorResponse(int code, String reason) {
+        return new WebResourceResponse("application/json", "UTF-8", code, reason,
+                new java.util.HashMap<String, String>(), new java.io.ByteArrayInputStream(new byte[0]));
+    }
+
     private void startTracker() {
         if (webView != null) return;
 
@@ -193,7 +225,12 @@ public class MainActivity extends Activity {
 
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                return assetLoader.shouldInterceptRequest(request.getUrl());
+                Uri u = request.getUrl();
+                if (Config.APP_HOST_BUILTIN.equals(u.getHost()) && u.getPath() != null
+                        && u.getPath().startsWith("/ra/")) {
+                    return fetchRetroAchievements(u);
+                }
+                return assetLoader.shouldInterceptRequest(u);
             }
 
             @Override
