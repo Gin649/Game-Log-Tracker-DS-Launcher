@@ -15,7 +15,7 @@ async function raFetch(endpoint, params){
 
   async function validate(label, res){
     if(res.status === 401 || res.status === 403){
-      if(label === 'direct' || label === 'worker'){
+      if(label === 'direct' || label === 'worker' || label === 'native'){
         // Direct and our own Worker both reach RetroAchievements server-to-server
         // with nothing in between to misattribute a 401/403 to, a public proxy
         // returning 401/403 is often the proxy's own auth wall, not RA's, so only
@@ -59,6 +59,16 @@ async function raFetch(endpoint, params){
         });
       });
     });
+  }
+
+  // Inside the Thor app the app itself calls RetroAchievements (no CORS, no proxy hops), so this is
+  // the fast path. If it fails for any reason the normal routes below still run.
+  if(window.ThorBridge && location.hostname === 'appassets.androidplatform.net'){
+    try{
+      return await attempt('native', () => fetchWithTimeout(`/ra/${endpoint}?${qs.toString()}`, 20000));
+    }catch(nativeErr){
+      if(nativeErr.authFailure) throw nativeErr;
+    }
   }
 
   // Our own Cloudflare Worker, one reliable hop we control, instead of going
