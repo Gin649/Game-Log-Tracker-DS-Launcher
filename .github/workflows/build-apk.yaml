@@ -1,0 +1,45 @@
+name: Build APK
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The tracker bundled in the APK carries two index files (RetroAchievements patches and guides).
+      # Refresh them here so each build ships current ones. If GitHub can't be reached, the copies
+      # already in the repo are used and the build carries on.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Refresh RA patches index
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node tools/build-ra-index.mjs app/src/main/assets/www/ra-patches-index.json
+
+      - name: Refresh RA guides index
+        continue-on-error: true
+        run: node tools/build-ra-guides-index.mjs app/src/main/assets/www/ra-guides-index.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build debug APK
+        run: gradle assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: glt-thor-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
