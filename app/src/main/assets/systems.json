@@ -1,0 +1,378 @@
+[
+ {
+  "folder": "gb",
+  "ra": [
+   "Game Boy"
+  ],
+  "core": "gambatte"
+ },
+ {
+  "folder": "gbh",
+  "ra": [
+   "Game Boy"
+  ],
+  "core": "gambatte",
+  "hack": true
+ },
+ {
+  "folder": "gbc",
+  "ra": [
+   "Game Boy Color"
+  ],
+  "core": "gambatte"
+ },
+ {
+  "folder": "gbch",
+  "ra": [
+   "Game Boy Color"
+  ],
+  "core": "gambatte",
+  "hack": true
+ },
+ {
+  "folder": "gba",
+  "ra": [
+   "Game Boy Advance"
+  ],
+  "core": "mgba"
+ },
+ {
+  "folder": "gbah",
+  "ra": [
+   "Game Boy Advance"
+  ],
+  "core": "mgba",
+  "hack": true
+ },
+ {
+  "folder": "nes",
+  "ra": [
+   "NES/Famicom"
+  ],
+  "core": "mesen"
+ },
+ {
+  "folder": "famicom",
+  "ra": [
+   "NES/Famicom"
+  ],
+  "core": "mesen"
+ },
+ {
+  "folder": "nesh",
+  "ra": [
+   "NES/Famicom"
+  ],
+  "core": "mesen",
+  "hack": true
+ },
+ {
+  "folder": "snes",
+  "ra": [
+   "SNES/Super Famicom"
+  ],
+  "core": "snes9x"
+ },
+ {
+  "folder": "sfc",
+  "ra": [
+   "SNES/Super Famicom"
+  ],
+  "core": "snes9x"
+ },
+ {
+  "folder": "snesh",
+  "ra": [
+   "SNES/Super Famicom"
+  ],
+  "core": "snes9x",
+  "hack": true
+ },
+ {
+  "folder": "genesis",
+  "ra": [
+   "Genesis/Mega Drive"
+  ],
+  "core": "genesis_plus_gx"
+ },
+ {
+  "folder": "megadrive",
+  "ra": [
+   "Genesis/Mega Drive"
+  ],
+  "core": "genesis_plus_gx"
+ },
+ {
+  "folder": "genh",
+  "ra": [
+   "Genesis/Mega Drive"
+  ],
+  "core": "genesis_plus_gx",
+  "hack": true
+ },
+ {
+  "folder": "mastersystem",
+  "ra": [
+   "Master System"
+  ],
+  "core": "genesis_plus_gx"
+ },
+ {
+  "folder": "gamegear",
+  "ra": [
+   "Game Gear"
+  ],
+  "core": "genesis_plus_gx"
+ },
+ {
+  "folder": "segacd",
+  "ra": [
+   "Sega CD"
+  ],
+  "core": "genesis_plus_gx"
+ },
+ {
+  "folder": "sega32x",
+  "ra": [
+   "32X"
+  ],
+  "core": "picodrive"
+ },
+ {
+  "folder": "sg-1000",
+  "ra": [
+   "SG-1000"
+  ],
+  "core": "genesis_plus_gx"
+ },
+ {
+  "folder": "n64",
+  "ra": [
+   "Nintendo 64"
+  ],
+  "core": "mupen64plus_next",
+  "standalone": "mupen64plusae"
+ },
+ {
+  "folder": "psx",
+  "ra": [
+   "PlayStation"
+  ],
+  "core": "pcsx_rearmed",
+  "standalone": "duckstation"
+ },
+ {
+  "folder": "nds",
+  "ra": [
+   "Nintendo DS",
+   "Nintendo DSi"
+  ],
+  "core": "melondsds"
+ },
+ {
+  "folder": "pcengine",
+  "ra": [
+   "PC Engine/TurboGrafx-16"
+  ],
+  "core": "mednafen_pce_fast"
+ },
+ {
+  "folder": "pcenginecd",
+  "ra": [
+   "PC Engine CD/TurboGrafx-CD"
+  ],
+  "core": "mednafen_pce_fast"
+ },
+ {
+  "folder": "atari2600",
+  "ra": [
+   "Atari 2600"
+  ],
+  "core": "stella"
+ },
+ {
+  "folder": "atari5200",
+  "ra": [
+   "Atari 5200"
+  ],
+  "core": "atari800"
+ },
+ {
+  "folder": "atari7800",
+  "ra": [
+   "Atari 7800"
+  ],
+  "core": "prosystem"
+ },
+ {
+  "folder": "atarilynx",
+  "ra": [
+   "Atari Lynx"
+  ],
+  "core": "handy"
+ },
+ {
+  "folder": "atarijaguar",
+  "ra": [
+   "Atari Jaguar"
+  ],
+  "core": "virtualjaguar"
+ },
+ {
+  "folder": "ngp",
+  "ra": [
+   "Neo Geo Pocket"
+  ],
+  "core": "mednafen_ngp"
+ },
+ {
+  "folder": "ngpc",
+  "ra": [
+   "Neo Geo Pocket"
+  ],
+  "core": "mednafen_ngp"
+ },
+ {
+  "folder": "wonderswan",
+  "ra": [
+   "WonderSwan"
+  ],
+  "core": "mednafen_wswan"
+ },
+ {
+  "folder": "wonderswancolor",
+  "ra": [
+   "WonderSwan"
+  ],
+  "core": "mednafen_wswan"
+ },
+ {
+  "folder": "virtualboy",
+  "ra": [
+   "Virtual Boy"
+  ],
+  "core": "mednafen_vb"
+ },
+ {
+  "folder": "pokemini",
+  "ra": [
+   "Pokemon Mini"
+  ],
+  "core": "pokemini"
+ },
+ {
+  "folder": "colecovision",
+  "ra": [
+   "ColecoVision"
+  ],
+  "core": "gearcoleco"
+ },
+ {
+  "folder": "intellivision",
+  "ra": [
+   "Intellivision"
+  ],
+  "core": "freeintv"
+ },
+ {
+  "folder": "vectrex",
+  "ra": [
+   "Vectrex"
+  ],
+  "core": "vecx"
+ },
+ {
+  "folder": "arcade",
+  "ra": [
+   "Arcade"
+  ],
+  "core": "fbneo"
+ },
+ {
+  "folder": "msx",
+  "ra": [
+   "MSX"
+  ],
+  "core": "bluemsx"
+ },
+ {
+  "folder": "channelf",
+  "ra": [
+   "Fairchild Channel F"
+  ],
+  "core": "freechaf"
+ },
+ {
+  "folder": "odyssey2",
+  "ra": [
+   "Magnavox Odyssey 2"
+  ],
+  "core": "o2em"
+ },
+ {
+  "folder": "dreamcast",
+  "ra": [
+   "Dreamcast"
+  ],
+  "core": ""
+ },
+ {
+  "folder": "psp",
+  "ra": [
+   "PlayStation Portable"
+  ],
+  "core": "ppsspp",
+  "standalone": "ppsspp"
+ },
+ {
+  "folder": "saturn",
+  "ra": [
+   "Saturn",
+   "Sega Saturn"
+  ],
+  "core": ""
+ },
+ {
+  "folder": "3do",
+  "ra": [
+   "3DO Interactive Multiplayer"
+  ],
+  "core": ""
+ },
+ {
+  "folder": "gc",
+  "ra": [
+   "GameCube"
+  ],
+  "core": "dolphin",
+  "standalone": "dolphin"
+ },
+ {
+  "folder": "wii",
+  "ra": [
+   "Wii"
+  ],
+  "core": "dolphin",
+  "standalone": "dolphin"
+ },
+ {
+  "folder": "msu-md",
+  "ra": [],
+  "core": "genesis_plus_gx",
+  "hack": true
+ },
+ {
+  "folder": "snes-msu1",
+  "ra": [],
+  "core": "snes9x",
+  "hack": true
+ },
+ {
+  "folder": "ps2",
+  "ra": [
+   "PlayStation 2"
+  ],
+  "core": "",
+  "standalone": "armsx2"
+ }
+]

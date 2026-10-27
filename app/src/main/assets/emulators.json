@@ -1,0 +1,47 @@
+[
+ {
+  "id": "dolphin",
+  "label": "Dolphin",
+  "packages": ["org.dolphinemu.dolphinemu", "org.mm.j", "com.joeyos.dolphinemu"],
+  "labels": ["dolphin"],
+  "activity": "org.dolphinemu.dolphinemu.ui.main.MainActivity",
+  "action": "android.intent.action.MAIN",
+  "category": "android.intent.category.LEANBACK_LAUNCHER",
+  "data": "none",
+  "extras": {"AutoStartFile": "%ROMSAF%"}
+ },
+ {
+  "id": "duckstation",
+  "label": "DuckStation",
+  "packages": ["com.github.stenzek.duckstation"],
+  "labels": ["duckstation"],
+  "activity": "com.github.stenzek.duckstation.EmulationActivity",
+  "data": "none",
+  "extras": {"bootPath": "%ROMSAF%"},
+  "boolExtras": {"resumeState": false}
+ },
+ {
+  "id": "ppsspp",
+  "label": "PPSSPP",
+  "packages": ["org.ppsspp.ppsspp", "org.ppsspp.ppssppgold"],
+  "labels": ["ppsspp"],
+  "action": "android.intent.action.VIEW",
+  "data": "path"
+ },
+ {
+  "id": "mupen64plusae",
+  "label": "Mupen64Plus AE",
+  "packages": ["org.mupen64plusae.v3.fzurita", "paulscode.android.mupen64plusae"],
+  "labels": ["mupen64plus", "m64plus"],
+  "action": "android.intent.action.VIEW",
+  "data": "saf"
+ },
+ {
+  "id": "armsx2",
+  "label": "ARMSX2",
+  "packages": ["com.armsx2"],
+  "labels": ["armsx2"],
+  "action": "android.intent.action.VIEW",
+  "data": "saf"
+ }
+]
