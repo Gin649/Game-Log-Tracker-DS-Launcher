@@ -81,10 +81,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          APK="GLT-Thor-${GITHUB_REF_NAME}.apk"
+          APK="GLT-DS-Launcher-${GITHUB_REF_NAME}.apk"
           cp app/build/outputs/apk/release/app-release.apk "$APK"
-          gh release create "$GITHUB_REF_NAME" "$APK" \
-            --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$APK" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$APK" \
+              --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+          fi
 
       - name: Remove keystore from runner
         if: always()
