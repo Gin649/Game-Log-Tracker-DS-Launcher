@@ -39,7 +39,7 @@ public final class MiximageCompositor {
             canvas.drawColor(0xFF15121F);
             Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.ANTI_ALIAS_FLAG);
 
-            // 1. Screenshot fills the whole frame (cropped, not stretched), dimmed so the layers on top stand out.
+            // 1. Background (fan art when there is some, otherwise a screenshot) fills the whole frame (cropped, not stretched), dimmed so the layers on top stand out.
             if (screenshot != null) {
                 drawCover(canvas, screenshot, paint);
                 Paint dim = new Paint();
