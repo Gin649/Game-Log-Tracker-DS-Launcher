@@ -76,14 +76,14 @@ jobs:
       - name: Verify signature
         run: |
           APKSIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -n 1)
-          "$APKSIGNER" verify --print-certs app/build/outputs/apk/release/app-release.apk
+          "$APKSIGNER" verify --print-certs app/app/build/outputs/apk/release/app-release.apk
 
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           APK="GLT-Thor-${GITHUB_REF_NAME}.apk"
-          cp app/build/outputs/apk/release/app-release.apk "$APK"
+          cp app/app/build/outputs/apk/release/app-release.apk "$APK"
           gh release create "$GITHUB_REF_NAME" "$APK" \
             --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
 
