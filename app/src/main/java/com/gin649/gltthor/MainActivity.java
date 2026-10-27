@@ -45,20 +45,6 @@ public class MainActivity extends Activity {
     private boolean hadStorage;
     private WebViewAssetLoader assetLoader;
 
-    /** Sets how many CSS pixels fit across this screen, so the tracker is not zoomed in. */
-    @Override
-    protected void attachBaseContext(Context base) {
-        int css = Prefs.getInt(base, "cssWidth", 720);
-        if (css > 0) {
-            Configuration cfg = new Configuration(base.getResources().getConfiguration());
-            int widthPx = base.getResources().getDisplayMetrics().widthPixels;
-            int dpi = Math.round(widthPx * 160f / css);
-            cfg.densityDpi = Math.max(120, Math.min(640, dpi));
-            base = base.createConfigurationContext(cfg);
-        }
-        super.attachBaseContext(base);
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -153,6 +139,21 @@ public class MainActivity extends Activity {
         }
     }
 
+    /**
+     * Lays the tracker out at the chosen number of CSS pixels and lets the WebView scale that to
+     * the real width of the bottom screen, so the page always fits no matter what the display
+     * density is reported as.
+     */
+    private void applyViewport(WebView view) {
+        int css = Prefs.getInt(this, "cssWidth", 720);
+        if (css <= 0) css = 720;
+        String js = "(function(){var m=document.querySelector('meta[name=viewport]');"
+                + "if(!m){m=document.createElement('meta');m.name='viewport';"
+                + "(document.head||document.documentElement).appendChild(m);}"
+                + "m.setAttribute('content','width=" + css + ",viewport-fit=cover');})();";
+        view.evaluateJavascript(js, null);
+    }
+
     private void startTracker() {
         if (webView != null) return;
 
@@ -164,6 +165,8 @@ public class MainActivity extends Activity {
         ws.setDomStorageEnabled(true);
         ws.setAllowFileAccess(false);
         ws.setMediaPlaybackRequiresUserGesture(false);
+        ws.setUseWideViewPort(true);
+        ws.setLoadWithOverviewMode(true);
         ws.setUserAgentString(ws.getUserAgentString() + " GLTThor/1");
 
         // The tracker is bundled in assets/www and served from https://appassets.androidplatform.net/assets/...
@@ -176,6 +179,18 @@ public class MainActivity extends Activity {
         webView.addJavascriptInterface(new ThorBridge(this), "ThorBridge");
 
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
+                applyViewport(view);
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                applyViewport(view);
+            }
+
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 return assetLoader.shouldInterceptRequest(request.getUrl());
