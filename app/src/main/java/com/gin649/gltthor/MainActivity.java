@@ -100,6 +100,7 @@ public class MainActivity extends Activity {
 
         if (Prefs.setupDone(this)) {
             startTracker();
+            UpdateChecker.check(this);
         } else {
             splashHint.setText("Setting up...");
             openSetup();
@@ -302,6 +303,7 @@ public class MainActivity extends Activity {
         if (granted && !hadStorage) Shared.rescan();
         hadStorage = granted;
 
+        UpdateChecker.resumePendingInstall(this);
         if (Prefs.setupDone(this)) ensureArtScreen();
     }
 
