@@ -190,7 +190,7 @@ final class LibraryScraper {
             return false;
         }
 
-        Bitmap shot = fetch(ScreenScraperClient.pickMedia(info, "ss", "sstitle", "fanart"), 1600);
+        Bitmap shot = fetch(ScreenScraperClient.pickMedia(info, "fanart", "ss", "sstitle"), 1600);
         Bitmap box = fetch(ScreenScraperClient.pickMedia(info, "box-2D", "box-2D-front"), 900);
         Bitmap logo = fetch(ScreenScraperClient.pickMedia(info, "wheel-hd", "wheel", "marquee"), 900);
         try {
