@@ -53,12 +53,12 @@ One Android app for the AYN Thor (works on other devices too, with one screen).
 - Room needs AndroidX, so `android.useAndroidX` is true in `gradle.properties`. The first build downloads Room.
 
 ## Game art for the top screen
-1. **Your ES-DE media first.** In the wizard's folders step, if the ES-DE folder has `downloaded_media`, a box "Use my ES-DE
+1. **Fan art is always the first choice.** Your ES-DE media first. In the wizard's folders step, if the ES-DE folder has `downloaded_media`, a box "Use my ES-DE
    media" is on by default. Games with art there use it as it is and are never sent to ScreenScraper. Turn it off to
    ignore ES-DE's art completely.
 2. **ScreenScraper for the rest.** Opening a game that has no art fetches it in the background. Tracker menu > "Fetch game
    art" does the whole library, one game at a time. The app searches by cleaned-up title (tags, regions and punctuation
-   ignored; "Game 2" never matches "Game"), downloads screenshot, box art and logo, and builds one 1280x720 JPEG per
+   ignored; "Game 2" never matches "Game"), downloads fan art (or a screenshot when there is none), box art and logo, and builds one 1280x720 JPEG per
    game in the app's own storage (`MiximageCompositor`). Calls go straight from the device with OkHttp, not through Cloudflare.
 3. **ScreenScraper needs developer keys.** Put your `devid` and `devpassword` in `assets/screenscraper.json` before building,
    or, without rebuilding, in `<ES-DE folder>/gltthor/screenscraper.json` (same format, only the keys you set are used).
