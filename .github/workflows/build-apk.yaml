@@ -1,8 +1,12 @@
 name: Build APK
 
 on:
+  workflow_dispatch: # Enables manual triggering
   push:
-  workflow_dispatch:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'      # Keeps your automatic rule active if wanted, or you can delete 'push:' entirely to make it 100% manual
 
 jobs:
   build:
