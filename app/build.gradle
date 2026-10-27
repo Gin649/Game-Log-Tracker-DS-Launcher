@@ -19,6 +19,9 @@ android {
         versionCode releaseVersionCode
         versionName releaseVersionName
 
+        // Name shown under the icon; the debug build overrides it (see buildTypes).
+        manifestPlaceholders = [appLabel: 'Game Log Tracker']
+
         buildConfigField 'String', 'UPDATE_REPO', "\"${updateRepo}\""
 
         // Room writes its schema JSON here so future migrations can be tested.
@@ -45,6 +48,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Installs next to the release app instead of replacing it.
+            applicationIdSuffix '.debug'
+            manifestPlaceholders = [appLabel: 'Debug Game Log Tracker']
+        }
         release {
             minifyEnabled false
             if (keystorePath) {
