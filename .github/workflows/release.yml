@@ -23,7 +23,7 @@ jobs:
         run: |
           for v in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
             if [ -z "${!v}" ]; then
-              echo "::error::Missing secret $v. Run the Generate keystore workflow first."
+              echo "::error::Missing secret $v. Run the Generate keystore  workflow first."
               exit 1
             fi
           done
