@@ -104,7 +104,8 @@
   "ds",
   "nds",
   "nintendods",
-  "nintendonintendods"
+  "nintendonintendods",
+  "nintendodsi"
  ],
  "gc": [
   "gamecube",
@@ -223,5 +224,83 @@
   "3do",
   "3dointeractivemultiplayer",
   "the3docompany3do"
+ ],
+ "n3ds": [
+  "3ds",
+  "n3ds",
+  "nintendo3ds"
+ ],
+ "switch": [
+  "switch",
+  "nintendoswitch",
+  "ns"
+ ],
+ "wiiu": [
+  "wiiu",
+  "nintendowiiu"
+ ],
+ "psvita": [
+  "psvita",
+  "vita",
+  "playstationvita",
+  "sonyplaystationvita"
+ ],
+ "xbox": [
+  "xbox",
+  "microsoftxbox",
+  "originalxbox"
+ ],
+ "fds": [
+  "fds",
+  "famicomdisksystem",
+  "nintendofamicomdisksystem"
+ ],
+ "amstradcpc": [
+  "amstradcpc",
+  "cpc"
+ ],
+ "apple2": [
+  "apple2",
+  "appleii"
+ ],
+ "arduboy": [
+  "arduboy"
+ ],
+ "megaduck": [
+  "megaduck"
+ ],
+ "uzebox": [
+  "uzebox"
+ ],
+ "wasm4": [
+  "wasm4"
+ ],
+ "supervision": [
+  "supervision",
+  "waratasupervision"
+ ],
+ "neogeocd": [
+  "neogeocd",
+  "snkneogeocd"
+ ],
+ "pcfx": [
+  "pcfx",
+  "necpcfx"
+ ],
+ "amiga": [
+  "amiga",
+  "commodoreamiga"
+ ],
+ "atarijaguarcd": [
+  "atarijaguarcd",
+  "jaguarcd"
+ ],
+ "arcadia": [
+  "arcadia",
+  "arcadia2001"
+ ],
+ "vc4000": [
+  "vc4000",
+  "intertonvc4000"
  ]
 }

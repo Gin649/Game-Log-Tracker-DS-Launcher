@@ -944,6 +944,80 @@
       romConvertedFrom = n.converted;
       romFilename = n.converted ? String(filename || '').replace(/\.(v64|n64)$/i, '.z64') : filename;
     }
+    // Inside the Thor app the launcher has already found this game's ROM on the device (the same file Play starts).
+    // It is read straight from the ROMs folder and the patched copy is saved next to it, so nothing is picked or downloaded.
+    let romOnDevice = null; // { name, folder, path } when the ROM came from the launcher
+    let romNotFound = false;
+    const deviceBridge = (typeof thorBridge !== 'undefined' && thorBridge && typeof thorBridge.findRom === 'function') ? thorBridge : null;
+
+    async function loadRomFromDevice(){
+      if(!deviceBridge) return false;
+      let info = null;
+      try{ info = JSON.parse(deviceBridge.findRom(JSON.stringify({ title: title, console: consoleName }))); }catch(e){ return false; }
+      if(!info || !info.found){ romNotFound = true; return false; }
+      try{
+        patchWrap.innerHTML = '<div class="achievements-list-loading">Loading your ROM…</div>';
+        const resp = await fetch('/rom/' + info.token, { cache: 'no-store' });
+        if(!resp.ok) throw new Error('read failed');
+        await setRom(new Uint8Array(await resp.arrayBuffer()), info.name);
+        if(!romBytes) return false;
+        romOnDevice = { name: info.name, folder: info.folder, path: info.path };
+        romFromStorage = false;
+        return true;
+      }catch(e){
+        return false;
+      }
+    }
+
+    function bytesToBase64(u8){
+      let bin = '';
+      for(let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+      return btoa(bin);
+    }
+
+    // Writes the patched ROM into the folder of the ROM it was made from. Returns { ok, name, path, message }.
+    async function saveBesideRom(outName, bytes){
+      let begin;
+      try{ begin = JSON.parse(deviceBridge.romSaveBegin(romOnDevice.path, outName)); }catch(e){ return { ok: false, message: 'Could not reach the launcher.' }; }
+      if(!begin || !begin.ok) return { ok: false, message: (begin && begin.message) || 'Could not create the file.' };
+      const CHUNK = 786432; // 768 KB of ROM per call
+      for(let i = 0; i < bytes.length; i += CHUNK){
+        const okChunk = deviceBridge.romSaveChunk(begin.id, bytesToBase64(bytes.subarray(i, Math.min(i + CHUNK, bytes.length))));
+        if(!okChunk) return { ok: false, message: 'Writing the file failed (is the storage full?).' };
+        await new Promise(r => setTimeout(r, 0));
+      }
+      let end;
+      try{ end = JSON.parse(deviceBridge.romSaveEnd(begin.id)); }catch(e){ return { ok: false, message: 'Could not finish the file.' }; }
+      return end && end.ok ? { ok: true, name: end.name, path: end.path } : { ok: false, message: (end && end.message) || 'Could not finish the file.' };
+    }
+
+    // RAPatches names its files "<RA game ID>-<Title>", so the hack's own RetroAchievements game can be found from the name.
+    function patchGameIdFrom(label, verifyGameId){
+      if(verifyGameId) return Number(verifyGameId);
+      const m = /^(\d{1,7})-/.exec(String(label || ''));
+      return m ? Number(m[1]) : null;
+    }
+
+    async function addGameToBacklog(raGameId, statusEl, btn){
+      if(!raGameId) return;
+      if(typeof libraryData !== 'undefined' && libraryData.some(x => Number(x.GameID) === Number(raGameId))){
+        statusEl.textContent = 'This game is already in your library or backlog.';
+        if(btn) btn.disabled = true;
+        return;
+      }
+      statusEl.textContent = 'Adding…';
+      try{
+        const g = await raFetch('API_GetGameExtended.php', { i: raGameId });
+        if(!g || !(g.ID || g.Title)) throw new Error('not found');
+        const consoleId = g.ConsoleID;
+        await addManualGamesBulk([{ g: { ID: g.ID || raGameId, Title: g.Title, ConsoleName: g.ConsoleName, ImageIcon: g.ImageIcon, NumAchievements: g.NumAchievements }, consoleId: consoleId, consoleName: g.ConsoleName }]);
+        statusEl.textContent = 'Added to your Backlog.';
+        if(btn) btn.disabled = true;
+      }catch(e){
+        statusEl.textContent = "Couldn't add it to your backlog. Try again in a moment.";
+      }
+    }
+
     let romFileHandle = null; // FileSystemFileHandle for the loaded ROM, when the File System Access API is available, lets "Save Patched ROM" default to the same folder
     let rememberRom = false;
     let results = null; // { official: [...], verified: [...], unverified: [...] }
@@ -954,6 +1028,7 @@
     const supportsFSAccess = !!(window.showOpenFilePicker && window.showSaveFilePicker);
 
     async function init(){
+      if(deviceBridge && await loadRomFromDevice()){ renderRomStage(); return; }
       const saved = await loadRom(gameId);
       if(saved){ await setRom(saved.bytes, saved.filename); romFromStorage = !!romBytes; }
       if(saved && romBytes && supportsFSAccess) romFileHandle = await loadRomHandle(gameId); // folder the ROM came from, remembered earlier
@@ -965,6 +1040,7 @@
       if(!romBytes){
         patchWrap.innerHTML = `
           ${romLoadError ? `<div class="hash-status mismatch" style="margin-bottom:10px;">${romLoadError}</div>` : ''}
+          ${romNotFound ? `<div class="hash-status mismatch" style="margin-bottom:10px;">No ROM for this game was found in your ROMs folder, so pick the file yourself.</div>` : ''}
           <p style="font-size:0.7688rem;color:var(--muted);margin:0 0 10px;line-height:1.55;">Select the ROM file for this game. Its checksum is what gets matched against the patch repo, so the results are patches actually compatible with your exact dump — not just anything with a similar name.</p>
           <input type="file" id="patch-rom-input" style="display:none;">
           <button class="guide-btn guide-btn-primary" id="patch-rom-pick-btn">Select ROM File…</button>
@@ -998,6 +1074,7 @@
       }
       patchWrap.innerHTML = `
         <div style="font-size:0.7688rem;color:var(--text);">Base ROM: <strong>${romFilename}</strong></div>
+        ${romOnDevice ? `<div style="font-size:0.675rem;color:var(--muted);margin-top:2px;">Found in your ${romOnDevice.folder} folder. The patched ROM is saved there too.</div>` : ''}
         <div style="font-size:0.675rem;color:var(--muted);margin-top:2px;">CRC32 ${crc32Hex(romBytes)}</div>
         ${romUnzippedFrom ? `<div style="font-size:0.675rem;color:var(--muted);margin-top:2px;">Unpacked from ${romUnzippedFrom}, so the checksum is of the ROM itself.</div>` : ''}
         ${romConvertedFrom ? `<div style="font-size:0.675rem;color:var(--muted);margin-top:2px;">Converted from .${romConvertedFrom} to .z64 byte order, which is what patches and RetroAchievements expect. The patched ROM will be saved as .z64.</div>` : ''}
@@ -1005,7 +1082,7 @@
           <button class="guide-btn guide-btn-ghost" id="patch-rom-change-btn">Use a different file…</button>
           ${romFromStorage ? '<button class="guide-btn guide-btn-danger" id="patch-rom-forget-btn">Forget saved ROM</button>' : ''}
         </div>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.75rem;color:var(--text);margin-top:10px;">
+        <label style="display:${romOnDevice ? 'none' : 'flex'};align-items:center;gap:8px;cursor:pointer;font-size:0.75rem;color:var(--text);margin-top:10px;">
           <input type="checkbox" id="patch-remember-checkbox" style="width:15px;height:15px;flex-shrink:0;">
           <span>Remember this ROM for future patches of this game</span>
         </label>
@@ -1013,7 +1090,7 @@
         <button class="guide-btn guide-btn-primary" id="patch-search-btn" style="width:100%;margin-top:12px;">Search RA Patches</button>
       `;
       patchWrap.querySelector('#patch-rom-change-btn').addEventListener('click', () => {
-        romBytes = null; romFilename = null; romFromStorage = false; romFileHandle = null; renderRomStage();
+        romBytes = null; romFilename = null; romFromStorage = false; romFileHandle = null; romOnDevice = null; romNotFound = false; renderRomStage();
       });
       const forgetBtn = patchWrap.querySelector('#patch-rom-forget-btn');
       if(forgetBtn) forgetBtn.addEventListener('click', async () => {
@@ -1397,6 +1474,35 @@
 
         if(rememberRom && !romFromStorage){
           try{ await saveRom(gameId, romFilename, romBytes); await saveRomHandle(gameId, romFileHandle); romFromStorage = true; }catch(e){ /* non-fatal */ }
+        }
+
+        if(romOnDevice && deviceBridge){
+          patchWrap.innerHTML = '<div class="achievements-list-loading">Saving the patched ROM…</div>';
+          const saved = await saveBesideRom(outName, target);
+          if(saved.ok){
+            const hackId = patchGameIdFrom(label, verifyGameId);
+            patchWrap.innerHTML = `
+              ${notes.map(n => `<div class="hash-status ok" style="margin-top:8px;">${n}</div>`).join('')}
+              ${raCheck ? `<div class="hash-status ${raCheck.cls}" style="margin-top:8px;">${raCheck.text}</div>` : ''}
+              <div class="hash-status ok" style="margin-top:8px;">Patched and saved as <strong>${saved.name}</strong> in your ${romOnDevice.folder} folder.</div>
+              <button class="guide-btn guide-btn-primary" id="patch-play-btn" style="margin-top:10px;width:100%;">▶ Play patched ROM</button>
+              ${hackId ? '<button class="guide-btn guide-btn-outline" id="patch-backlog-btn" style="margin-top:8px;width:100%;">＋ Add to my backlog</button>' : ''}
+              <div id="patch-after-msg" style="font-size:0.7188rem;color:var(--muted);margin-top:6px;min-height:1em;"></div>
+              <button class="guide-btn guide-btn-ghost" id="patch-back-btn" style="width:100%;margin-top:8px;">‹ Back to results</button>
+            `;
+            const afterMsg = patchWrap.querySelector('#patch-after-msg');
+            patchWrap.querySelector('#patch-play-btn').addEventListener('click', () => {
+              let res;
+              try{ res = JSON.parse(deviceBridge.launchFile(saved.path)); }catch(e){ res = { ok: false, message: 'Could not reach the launcher.' }; }
+              afterMsg.textContent = res.message || (res.ok ? 'Starting the game…' : 'Could not start the game.');
+            });
+            const blBtn = patchWrap.querySelector('#patch-backlog-btn');
+            if(blBtn) blBtn.addEventListener('click', () => addGameToBacklog(hackId, afterMsg, blBtn));
+            patchWrap.querySelector('#patch-back-btn').addEventListener('click', renderResults);
+            return;
+          }
+          // couldn't write beside the ROM: fall through to the normal download below, and say why
+          notes.push("Couldn't save next to your ROM (" + saved.message + ') so it is offered as a download instead.');
         }
 
         const saveHint = supportsFSAccess && romFileHandle

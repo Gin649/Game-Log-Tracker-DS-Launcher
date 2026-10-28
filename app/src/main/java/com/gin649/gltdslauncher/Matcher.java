@@ -44,13 +44,82 @@ final class Matcher {
         return s;
     }
 
+    /** Words that can trail a game's title without making it a different game. */
+    private static final Set<String> NOISE = new HashSet<String>(java.util.Arrays.asList(
+            "version", "ver", "edition", "disc", "disk", "cd", "rev", "revision", "special", "complete", "deluxe",
+            "remastered", "hd", "goty", "platinum", "hits", "greatest", "players", "choice", "collectors", "limited",
+            "original", "game", "of", "the", "year", "usa", "europe", "japan", "eng", "english", "hack", "patched",
+            "translated", "translation", "fixed", "fix"));
+
+    private static String[] words(String s) {
+        return s.trim().isEmpty() ? new String[0] : s.trim().split(" ");
+    }
+
+    private static boolean isVersionWord(String w) {
+        return w.equals("version") || w.equals("ver") || w.equals("rev") || w.equals("revision")
+                || w.equals("disc") || w.equals("disk") || w.equals("cd") || w.matches("v\\d+[a-z]?");
+    }
+
+    /**
+     * True when the words left over after the shared title are only things like a version, disc number or region,
+     * so the file is the same game. A sequel, prequel or spin-off ("Zero", "2", "Code Veronica") is not.
+     */
+    private static boolean onlyNoise(String[] extra) {
+        boolean inVersion = false;
+        for (String w : extra) {
+            if (w.isEmpty()) continue;
+            if (isVersionWord(w)) {
+                inVersion = true;
+                continue;
+            }
+            if (inVersion && w.matches("\\d{1,3}")) continue; // the 1 in "disc 1"
+            inVersion = false;
+            if (!NOISE.contains(w)) return false;
+        }
+        return true;
+    }
+
+    private static Set<String> digitWords(String s) {
+        Set<String> out = new HashSet<String>();
+        for (String w : words(s)) {
+            if (w.matches("\\d+")) out.add(w);
+        }
+        return out;
+    }
+
     private static int score(String t, String r) {
         String tc = t.replace(" ", "");
         String rc = r.replace(" ", "");
         if (tc.isEmpty() || rc.isEmpty()) return 0;
         if (tc.equals(rc)) return 100;
-        if (rc.startsWith(tc) || tc.startsWith(rc)) return 80;
-        if (rc.contains(tc) || tc.contains(rc)) return 60;
+
+        boolean tShorter = tc.length() <= rc.length();
+        String shortS = tShorter ? t : r;
+        String longS = tShorter ? r : t;
+        String shortC = tShorter ? tc : rc;
+        String longC = tShorter ? rc : tc;
+
+        if (longC.startsWith(shortC)) {
+            // one title starts with the other: only the same game if what is left over is a version, disc or region
+            String[] sw = words(shortS);
+            String[] lw = words(longS);
+            boolean wordPrefix = lw.length >= sw.length;
+            for (int i = 0; wordPrefix && i < sw.length; i++) {
+                if (!sw[i].equals(lw[i])) wordPrefix = false;
+            }
+            String[] extra = wordPrefix
+                    ? java.util.Arrays.copyOfRange(lw, sw.length, lw.length)
+                    : new String[]{longC.substring(shortC.length())};
+            return onlyNoise(extra) ? 80 : 0;
+        }
+
+        if (!digitWords(t).equals(digitWords(r))) return 0; // "Game 2" is never "Game"
+
+        if (longC.contains(shortC)) {
+            // "Zelda A Link to the Past" inside "The Legend of Zelda A Link to the Past" is the same game, but a
+            // short title inside a longer one ("Metroid" in "Super Metroid") is not
+            return words(shortS).length >= 3 ? 60 : 0;
+        }
 
         Set<String> a = new HashSet<String>();
         Set<String> b = new HashSet<String>();
@@ -74,12 +143,20 @@ final class Matcher {
 
     /** Best ROM for a title among candidates, or null when nothing is close enough. */
     static RomIndex.Rom best(List<RomIndex.Rom> candidates, String title) {
-        String t = norm(title);
+        // RetroAchievements sometimes lists two names in one title ("Resident Evil | Biohazard"); either can match
+        List<String> names = new java.util.ArrayList<String>();
+        if (title != null) {
+            for (String part : title.split("\\|")) {
+                String n = norm(part);
+                if (!n.isEmpty() && !names.contains(n)) names.add(n);
+            }
+        }
         boolean hack = wantsHack(title);
         RomIndex.Rom best = null;
         int bestScore = 0;
         for (RomIndex.Rom r : candidates) {
-            int s = score(t, r.norm);
+            int s = 0;
+            for (String n : names) s = Math.max(s, score(n, r.norm));
             if (s == 0) continue;
             s += (r.sys.hack == hack) ? 15 : -15;
             s += regionBonus(r.name);

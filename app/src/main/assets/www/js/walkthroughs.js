@@ -126,6 +126,7 @@ function stopWalkthroughPlayers(){
 }
 
 function setupWalkthroughUI(gameId, title, card, consoleName){
+  const inApp = () => (typeof thorBridge !== 'undefined' && thorBridge && typeof thorBridge.openViewer === 'function');
   const btn = card.querySelector('#modal-yt-btn');
   const panel = card.querySelector('#modal-yt-panel');
   if(!btn || !panel) return;
@@ -205,6 +206,14 @@ function setupWalkthroughUI(gameId, title, card, consoleName){
         clearInterval(timer);
         ytLive.delete(sess);
         try{ player && player.destroy(); }catch(e){}
+      }
+    };
+    // Some videos refuse to play inside another page (embedding off, or the app's address is blocked); in the app the
+    // video then opens in the in-app viewer instead of showing an error box.
+    opts.events.onError = () => {
+      if(inApp()){
+        msg('This video can\'t play here, so it is opening in the viewer.');
+        try{ thorBridge.openViewer(ytWatchUrl(it), ''); }catch(e){}
       }
     };
     opts.events.onReady = (ev) => {
@@ -347,7 +356,33 @@ function setupWalkthroughUI(gameId, title, card, consoleName){
     document.addEventListener('keydown', (ev) => {
       if(ev.key === 'Escape' && els.wrap.isConnected && els.wrap.classList.contains('yt-max')) setMax(false);
     });
-    loadWalkthroughs(gameId).then(list => { items = list; renderList(); });
+    loadedP = loadWalkthroughs(gameId).then(list => { items = list; renderList(); });
+    if(inApp()){
+      // "Find a walkthrough" and "Open on YouTube" use the in-app viewer so swiping back returns here.
+      panel.querySelector('.yt-find').addEventListener('click', (ev) => {
+        ev.preventDefault();
+        try{ thorBridge.openViewer(searchUrl, 'walkthrough'); }catch(e){}
+      });
+      els.ytLink.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const u = els.ytLink.getAttribute('href');
+        if(u && u !== '#'){ try{ thorBridge.openViewer(u, ''); }catch(e){} }
+      });
+    }
+  }
+  let loadedP = null;
+
+  // The in-app viewer's "Save video" button calls this with the open video's link.
+  if(inApp()){
+    window.thorWalkthroughLink = async (url) => {
+      if(!document.body.contains(panel)) return;
+      if(panel.style.display === 'none') btn.click();
+      if(!built) build();
+      try{ await loadedP; }catch(e){}
+      els.input.value = url;
+      await addLink();
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
   }
 
   btn.addEventListener('click', () => {

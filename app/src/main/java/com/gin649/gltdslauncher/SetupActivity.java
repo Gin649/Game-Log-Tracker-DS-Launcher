@@ -60,7 +60,7 @@ public class SetupActivity extends Activity {
     private static final String[] ZOOM_LABELS = {"Compact (fits the most)", "Normal", "Large", "Extra large"};
     private static final int[] ZOOM_VALUES = {900, 720, 560, 440};
     private static final String[] RA_PACKAGES = {"com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"};
-    private static final String[] STEP_TITLES = {"Welcome", "Your accounts", "Your folders", "Emulators", "Screens", "Finish"};
+    private static final String[] STEP_TITLES = {"Welcome", "Your accounts", "Your folders", "Your Emulators", "Your screens", "Finish"};
     private static final int LAST_STEP = 5;
 
     private LinearLayout content;
@@ -84,9 +84,11 @@ public class SetupActivity extends Activity {
     private int cssWidth;
     private int topDisplay;
     private final Map<String, String> emuChoice = new HashMap<String, String>();
+    /** For each system folder on the emulator step: the saved value behind each spinner item. */
+    private final Map<String, List<String>> emuValues = new HashMap<String, List<String>>();
 
     // views of the step on screen
-    private EditText etUser, etKey, etRawg, etSite;
+    private EditText etUser, etKey, etRawg;
     private Spinner spRa, spDisplay, spZoom;
     private final Map<String, Spinner> emuSpinners = new LinkedHashMap<String, Spinner>();
     private final List<Integer> displayIds = new ArrayList<Integer>();
@@ -360,7 +362,6 @@ public class SetupActivity extends Activity {
         etSgdb = null;
         cbEsdeMedia = null;
         cbLibretro = null;
-        etSite = null;
         spRa = null;
         spDisplay = null;
         spZoom = null;
@@ -446,6 +447,7 @@ public class SetupActivity extends Activity {
         text("It takes a minute. Everything can be changed later from the tracker's menu, under Launcher settings.", 14, MUTED);
         text("First, the app needs access to your files so it can find your games and their artwork.", 14, MUTED);
         fileAccessRow();
+        usageAccessRow();
     }
 
     private void stepAccounts() {
@@ -687,25 +689,59 @@ public class SetupActivity extends Activity {
             }
         }
 
+        // One choice per system folder you have: every standalone emulator that is installed and can play it,
+        // then the RetroArch cores for it.
+        boolean haveRa = !found.isEmpty();
+        emuValues.clear();
         boolean any = false;
-        for (SystemMap.Sys s : Shared.systems().all) {
-            if (s.standalone.isEmpty() || s.core.isEmpty()) continue;
-            Recipes.Recipe r = Recipes.byId(this, s.standalone);
-            if (r == null || Recipes.installedPackage(this, r) == null) continue;
-            if (!s.dir().isDirectory()) continue;
+        for (SystemMap.Sys sys : Shared.systems().all) {
+            if (!sys.dir().isDirectory()) continue;
+
+            List<String> items = new ArrayList<String>();
+            List<String> values = new ArrayList<String>();
+            for (String id : sys.standalones) {
+                Recipes.Recipe r = Recipes.byId(this, id);
+                if (r == null || Recipes.installedPackage(this, r) == null) continue;
+                items.add("Standalone: " + r.label);
+                values.add("standalone:" + id);
+            }
+            if (haveRa) {
+                List<String> cores = new ArrayList<String>();
+                if (!sys.core.isEmpty()) cores.add(sys.core);
+                for (String c : sys.cores) {
+                    if (!c.isEmpty() && !cores.contains(c)) cores.add(c);
+                }
+                for (String c : cores) {
+                    items.add("RetroArch: " + c);
+                    values.add("retroarch:" + c);
+                }
+            }
+            if (items.isEmpty()) continue;
 
             if (!any) {
                 text("Which emulator for each system?", 17, TEXT);
+                text("Only the systems found in your ROMs folder are listed, with the emulators you have installed.", 13, MUTED);
                 any = true;
             }
-            text(s.folder, 14, GOLD);
-            List<String> items = new ArrayList<String>();
-            items.add("Standalone: " + r.label);
-            items.add("RetroArch: " + s.core);
-            String cur = emuChoice.containsKey(s.folder) ? emuChoice.get(s.folder) : get("emu." + s.folder, "");
-            emuSpinners.put(s.folder, spinner(items, "retroarch".equals(cur) ? 1 : 0));
+            text(sys.folder, 14, GOLD);
+            String cur = emuChoice.containsKey(sys.folder) ? emuChoice.get(sys.folder) : get("emu." + sys.folder, "");
+            int sel = values.indexOf(cur);
+            if (sel < 0 && cur.equals("retroarch")) { // an older install saved just "retroarch": the system's own core
+                for (int i = 0; i < values.size(); i++) {
+                    if (values.get(i).startsWith("retroarch:")) {
+                        sel = i;
+                        break;
+                    }
+                }
+            }
+            if (sel < 0) sel = 0;
+            emuValues.put(sys.folder, values);
+            emuSpinners.put(sys.folder, spinner(items, sel));
         }
-        text("Nintendo DS and 3DS games are not launched from here, since those emulators use both screens.", 13, MUTED);
+        if (!any) {
+            text("No system folders with an installed emulator were found yet. Choose your ROMs folder in the previous step "
+                    + "and install the emulators you use.", 13, MUTED);
+        }
     }
 
     private void stepScreens() {
@@ -732,22 +768,16 @@ public class SetupActivity extends Activity {
             if (ZOOM_VALUES[i] == cssWidth) zsel = i;
         }
         spZoom = spinner(zooms, zsel);
-
-        text("Tracker address (advanced)", 17, TEXT);
-        text("Leave blank to use the tracker built into this app. Only fill this in to load your own hosted copy.", 13, MUTED);
-        etSite = field("blank = built-in tracker", siteUrl, false);
     }
 
     private void stepFinish() {
         text("Almost done.", 17, TEXT);
         fileAccessRow();
-        usageAccessRow();
         StringBuilder sb = new StringBuilder();
         sb.append("RetroAchievements: ").append(raUser.isEmpty() ? "not set" : raUser).append("\n");
         sb.append("RAWG key: ").append(rawgKey.isEmpty() ? "not set" : "set").append("\n");
         sb.append("SteamGridDB: ").append(sgdbKey.isEmpty() ? "not set" : "key set").append("\n");
         sb.append("Free libretro thumbnails: ").append(libretroFallback ? "on" : "off").append("\n");
-        sb.append("Tracker: ").append(siteUrl.isEmpty() ? "built in" : siteUrl).append("\n");
         sb.append("ROMs: ").append(romsRoot.isEmpty() ? "not chosen" : romsRoot).append("\n");
         sb.append("Frontend: ").append(frontend.equals("esde") ? "ES-DE" : frontend.equals("daijisho") ? "Daijish\u014d" : "none / other").append("\n");
         if (frontend.equals("esde")) sb.append("ES-DE: ").append(esRoot.isEmpty() ? "none" : esRoot).append("\n");
@@ -768,13 +798,11 @@ public class SetupActivity extends Activity {
         if (etSgdb != null) sgdbKey = etSgdb.getText().toString().trim();
         if (cbEsdeMedia != null) useEsdeMedia = cbEsdeMedia.isChecked();
         if (cbLibretro != null) libretroFallback = cbLibretro.isChecked();
-        if (etSite != null) {
-            String s = etSite.getText().toString().trim();
-            siteUrl = s.startsWith("http") ? s : Config.DEFAULT_URL;
-        }
         if (spRa != null && spRa.getSelectedItem() != null) raPackage = (String) spRa.getSelectedItem();
         for (Map.Entry<String, Spinner> e : emuSpinners.entrySet()) {
-            emuChoice.put(e.getKey(), e.getValue().getSelectedItemPosition() == 1 ? "retroarch" : "standalone");
+            List<String> values = emuValues.get(e.getKey());
+            int p = e.getValue().getSelectedItemPosition();
+            if (values != null && p >= 0 && p < values.size()) emuChoice.put(e.getKey(), values.get(p));
         }
         if (spDisplay != null) {
             int p = spDisplay.getSelectedItemPosition();
@@ -789,7 +817,7 @@ public class SetupActivity extends Activity {
     private void goBack() {
         collect();
         if (step == 0) {
-            finish();
+            closeWizard();
             return;
         }
         step--;
@@ -849,6 +877,11 @@ public class SetupActivity extends Activity {
         Shared.reload(this);
 
         finished = true;
-        finish();
+        closeWizard();
+    }
+
+    /** Closes the wizard and removes it from the recent-apps list too, so it does not stay open in the taskbar. */
+    private void closeWizard() {
+        finishAndRemoveTask();
     }
 }

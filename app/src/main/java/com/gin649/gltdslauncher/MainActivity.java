@@ -35,6 +35,8 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import org.json.JSONObject;
+
 /** The bottom screen: the tracker in a WebView, or the logo while setup is open. */
 public class MainActivity extends Activity {
 
@@ -49,6 +51,8 @@ public class MainActivity extends Activity {
     private boolean hadStorage;
     private WebViewAssetLoader assetLoader;
     private boolean relaunching;
+    /** The running tracker screen, so the in-app web viewer can hand a link back to it. */
+    private static MainActivity current;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +77,7 @@ public class MainActivity extends Activity {
             }
         }
 
+        current = this;
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         Config.load(this);
         Shared.init(this);
@@ -209,6 +214,21 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** Streams one ROM file to the page (used by the ROM hack panel). The token comes from ThorBridge.findRom. */
+    private WebResourceResponse serveRom(String token) {
+        java.io.File f = ThorBridge.romForToken(token);
+        if (f == null) return errorResponse(404, "Not found");
+        try {
+            java.util.Map<String, String> headers = new java.util.HashMap<String, String>();
+            headers.put("Cache-Control", "no-store");
+            headers.put("Content-Length", String.valueOf(f.length()));
+            return new WebResourceResponse("application/octet-stream", null, 200, "OK", headers,
+                    new java.io.FileInputStream(f));
+        } catch (Exception e) {
+            return errorResponse(500, "Could not read the file");
+        }
+    }
+
     private WebResourceResponse errorResponse(int code, String reason) {
         return new WebResourceResponse("application/json", "UTF-8", code, reason,
                 new java.util.HashMap<String, String>(), new java.io.ByteArrayInputStream(new byte[0]));
@@ -259,6 +279,10 @@ public class MainActivity extends Activity {
                         && u.getPath().startsWith("/ra/")) {
                     return fetchRetroAchievements(u);
                 }
+                if (Config.APP_HOST_BUILTIN.equals(u.getHost()) && u.getPath() != null
+                        && u.getPath().startsWith("/rom/")) {
+                    return serveRom(u.getPath().substring(5));
+                }
                 return assetLoader.shouldInterceptRequest(u);
             }
 
@@ -266,6 +290,12 @@ public class MainActivity extends Activity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri u = request.getUrl();
                 if (Config.APP_HOST.equals(u.getHost())) return false;
+                String scheme = u.getScheme() == null ? "" : u.getScheme().toLowerCase();
+                if (scheme.equals("http") || scheme.equals("https")) {
+                    // web pages open in the app's own viewer, which Back or a swipe closes again
+                    WebViewerActivity.open(MainActivity.this, u.toString(), "");
+                    return true;
+                }
                 try {
                     startActivity(new Intent(Intent.ACTION_VIEW, u));
                 } catch (Exception ignored) {
@@ -343,8 +373,23 @@ public class MainActivity extends Activity {
         super.onPause();
     }
 
+    /** Sends a link picked in the in-app web viewer to the tracker page (saved as a walkthrough video). */
+    static void deliverLink(final String url) {
+        final MainActivity a = current;
+        if (a == null) return;
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (a.webView == null) return;
+                a.webView.evaluateJavascript("window.thorWalkthroughLink&&window.thorWalkthroughLink("
+                        + JSONObject.quote(url) + ")", null);
+            }
+        });
+    }
+
     @Override
     protected void onDestroy() {
+        if (current == this) current = null;
         if (!relaunching) {
             PadRouter.detach(this);
             TopPanel.detachHost(this);

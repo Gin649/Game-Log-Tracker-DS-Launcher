@@ -33,10 +33,16 @@ final class Recipes {
         String category = "";
         String data = "none";   // none, saf (content address) or path
         boolean clearTask;
+        /** Emulator that shows both of a handheld's screens itself (DS, 3DS): it starts on the bottom screen. */
+        boolean dual;
+        /** Other activity names to try, in order, when the first one is not in the installed version. */
+        final List<String> activities = new ArrayList<String>();
         final List<String> packages = new ArrayList<String>();
         final List<String> labels = new ArrayList<String>();
         final Map<String, String> extras = new LinkedHashMap<String, String>();
         final Map<String, Boolean> boolExtras = new LinkedHashMap<String, Boolean>();
+        /** Extras that are a list of strings; %ROM%, %ROMSAF% and %ROMBASE% work in each item. */
+        final Map<String, List<String>> arrayExtras = new LinkedHashMap<String, List<String>>();
     }
 
     private Recipes() {}
@@ -106,6 +112,19 @@ final class Recipes {
             if (o.has("category")) r.category = o.getString("category");
             if (o.has("data")) r.data = o.getString("data");
             if (o.has("clearTask")) r.clearTask = o.getBoolean("clearTask");
+            if (o.has("dual")) r.dual = o.getBoolean("dual");
+            if (o.has("activities")) fill(r.activities, o.getJSONArray("activities"));
+            if (o.has("arrayExtras")) {
+                r.arrayExtras.clear();
+                JSONObject e = o.getJSONObject("arrayExtras");
+                Iterator<String> keys = e.keys();
+                while (keys.hasNext()) {
+                    String k = keys.next();
+                    List<String> items = new ArrayList<String>();
+                    fill(items, e.getJSONArray(k));
+                    r.arrayExtras.put(k, items);
+                }
+            }
             if (o.has("packages")) fill(r.packages, o.getJSONArray("packages"));
             if (o.has("labels")) fill(r.labels, o.getJSONArray("labels"));
             if (o.has("extras")) {
@@ -163,17 +182,41 @@ final class Recipes {
         return null;
     }
 
+    /** One intent per activity to try, best first. A recipe with no activity gives one intent aimed at the package. */
+    static List<Intent> buildAll(Context ctx, Recipe r, String pkg, File rom) {
+        List<String> acts = new ArrayList<String>();
+        if (!r.activity.isEmpty()) acts.add(r.activity);
+        for (String a : r.activities) {
+            if (!acts.contains(a)) acts.add(a);
+        }
+        if (acts.isEmpty()) acts.add("");
+        List<Intent> out = new ArrayList<Intent>();
+        for (String a : acts) out.add(build(ctx, r, pkg, rom, a));
+        return out;
+    }
+
     static Intent build(Context ctx, Recipe r, String pkg, File rom) {
+        return buildAll(ctx, r, pkg, rom).get(0);
+    }
+
+    private static String fillIn(String text, String uriText, String path, String base) {
+        return text.replace("%ROMSAF%", uriText).replace("%ROMBASE%", base).replace("%ROM%", path);
+    }
+
+    private static Intent build(Context ctx, Recipe r, String pkg, File rom, String activity) {
         Intent i = new Intent();
         if (!r.action.isEmpty()) i.setAction(r.action);
         if (!r.category.isEmpty()) i.addCategory(r.category);
-        if (!r.activity.isEmpty()) {
-            i.setComponent(new ComponentName(pkg, r.activity));
+        if (!activity.isEmpty()) {
+            i.setComponent(new ComponentName(pkg, activity));
         } else {
             i.setPackage(pkg);
         }
 
         String path = rom.getPath();
+        String fileName = rom.getName();
+        int dot = fileName.lastIndexOf('.');
+        String base = dot > 0 ? fileName.substring(0, dot) : fileName;
         Uri uri = RomUri.forRom(ctx, rom);
         String uriText = RomUri.isContent(uri) ? uri.toString() : path;
 
@@ -184,7 +227,12 @@ final class Recipes {
         }
 
         for (Map.Entry<String, String> e : r.extras.entrySet()) {
-            i.putExtra(e.getKey(), e.getValue().replace("%ROMSAF%", uriText).replace("%ROM%", path));
+            i.putExtra(e.getKey(), fillIn(e.getValue(), uriText, path, base));
+        }
+        for (Map.Entry<String, List<String>> e : r.arrayExtras.entrySet()) {
+            String[] items = new String[e.getValue().size()];
+            for (int n = 0; n < items.length; n++) items[n] = fillIn(e.getValue().get(n), uriText, path, base);
+            i.putExtra(e.getKey(), items);
         }
         for (Map.Entry<String, Boolean> e : r.boolExtras.entrySet()) {
             i.putExtra(e.getKey(), e.getValue().booleanValue());

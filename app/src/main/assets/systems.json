@@ -4,7 +4,10 @@
   "ra": [
    "Game Boy"
   ],
-  "core": "gambatte"
+  "core": "gambatte",
+  "cores": [
+   "mgba"
+  ]
  },
  {
   "folder": "gbh",
@@ -19,7 +22,10 @@
   "ra": [
    "Game Boy Color"
   ],
-  "core": "gambatte"
+  "core": "gambatte",
+  "cores": [
+   "mgba"
+  ]
  },
  {
   "folder": "gbch",
@@ -34,7 +40,10 @@
   "ra": [
    "Game Boy Advance"
   ],
-  "core": "mgba"
+  "core": "mgba",
+  "cores": [
+   "vba_next"
+  ]
  },
  {
   "folder": "gbah",
@@ -49,14 +58,22 @@
   "ra": [
    "NES/Famicom"
   ],
-  "core": "mesen"
+  "core": "mesen",
+  "cores": [
+   "fceumm",
+   "nestopia"
+  ]
  },
  {
   "folder": "famicom",
   "ra": [
    "NES/Famicom"
   ],
-  "core": "mesen"
+  "core": "mesen",
+  "cores": [
+   "fceumm",
+   "nestopia"
+  ]
  },
  {
   "folder": "nesh",
@@ -71,14 +88,22 @@
   "ra": [
    "SNES/Super Famicom"
   ],
-  "core": "snes9x"
+  "core": "snes9x",
+  "cores": [
+   "bsnes",
+   "snes9x2010"
+  ]
  },
  {
   "folder": "sfc",
   "ra": [
    "SNES/Super Famicom"
   ],
-  "core": "snes9x"
+  "core": "snes9x",
+  "cores": [
+   "bsnes",
+   "snes9x2010"
+  ]
  },
  {
   "folder": "snesh",
@@ -93,14 +118,20 @@
   "ra": [
    "Genesis/Mega Drive"
   ],
-  "core": "genesis_plus_gx"
+  "core": "genesis_plus_gx",
+  "cores": [
+   "picodrive"
+  ]
  },
  {
   "folder": "megadrive",
   "ra": [
    "Genesis/Mega Drive"
   ],
-  "core": "genesis_plus_gx"
+  "core": "genesis_plus_gx",
+  "cores": [
+   "picodrive"
+  ]
  },
  {
   "folder": "genh",
@@ -115,21 +146,32 @@
   "ra": [
    "Master System"
   ],
-  "core": "genesis_plus_gx"
+  "core": "genesis_plus_gx",
+  "cores": [
+   "picodrive",
+   "smsplus"
+  ]
  },
  {
   "folder": "gamegear",
   "ra": [
    "Game Gear"
   ],
-  "core": "genesis_plus_gx"
+  "core": "genesis_plus_gx",
+  "cores": [
+   "picodrive",
+   "smsplus"
+  ]
  },
  {
   "folder": "segacd",
   "ra": [
    "Sega CD"
   ],
-  "core": "genesis_plus_gx"
+  "core": "genesis_plus_gx",
+  "cores": [
+   "picodrive"
+  ]
  },
  {
   "folder": "sega32x",
@@ -151,7 +193,10 @@
    "Nintendo 64"
   ],
   "core": "mupen64plus_next",
-  "standalone": "mupen64plusae"
+  "standalone": "mupen64plusae",
+  "cores": [
+   "parallel_n64"
+  ]
  },
  {
   "folder": "psx",
@@ -159,7 +204,11 @@
    "PlayStation"
   ],
   "core": "pcsx_rearmed",
-  "standalone": "duckstation"
+  "standalone": "duckstation",
+  "cores": [
+   "swanstation",
+   "mednafen_psx_hw"
+  ]
  },
  {
   "folder": "nds",
@@ -167,21 +216,31 @@
    "Nintendo DS",
    "Nintendo DSi"
   ],
-  "core": "melondsds"
+  "core": "melondsds",
+  "standalone": "watermelonds",
+  "cores": [
+   "melonds"
+  ]
  },
  {
   "folder": "pcengine",
   "ra": [
    "PC Engine/TurboGrafx-16"
   ],
-  "core": "mednafen_pce_fast"
+  "core": "mednafen_pce_fast",
+  "cores": [
+   "mednafen_pce"
+  ]
  },
  {
   "folder": "pcenginecd",
   "ra": [
    "PC Engine CD/TurboGrafx-CD"
   ],
-  "core": "mednafen_pce_fast"
+  "core": "mednafen_pce_fast",
+  "cores": [
+   "mednafen_pce"
+  ]
  },
  {
   "folder": "atari2600",
@@ -286,7 +345,11 @@
   "ra": [
    "Arcade"
   ],
-  "core": "fbneo"
+  "core": "fbneo",
+  "cores": [
+   "mame2003_plus",
+   "mame"
+  ]
  },
  {
   "folder": "msx",
@@ -314,7 +377,7 @@
   "ra": [
    "Dreamcast"
   ],
-  "core": ""
+  "core": "flycast"
  },
  {
   "folder": "psp",
@@ -330,14 +393,17 @@
    "Saturn",
    "Sega Saturn"
   ],
-  "core": ""
+  "core": "yabasanshiro",
+  "cores": [
+   "kronos"
+  ]
  },
  {
   "folder": "3do",
   "ra": [
    "3DO Interactive Multiplayer"
   ],
-  "core": ""
+  "core": "opera"
  },
  {
   "folder": "gc",
@@ -373,6 +439,176 @@
    "PlayStation 2"
   ],
   "core": "",
-  "standalone": "armsx2"
+  "standalone": "armsx2",
+  "standalones": [
+   "armsx2"
+  ]
+ },
+ {
+  "folder": "n3ds",
+  "ra": [
+   "Nintendo 3DS"
+  ],
+  "core": "azahar",
+  "standalone": "azahar"
+ },
+ {
+  "folder": "switch",
+  "ra": [
+   "Nintendo Switch"
+  ],
+  "core": "",
+  "standalone": "eden",
+  "standalones": [
+   "eden",
+   "eden_nightly"
+  ]
+ },
+ {
+  "folder": "wiiu",
+  "ra": [
+   "Wii U"
+  ],
+  "core": "",
+  "standalones": [
+   "cemu"
+  ]
+ },
+ {
+  "folder": "psvita",
+  "ra": [
+   "PlayStation Vita"
+  ],
+  "core": "",
+  "standalones": [
+   "vita3k"
+  ]
+ },
+ {
+  "folder": "xbox",
+  "ra": [
+   "Xbox",
+   "Original Xbox"
+  ],
+  "core": "",
+  "standalones": [
+   "hakux"
+  ]
+ },
+ {
+  "folder": "fds",
+  "ra": [
+   "Famicom Disk System"
+  ],
+  "core": "mesen",
+  "cores": [
+   "nestopia",
+   "fceumm"
+  ]
+ },
+ {
+  "folder": "amstradcpc",
+  "ra": [
+   "Amstrad CPC"
+  ],
+  "core": "cap32"
+ },
+ {
+  "folder": "apple2",
+  "ra": [
+   "Apple II"
+  ],
+  "core": ""
+ },
+ {
+  "folder": "arduboy",
+  "ra": [
+   "Arduboy"
+  ],
+  "core": "arduous"
+ },
+ {
+  "folder": "megaduck",
+  "ra": [
+   "Mega Duck"
+  ],
+  "core": "sameduck"
+ },
+ {
+  "folder": "uzebox",
+  "ra": [
+   "Uzebox"
+  ],
+  "core": "uzem"
+ },
+ {
+  "folder": "wasm4",
+  "ra": [
+   "WASM-4"
+  ],
+  "core": "wasm4"
+ },
+ {
+  "folder": "supervision",
+  "ra": [
+   "Watara Supervision"
+  ],
+  "core": "potator"
+ },
+ {
+  "folder": "neogeocd",
+  "ra": [
+   "Neo Geo CD"
+  ],
+  "core": "neocd"
+ },
+ {
+  "folder": "pcfx",
+  "ra": [
+   "PC-FX"
+  ],
+  "core": "mednafen_pcfx"
+ },
+ {
+  "folder": "amiga",
+  "ra": [
+   "Amiga"
+  ],
+  "core": "puae"
+ },
+ {
+  "folder": "atarijaguarcd",
+  "ra": [
+   "Atari Jaguar CD"
+  ],
+  "core": ""
+ },
+ {
+  "folder": "arcadia",
+  "ra": [
+   "Arcadia 2001"
+  ],
+  "core": ""
+ },
+ {
+  "folder": "vc4000",
+  "ra": [
+   "Interton VC 4000"
+  ],
+  "core": ""
+ },
+ {
+  "folder": "elektor",
+  "ra": [
+   "Elektor TV Games Computer"
+  ],
+  "core": ""
+ },
+ {
+  "folder": "pc8800",
+  "ra": [
+   "PC-8000/8800"
+  ],
+  "core": ""
  }
 ]

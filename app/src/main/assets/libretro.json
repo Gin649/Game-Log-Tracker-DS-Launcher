@@ -51,6 +51,23 @@
   "snesh": "Nintendo - Super Nintendo Entertainment System",
   "genh": "Sega - Mega Drive - Genesis",
   "snes-msu1": "Nintendo - Super Nintendo Entertainment System",
-  "msu-md": "Sega - Mega Drive - Genesis"
+  "msu-md": "Sega - Mega Drive - Genesis",
+  "n3ds": "Nintendo - Nintendo 3DS",
+  "switch": "Nintendo - Switch",
+  "wiiu": "Nintendo - Wii U",
+  "psvita": "Sony - PlayStation Vita",
+  "xbox": "Microsoft - Xbox",
+  "fds": "Nintendo - Family Computer Disk System",
+  "amstradcpc": "Amstrad - CPC",
+  "arduboy": "Arduboy Inc - Arduboy",
+  "megaduck": "Welback Holdings - Mega Duck",
+  "supervision": "Watara - Supervision",
+  "neogeocd": "SNK - Neo Geo CD",
+  "pcfx": "NEC - PC-FX",
+  "amiga": "Commodore - Amiga",
+  "uzebox": "Uzebox",
+  "wasm4": "WASM-4",
+  "atarijaguarcd": "Atari - Jaguar",
+  "apple2": "Apple - II"
  }
 }

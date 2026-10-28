@@ -20,7 +20,11 @@ final class SystemMap {
         String folder;
         String core = "";
         boolean hack;
-        String standalone = "";   // id from emulators.json, or empty
+        String standalone = "";   // the first standalone emulator for this system (id from emulators.json), or empty
+        /** Every standalone emulator that can play this system, best first (includes the one above). */
+        final List<String> standalones = new ArrayList<String>();
+        /** Other RetroArch cores that can play this system besides {@link #core}. */
+        final List<String> cores = new ArrayList<String>();
         /** For a folder found by name ("Game Boy Advance"): the built-in system it stands for ("gba"), else empty. */
         String base = "";
         final List<String> ra = new ArrayList<String>();
@@ -114,6 +118,8 @@ final class SystemMap {
             n.core = src.core;
             n.hack = src.hack;
             n.standalone = src.standalone;
+            n.standalones.addAll(src.standalones);
+            n.cores.addAll(src.cores);
             n.ra.addAll(src.ra);
             n.base = canonical;
             all.add(n);
@@ -149,7 +155,22 @@ final class SystemMap {
             Sys s = get(o.getString("folder"));
             if (o.has("core")) s.core = o.getString("core");
             if (o.has("hack")) s.hack = o.getBoolean("hack");
-            if (o.has("standalone")) s.standalone = o.optString("standalone", "");
+            if (o.has("standalone")) {
+                s.standalone = o.optString("standalone", "");
+                s.standalones.remove(s.standalone);
+                if (!s.standalone.isEmpty()) s.standalones.add(0, s.standalone);
+            }
+            if (o.has("standalones")) {
+                s.standalones.clear();
+                JSONArray a = o.getJSONArray("standalones");
+                for (int j = 0; j < a.length(); j++) s.standalones.add(a.getString(j));
+                s.standalone = s.standalones.isEmpty() ? "" : s.standalones.get(0);
+            }
+            if (o.has("cores")) {
+                s.cores.clear();
+                JSONArray a = o.getJSONArray("cores");
+                for (int j = 0; j < a.length(); j++) s.cores.add(a.getString(j));
+            }
             if (o.has("ra")) {
                 s.ra.clear();
                 JSONArray r = o.getJSONArray("ra");

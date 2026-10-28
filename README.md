@@ -23,22 +23,25 @@ One Android app for the AYN Thor (works on other devices too, with one screen).
   `sw.js` is not needed there: the service worker is switched off inside the app.
 - Each build refreshes `ra-patches-index.json` and `ra-guides-index.json` (`tools/`, see the workflow). If GitHub is
   unreachable during the build, the copies already in the repo are used.
-- The wizard's "Tracker address" can still point at your own hosted copy. Leave it blank for the bundled one.
 
 ## What the wizard asks for
-1. Allow "All files access" for the app.
-2. RetroAchievements username and Web API key, and an optional RAWG key. They are copied into the tracker, so you do not type them twice.
-3. Your frontend (ES-DE, Daijisho or none), your ROMs folder, and the frontend's folder. For ES-DE that is where `downloaded_media` and
-   `custom_systems/es_systems.xml` live; your custom systems and their cores are imported from that file.
-4. Which RetroArch is installed, which standalone emulators were found, and, per system, standalone or RetroArch.
-5. Top screen, tracker size on the bottom screen, and the tracker address.
+1. Welcome: allow "All files access" and "Usage access" (lets the app return to the tracker when a game closes).
+2. RetroAchievements username and Web API key, and an optional RAWG key.
+3. Your folders: frontend (ES-DE, Daijisho or none), ROMs folder, and the frontend's folder.
+4. Your Emulators: per system, pick a standalone emulator or a RetroArch core. Change it any time from Launcher settings.
+5. Your screens: top screen and tracker size on the bottom screen.
+The wizard removes itself from the recent apps list when it finishes.
 
 ## Emulators
 - RetroArch: launched with the ROM, core and config paths, the same way ES-DE does it.
 - Standalone: Dolphin (GameCube, Wii), DuckStation (PS1), PPSSPP (PSP), Mupen64Plus AE/FZ (N64), ARMSX2 (PS2).
   The recipes are in `assets/emulators.json`. If an emulator opens but does not start the game, its recipe may need a fix:
   put a copy of the entry in `<ES-DE folder>/gltthor/emulators.json` (same `id`) and edit it, no rebuild needed.
-- DS and 3DS are not launched from here.
+- Also set up: Watermelon DS (DS), Azahar (3DS), Eden / Eden nightly (Switch), Cemu (Wii U), Vita3K (Vita), HakuX (Xbox).
+  Several of these recipes are best guesses (HakuX package and intent, Azahar/Eden activity names; Vita3K needs title-ID
+  file names and games installed in it first). If one opens without starting the game, override it as described above.
+- Walkthroughs: "Find a walkthrough" opens an in-app browser; back or swipe returns to the tracker, and "Save video" sends the link over.
+- ROM hacks: the base ROM is the one Play finds. The patched ROM is saved beside it, with "Play patched ROM" and "Add to my backlog".
 - Cores per system are in `assets/systems.json`. Cores for systems you defined in ES-DE come from your own file, the rest are
   common defaults. Override any of them in `<ES-DE folder>/gltthor/systems.json`.
 

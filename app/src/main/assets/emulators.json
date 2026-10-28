@@ -2,45 +2,192 @@
  {
   "id": "dolphin",
   "label": "Dolphin",
-  "packages": ["org.dolphinemu.dolphinemu", "org.mm.j", "com.joeyos.dolphinemu"],
-  "labels": ["dolphin"],
+  "packages": [
+   "org.dolphinemu.dolphinemu",
+   "org.mm.j",
+   "com.joeyos.dolphinemu"
+  ],
+  "labels": [
+   "dolphin"
+  ],
   "activity": "org.dolphinemu.dolphinemu.ui.main.MainActivity",
   "action": "android.intent.action.MAIN",
   "category": "android.intent.category.LEANBACK_LAUNCHER",
   "data": "none",
-  "extras": {"AutoStartFile": "%ROMSAF%"}
+  "extras": {
+   "AutoStartFile": "%ROMSAF%"
+  }
  },
  {
   "id": "duckstation",
   "label": "DuckStation",
-  "packages": ["com.github.stenzek.duckstation"],
-  "labels": ["duckstation"],
+  "packages": [
+   "com.github.stenzek.duckstation"
+  ],
+  "labels": [
+   "duckstation"
+  ],
   "activity": "com.github.stenzek.duckstation.EmulationActivity",
   "data": "none",
-  "extras": {"bootPath": "%ROMSAF%"},
-  "boolExtras": {"resumeState": false}
+  "extras": {
+   "bootPath": "%ROMSAF%"
+  },
+  "boolExtras": {
+   "resumeState": false
+  }
  },
  {
   "id": "ppsspp",
   "label": "PPSSPP",
-  "packages": ["org.ppsspp.ppsspp", "org.ppsspp.ppssppgold"],
-  "labels": ["ppsspp"],
+  "packages": [
+   "org.ppsspp.ppsspp",
+   "org.ppsspp.ppssppgold"
+  ],
+  "labels": [
+   "ppsspp"
+  ],
   "action": "android.intent.action.VIEW",
   "data": "path"
  },
  {
   "id": "mupen64plusae",
   "label": "Mupen64Plus AE",
-  "packages": ["org.mupen64plusae.v3.fzurita", "paulscode.android.mupen64plusae"],
-  "labels": ["mupen64plus", "m64plus"],
+  "packages": [
+   "org.mupen64plusae.v3.fzurita",
+   "paulscode.android.mupen64plusae"
+  ],
+  "labels": [
+   "mupen64plus",
+   "m64plus"
+  ],
   "action": "android.intent.action.VIEW",
   "data": "saf"
  },
  {
   "id": "armsx2",
   "label": "ARMSX2",
-  "packages": ["com.armsx2"],
-  "labels": ["armsx2"],
+  "packages": [
+   "com.armsx2"
+  ],
+  "labels": [
+   "armsx2"
+  ],
+  "action": "android.intent.action.VIEW",
+  "data": "saf"
+ },
+ {
+  "id": "watermelonds",
+  "label": "WatermelonDS",
+  "packages": [
+   "me.magnum.melondualds",
+   "me.magnum.melondualds.nightly"
+  ],
+  "labels": [
+   "watermelonds",
+   "melondualds"
+  ],
+  "activity": "me.magnum.melonds.ui.emulator.EmulatorActivity",
+  "action": "android.intent.action.VIEW",
+  "data": "saf",
+  "dual": true
+ },
+ {
+  "id": "azahar",
+  "label": "Azahar",
+  "packages": [
+   "org.azahar_emu.azahar",
+   "io.github.azahar_emu.azahar"
+  ],
+  "labels": [
+   "azahar"
+  ],
+  "activity": "org.citra.citra_emu.activities.EmulationActivity",
+  "activities": [
+   "org.azahar_emu.azahar.activities.EmulationActivity"
+  ],
+  "action": "android.nfc.action.TECH_DISCOVERED",
+  "data": "saf",
+  "clearTask": true,
+  "extras": {
+   "SelectedGame": "%ROM%"
+  },
+  "dual": true
+ },
+ {
+  "id": "eden",
+  "label": "Eden",
+  "packages": [
+   "dev.eden.eden_emulator"
+  ],
+  "labels": [],
+  "activity": "org.yuzu.yuzu_emu.activities.EmulationActivity",
+  "activities": [
+   "org.eden.emu.activities.EmulationActivity"
+  ],
+  "action": "android.intent.action.VIEW",
+  "data": "saf",
+  "clearTask": true
+ },
+ {
+  "id": "eden_nightly",
+  "label": "Eden Nightly",
+  "packages": [
+   "dev.eden.eden_emulator.nightly",
+   "dev.eden.eden_nightly"
+  ],
+  "labels": [
+   "eden nightly"
+  ],
+  "activity": "org.yuzu.yuzu_emu.activities.EmulationActivity",
+  "activities": [
+   "org.eden.emu.activities.EmulationActivity"
+  ],
+  "action": "android.intent.action.VIEW",
+  "data": "saf",
+  "clearTask": true
+ },
+ {
+  "id": "cemu",
+  "label": "Cemu",
+  "packages": [
+   "info.cemu.cemu"
+  ],
+  "labels": [
+   "cemu"
+  ],
+  "activity": "info.cemu.cemu.emulation.EmulationActivity",
+  "action": "android.intent.action.VIEW",
+  "data": "saf"
+ },
+ {
+  "id": "vita3k",
+  "label": "Vita3K",
+  "packages": [
+   "org.vita3k.emulator"
+  ],
+  "labels": [
+   "vita3k"
+  ],
+  "activity": "org.vita3k.emulator.Emulator",
+  "clearTask": true,
+  "data": "none",
+  "arrayExtras": {
+   "AppStartParameters": [
+    "-r",
+    "%ROMBASE%"
+   ]
+  }
+ },
+ {
+  "id": "hakux",
+  "label": "hakuX",
+  "packages": [
+   "com.rfandango.hakux",
+   "com.hakux"
+  ],
+  "labels": [
+   "hakux"
+  ],
   "action": "android.intent.action.VIEW",
   "data": "saf"
  }
