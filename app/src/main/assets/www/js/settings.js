@@ -24,7 +24,7 @@ function closeDataModal(){
 
 // About
 // Bump this every release, together with CACHE_NAME in sw.js.
-const APP_VERSION = '2.1.2.2';
+const APP_VERSION = '2.1.2.3';
 function openAboutModal(){
   $('#about-version').textContent = APP_VERSION;
   $('#about-backdrop').classList.add('open');
@@ -33,8 +33,15 @@ function closeAboutModal(){
   $('#about-backdrop').classList.remove('open');
 }
 
+// Cached RA data is refetched on demand, so it would only make backup files bigger.
+const REBUILDABLE_CACHE_PREFIXES = ['ra-hours:', 'ra-gameinfo:', 'ra-ach:', 'ra-dash:'];
+function isRebuildableCache(rawKey){
+  return REBUILDABLE_CACHE_PREFIXES.some(p => rawKey.startsWith('priv:' + p) || rawKey.startsWith('shared:' + p));
+}
+
 async function exportLocalData(){
-  const entries = await window.storage._getAllRaw(); // [{key, value}, ...], includes RA creds, RAWG key, manual games, caches
+  const all = await window.storage._getAllRaw(); // [{key, value}, ...]
+  const entries = all.filter(e => !isRebuildableCache(String(e.key)));
   const payload = {
     app: 'Game Log Tracker',
     exportedAt: new Date().toISOString(),

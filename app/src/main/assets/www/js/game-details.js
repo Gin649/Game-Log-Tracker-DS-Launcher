@@ -95,18 +95,92 @@ function tidyDescription(text){
   }).filter(Boolean).join('\n\n');
 }
 
-function playtimeBox(label, seconds, players){
+function achievementType(a){
+  return String((a && (a.Type || a.type)) || '').toLowerCase();
+}
+
+// RA's API doesn't report your own time to beat or master, so both come from your unlock
+// dates. The beat time ends at the unlock that met the beaten requirements (every
+// progression achievement plus a win condition). The master time uses your tracked
+// playtime when RA has it, and an estimate otherwise.
+async function getMyTimes(gameId){
+  const list = await getAchievementsList(gameId);
+  if(!list || !list.length) return null;
+  try{ attachAchievementTypes(list, await getGameExtended(gameId)); }
+  catch(e){ /* without the tags there is no beat time */ }
+  const cached = estHoursCache[gameId];
+  const real = cached && cached.real ? cached.hours : null;
+  const snap = await readSnap(gameId);
+
+  // Unlock dates in either mode. The share of unlocks made by the beat moment, scaled to
+  // RA's real total playtime, gives a better estimate than the raw unlock gaps alone.
+  const anyStamps = list
+    .map(a => { const d = parseRADate(a.DateEarned || a.DateEarnedHardcore); return d ? d.getTime() : null; })
+    .filter(t => t != null);
+  const estTotal = estimateHoursFromTimestamps(anyStamps);
+
+  const timesFor = (hard) => {
+    const earned = list.map(a => {
+      const d = parseRADate(hard ? a.DateEarnedHardcore : (a.DateEarned || a.DateEarnedHardcore));
+      return d ? d.getTime() : null;
+    });
+    const out = { beat: null, master: null };
+
+    const progression = [];
+    const wins = [];
+    list.forEach((a, i) => {
+      const t = achievementType(a);
+      if(t === 'progression') progression.push(earned[i]);
+      else if(t === 'win_condition') wins.push(earned[i]);
+    });
+    const winTimes = wins.filter(t => t != null);
+    const beaten = progression.length + wins.length > 0
+      && !progression.includes(null)
+      && (wins.length === 0 || winTimes.length > 0);
+    const saved = snap && snap[hard ? 'beatHardcore' : 'beatCasual'];
+    if(saved > 0){
+      out.beat = { hours: saved, est: false };
+    }else if(beaten){
+      const beatAt = Math.max(...progression, wins.length ? Math.min(...winTimes) : -Infinity);
+      const hours = estimateHoursFromTimestamps(anyStamps.filter(t => t <= beatAt));
+      if(hours != null){
+        out.beat = { hours: (real != null && estTotal) ? (hours / estTotal) * real : hours, est: true };
+      }
+    }
+
+    const savedMaster = snap && snap[hard ? 'masterHardcore' : 'masterCasual'];
+    if(savedMaster > 0){
+      out.master = { hours: savedMaster, est: false };
+    }else if(earned.every(t => t != null)){
+      if(real != null){
+        out.master = { hours: real, est: false };
+      }else{
+        const hours = estimateHoursFromTimestamps(earned);
+        if(hours != null) out.master = { hours, est: true };
+      }
+    }
+    return out;
+  };
+
+  return { casual: timesFor(false), hardcore: timesFor(true) };
+}
+
+function playtimeBox(label, seconds, players, mine){
   const value = seconds ? formatDuration({ hours: seconds / 3600 }, true) : '—';
   const n = players ? `${players} player${players === 1 ? '' : 's'}` : '';
-  return `<div class="gd-box"><div class="gd-k">${label}</div><div class="gd-v">${value}</div><div class="gd-n">${n}</div></div>`;
+  const you = mine
+    ? `<div class="gd-you"><div class="gd-k">YOUR TIME</div><div class="gd-v">${mine.est ? '~' : ''}${formatDuration({ hours: mine.hours }, true)}</div></div>`
+    : '';
+  return `<div class="gd-box"><div class="gd-main"><div class="gd-k">${label}</div><div class="gd-v">${value}</div><div class="gd-n">${n}</div></div>${you}</div>`;
 }
 
 // aboutOnly: games tracked by hand (not on RA) have no playtime data, so only the write-up shows.
-function renderGameDetails(wrap, stats, description, aboutOnly, manualCtx){
+function renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine){
   if(description) description = tidyDescription(description); // also fixes write-ups saved before this was added
   const hard = statsMode === 'hardcore';
   const m = (!aboutOnly && stats) ? (hard ? stats.hardcore : stats.casual) : null;
-  const hasTimes = !!(m && (m.beat || m.master));
+  const my = (!aboutOnly && mine) ? (hard ? mine.hardcore : mine.casual) : null;
+  const hasTimes = !!(m && (m.beat || m.master)) || !!(my && (my.beat || my.master));
 
   if(!hasTimes && !description){
     wrap.innerHTML = `<div class="gd-empty">${aboutOnly ? 'No write-up available for this game yet.' : 'No details available for this game yet.'}</div>`;
@@ -118,7 +192,7 @@ function renderGameDetails(wrap, stats, description, aboutOnly, manualCtx){
   if(!aboutOnly){
     html += `<div class="gd-head"><span class="gd-label">AVERAGE PLAYTIME</span><span class="gd-mode">${hard ? 'Hardcore' : 'Casual'}</span></div>`;
     html += hasTimes
-      ? `<div class="gd-boxes">${playtimeBox('TIME TO BEAT', m.beat, m.beatN)}${playtimeBox('TIME TO MASTER', m.master, m.masterN)}</div>`
+      ? `<div class="gd-boxes">${playtimeBox('TIME TO BEAT', m && m.beat, m && m.beatN, my && my.beat)}${playtimeBox('TIME TO MASTER', m && m.master, m && m.masterN, my && my.master)}</div>`
       : '<div class="gd-empty">No playtime data yet.</div>';
   }
 
@@ -157,6 +231,7 @@ function setupGameDetailsUI(gameId, title, card, opts){
   const load = () => pending || (pending = Promise.allSettled([
     aboutOnly ? Promise.resolve(null) : getPlaytimeStats(gameId),
     getRawgDescription(title),
+    aboutOnly ? Promise.resolve(null) : getMyTimes(gameId),
   ]));
   setTimeout(load, 400);
 
@@ -169,14 +244,16 @@ function setupGameDetailsUI(gameId, title, card, opts){
 
     loaded = true;
     wrap.innerHTML = '<div class="achievements-list-loading">Loading details…</div>';
-    const [statsRes, descRes] = await load();
+    const [statsRes, descRes, mineRes] = await load();
     if(card.dataset.gameId !== String(gameId)) return; // user moved on to another game
     if(statsRes.status === 'rejected') console.error('Playtime stats failed:', statsRes.reason && statsRes.reason.message);
     if(descRes.status === 'rejected') console.error('RAWG description failed:', descRes.reason && descRes.reason.message);
 
     const stats = statsRes.status === 'fulfilled' ? statsRes.value : null;
     const description = descRes.status === 'fulfilled' ? descRes.value : null;
-    renderGameDetails(wrap, stats, description, aboutOnly, manualCtx);
+    if(mineRes.status === 'rejected') console.error('Your times failed:', mineRes.reason && mineRes.reason.message);
+    const mine = mineRes.status === 'fulfilled' ? mineRes.value : null;
+    renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine);
     if(!stats && !description){ loaded = false; pending = null; } // both failed: try again next time it's opened
   });
 }

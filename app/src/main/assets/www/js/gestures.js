@@ -70,6 +70,7 @@
         .sort((a, b) => (a.DisplayOrder ?? 0) - (b.DisplayOrder ?? 0));
     }else{
       delete achievementsListCache[gameId];
+      try{ await window.storage.delete(achCacheKey(gameId), false); }catch(e){ /* nothing stored */ }
     }
     try{ await getEstimatedHours(gameId, true); }catch(e){ console.error('Playtime refresh failed:', e); }
 

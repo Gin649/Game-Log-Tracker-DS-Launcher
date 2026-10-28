@@ -5,11 +5,17 @@
 // hits the network itself if that hasn't happened yet for this game.
 async function getAchievementsList(gameId){
   if(achievementsListCache[gameId]) return achievementsListCache[gameId];
+  const stored = await readStoredAchList(gameId);
+  if(stored){
+    achievementsListCache[gameId] = stored;
+    return stored;
+  }
   const data = await raFetch('API_GetGameInfoAndUserProgress.php', { g: gameId, a: 1 });
   const list = (data && data.Achievements)
     ? Object.values(data.Achievements).sort((a,b) => (a.DisplayOrder ?? 0) - (b.DisplayOrder ?? 0))
     : [];
   achievementsListCache[gameId] = list;
+  if(list.length) await storeAchList(gameId, list);
   return list;
 }
 

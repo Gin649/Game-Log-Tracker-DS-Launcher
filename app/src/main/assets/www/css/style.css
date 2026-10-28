@@ -454,7 +454,9 @@
   .gd-label{font-size:0.725rem;color:var(--muted);font-family:'Space Mono',monospace;letter-spacing:0.04em;}
   .gd-mode{font-size:0.6875rem;color:var(--muted);}
   .gd-boxes{display:flex;gap:8px;}
-  .gd-box{flex:1;background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:10px;}
+  .gd-box{flex:1;display:flex;flex-wrap:wrap;justify-content:space-between;gap:0 8px;background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:10px;}
+  .gd-box .gd-you{text-align:right;}
+  .gd-box .gd-you .gd-v{color:var(--teal);}
   .gd-box .gd-k{font-size:0.6875rem;color:var(--muted);}
   .gd-box .gd-v{font-size:1.25rem;color:var(--gold);margin:3px 0 2px;}
   .gd-box .gd-n{font-size:0.6875rem;color:var(--muted);min-height:1em;}

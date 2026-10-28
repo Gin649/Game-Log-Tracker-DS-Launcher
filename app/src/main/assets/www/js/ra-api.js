@@ -189,6 +189,97 @@ function formatDuration(entry, short){
   return `${hours} hr${hours === 1 ? '' : 's'}${minPart}`;
 }
 
+const CACHE_TTL_ACTIVE = 12 * 60 * 60 * 1000;
+const CACHE_TTL_IDLE = 7 * 24 * 60 * 60 * 1000;
+const IDLE_AFTER_MS = 3 * 24 * 60 * 60 * 1000;
+
+function findLibraryGame(gameId){
+  return libraryData.find(g => g.GameID === gameId) || null;
+}
+
+// A game nobody has touched for a few days can't gain playtime, so its cached data
+// is kept longer. New unlocks still show up through awardedCountChanged().
+function cachedDataTtl(gameId){
+  const g = findLibraryGame(gameId);
+  const played = g && g.lastPlayed ? Date.parse(g.lastPlayed) : NaN;
+  const idle = !isNaN(played) && Date.now() - played > IDLE_AFTER_MS;
+  return idle ? CACHE_TTL_IDLE : CACHE_TTL_ACTIVE;
+}
+
+// Entries remember the library's unlock count from when they were saved. If the
+// library now reports a different count, the cached data is out of date.
+function awardedCountChanged(entry, gameId){
+  if(entry.libAwarded == null) return false;
+  const g = findLibraryGame(gameId);
+  if(!g || g.NumAwarded == null) return false;
+  return Number(g.NumAwarded) !== entry.libAwarded;
+}
+
+function libraryAwardedFor(gameId){
+  const g = findLibraryGame(gameId);
+  return g && g.NumAwarded != null ? Number(g.NumAwarded) : null;
+}
+
+const achCacheKey = (gameId) => `ra-ach:${creds.username}:${gameId}`;
+
+async function readStoredAchList(gameId){
+  try{
+    const r = await window.storage.get(achCacheKey(gameId), false);
+    if(!r || !r.value) return null;
+    const entry = JSON.parse(r.value);
+    if(!entry || !Array.isArray(entry.list)) return null;
+    if(Date.now() - entry.ts >= cachedDataTtl(gameId)) return null;
+    if(awardedCountChanged(entry, gameId)) return null;
+    return entry.list;
+  }catch(e){
+    return null;
+  }
+}
+
+async function storeAchList(gameId, list){
+  const entry = { list, ts: Date.now(), libAwarded: libraryAwardedFor(gameId) };
+  try{ await window.storage.set(achCacheKey(gameId), JSON.stringify(entry), false); }
+  catch(e){ /* non-fatal */ }
+}
+
+// RA's API only reports total playtime as of now. To know the playtime at the moment a
+// game was beaten or mastered, it is saved the first time a fresh award is seen. It can't
+// be rebuilt later, so these entries are kept in backups.
+const SNAP_WINDOW_MS = 24 * 60 * 60 * 1000;
+const SNAP_SLOTS_BY_AWARD = {
+  'beaten-softcore': ['beatCasual'],
+  'beaten-hardcore': ['beatCasual', 'beatHardcore'],
+  'completed': ['masterCasual'],
+  'mastered': ['masterCasual', 'masterHardcore'],
+};
+const snapKey = (gameId) => `ra-snap:${creds.username}:${gameId}`;
+
+// Slots the game's current top award could fill, only while that award is new.
+function recentAwardSlots(gameId){
+  const g = findLibraryGame(gameId);
+  if(!g || !g.HighestAwardKind || !g.HighestAwardDate) return [];
+  const at = parseRADate(g.HighestAwardDate);
+  if(!at || Date.now() - at.getTime() > SNAP_WINDOW_MS) return [];
+  return SNAP_SLOTS_BY_AWARD[g.HighestAwardKind] || [];
+}
+
+async function readSnap(gameId){
+  try{
+    const r = await window.storage.get(snapKey(gameId), false);
+    return r && r.value ? JSON.parse(r.value) : null;
+  }catch(e){
+    return null;
+  }
+}
+
+// 0 means RA had no playtime when the award was seen, which stops it being asked again.
+async function saveSnap(gameId, existing, slots, hours){
+  const next = { ...(existing || {}) };
+  slots.forEach(s => { next[s] = hours; });
+  try{ await window.storage.set(snapKey(gameId), JSON.stringify(next), false); }
+  catch(e){ /* non-fatal */ }
+}
+
 async function getEstimatedHours(gameId, force){
   if(!force && estHoursCache[gameId] !== undefined) return estHoursCache[gameId];
 
@@ -203,6 +294,9 @@ async function getEstimatedHours(gameId, force){
     Number(localGame.NumAwarded) >= Number(localGame.MaxPossible));
   const beaten = officialAward || fullyCompleted;
   const cacheKey = `ra-hours:${creds.username}:${gameId}`;
+  const wantedSlots = recentAwardSlots(gameId);
+  const snap = wantedSlots.length ? await readSnap(gameId) : null;
+  const missingSlots = wantedSlots.filter(s => !snap || snap[s] === undefined);
   if(!force){
   try{
     const r = await window.storage.get(cacheKey, false);
@@ -212,9 +306,13 @@ async function getEstimatedHours(gameId, force){
       // RA may simply not have finished computing playtime for this game
       // yet, and we don't want that temporary gap sticking around for the
       // full 12h once RA does have it.
-      const ttl = parsed.hours == null ? 5 * 60 * 1000 : 12 * 60 * 60 * 1000;
-      if(Date.now() - parsed.ts < ttl){
+      const ttl = parsed.hours == null ? 5 * 60 * 1000 : cachedDataTtl(gameId);
+      if(Date.now() - parsed.ts < ttl && !awardedCountChanged(parsed, gameId) && missingSlots.length === 0){
         estHoursCache[gameId] = { hours: parsed.hours, beaten, real: !!parsed.real };
+        if(!achievementsListCache[gameId]){
+          const stored = await readStoredAchList(gameId);
+          if(stored) achievementsListCache[gameId] = stored;
+        }
         return estHoursCache[gameId];
       }
     }
@@ -229,6 +327,7 @@ async function getEstimatedHours(gameId, force){
     if(data && data.Achievements){
       achievementsListCache[gameId] = Object.values(data.Achievements)
         .sort((a,b) => (a.DisplayOrder ?? 0) - (b.DisplayOrder ?? 0));
+      await storeAchList(gameId, achievementsListCache[gameId]);
     }
 
     const realSeconds = Number(data && data.UserTotalPlaytime);
@@ -247,6 +346,8 @@ async function getEstimatedHours(gameId, force){
       hours = beaten ? beatenSpanHoursFromTimestamps(dates) : estimateHoursFromTimestamps(dates);
     }
 
+    if(missingSlots.length) await saveSnap(gameId, snap, missingSlots, real ? hours : 0);
+
     // This per-game call sees real progress sooner than RA's bulk
     // completion-progress fetch does, use it to move a manually-added
     // game out of the Backlog right away instead of waiting on that.
@@ -258,7 +359,7 @@ async function getEstimatedHours(gameId, force){
   }catch(e){ hours = null; }
 
   estHoursCache[gameId] = { hours, beaten, real };
-  try{ await window.storage.set(cacheKey, JSON.stringify({ hours, real, ts: Date.now() }), false); }catch(e){ /* non-fatal */ }
+  try{ await window.storage.set(cacheKey, JSON.stringify({ hours, real, ts: Date.now(), libAwarded: libraryAwardedFor(gameId) }), false); }catch(e){ /* non-fatal */ }
   return estHoursCache[gameId];
 }
 

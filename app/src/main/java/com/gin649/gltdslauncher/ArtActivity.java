@@ -117,6 +117,18 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         panel = new WebView(this);
         panel.setBackgroundColor(Color.TRANSPARENT);
         panel.setVisibility(View.INVISIBLE);
+        // Display only: taps go to the tracker through TopBridge, so the panel never needs focus or
+        // text selection (a stuck selection tint is what showed up over the whole top screen).
+        panel.setFocusable(false);
+        panel.setFocusableInTouchMode(false);
+        panel.setLongClickable(false);
+        panel.setHapticFeedbackEnabled(false);
+        panel.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                return true;
+            }
+        });
         WebSettings ws = panel.getSettings();
         ws.setJavaScriptEnabled(true);
         ws.setAllowFileAccess(false);

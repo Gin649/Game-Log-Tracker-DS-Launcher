@@ -1,103 +1,64 @@
 // Loading the library from RA, connect/disconnect, and the casual/hardcore toggle.
 
-async function loadAll(opts){
-  const forcePlaytimeRefresh = !!(opts && opts.forceRecentPlaytime);
-  await enqueueTask(async () => {
-  $('#recent-games').innerHTML = '<div class="loading">Loading</div>';
-  $('#recent-unlocks').innerHTML = '<div class="loading">Loading</div>';
-  $('#backlog-table-wrap').innerHTML = '<div class="loading">Loading</div>';
-  $('#lib-table-wrap').innerHTML = '<div class="loading">Loading</div>';
+const dashCacheKey = () => `ra-dash:${creds.username}`;
 
+async function loadDashCache(){
   try{
-    const profile = await raFetch('API_GetUserProfile.php', {});
-    renderProfile(profile);
+    const r = await window.storage.get(dashCacheKey(), false);
+    return r && r.value ? JSON.parse(r.value) : null;
   }catch(e){
-    $('#profile-hero').innerHTML = `<div class="error-box">Could not load profile: ${e.message}</div>`;
+    return null;
   }
+}
 
-  try{
-    const points = await raFetch('API_GetUserPoints.php', {});
-    userPoints = points; // { Points (hardcore-only), SoftcorePoints }
-    if(lastProfile) renderProfile(lastProfile); // refresh now that real points are in
-  }catch(e){
-    console.error('Failed to load user points:', e);
-  }
+async function saveDashCache(dash){
+  try{ await window.storage.set(dashCacheKey(), JSON.stringify(dash), false); }
+  catch(e){ /* non-fatal */ }
+}
 
-  try{
-    const recent = await raFetch('API_GetUserRecentlyPlayedGames.php', { c: 12 });
-    recentGamesData = recent || [];
-    renderRecentGames(recentGamesData);
-  }catch(e){
-    $('#recent-games').innerHTML = `<div class="error-box">Could not load recently played games: ${e.message}</div>`;
-  }
+// Turns RA's completion-progress results into libraryData, then adds the manually-added
+// games that haven't shown up on RA yet.
+async function buildLibraryFromProgress(results){
+  libraryData = results.map(g => ({
+    ...g,
+    pct: Number(g.MaxPossible) ? Math.round((Number(g.NumAwarded)/Number(g.MaxPossible))*100) : 0,
+    lastPlayed: g.LastPlayed || g.MostRecentAwardedDate || null,
+  }));
 
-  try{
-    const unlocks = await raFetch('API_GetUserRecentAchievements.php', { m: 4320 });
-    renderUnlocks(unlocks);
-  }catch(e){
-    $('#recent-unlocks').innerHTML = `<div class="error-box">Could not load recent unlocks: ${e.message}</div>`;
-  }
+  // The completion-progress list only knows when a game last earned an achievement, not when
+  // it was last played, so a session with no unlocks never moved a game up the Library. The
+  // recently-played list (the one Overview uses) has the real play time, so take whichever
+  // date is newer. Dates are stored in one format so the column sorts correctly.
+  const recentPlayed = new Map(recentGamesData.map(r => [String(r.GameID), r.LastPlayed]));
+  libraryData.forEach(g => {
+    const a = parseRADate(g.lastPlayed);
+    const b = parseRADate(recentPlayed.get(String(g.GameID)));
+    const best = (a && b) ? (b.getTime() > a.getTime() ? b : a) : (a || b);
+    g.lastPlayed = best ? best.toISOString() : null;
+  });
 
-  try{
-    const progress = await raFetch('API_GetUserCompletionProgress.php', { c: 500 });
-    const results = (progress && progress.Results) || [];
-    libraryData = results.map(g => ({
-      ...g,
-      pct: Number(g.MaxPossible) ? Math.round((Number(g.NumAwarded)/Number(g.MaxPossible))*100) : 0,
-      lastPlayed: g.LastPlayed || g.MostRecentAwardedDate || null,
-    }));
+  // Merge in manually-added games not yet actually played; drop any that
+  // now show up for real (the user has since earned progress on them).
+  const realIds = new Set(libraryData.map(g => g.GameID));
+  const manual = await loadManualGames();
+  const stillManual = manual.filter(g => !realIds.has(g.GameID));
+  // Older custom games may still carry RAWG's platform name; use RA's so they group together.
+  const renamed = await normalizeCustomConsoleNames(stillManual);
+  if(stillManual.length !== manual.length || renamed) await saveManualGames(stillManual);
+  libraryData = [...libraryData, ...stillManual];
 
-    // The completion-progress list only knows when a game last earned an achievement, not when
-    // it was last played, so a session with no unlocks never moved a game up the Library. The
-    // recently-played list (the one Overview uses) has the real play time, so take whichever
-    // date is newer. Dates are stored in one format so the column sorts correctly.
-    const recentPlayed = new Map(recentGamesData.map(r => [String(r.GameID), r.LastPlayed]));
-    libraryData.forEach(g => {
-      const a = parseRADate(g.lastPlayed);
-      const b = parseRADate(recentPlayed.get(String(g.GameID)));
-      const best = (a && b) ? (b.getTime() > a.getTime() ? b : a) : (a || b);
-      g.lastPlayed = best ? best.toISOString() : null;
-    });
+  // Also bring back anything promoteManualGameToReal() confirmed earlier
+  // (via the faster per-game endpoint) that this bulk fetch still hasn't
+  // caught up to, otherwise it'd vanish from both Backlog and Library
+  // for however much longer RA takes to reflect it here. Once the bulk
+  // fetch does agree, drop it from here, it's now included for real.
+  const pendingReal = await loadPendingRealGames();
+  const stillPending = pendingReal.filter(g => !realIds.has(g.GameID));
+  if(stillPending.length !== pendingReal.length) await savePendingRealGames(stillPending);
+  libraryData = [...libraryData, ...stillPending];
+}
 
-    // Merge in manually-added games not yet actually played; drop any that
-    // now show up for real (the user has since earned progress on them).
-    const realIds = new Set(libraryData.map(g => g.GameID));
-    const manual = await loadManualGames();
-    const stillManual = manual.filter(g => !realIds.has(g.GameID));
-    // Older custom games may still carry RAWG's platform name; use RA's so they group together.
-    const renamed = await normalizeCustomConsoleNames(stillManual);
-    if(stillManual.length !== manual.length || renamed) await saveManualGames(stillManual);
-    libraryData = [...libraryData, ...stillManual];
-
-    // Also bring back anything promoteManualGameToReal() confirmed earlier
-    // (via the faster per-game endpoint) that this bulk fetch still hasn't
-    // caught up to, otherwise it'd vanish from both Backlog and Library
-    // for however much longer RA takes to reflect it here. Once the bulk
-    // fetch does agree, drop it from here, it's now included for real.
-    const pendingReal = await loadPendingRealGames();
-    const stillPending = pendingReal.filter(g => !realIds.has(g.GameID));
-    if(stillPending.length !== pendingReal.length) await savePendingRealGames(stillPending);
-    libraryData = [...libraryData, ...stillPending];
-
-    if(lastProfile) renderProfile(lastProfile);
-  }catch(e){
-    console.error('Failed to load live library data:', e);
-    // Still show whatever's manually tracked, a proxy hiccup shouldn't
-    // make the wishlist disappear for this session. (renderLibrary() runs
-    // right after this block regardless, so no need to touch the DOM here.)
-    try{
-      libraryData = await loadManualGames();
-    }catch(e2){
-      libraryData = [];
-    }
-    if(libraryData.length === 0){
-      $('#lib-table-wrap').innerHTML = `<div class="error-box">Could not load your library: ${e.message}</div>`;
-      $('#year-wrap').innerHTML = `<div class="error-box">Could not load completions: ${e.message}</div>`;
-      return;
-    }
-    if(lastProfile) renderProfile(lastProfile);
-  }
-
+function renderLibraryViews(){
   try{ renderSystemChips(); }
   catch(e){ console.error('renderSystemChips failed:', e); }
 
@@ -122,6 +83,108 @@ async function loadAll(opts){
     console.error('renderByYear failed:', e);
     $('#year-wrap').innerHTML = `<div class="error-box">Couldn't display beaten by year: ${e.message}</div>`;
   }
+}
+
+async function loadAll(opts){
+  const forcePlaytimeRefresh = !!(opts && opts.forceRecentPlaytime);
+  await enqueueTask(async () => {
+  // Show the last saved copy right away while the fresh data loads. An explicit
+  // refresh skips this since the screens are already filled in.
+  const cached = forcePlaytimeRefresh ? null : await loadDashCache();
+  const dash = cached ? { ...cached } : {};
+  const fromCache = {};
+  let gotFresh = false;
+
+  if(cached){
+    try{
+      if(cached.profile){ renderProfile(cached.profile); fromCache.profile = true; }
+      if(cached.points){ userPoints = cached.points; }
+      if(cached.recent){ recentGamesData = cached.recent; renderRecentGames(recentGamesData); fromCache.recent = true; }
+      if(cached.unlocks){ renderUnlocks(cached.unlocks); fromCache.unlocks = true; }
+      if(cached.progress){
+        await buildLibraryFromProgress(cached.progress);
+        renderLibraryViews();
+        fromCache.library = true;
+      }
+      if(lastProfile) renderProfile(lastProfile);
+    }catch(e){
+      console.error('Showing the saved dashboard failed:', e);
+    }
+  }
+
+  if(!fromCache.recent) $('#recent-games').innerHTML = '<div class="loading">Loading</div>';
+  if(!fromCache.unlocks) $('#recent-unlocks').innerHTML = '<div class="loading">Loading</div>';
+  if(!fromCache.library){
+    $('#backlog-table-wrap').innerHTML = '<div class="loading">Loading</div>';
+    $('#lib-table-wrap').innerHTML = '<div class="loading">Loading</div>';
+  }
+
+  try{
+    const profile = await raFetch('API_GetUserProfile.php', {});
+    dash.profile = profile; gotFresh = true;
+    renderProfile(profile);
+  }catch(e){
+    if(fromCache.profile) console.error('Profile refresh failed:', e);
+    else $('#profile-hero').innerHTML = `<div class="error-box">Could not load profile: ${e.message}</div>`;
+  }
+
+  try{
+    const points = await raFetch('API_GetUserPoints.php', {});
+    userPoints = points; // { Points (hardcore-only), SoftcorePoints }
+    dash.points = points; gotFresh = true;
+    if(lastProfile) renderProfile(lastProfile); // refresh now that real points are in
+  }catch(e){
+    console.error('Failed to load user points:', e);
+  }
+
+  try{
+    const recent = await raFetch('API_GetUserRecentlyPlayedGames.php', { c: 12 });
+    recentGamesData = recent || [];
+    dash.recent = recentGamesData; gotFresh = true;
+    renderRecentGames(recentGamesData);
+  }catch(e){
+    if(fromCache.recent) console.error('Recent games refresh failed:', e);
+    else $('#recent-games').innerHTML = `<div class="error-box">Could not load recently played games: ${e.message}</div>`;
+  }
+
+  try{
+    const unlocks = await raFetch('API_GetUserRecentAchievements.php', { m: 4320 });
+    dash.unlocks = unlocks; gotFresh = true;
+    renderUnlocks(unlocks);
+  }catch(e){
+    if(fromCache.unlocks) console.error('Recent unlocks refresh failed:', e);
+    else $('#recent-unlocks').innerHTML = `<div class="error-box">Could not load recent unlocks: ${e.message}</div>`;
+  }
+
+  try{
+    const progress = await raFetch('API_GetUserCompletionProgress.php', { c: 500 });
+    const results = (progress && progress.Results) || [];
+    dash.progress = results; gotFresh = true;
+    await buildLibraryFromProgress(results);
+
+    if(lastProfile) renderProfile(lastProfile);
+  }catch(e){
+    console.error('Failed to load live library data:', e);
+    if(!fromCache.library){
+      // Still show whatever's manually tracked, a proxy hiccup shouldn't
+      // make the wishlist disappear for this session. (The views are drawn
+      // right after this block regardless, so no need to touch the DOM here.)
+      try{
+        libraryData = await loadManualGames();
+      }catch(e2){
+        libraryData = [];
+      }
+      if(libraryData.length === 0){
+        $('#lib-table-wrap').innerHTML = `<div class="error-box">Could not load your library: ${e.message}</div>`;
+        $('#year-wrap').innerHTML = `<div class="error-box">Could not load completions: ${e.message}</div>`;
+        return;
+      }
+      if(lastProfile) renderProfile(lastProfile);
+    }
+  }
+
+  renderLibraryViews();
+  if(gotFresh) await saveDashCache(dash);
   }); // end of queued task, everything above this point is fully serialized
 
   // On an explicit refresh, refetch playtime for anything played in the last 24h and skip
