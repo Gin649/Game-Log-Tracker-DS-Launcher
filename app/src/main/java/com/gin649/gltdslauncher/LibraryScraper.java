@@ -11,6 +11,7 @@ import com.gin649.gltdslauncher.graphics.MiximageCompositor;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -20,24 +21,30 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Finds each game on ScreenScraper by title, downloads its screenshot, box art and logo, and builds the
- * flat miximage that the top screen shows. One game at a time, slowly, to stay inside ScreenScraper's limits.
+ * Gets the top-screen picture for each game, one game at a time, slowly. In order:
+ * 1. your frontend's own art (ES-DE, Daijisho and the like): fan art, miximage, a miximage built here from its screenshot,
+ *    box art and marquee, then marquee, then box art
+ * 2. SteamGridDB fan art (a hero banner), only when you gave an API key
+ * 3. the free libretro thumbnails (box art, screenshot, logo), built into a miximage here
  */
 final class LibraryScraper {
 
     private static final ExecutorService EXEC = Executors.newSingleThreadExecutor();
     private static final Set<Integer> QUEUED = Collections.synchronizedSet(new HashSet<Integer>());
-    /** Games ScreenScraper had no pictures for, so opening them again doesn't spend more of the daily limit. */
+    /** Games nothing had pictures for, so opening them again doesn't search again. */
     private static final Set<Integer> NO_ART = Collections.synchronizedSet(new HashSet<Integer>());
     private static final AtomicInteger DONE = new AtomicInteger();
     private static final AtomicInteger FAILED = new AtomicInteger();
-    private static final long API_PAUSE_MS = 1300;
+    private static final long API_PAUSE_MS = 700;
+    private static final long OFF_MS = 30L * 60 * 1000;
 
     /** Library id of the game open in the tracker right now, 0 if none. */
     static volatile int viewingId;
     private static volatile boolean running;
     private static volatile boolean stopRequested;
     private static volatile String message = "";
+    /** SteamGridDB said stop (limit or key); until this time only the other sources are used. */
+    private static volatile long sgdbOffUntil;
 
     private LibraryScraper() {}
 
@@ -46,14 +53,17 @@ final class LibraryScraper {
         final GameEntity g = LibrarySync.find(ctx, rom);
         viewingId = g == null ? 0 : g.id;
         if (g == null || g.screenscraperId < 0 || NO_ART.contains(g.id)) return;
-        if (Config.useEsdeMedia() && MediaFinder.find(rom) != null) return; // ES-DE already has art for it
         if (g.localMiximagePath != null && new File(g.localMiximagePath).isFile()) return;
+        if (Config.useEsdeMedia()) {
+            MediaFinder.Found f = MediaFinder.lookup(rom);
+            if (f.direct != null || f.canBuild()) return; // your frontend has something; LibrarySync.artFor handles it
+        }
         if (!QUEUED.add(g.id)) return;
         EXEC.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    runBatch(ctx, Collections.singletonList(g), false);
+                    runBatch(ctx, Collections.singletonList(g));
                 } finally {
                     QUEUED.remove(g.id);
                 }
@@ -65,24 +75,28 @@ final class LibraryScraper {
     static void scrapeAll(final Context ctx) {
         if (running) return;
         stopRequested = false;
+        sgdbOffUntil = 0;
         NO_ART.clear();
         EXEC.execute(new Runnable() {
             @Override
             public void run() {
                 GameDao dao = GameRepository.get(ctx).dao();
+                dao.resetNoMatch(); // a manual run tries everything again, in case a key or a source was added
                 Set<Integer> tried = new HashSet<Integer>();
                 boolean more = true;
                 while (more && !stopRequested) {
                     more = false;
-                    List<GameEntity> batch = dao.getUnmatched(40);
-                    batch.addAll(dao.getNeedingMiximage(40));
+                    // games that fail stay in this query, so ask for enough rows to get past the ones already tried
+                    int lim = 40 + tried.size();
+                    List<GameEntity> batch = dao.getUnmatched(lim);
+                    batch.addAll(dao.getNeedingMiximage(lim));
                     java.util.Iterator<GameEntity> it = batch.iterator();
                     while (it.hasNext()) {
                         if (!tried.add(it.next().id)) it.remove();
                     }
                     if (!batch.isEmpty()) {
                         more = true;
-                        if (!runBatch(ctx, batch, true)) return; // stopped by a limit or a login problem
+                        if (!runBatch(ctx, batch)) return;
                     }
                 }
                 if (!stopRequested) message = "Finished.";
@@ -90,6 +104,7 @@ final class LibraryScraper {
         });
     }
 
+    /** Lets games that found nothing be searched again. */
     static void retryUnmatched(Context ctx) {
         try {
             GameRepository.get(ctx).dao().resetNoMatch();
@@ -101,9 +116,10 @@ final class LibraryScraper {
         JSONObject o = new JSONObject();
         try {
             GameDao dao = GameRepository.get(ctx).dao();
-            ScreenScraperClient.Settings s = ScreenScraperClient.load(ctx);
-            o.put("configured", s.ready());
-            o.put("hasLogin", !s.user.isEmpty());
+            boolean sgdb = SteamGridDbClient.enabled(ctx);
+            o.put("configured", sgdb || Config.LIBRETRO_FALLBACK || Config.useEsdeMedia());
+            o.put("steamgriddb", sgdb);
+            o.put("libretro", Config.LIBRETRO_FALLBACK);
             o.put("running", running);
             o.put("done", DONE.get());
             o.put("failed", FAILED.get());
@@ -116,26 +132,15 @@ final class LibraryScraper {
         return o.toString();
     }
 
-    /** Returns false when the run should stop (limit reached, bad login, missing keys). */
-    private static boolean runBatch(Context ctx, List<GameEntity> games, boolean countOnly) {
-        ScreenScraperClient.Settings s = ScreenScraperClient.load(ctx);
-        if (!s.ready()) {
-            message = "ScreenScraper developer keys are missing. See the README (assets/screenscraper.json).";
-            return false;
-        }
+    /** Returns false when the run should stop. */
+    private static boolean runBatch(Context ctx, List<GameEntity> games) {
         running = true;
         try {
             for (GameEntity g : games) {
                 if (stopRequested) return false;
                 try {
-                    if (scrapeOne(ctx, s, g)) DONE.incrementAndGet();
+                    if (scrapeOne(ctx, g)) DONE.incrementAndGet();
                     else FAILED.incrementAndGet();
-                } catch (ScreenScraperClient.LimitException e) {
-                    message = e.getMessage();
-                    return false;
-                } catch (ScreenScraperClient.AuthException e) {
-                    message = e.getMessage();
-                    return false;
                 } catch (Exception e) {
                     FAILED.incrementAndGet();
                     message = "Could not fetch art for " + g.title + ": " + e.getMessage();
@@ -155,70 +160,84 @@ final class LibraryScraper {
         }
     }
 
-    private static boolean scrapeOne(Context ctx, ScreenScraperClient.Settings s, GameEntity g) throws Exception {
+    private static boolean scrapeOne(Context ctx, GameEntity g) throws Exception {
         GameDao dao = GameRepository.get(ctx).dao();
-        if (Config.useEsdeMedia()) { // art ES-DE already downloaded is used as it is, nothing is fetched
-            String esde = MediaFinder.find(g.systemId, g.romPath);
-            if (esde != null) {
-                dao.setMiximagePath(g.id, esde);
+
+        // 1. what your frontend already has: nothing is downloaded for these
+        if (Config.useEsdeMedia()) {
+            MediaFinder.Found f = MediaFinder.lookup(g.systemId, g.romPath);
+            if (f.direct != null) {
+                dao.setMiximagePath(g.id, f.direct);
                 return true;
             }
-        }
-        int systemId = s.systemId(g.systemId);
-        if (systemId <= 0) {
-            message = "No ScreenScraper system id for \"" + g.systemId + "\". Add it to screenscraper.json.";
-            return false;
-        }
-
-        int ssId = g.screenscraperId;
-        String canonical = null;
-        if (ssId <= 0) {
-            ScreenScraperClient.Match m = ScreenScraperClient.search(s, g.title, systemId);
-            pause(API_PAUSE_MS);
-            if (m == null) {
-                dao.markNoMatch(g.id);
-                return false;
+            if (f.canBuild()) {
+                String built = LibrarySync.buildMiximage(ctx, g, f);
+                if (built != null) {
+                    if (g.id == viewingId) refreshTopScreen(built);
+                    return true;
+                }
             }
-            ssId = m.id;
-            canonical = m.name;
         }
 
-        JSONObject info = ScreenScraperClient.gameInfo(s, ssId, systemId);
-        pause(API_PAUSE_MS);
-        if (info == null) {
-            NO_ART.add(g.id);
-            return false;
-        }
+        boolean offline = false;
+        File target = new File(ctx.getFilesDir(), "miximages/" + g.systemId + "/" + g.id + ".jpg");
 
-        Bitmap shot = fetch(ScreenScraperClient.pickMedia(info, "fanart", "ss", "sstitle"), 1600);
-        Bitmap box = fetch(ScreenScraperClient.pickMedia(info, "box-2D", "box-2D-front"), 900);
-        Bitmap logo = fetch(ScreenScraperClient.pickMedia(info, "wheel-hd", "wheel", "marquee"), 900);
-        try {
-            File target = new File(ctx.getFilesDir(), "miximages/" + g.systemId + "/" + g.id + ".jpg");
-            File out = MiximageCompositor.createMiximage(shot, box, logo, target);
-            if (canonical != null || g.screenscraperId <= 0) {
-                if (canonical == null || canonical.isEmpty()) canonical = g.title;
-                dao.setScreenscraperMatch(g.id, ssId, canonical);
+        // 2. SteamGridDB fan art, if there is a key
+        if (SteamGridDbClient.enabled(ctx) && System.currentTimeMillis() >= sgdbOffUntil) {
+            try {
+                byte[] hero = SteamGridDbClient.heroFor(ctx, g.title);
+                pause(API_PAUSE_MS);
+                Bitmap b = hero == null ? null : MiximageCompositor.decode(hero, 1920);
+                if (b != null) {
+                    try {
+                        File out = MiximageCompositor.saveJpeg(b, target);
+                        if (out != null) {
+                            dao.setMiximagePath(g.id, out.getPath());
+                            if (g.id == viewingId) refreshTopScreen(out.getPath());
+                            return true;
+                        }
+                    } finally {
+                        b.recycle();
+                    }
+                }
+            } catch (SteamGridDbClient.AuthException e) {
+                message = e.getMessage() + " Skipping SteamGridDB for now.";
+                sgdbOffUntil = System.currentTimeMillis() + OFF_MS;
+            } catch (SteamGridDbClient.LimitException e) {
+                message = e.getMessage() + " Skipping SteamGridDB for now.";
+                sgdbOffUntil = System.currentTimeMillis() + OFF_MS;
+            } catch (IOException e) {
+                offline = true;
             }
-            if (out == null) { // matched, but ScreenScraper had no usable pictures
-                NO_ART.add(g.id);
-                return false;
-            }
-            dao.setMiximagePath(g.id, out.getPath());
-            if (g.id == viewingId) refreshTopScreen(out.getPath());
-            return true;
-        } finally {
-            if (shot != null) shot.recycle();
-            if (box != null) box.recycle();
-            if (logo != null) logo.recycle();
         }
-    }
 
-    private static Bitmap fetch(String url, int maxSide) throws Exception {
-        if (url == null) return null;
-        byte[] data = ScreenScraperClient.download(url);
-        pause(500);
-        return MiximageCompositor.decode(data, maxSide);
+        // 3. free libretro thumbnails, mixed into a miximage
+        if (Config.LIBRETRO_FALLBACK) {
+            try {
+                String romName = new File(g.romPath).getName();
+                int dot = romName.lastIndexOf('.');
+                if (dot > 0) romName = romName.substring(0, dot);
+                LibretroThumbs.Art art = LibretroThumbs.fetch(ctx, g.systemId, romName, g.title);
+                if (art != null) {
+                    try {
+                        File out = MiximageCompositor.createMiximage(art.screen, art.box, art.logo, target);
+                        if (out != null) {
+                            dao.setMiximagePath(g.id, out.getPath());
+                            if (g.id == viewingId) refreshTopScreen(out.getPath());
+                            return true;
+                        }
+                    } finally {
+                        art.recycle();
+                    }
+                }
+            } catch (IOException e) {
+                offline = true;
+            }
+        }
+
+        NO_ART.add(g.id);
+        if (!offline) dao.markNoMatch(g.id); // looked everywhere and found nothing; a manual "Fetch game art" tries again
+        return false;
     }
 
     private static void refreshTopScreen(String path) {

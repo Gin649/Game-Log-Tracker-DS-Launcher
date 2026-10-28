@@ -1,9 +1,11 @@
 package com.gin649.gltdslauncher;
 
 import java.text.Normalizer;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /** Matches a RetroAchievements game title to a ROM file name. */
@@ -87,5 +89,51 @@ final class Matcher {
             }
         }
         return bestScore >= 40 ? best : null;
+    }
+
+    // ---------- title similarity for online art lookups ----------
+
+    private static final Set<String> SIM_STOP = new HashSet<String>(java.util.Arrays.asList("the", "a", "an", "of", "and"));
+
+    private static final Map<String, String> SIM_ROMAN = new HashMap<String, String>();
+
+    static {
+        String[] r = {"ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x"};
+        for (int i = 0; i < r.length; i++) SIM_ROMAN.put(r[i], String.valueOf(i + 2));
+    }
+
+    private static Set<String> simTokens(String s) {
+        Set<String> out = new HashSet<String>();
+        for (String w : Matcher.norm(s).split(" ")) {
+            if (w.isEmpty() || SIM_STOP.contains(w)) continue;
+            String roman = SIM_ROMAN.get(w);
+            out.add(roman != null ? roman : w);
+        }
+        return out;
+    }
+
+    private static Set<String> numbers(Set<String> tokens) {
+        Set<String> out = new HashSet<String>();
+        for (String t : tokens) {
+            if (t.matches("\\d+")) out.add(t);
+        }
+        return out;
+    }
+
+    /**
+     * 0 to 100. 100 when the titles are the same apart from punctuation, tags and small words; otherwise the
+     * share of words in common, but 0 if the sequel numbers differ so "Game 2" never matches "Game".
+     */
+    static int similarity(String a, String b) {
+        Set<String> ta = simTokens(a);
+        Set<String> tb = simTokens(b);
+        if (ta.isEmpty() || tb.isEmpty()) return 0;
+        if (ta.equals(tb)) return 100;
+        if (!numbers(ta).equals(numbers(tb))) return 0;
+        Set<String> inter = new HashSet<String>(ta);
+        inter.retainAll(tb);
+        Set<String> union = new HashSet<String>(ta);
+        union.addAll(tb);
+        return (int) Math.round(100.0 * inter.size() / union.size());
     }
 }

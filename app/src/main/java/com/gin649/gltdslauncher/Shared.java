@@ -78,9 +78,8 @@ final class Shared {
                 RomIndex.Rom rom = findRom(title, console);
                 LibraryScraper.viewingId = 0;
                 if (rom != null) {
-                    // ES-DE's own downloaded art when that is switched on, otherwise (or when it has none) the miximage built here
-                    String esde = Config.useEsdeMedia() ? MediaFinder.find(rom) : null;
-                    s.localPath = esde != null ? esde : (appCtx == null ? null : LibrarySync.miximageFor(appCtx, rom));
+                    // your frontend's art in the order fan art, miximage, built miximage, marquee, box art; else what was downloaded
+                    s.localPath = appCtx == null ? null : LibrarySync.artFor(appCtx, rom);
                     if (appCtx != null) LibraryScraper.requestFor(appCtx, rom); // fetches art in the background if none yet
                 }
                 if (token == VIEW_TOKEN.get()) ArtBus.set(s);

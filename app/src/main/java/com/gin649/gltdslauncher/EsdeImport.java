@@ -18,7 +18,10 @@ import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
-/** Reads your ES-DE custom_systems/es_systems.xml so your own system folders and cores are picked up. */
+/**
+ * Reads your ES-DE custom_systems/es_systems.xml, and your Daijisho platform files (see DaijishoImport), so your own
+ * system folders and cores are picked up.
+ */
 final class EsdeImport {
 
     private static final Map<String, String> PLATFORM_TO_RA = new HashMap<String, String>();
@@ -68,14 +71,38 @@ final class EsdeImport {
     static int run(Context ctx, String esRoot) {
         File out = new File(ctx.getFilesDir(), "imported_systems.json");
         out.delete();
-        if (esRoot == null || esRoot.isEmpty()) return 0;
-        File xml = new File(esRoot, "custom_systems/es_systems.xml");
-        if (!xml.isFile()) return 0;
-
+        JSONArray arr = new JSONArray();
+        if (esRoot != null && !esRoot.isEmpty()) {
+            try {
+                collectEsde(esRoot, arr);
+            } catch (Exception ignored) {
+                // an unreadable es_systems.xml must not stop the Daijisho side
+            }
+        }
         try {
+            DaijishoImport.collect(arr);
+        } catch (Exception ignored) {
+        }
+        if (arr.length() == 0) return 0;
+        try {
+            FileOutputStream fos = new FileOutputStream(out);
+            try {
+                fos.write(arr.toString(1).getBytes("UTF-8"));
+            } finally {
+                fos.close();
+            }
+            return arr.length();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private static void collectEsde(String esRoot, JSONArray arr) throws Exception {
+        File xml = new File(esRoot, "custom_systems/es_systems.xml");
+        if (!xml.isFile()) return;
+        {
             org.w3c.dom.Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xml);
             NodeList systems = doc.getDocumentElement().getChildNodes();
-            JSONArray arr = new JSONArray();
 
             for (int i = 0; i < systems.getLength(); i++) {
                 Node n = systems.item(i);
@@ -109,16 +136,6 @@ final class EsdeImport {
                 o.put("hack", fullname.toLowerCase(Locale.ROOT).contains("hack"));
                 arr.put(o);
             }
-
-            FileOutputStream fos = new FileOutputStream(out);
-            try {
-                fos.write(arr.toString(1).getBytes("UTF-8"));
-            } finally {
-                fos.close();
-            }
-            return arr.length();
-        } catch (Exception e) {
-            return 0;
         }
     }
 }

@@ -49,6 +49,7 @@ public class SetupActivity extends Activity {
 
     private static final int REQ_ROMS = 10;
     private static final int REQ_ES = 11;
+    private static final int REQ_DJ = 12;
 
     private static final int BG = Color.rgb(21, 18, 31);
     private static final int GOLD = Color.rgb(228, 169, 63);
@@ -71,9 +72,13 @@ public class SetupActivity extends Activity {
     private boolean finished;
 
     private String raUser, raKey, rawgKey, romsRoot, romsTree, esRoot, raPackage, siteUrl;
+    /** "esde", "daijisho" or "none" (any other frontend, or no frontend at all). */
+    private String frontend, djRoot;
+    private CheckBox cbLibretro;
+    private boolean libretroFallback;
     private String origUser, origKey, origRawg;
-    private String ssUser, ssPass;
-    private EditText etSsUser, etSsPass;
+    private String sgdbKey;
+    private EditText etSgdb;
     private CheckBox cbEsdeMedia;
     private boolean useEsdeMedia;
     private int cssWidth;
@@ -103,11 +108,17 @@ public class SetupActivity extends Activity {
         romsRoot = get("romsRoot", "");
         romsTree = get("romsTree", "");
         esRoot = get("esRoot", "");
+        djRoot = get("djRoot", "");
+        frontend = get("frontend", "");
+        if (!frontend.equals("esde") && !frontend.equals("daijisho") && !frontend.equals("none")) {
+            // first run, or an install from before this choice existed: ES-DE if it is there, otherwise none
+            frontend = (!esRoot.isEmpty() || !guessEsRoot().isEmpty()) ? "esde" : "none";
+        }
+        libretroFallback = Prefs.getInt(this, "libretroFallback", 1) == 1;
         raPackage = get("raPackage", "");
         siteUrl = get("siteUrl", Config.DEFAULT_URL);
         if (siteUrl.startsWith("https://gin649.github.io/")) siteUrl = Config.DEFAULT_URL; // old default = built-in
-        ssUser = get("ssUser", "");
-        ssPass = get("ssPass", "");
+        sgdbKey = get("sgdbKey", "");
         useEsdeMedia = Prefs.getInt(this, "useEsdeMedia", 1) == 1;
         cssWidth = Prefs.getInt(this, "cssWidth", 720);
         topDisplay = DisplayPicker.prefs(this).getInt("topDisplay", -1);
@@ -156,7 +167,8 @@ public class SetupActivity extends Activity {
 
         setContentView(root);
 
-        if (esRoot.isEmpty()) esRoot = guessEsRoot();
+        if (frontend.equals("esde") && esRoot.isEmpty()) esRoot = guessEsRoot();
+        if (frontend.equals("daijisho") && djRoot.isEmpty()) djRoot = guessDjRoot();
         render();
     }
 
@@ -321,6 +333,23 @@ public class SetupActivity extends Activity {
         return "";
     }
 
+    private String guessDjRoot() {
+        List<String> tries = new ArrayList<String>();
+        if (!romsRoot.isEmpty()) {
+            File parent = new File(romsRoot).getParentFile();
+            if (parent != null) {
+                tries.add(parent.getPath() + "/DaijishoMedia");
+                tries.add(parent.getPath() + "/Daijish\u014d");
+            }
+        }
+        tries.add("/storage/emulated/0/DaijishoMedia");
+        tries.add("/storage/emulated/0/Daijish\u014d");
+        for (String t : tries) {
+            if (new File(t).isDirectory()) return t;
+        }
+        return "";
+    }
+
     // ---------- steps ----------
 
     private void render() {
@@ -328,9 +357,9 @@ public class SetupActivity extends Activity {
         etUser = null;
         etKey = null;
         etRawg = null;
-        etSsUser = null;
-        etSsPass = null;
+        etSgdb = null;
         cbEsdeMedia = null;
+        cbLibretro = null;
         etSite = null;
         spRa = null;
         spDisplay = null;
@@ -440,22 +469,46 @@ public class SetupActivity extends Activity {
                 openUrl("https://rawg.io/apidocs");
             }
         });
-        text("ScreenScraper (optional)", 17, TEXT);
-        text("Your ScreenScraper login. It is used to fetch box art and screenshots and build the top-screen art. "
-                + "Leave blank to use the login from your ES-DE settings, if it has one.", 13, MUTED);
-        etSsUser = field("ScreenScraper username", ssUser, false);
-        etSsPass = field("ScreenScraper password", ssPass, false);
-        action("Create a ScreenScraper account", new View.OnClickListener() {
+        text("SteamGridDB (optional)", 17, TEXT);
+        text("Fan art for games that have none in your frontend. It needs your own free API key (steamgriddb.com, your "
+                + "profile, Preferences, API), not a developer account. It looks games up by title only, so retro coverage "
+                + "is uneven. Leave blank to skip it; the free libretro thumbnails are used instead.", 13, MUTED);
+        etSgdb = field("SteamGridDB API key", sgdbKey, false);
+        action("Open SteamGridDB", new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                openUrl("https://screenscraper.fr");
+                openUrl("https://www.steamgriddb.com/profile/preferences/api");
             }
         });
     }
 
+    private void frontendButton(String label, final String id) {
+        boolean on = frontend.equals(id);
+        Button b = action((on ? "\u25cf " : "\u25cb ") + label, new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                collect();
+                if (!frontend.equals(id)) {
+                    frontend = id;
+                    if (id.equals("esde") && esRoot.isEmpty()) esRoot = guessEsRoot();
+                    if (id.equals("daijisho") && djRoot.isEmpty()) djRoot = guessDjRoot();
+                }
+                render();
+            }
+        });
+        if (on) b.setTextColor(TEAL);
+    }
+
     private void stepFolders() {
+        text("Which frontend do you use?", 17, TEXT);
+        text("This decides which folders to ask for. The app works with any of them, or with none.", 13, MUTED);
+        frontendButton("ES-DE", "esde");
+        frontendButton("Daijish\u014d", "daijisho");
+        frontendButton("None / something else", "none");
+
         text("ROMs folder", 17, TEXT);
-        text("The folder that holds one folder per system, like gba, snes and psx.", 13, MUTED);
+        text("The folder that holds one folder per system, like gba, snes and psx. Folders named in full, like "
+                + "\"Game Boy Advance\" or \"PS1\", are recognised too.", 13, MUTED);
         text(romsRoot.isEmpty() ? "Not chosen yet" : romsRoot, 14, romsRoot.isEmpty() ? GOLD : TEAL);
         action("Choose ROMs folder", new View.OnClickListener() {
             @Override
@@ -464,26 +517,62 @@ public class SetupActivity extends Activity {
             }
         });
 
-        text("ES-DE folder (optional)", 17, TEXT);
-        text("The ES-DE data folder, the one that contains downloaded_media. It gives the top screen your game art "
-                + "and brings in your own custom systems.", 13, MUTED);
-        text(esRoot.isEmpty() ? "Not chosen" : esRoot, 14, esRoot.isEmpty() ? MUTED : TEAL);
-        action("Choose ES-DE folder", new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                pickFolder(REQ_ES);
-            }
-        });
+        boolean mediaFound = false;
+        if (frontend.equals("esde")) {
+            text("ES-DE folder", 17, TEXT);
+            text("The ES-DE data folder, the one that contains downloaded_media. It gives the top screen your game art "
+                    + "and brings in your own custom systems.", 13, MUTED);
+            text(esRoot.isEmpty() ? "Not chosen" : esRoot, 14, esRoot.isEmpty() ? MUTED : TEAL);
+            action("Choose ES-DE folder", new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    pickFolder(REQ_ES);
+                }
+            });
+            mediaFound = !esRoot.isEmpty() && new File(esRoot, "downloaded_media").isDirectory();
+        } else if (frontend.equals("daijisho")) {
+            text("Daijish\u014d media folder", 17, TEXT);
+            text("Daijish\u014d keeps its own scraped pictures private, so point this at a folder it can share: your "
+                    + "DaijishoMedia folder, or where SkraperUI or another scraper saved images and gamelist.xml. "
+                    + "Exported platform .json files in it are read too, to pick up your cores. Art saved next to your "
+                    + "ROMs is found without choosing anything.", 13, MUTED);
+            text(djRoot.isEmpty() ? "Not chosen" : djRoot, 14, djRoot.isEmpty() ? MUTED : TEAL);
+            action("Choose Daijish\u014d media folder", new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    pickFolder(REQ_DJ);
+                }
+            });
+            mediaFound = !djRoot.isEmpty() && new File(djRoot).isDirectory();
+        } else {
+            text("No frontend", 17, TEXT);
+            text("Everything the app needs is set here and in the next steps: your ROMs folder, your RetroArch or "
+                    + "standalone emulators, and the screens. Game art for the top screen comes from pictures next to your "
+                    + "ROMs when there are any, otherwise it is downloaded (see below).", 13, MUTED);
+        }
 
-        if (!esRoot.isEmpty() && new File(esRoot, "downloaded_media").isDirectory()) {
+        if (mediaFound || frontend.equals("none")) {
             cbEsdeMedia = new CheckBox(this);
-            cbEsdeMedia.setText("Use my ES-DE media (box art, screenshots, fan art) for the top screen, so nothing "
-                    + "is downloaded again. ScreenScraper is only asked about games that have none.");
+            cbEsdeMedia.setText(frontend.equals("none")
+                    ? "Use pictures that are already next to my ROMs (images, media, gamelist.xml) before downloading anything."
+                    : "Use my " + (frontend.equals("esde") ? "ES-DE" : "Daijish\u014d") + " media (box art, screenshots, fan art) for the "
+                    + "top screen, so nothing is downloaded again. Art is only fetched for games that have none.");
             cbEsdeMedia.setTextColor(TEXT);
             cbEsdeMedia.setTextSize(14);
             cbEsdeMedia.setChecked(useEsdeMedia);
             content.addView(cbEsdeMedia);
         }
+
+        text("Art for games that have none", 17, TEXT);
+        text("The top screen shows fan art first, then a miximage, then the marquee, then box art. If your frontend has a "
+                + "screenshot but no miximage, one is built for you. For games with nothing, SteamGridDB (if you gave a key) "
+                + "supplies fan art, then the free libretro thumbnails (box art, screenshot, logo; no account) make a miximage.", 13, MUTED);
+        cbLibretro = new CheckBox(this);
+        cbLibretro.setText("Use the free libretro thumbnails for games that have no art yet.");
+        cbLibretro.setTextColor(TEXT);
+        cbLibretro.setTextSize(14);
+        cbLibretro.setChecked(libretroFallback);
+        content.addView(cbLibretro);
 
         String summary = folderSummary();
         if (!summary.isEmpty()) text(summary, 13, MUTED);
@@ -503,9 +592,12 @@ public class SetupActivity extends Activity {
             if (!hasFileAccess()) sb.append(" (allow file access to see them)");
             sb.append("\n");
         }
-        if (!esRoot.isEmpty()) {
+        if (frontend.equals("esde") && !esRoot.isEmpty()) {
             sb.append("downloaded_media: ").append(new File(esRoot, "downloaded_media").isDirectory() ? "found" : "not found").append("\n");
             sb.append("custom_systems/es_systems.xml: ").append(new File(esRoot, "custom_systems/es_systems.xml").isFile() ? "found" : "not found");
+        }
+        if (frontend.equals("daijisho") && !djRoot.isEmpty()) {
+            sb.append("Daijish\u014d folder: ").append(new File(djRoot).isDirectory() ? "found" : "not found");
         }
         return sb.toString();
     }
@@ -526,7 +618,7 @@ public class SetupActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
-        if (requestCode != REQ_ROMS && requestCode != REQ_ES) return;
+        if (requestCode != REQ_ROMS && requestCode != REQ_ES && requestCode != REQ_DJ) return;
 
         Uri u = data.getData();
         try {
@@ -542,7 +634,10 @@ public class SetupActivity extends Activity {
         if (requestCode == REQ_ROMS) {
             romsRoot = path;
             romsTree = u.toString();
-            if (esRoot.isEmpty()) esRoot = guessEsRoot();
+            if (frontend.equals("esde") && esRoot.isEmpty()) esRoot = guessEsRoot();
+            if (frontend.equals("daijisho") && djRoot.isEmpty()) djRoot = guessDjRoot();
+        } else if (requestCode == REQ_DJ) {
+            djRoot = path;
         } else {
             esRoot = path;
         }
@@ -554,8 +649,12 @@ public class SetupActivity extends Activity {
         put("romsRoot", romsRoot);
         put("romsTree", romsTree);
         put("esRoot", esRoot);
+        put("djRoot", djRoot);
+        put("frontend", frontend);
         Prefs.putInt(this, "useEsdeMedia", useEsdeMedia ? 1 : 0);
+        Prefs.putInt(this, "libretroFallback", libretroFallback ? 1 : 0);
         Config.load(this);
+        LibretroThumbs.reset();
         EsdeImport.run(this, Config.ES_ROOT);
         Recipes.reset();
         Shared.reload(this);
@@ -646,11 +745,14 @@ public class SetupActivity extends Activity {
         StringBuilder sb = new StringBuilder();
         sb.append("RetroAchievements: ").append(raUser.isEmpty() ? "not set" : raUser).append("\n");
         sb.append("RAWG key: ").append(rawgKey.isEmpty() ? "not set" : "set").append("\n");
-        sb.append("ScreenScraper: ").append(ssUser.isEmpty() ? "from ES-DE settings, if any" : ssUser).append("\n");
+        sb.append("SteamGridDB: ").append(sgdbKey.isEmpty() ? "not set" : "key set").append("\n");
+        sb.append("Free libretro thumbnails: ").append(libretroFallback ? "on" : "off").append("\n");
         sb.append("Tracker: ").append(siteUrl.isEmpty() ? "built in" : siteUrl).append("\n");
         sb.append("ROMs: ").append(romsRoot.isEmpty() ? "not chosen" : romsRoot).append("\n");
-        sb.append("ES-DE: ").append(esRoot.isEmpty() ? "none" : esRoot).append("\n");
-        sb.append("ES-DE media: ").append(useEsdeMedia && new File(esRoot, "downloaded_media").isDirectory() ? "used as it is" : "not used").append("\n");
+        sb.append("Frontend: ").append(frontend.equals("esde") ? "ES-DE" : frontend.equals("daijisho") ? "Daijish\u014d" : "none / other").append("\n");
+        if (frontend.equals("esde")) sb.append("ES-DE: ").append(esRoot.isEmpty() ? "none" : esRoot).append("\n");
+        if (frontend.equals("daijisho")) sb.append("Daijish\u014d media: ").append(djRoot.isEmpty() ? "none" : djRoot).append("\n");
+        sb.append("Existing art: ").append(useEsdeMedia ? "used as it is" : "not used").append("\n");
         sb.append("RetroArch: ").append(raPackage.isEmpty() ? "default" : raPackage).append("\n");
         sb.append("Top screen: ").append(topDisplay < 0 ? "automatic" : "display " + topDisplay);
         text(sb.toString(), 13, MUTED);
@@ -663,9 +765,9 @@ public class SetupActivity extends Activity {
         if (etUser != null) raUser = etUser.getText().toString().trim();
         if (etKey != null) raKey = etKey.getText().toString().trim();
         if (etRawg != null) rawgKey = etRawg.getText().toString().trim();
-        if (etSsUser != null) ssUser = etSsUser.getText().toString().trim();
-        if (etSsPass != null) ssPass = etSsPass.getText().toString().trim();
+        if (etSgdb != null) sgdbKey = etSgdb.getText().toString().trim();
         if (cbEsdeMedia != null) useEsdeMedia = cbEsdeMedia.isChecked();
+        if (cbLibretro != null) libretroFallback = cbLibretro.isChecked();
         if (etSite != null) {
             String s = etSite.getText().toString().trim();
             siteUrl = s.startsWith("http") ? s : Config.DEFAULT_URL;
@@ -722,10 +824,12 @@ public class SetupActivity extends Activity {
         put("romsRoot", romsRoot);
         put("romsTree", romsTree);
         put("esRoot", esRoot);
+        put("djRoot", djRoot);
+        put("frontend", frontend);
+        Prefs.putInt(this, "libretroFallback", libretroFallback ? 1 : 0);
         put("raPackage", raPackage.isEmpty() ? "com.retroarch.aarch64" : raPackage);
         put("siteUrl", siteUrl.startsWith("http") ? siteUrl : Config.DEFAULT_URL);
-        put("ssUser", ssUser);
-        put("ssPass", ssPass);
+        put("sgdbKey", sgdbKey);
         Prefs.putInt(this, "useEsdeMedia", useEsdeMedia ? 1 : 0);
         Prefs.putInt(this, "cssWidth", cssWidth);
         DisplayPicker.save(this, topDisplay);

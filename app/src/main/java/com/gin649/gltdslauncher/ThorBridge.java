@@ -122,7 +122,7 @@ final class ThorBridge {
         LibraryScraper.scrapeAll(act);
     }
 
-    /** Lets games that found no ScreenScraper match be searched again. */
+    /** Lets games that found no art be searched again. */
     @JavascriptInterface
     public void retryUnmatched() {
         LibraryScraper.retryUnmatched(act);

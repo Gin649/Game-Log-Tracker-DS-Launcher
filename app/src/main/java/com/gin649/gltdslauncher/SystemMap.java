@@ -21,6 +21,8 @@ final class SystemMap {
         String core = "";
         boolean hack;
         String standalone = "";   // id from emulators.json, or empty
+        /** For a folder found by name ("Game Boy Advance"): the built-in system it stands for ("gba"), else empty. */
+        String base = "";
         final List<String> ra = new ArrayList<String>();
 
         File dir() {
@@ -34,6 +36,10 @@ final class SystemMap {
         SystemMap m = new SystemMap();
         try {
             m.merge(readAll(ctx.getAssets().open("systems.json")));
+        } catch (Exception ignored) {
+        }
+        try { // before the imports, so a Daijisho platform file or your own systems.json can refine what was found
+            m.discover(ctx);
         } catch (Exception ignored) {
         }
         File imported = new File(ctx.getFilesDir(), "imported_systems.json");
@@ -53,6 +59,65 @@ final class SystemMap {
             }
         }
         return m;
+    }
+
+    /** The built-in system folder name this folder stands for ("Game Boy Advance" gives "gba"), or the folder itself. */
+    String baseOf(String folder) {
+        for (Sys s : all) {
+            if (s.folder.equals(folder)) return s.base.isEmpty() ? s.folder : s.base;
+        }
+        return folder;
+    }
+
+    /**
+     * Folders in the ROMs folder that are not known by their exact name (common with Daijisho, where you name them
+     * yourself: "Game Boy Advance", "SNES", "PS1") are matched to a built-in system by name from folder_aliases.json,
+     * so they get its cores, RetroAchievements names and art lookups. Folders with no match are left alone.
+     */
+    private void discover(Context ctx) throws Exception {
+        if (Config.ROMS_ROOT.isEmpty()) return;
+        File[] dirs = new File(Config.ROMS_ROOT).listFiles();
+        if (dirs == null) return;
+        JSONObject aliases = new JSONObject(readAll(ctx.getAssets().open("folder_aliases.json")));
+        for (File d : dirs) {
+            if (!d.isDirectory() || d.getName().startsWith(".")) continue;
+            String name = d.getName();
+            boolean known = false;
+            for (Sys s : all) {
+                if (s.folder.equals(name)) {
+                    known = true;
+                    break;
+                }
+            }
+            if (known) continue;
+            String key = Matcher.compact(name);
+            String canonical = null;
+            java.util.Iterator<String> it = aliases.keys();
+            while (it.hasNext() && canonical == null) {
+                String base = it.next();
+                JSONArray list = aliases.getJSONArray(base);
+                for (int i = 0; i < list.length(); i++) {
+                    if (list.getString(i).equals(key)) {
+                        canonical = base;
+                        break;
+                    }
+                }
+            }
+            if (canonical == null) continue;
+            Sys src = null;
+            for (Sys s : all) {
+                if (s.folder.equals(canonical)) src = s;
+            }
+            if (src == null) continue;
+            Sys n = new Sys();
+            n.folder = name;
+            n.core = src.core;
+            n.hack = src.hack;
+            n.standalone = src.standalone;
+            n.ra.addAll(src.ra);
+            n.base = canonical;
+            all.add(n);
+        }
     }
 
     private static String readAll(InputStream in) throws Exception {
