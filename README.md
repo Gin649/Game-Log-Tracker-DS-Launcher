@@ -28,8 +28,8 @@ One Android app for the AYN Thor (works on other devices too, with one screen).
 ## What the wizard asks for
 1. Allow "All files access" for the app.
 2. RetroAchievements username and Web API key, and an optional RAWG key. They are copied into the tracker, so you do not type them twice.
-3. ROMs folder (folder picker) and ES-DE folder (folder picker, optional). The ES-DE folder is where `downloaded_media` and
-   `custom_systems/es_systems.xml` live. Your custom systems and their cores are imported from that file.
+3. Your frontend (ES-DE, Daijisho or none), your ROMs folder, and the frontend's folder. For ES-DE that is where `downloaded_media` and
+   `custom_systems/es_systems.xml` live; your custom systems and their cores are imported from that file.
 4. Which RetroArch is installed, which standalone emulators were found, and, per system, standalone or RetroArch.
 5. Top screen, tracker size on the bottom screen, and the tracker address.
 
@@ -53,17 +53,24 @@ One Android app for the AYN Thor (works on other devices too, with one screen).
 - Room needs AndroidX, so `android.useAndroidX` is true in `gradle.properties`. The first build downloads Room.
 
 ## Game art for the top screen
-1. **Fan art is always the first choice.** Your ES-DE media first. In the wizard's folders step, if the ES-DE folder has `downloaded_media`, a box "Use my ES-DE
-   media" is on by default. Games with art there use it as it is and are never sent to ScreenScraper. Turn it off to
-   ignore ES-DE's art completely.
-2. **ScreenScraper for the rest.** Opening a game that has no art fetches it in the background. Tracker menu > "Fetch game
-   art" does the whole library, one game at a time. The app searches by cleaned-up title (tags, regions and punctuation
-   ignored; "Game 2" never matches "Game"), downloads fan art (or a screenshot when there is none), box art and logo, and builds one 1280x720 JPEG per
-   game in the app's own storage (`MiximageCompositor`). Calls go straight from the device with OkHttp, not through Cloudflare.
-3. **ScreenScraper needs developer keys.** Put your `devid` and `devpassword` in `assets/screenscraper.json` before building,
-   or, without rebuilding, in `<ES-DE folder>/gltthor/screenscraper.json` (same format, only the keys you set are used).
-   Your own login goes in the wizard (or is read from ES-DE's settings). Without the keys, "Fetch game art" says so and nothing is sent.
-   System ids per folder are in the same file; add yours there if a folder is missing.
+Art is looked up in this order and the first hit wins:
+1. **Art you already have.** ES-DE: `downloaded_media` (fan art first). Daijisho: your DaijishoMedia folder or wherever SkraperUI /
+   another scraper saved images and `gamelist.xml` (Daijisho keeps its own scraped pictures in private app storage, which no
+   other app can read, so point the wizard at a folder it can share). Pictures next to your ROMs (`rom.png`, `images/`, `media/`,
+   `gamelist.xml`) are found in every mode. Games with art there are never downloaded again.
+2. **Free libretro thumbnails, no account or keys.** Box art, in-game screenshot (or title screen) and logo from
+   thumbnails.libretro.com. There is no fan art there, so the screenshot is the background of the mix image. On by default; switch it off
+   in the wizard. Systems and their libretro folder names are in `assets/libretro.json` (add yours in
+   `<frontend folder>/gltthor/libretro.json`). Each system's file list is cached for 30 days.
+Opening a game with no art fetches it in the background; tracker menu > "Fetch game art" does the whole library. One 1280x720 JPEG
+per game is built in the app's own storage (`MiximageCompositor`).
+
+## Frontends (wizard, step "Your folders")
+- **ES-DE**: choose the ES-DE folder. Media and `custom_systems/es_systems.xml` (your systems and cores) are used.
+- **Daijisho**: choose a media folder it can share (see above). Exported platform `.json` files in that folder are read for your
+  cores; a platform is matched to the folder in your ROMs folder with the same short name, id or name.
+- **None / other**: only the ROMs folder is needed. Everything else (emulators, screens, accounts) has its own step.
+- ROM folders named in full ("Game Boy Advance", "PS1", "SNES") are matched to the built-in systems by name (`assets/folder_aliases.json`).
 
 ## Notes
 - Bottom screen too zoomed or too small: Launcher settings, Screens, Tracker size. The tracker's own Text Size menu also works.
