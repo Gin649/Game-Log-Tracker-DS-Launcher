@@ -230,8 +230,8 @@
   function confirm(){
     const el = ensureFocus();
     if(!el) return;
-    if(el.classList.contains('tab-btn') || (el.classList.contains('chip') && el.closest('#system-chips'))){
-      el.click();          // picking a tab or console starts you on its first game
+    if(el.classList.contains('chip') && el.closest('#system-chips')){
+      el.click();          // picking a console starts you on its first game
       focusFirstGame();
       return;
     }
