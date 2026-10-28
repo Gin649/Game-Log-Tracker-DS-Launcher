@@ -215,11 +215,26 @@
     else if(dir === 'up' || dir === 'down') scrollBy(getScroller(), dir === 'down' ? STEP_SCROLL : -STEP_SCROLL);
   }
 
+  // Puts the highlight on the first game of the tab that is showing: the first recently played
+  // card, library or backlog row, or Beaten by Year tile. Does nothing if there is no game yet.
+  function focusFirstGame(){
+    if(menuOpen() || topOverlay()) return;
+    const panel = document.querySelector('.tab-panel.active');
+    if(!panel) return;
+    const first = candidates(panel).find(i => i.el.matches('.cart, .lib-table tbody tr, .year-item'));
+    if(first) setFocus(first.el);
+  }
+
   // ---- buttons -------------------------------------------------------------------------------
 
   function confirm(){
     const el = ensureFocus();
     if(!el) return;
+    if(el.classList.contains('tab-btn') || (el.classList.contains('chip') && el.closest('#system-chips'))){
+      el.click();          // picking a tab or console starts you on its first game
+      focusFirstGame();
+      return;
+    }
     if(isTextField(el)){ el.focus(); showKeyboard(true); return; }
     if(el.tagName === 'SELECT'){ // the native picker can't be opened from here, so step through the options
       if(!el.options.length) return;
@@ -272,7 +287,10 @@
     if(!tabs.length) return;
     const cur = Math.max(0, tabs.findIndex(t => t.classList.contains('active')));
     const next = Math.min(tabs.length - 1, Math.max(0, cur + delta));
-    if(next !== cur) tabs[next].click();
+    if(next !== cur){
+      tabs[next].click();
+      focusFirstGame();
+    }
   }
 
   // Library, Beaten by Year and Backlog share a row of console filters; step through it.
@@ -288,6 +306,7 @@
     chips[next].click(); // redraws the row, so look the active chip up again afterwards
     const active = row.querySelector('.chip.active');
     if(active) active.scrollIntoView({ block: 'nearest', inline: 'center' });
+    focusFirstGame();
   }
 
   function press(name){

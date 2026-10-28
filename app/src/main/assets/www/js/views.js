@@ -248,6 +248,20 @@ function renderLibrary(){
     return 0;
   });
 
+  // In the default name order the three most recently played games go first, then the rest by
+  // name. With a console picked, rows only holds that console's games, so these are the last
+  // three played on it. Any other sort, or a search, shows the plain order.
+  if(key === 'Title' && dir === 'asc' && !searchVal){
+    const recent = rows
+      .filter(g => parseRADate(g.lastPlayed))
+      .sort((a, b) => parseRADate(b.lastPlayed) - parseRADate(a.lastPlayed))
+      .slice(0, 3);
+    if(recent.length){
+      const picked = new Set(recent);
+      rows = [...recent, ...rows.filter(g => !picked.has(g))];
+    }
+  }
+
   $('#lib-count').textContent = rows.length ? `(${rows.length})` : '';
 
   if(rows.length === 0){
