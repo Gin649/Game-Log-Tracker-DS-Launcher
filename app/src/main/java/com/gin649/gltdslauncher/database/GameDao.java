@@ -68,9 +68,9 @@ public interface GameDao {
     @Query("DELETE FROM game_library WHERE id IN (:ids)")
     void deleteByIds(List<Integer> ids);
 
-    // ---- ScreenScraper matching and art ----
+    // ---- Online art search status (the column is still called screenscraper_id) ----
 
-    /** screenscraper_id: 0 = not searched yet, -1 = searched and nothing matched, above 0 = matched. */
+    /** screenscraper_id: 0 = not searched yet, -1 = searched and nothing found. (Older builds stored a ScreenScraper id above 0.) */
     @Query("SELECT * FROM game_library WHERE screenscraper_id = 0 AND local_miximage_path IS NULL ORDER BY id LIMIT :limit")
     List<GameEntity> getUnmatched(int limit);
 

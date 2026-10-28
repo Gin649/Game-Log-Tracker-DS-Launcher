@@ -25,7 +25,7 @@ public class GameEntity {
     @PrimaryKey(autoGenerate = true)
     public int id;
 
-    /** 0 = not searched on ScreenScraper yet, -1 = searched with no match, above 0 = the ScreenScraper game id. */
+    /** 0 = art not searched online yet, -1 = searched and nothing found (older builds stored a ScreenScraper id above 0). */
     @ColumnInfo(name = "screenscraper_id")
     public int screenscraperId;
 
@@ -56,7 +56,7 @@ public class GameEntity {
     /** Room uses this constructor. */
     public GameEntity() {}
 
-    /** A freshly scanned ROM: no ScreenScraper match, no art, not a favorite, never played. */
+    /** A freshly scanned ROM: not searched for art, no art, not a favorite, never played. */
     public static GameEntity scanned(@NonNull String title, @NonNull String romPath, @NonNull String systemId) {
         GameEntity g = new GameEntity();
         g.title = title;

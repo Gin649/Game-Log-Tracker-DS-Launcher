@@ -51,7 +51,7 @@ public final class GameRepository {
 
     /**
      * Make the table match what is on disk for one system: new files are added, files that are gone
-     * are removed, and existing rows (favorites, play counts, ScreenScraper matches, art) are left alone.
+     * are removed, and existing rows (favorites, play counts, art) are left alone.
      * Returns {added, removed}.
      */
     public int[] syncSystem(final String systemId, final List<ScannedRom> found) {
