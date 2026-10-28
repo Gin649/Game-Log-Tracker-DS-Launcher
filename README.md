@@ -1,97 +1,128 @@
-# Game Log - Tracker DS Launcher
+# Game Log Tracker DS Launcher
 
-One Android app for the AYN Thor (works on other devices too, with one screen).
-- Bottom screen: the Game Log Tracker, bundled inside the APK (no website to host, works offline).
-- Top screen: art for the game open in the tracker, or the logo on the main menu.
-- Play button in each game profile: starts the game in RetroArch or a standalone emulator on the top screen.
-- Setup wizard on first run (reopen it any time from the tracker menu, "Launcher settings").
+Game Log Tracker as an Android app, built for the AYN Thor and its two screens. Track your RetroAchievements and completions on the bottom screen, see your game's art on the top screen, and start your games in RetroArch or a standalone emulator with one tap. It also works on single-screen Android devices (Android 11 or newer). Everything you add is saved on your own device.
 
-## Build and install
-1. Create a repo for this project, upload everything here (keep the `.github` folder), open the Actions tab, run "Build APK".
-2. Download the `glt-ds-launcher-apk` artifact, unzip, install `app-debug.apk`.
-3. Open the app on the BOTTOM screen. The wizard opens on the top screen while the bottom screen shows the logo.
-4. Moving from the old website version: the bundled tracker has its own storage. In the old one use Data > Export,
-   in this one Data > Import. Do this once.
-5. Update the two Cloudflare workers once so they accept the app (see `cloudflare/` in the hand-off, or add
-   `https://appassets.androidplatform.net` to `ALLOWED_ORIGINS` in both).
+Join the Discord: https://discord.gg/V3GdECWXg
 
-## The bundled tracker
-- The tracker's files live in `app/src/main/assets/www/` and are served to the WebView at
-  `https://appassets.androidplatform.net/assets/www/` (WebViewAssetLoader). It is a normal https page to the WebView, so
-  IndexedDB, fetch and the Cloudflare workers behave as they do in a browser.
-- To change the tracker, replace the files in `assets/www/` with the new version of the frontend repo and rebuild.
-  `sw.js` is not needed there: the service worker is switched off inside the app.
-- Each build refreshes `ra-patches-index.json` and `ra-guides-index.json` (`tools/`, see the workflow). If GitHub is
-  unreachable during the build, the copies already in the repo are used.
+Play some games with us.
 
-## What the wizard asks for
-1. Welcome: allow "All files access" and "Usage access" (lets the app return to the tracker when a game closes).
-2. RetroAchievements username and Web API key, and an optional RAWG key.
-3. Your folders: frontend (ES-DE, Daijisho or none), ROMs folder, and the frontend's folder.
-4. Your Emulators: per system, pick a standalone emulator or a RetroArch core. Change it any time from Launcher settings.
-5. Your screens: top screen and tracker size on the bottom screen.
-The wizard removes itself from the recent apps list when it finishes.
+## What it does
 
-## Emulators
-- RetroArch: launched with the ROM, core and config paths, the same way ES-DE does it.
-- Standalone: Dolphin (GameCube, Wii), DuckStation (PS1), PPSSPP (PSP), Mupen64Plus AE/FZ (N64), ARMSX2 (PS2).
-  The recipes are in `assets/emulators.json`. If an emulator opens but does not start the game, its recipe may need a fix:
-  put a copy of the entry in `<ES-DE folder>/gltthor/emulators.json` (same `id`) and edit it, no rebuild needed.
-- Also set up: Watermelon DS (DS), Azahar (3DS), Eden / Eden nightly (Switch), Cemu (Wii U), Vita3K (Vita), HakuX (Xbox).
-  Several of these recipes are best guesses (HakuX package and intent, Azahar/Eden activity names; Vita3K needs title-ID
-  file names and games installed in it first). If one opens without starting the game, override it as described above.
-- Walkthroughs: "Find a walkthrough" opens an in-app browser; back or swipe returns to the tracker, and "Save video" sends the link over.
-- ROM hacks: the base ROM is the one Play finds. The patched ROM is saved beside it, with "Play patched ROM" and "Add to my backlog".
-- Cores per system are in `assets/systems.json`. Cores for systems you defined in ES-DE come from your own file, the rest are
-  common defaults. Override any of them in `<ES-DE folder>/gltthor/systems.json`.
+**Two screens, one app.** The bottom screen is the Game Log Tracker. The top screen shows art for the game you have open, or the logo on the main menu. Open a game, press Play, and it starts on the top screen. Emulators that draw both DS or 3DS screens themselves start on the bottom screen instead. When the game closes, the tracker comes back.
 
-## Library database
-- `database/` holds the Room database: `GameEntity` (table `game_library`), `GameDao`, `AppDatabase`, `GameRepository`.
-- Every ROM scan syncs into it (`LibrarySync`): new files are added, files that are gone are removed, and favorites, play
-  counts, ScreenScraper matches and art are kept. If storage can't be read, or a system folder is missing (SD card out),
-  nothing is deleted.
-- Starting a game adds one to its play count. The tracker can read the library with `ThorBridge.libraryGames(systemId)`
-  and set favorites with `ThorBridge.setFavorite(id, true)`.
-- `screenscraper_id` is 0 when a game has not been searched, -1 when it was searched with no match, and above 0 when matched.
-- Room needs AndroidX, so `android.useAndroidX` is true in `gradle.properties`. The first build downloads Room.
+**The tracker** is the full Game Log Tracker, bundled inside the app. Everything in the web version is here:
 
-## Game art for the top screen
-Art is looked up in this order and the first hit wins:
-1. **Art you already have.** ES-DE: `downloaded_media` (fan art first). Daijisho: your DaijishoMedia folder or wherever SkraperUI /
-   another scraper saved images and `gamelist.xml` (Daijisho keeps its own scraped pictures in private app storage, which no
-   other app can read, so point the wizard at a folder it can share). Pictures next to your ROMs (`rom.png`, `images/`, `media/`,
-   `gamelist.xml`) are found in every mode. Games with art there are never downloaded again.
-2. **Free libretro thumbnails, no account or keys.** Box art, in-game screenshot (or title screen) and logo from
-   thumbnails.libretro.com. There is no fan art there, so the screenshot is the background of the mix image. On by default; switch it off
-   in the wizard. Systems and their libretro folder names are in `assets/libretro.json` (add yours in
-   `<frontend folder>/gltthor/libretro.json`). Each system's file list is cached for 30 days.
-Opening a game with no art fetches it in the background; tracker menu > "Fetch game art" does the whole library. One 1280x720 JPEG
-per game is built in the app's own storage (`MiximageCompositor`).
+- **Overview** with your RetroAchievements profile, recently played games and your latest unlocks.
+- **Game Library** with every game you've played on RA. Search it, filter by system, and see progress, awards and playtime. The three games you played most recently sit at the top, then everything else is listed by name. Tap a column heading to sort by anything else. Pick a console and the top three are the last ones you played on that console.
+- **Beaten by Year** groups everything you've beaten or mastered by the year you did it.
+- **Backlog** is for games you plan to play, including games from systems RA doesn't track. It's sorted by name.
+- **Social** shows the people you follow on RetroAchievements and what they've unlocked lately.
+- **Casual / Hardcore** is one switch in the menu that flips every stat, list and progress bar.
 
-## Frontends (wizard, step "Your folders")
-- **ES-DE**: choose the ES-DE folder. Media and `custom_systems/es_systems.xml` (your systems and cores) are used.
-- **Daijisho**: choose a media folder it can share (see above). Exported platform `.json` files in that folder are read for your
-  cores; a platform is matched to the folder in your ROMs folder with the same short name, id or name.
-- **None / other**: only the ROMs folder is needed. Everything else (emulators, screens, accounts) has its own step.
-- ROM folders named in full ("Game Boy Advance", "PS1", "SNES") are matched to the built-in systems by name (`assets/folder_aliases.json`).
+The web version has the full details: https://github.com/Gin649/Game-Log-Tracker
 
-## Notes
-- Bottom screen too zoomed or too small: Launcher settings, Screens, Tracker size. The tracker's own Text Size menu also works.
-- Standalone emulators are given read access to the ROM through the ROMs folder you picked, the same way ES-DE does.
-- Written without an Android SDK: the new code was type-checked against stubs and its title matching and ES-DE lookup were run on test data, but the first real build and the standalone launch recipes are untested on a device. Expect a few fixes.
+### Inside a game
 
+- Achievement list with points and unlock dates, missable achievements marked with a "!", and a Missable Only filter.
+- Put achievements in your own order, and export or import an order as a file.
+- Subsets, if the game has any, each with its own achievement list.
+- **Game manuals.** Find and download a manual for the game, then read it in the built-in viewer. It's saved on your device and works with the controller too.
+- **Walkthroughs.** Find a walkthrough opens a browser inside the app. Back, or a swipe from the edge, returns to the tracker, and Save video keeps the link in the game's profile.
+- Game guides, a Need Cheats? button, review scores, and the time other players take to beat the game.
+- **ROM Hacks.** The app finds your base ROM for you. The patched ROM is saved next to it, with a "Play patched ROM" button and an "Add to my backlog" option. I don't host or supply any ROMs.
 
-## Controller controls
+### On the top screen
+
+The top screen shows the game you have open, with its title and system underneath. It also carries your profile card and the menu, so the bottom screen stays free for the tracker.
+
+The picture it shows is the best one available, in this order:
+
+1. **Fan art or a finished miximage** from your frontend.
+2. **A miximage built for you** from your frontend's screenshot, box art and marquee.
+3. **Fan art from SteamGridDB**, if you gave the app a free key.
+4. **Free libretro thumbnails**, which need no account. The app builds a miximage from the box art, screenshot and logo.
+5. **Your marquee, then box art**, if nothing better turns up.
+
+Art you already have is never downloaded again. Opening a game that has no art fetches it in the background, and Fetch game art in the menu does your whole library.
+
+### Playing your games
+
+- **RetroArch** starts the game with the right core for the system.
+- **Standalone emulators:** Dolphin (GameCube, Wii), DuckStation (PS1), PPSSPP (PSP), Mupen64Plus (N64), ARMSX2 (PS2), WatermelonDS (DS), Azahar (3DS), Eden (Switch), Cemu (Wii U), Vita3K (Vita) and HakuX (Xbox).
+- You choose which emulator or RetroArch core each system uses, and you can change it any time from Launcher settings.
+- The app reads your ROMs folder, whether you use ES-DE, Daijisho or no frontend at all. Folders named in full, like "Game Boy Advance" or "SNES", are recognised too.
+- Some of the newer emulator setups are still being tested. If one opens but doesn't start your game, tell me on Discord.
+
+### Controller controls
 
 | Button | Action |
 | --- | --- |
 | D-pad / left stick | Move the highlight |
 | Right stick | Scroll up and down (faster the further you push) |
-| A | Confirm (swappable with B in the menu: Controller) |
-| B | Back: closes the game profile, pop-ups, the menu, or the on-screen keyboard |
-| Select | Open or close the hamburger menu |
-| X | Refresh the game profile, or the main screen |
-| L1 / R1 | Previous / next console (Game Library, Beaten by Year, Backlog) |
+| A | Confirm (can be swapped with B in the menu under Controller) |
+| B | Back: closes the game profile, pop-ups, the manual, the menu or the on-screen keyboard |
+| Select | Open or close the menu |
+| X | Refresh the game profile or the main screen |
+| L1 / R1 | Previous / next console |
 | L2 / R2 | Previous / next tab |
 
-Touch works as before. The Android back button and edge-swipe never close the app; use Home for that.
+When you switch console or tab, the highlight lands on the first game in the list.
+
+In a manual, L1 / R1 turn a page up or down and L2 / R2 zoom out or in.
+
+Touch works as normal and hides the highlight. The Android back button and edge swipe never close the app, so use Home for that.
+
+### Other things
+
+- Text size controls in the menu, and a tracker size setting for the bottom screen in Launcher settings.
+- An optional clock and battery readout, with the battery shown as pixel hearts. Turn it on under Display in the menu.
+- The app checks for new versions and offers to download and install them.
+- About, at the bottom of the menu, shows the app version and links to GitHub and Discord.
+
+## Getting started
+
+1. Download the latest `.apk` from the Releases page: https://github.com/Gin649/Game-Log-Tracker-DS-Launcher/releases
+2. Install it. Android will ask you to allow installing from your browser or file manager the first time.
+3. Open the app on the **bottom screen**. The setup wizard opens on the top screen while the bottom screen shows the logo.
+4. Follow the wizard. It asks for:
+   - **File access** so the app can find your games and artwork, and **usage access** so the top screen returns to the tracker when a game closes.
+   - Your RetroAchievements username and Web API key. You can find the key on RA under Control Panel, then Keys.
+   - Optional: a free RAWG key for ratings and game details, and a free SteamGridDB key for fan art.
+   - Which frontend you use (ES-DE, Daijisho or none), your ROMs folder, and the frontend's folder.
+   - Which emulator to use for each system. Only systems found in your ROMs folder are listed.
+   - Which screen is the top screen, and how big the tracker should be on the bottom screen.
+5. Tap Finish. You can change any of it later from the tracker's menu, under Launcher settings.
+
+**Coming from the web version?** The app keeps its own data, so move yours over once. In the web version choose Menu, then Data, then Export. In the app choose Menu, then Data, then Import.
+
+## Your data
+
+Everything is stored on your device: your RA login, keys, added games, playtime, custom achievement orders, guides, manuals and saved videos. Nothing syncs between devices.
+
+Menu, then Data, then Export saves a backup file, and Import loads it again. The backup includes your API keys, so treat the file like a password.
+
+## Privacy
+
+None of your data is stored by me, and the app has no analytics or tracking. RetroAchievements requests go straight from the app to RetroAchievements. Your optional RAWG and SteamGridDB keys are only sent to those services.
+
+Other sites the app contacts, and why:
+
+- RetroAchievements and media.retroachievements.org, for your profile, achievements and images.
+- RAWG, for ratings and game details (only if you added a key).
+- SteamGridDB, for fan art (only if you added a key).
+- thumbnails.libretro.com, for free box art, screenshots and logos. This is on by default and can be switched off in Launcher settings.
+- YouTube, for walkthrough videos.
+- archive.org, for text guides.
+- gamesdatabase.org, for game manuals. Those requests go through a private proxy I run on Cloudflare Workers that stores nothing.
+- cdnjs.cloudflare.com, to load the manual viewer the first time you open a manual.
+- GitHub, to check for new app versions and to find ROM patches and guides.
+
+## Thanks
+
+Joey (https://www.joeysretrohandhelds.com) helped make this possible, and his JoeyOS app inspired the guide lookup and the ROM patcher. I used his approach with his permission.
+
+Achievement data comes from RetroAchievements and ratings and box art from RAWG. Fan art comes from SteamGridDB and free thumbnails from the libretro project. Text guides come from the GameFAQs archive on archive.org, indexed by the Guide Watch project. I'm not affiliated with any of them.
+
+## Contact
+
+Questions or bugs: open an issue here, or find me on Discord.
