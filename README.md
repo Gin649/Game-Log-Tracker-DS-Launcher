@@ -2,7 +2,7 @@
 
 Game Log Tracker as an Android app, built for the AYN Thor and its two screens. Track your RetroAchievements and completions on the bottom screen, see your game's art on the top screen, and start your games in RetroArch or a standalone emulator with one tap. It also works on single-screen Android devices (Android 11 or newer). Everything you add is saved on your own device.
 
-Join the Discord: https://discord.gg/V3GdECWXg
+Join the Discord: https://discord.gg/6dgZA4yD2
 
 Play some games with us.
 
