@@ -80,6 +80,7 @@ final class Launcher {
             } else {
                 act.startActivity(intent);
             }
+            ArtWatch.start(act, standalone ? pkg : Config.RA_PACKAGE);
             LibrarySync.markPlayed(act, rom);
             return result(true, "Starting " + rom.name + " in " + started + "...");
         } catch (Exception e) {

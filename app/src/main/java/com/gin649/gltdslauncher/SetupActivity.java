@@ -386,6 +386,32 @@ public class SetupActivity extends Activity {
         }
     }
 
+    /** Lets the app notice a game closing, so the top screen comes back to the tracker (see ArtWatch). */
+    private void usageAccessRow() {
+        if (DisplayPicker.topDisplayId(this) < 0) return; // one screen: nothing to bring back
+        if (ArtWatch.hasUsageAccess(this)) {
+            text("Back to tracker after a game: on", 15, TEAL);
+        } else {
+            text("Back to tracker after a game: needs usage access", 15, GOLD);
+            text("Allow usage access so the top screen returns to the tracker when a game closes. "
+                    + "It is only used to see whether the emulator is still open.", 13, MUTED);
+            action("Allow usage access", new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    try {
+                        startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS,
+                                Uri.parse("package:" + getPackageName())));
+                    } catch (Exception e) {
+                        try {
+                            startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
+                        } catch (Exception ignored) {
+                        }
+                    }
+                }
+            });
+        }
+    }
+
     private void stepWelcome() {
         text("Let's set up Game Log Tracker on this device.", 17, TEXT);
         text("It takes a minute. Everything can be changed later from the tracker's menu, under Launcher settings.", 14, MUTED);
@@ -616,6 +642,7 @@ public class SetupActivity extends Activity {
     private void stepFinish() {
         text("Almost done.", 17, TEXT);
         fileAccessRow();
+        usageAccessRow();
         StringBuilder sb = new StringBuilder();
         sb.append("RetroAchievements: ").append(raUser.isEmpty() ? "not set" : raUser).append("\n");
         sb.append("RAWG key: ").append(rawgKey.isEmpty() ? "not set" : "set").append("\n");

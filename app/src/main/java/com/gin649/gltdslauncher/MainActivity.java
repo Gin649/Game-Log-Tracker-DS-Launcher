@@ -353,6 +353,21 @@ public class MainActivity extends Activity {
         super.onDestroy();
     }
 
+    /** Brings the art screen to the front of the top display, starting it if it is gone. */
+    void showArtScreen() {
+        if (isFinishing() || isDestroyed() || SetupActivity.running) return;
+        int id = DisplayPicker.topDisplayId(this);
+        if (id < 0) return;
+        Intent i = new Intent(this, ArtActivity.class);
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        try {
+            ActivityOptions options = ActivityOptions.makeBasic();
+            options.setLaunchDisplayId(id);
+            startActivity(i, options.toBundle());
+        } catch (Exception ignored) {
+        }
+    }
+
     private void ensureArtScreen() {
         if (ArtActivity.alive || SetupActivity.running) return;
         int id = DisplayPicker.topDisplayId(this);

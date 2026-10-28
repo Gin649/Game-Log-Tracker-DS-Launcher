@@ -31,6 +31,8 @@ import org.json.JSONObject;
 public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.Listener {
 
     static volatile boolean alive;
+    /** True while the art screen is the one showing on the top display. */
+    static volatile boolean resumed;
 
     private static final int BG = Color.rgb(21, 18, 31);
     private static final int GOLD = Color.rgb(228, 169, 63);
@@ -200,6 +202,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
                         | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+        resumed = true;
         ArtBus.attach(this);
         TopPanel.attachView(this);
         panelHtml = TopPanel.html();
@@ -209,6 +212,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
 
     @Override
     protected void onPause() {
+        resumed = false;
         ArtBus.attach(null);
         TopPanel.attachView(null);
         super.onPause();
@@ -217,6 +221,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     @Override
     protected void onDestroy() {
         alive = false;
+        resumed = false;
         TopPanel.setViewAlive(false);
         if (panel != null) panel.destroy();
         super.onDestroy();

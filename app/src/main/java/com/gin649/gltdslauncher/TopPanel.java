@@ -78,6 +78,21 @@ final class TopPanel {
         }
     }
 
+    /** Puts the art screen back in front on the top display (a game just closed). */
+    static void bringArtFront() {
+        final MainActivity h;
+        synchronized (TopPanel.class) {
+            h = host;
+        }
+        if (h == null) return;
+        MAIN.post(new Runnable() {
+            @Override
+            public void run() {
+                h.showArtScreen();
+            }
+        });
+    }
+
     /** The controller scrolled the open menu; the top screen scrolls its copy. */
     static void scrollMenu(final double dy) {
         final Listener l;
