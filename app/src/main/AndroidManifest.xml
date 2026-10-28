@@ -14,7 +14,8 @@
 
     <application
         android:allowBackup="false"
-        android:icon="@drawable/logo"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
         android:label="${appLabel}"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
 

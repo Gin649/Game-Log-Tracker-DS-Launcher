@@ -252,7 +252,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
             art.setImageDrawable(null);
             artShown = false;
             syncFallback();
-            titleView.setText("Game Log Tracker");
+            titleView.setText("Game Log Tracker DS Launcher");
             consoleView.setText("");
             consoleView.setVisibility(View.GONE);
             caption.setVisibility(View.VISIBLE);
