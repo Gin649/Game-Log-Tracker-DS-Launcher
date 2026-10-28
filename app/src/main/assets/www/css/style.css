@@ -617,6 +617,15 @@
     font-family:'Space Mono',monospace;font-size:0.625rem;font-weight:700;line-height:1.25;
   }
   .patch-info-link:hover{border-color:var(--gold);}
+  .patch-result-row .patch-info-link{cursor:pointer;background:transparent;color:var(--text);border-color:var(--border);padding:5px 8px;font-size:0.625rem;}
+  .patch-info-panel{background:var(--panel);padding:2px 11px 11px;}
+  .patch-info-title{font-size:0.8125rem;color:var(--text);line-height:1.35;}
+  .patch-info-facts{font-size:0.675rem;color:var(--muted);margin-top:3px;line-height:1.45;}
+  .patch-info-links{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}
+  .patch-info-btn{
+    text-decoration:none;border:1px solid var(--gold);color:var(--gold);border-radius:5px;padding:6px 9px;
+    font-family:'Space Mono',monospace;font-size:0.65rem;font-weight:700;line-height:1.25;
+  }
   .hash-status{font-size:0.725rem;border-radius:5px;padding:8px 10px;line-height:1.45;}
   .hash-status.ok{background:rgba(89,201,165,0.12);color:var(--teal);border:1px solid rgba(89,201,165,0.3);}
   .hash-status.mismatch{background:rgba(226,104,92,0.12);color:var(--danger);border:1px solid rgba(226,104,92,0.3);}

@@ -870,7 +870,7 @@
   // {field:"title", operator:"must", value:<name>}, index 9 is the fixed
   // {field:"categories", operator:"must", value:"Hack"}. The search is prefilled but not
   // guaranteed exact, so the user can refine it there.
-  function romhackSearchUrl(label){
+  function titleFromFileName(label){
     // Only the hack's name goes in the Title field: anything in brackets after it (a version number,
     // "(v2.2)", "[Beta]", even one cut off before its closing bracket) is dropped.
     const baseName = String(label || '').replace(/\.(bps|ips|ups|ppf|aps|xdelta3?|vcdiff|vcd|zip|7z|rar)$/i, '').replace(/^\d+[-_]/, '');
@@ -896,7 +896,10 @@
       }
       return words.join(' ');
     };
-    const title = addPossessive(spaceOut(baseName.replace(/\s*[(\[][^)\]]*[)\]]?/g, '')) || spaceOut(baseName));
+    return addPossessive(spaceOut(baseName.replace(/\s*[(\[][^)\]]*[)\]]?/g, '')) || spaceOut(baseName));
+  }
+
+  function romhackIngUrl(title){
     const filters = [null, null, null, null, null, null, null, null,
       { field: 'title', operator: 'must', value: title },
       { field: 'categories', operator: 'must', value: 'Hack' }
@@ -905,11 +908,71 @@
     return `https://romhack.ing/search/hack?page=0&sortField=releaseDate&sortDirection=desc&queryString=&filters=${encodeURIComponent(b64)}`;
   }
 
+  // The hack's name as RetroAchievements lists it, without leading tags like ~Hack~.
+  function cleanRaTitle(t){
+    return String(t || '').replace(/^(?:~[^~]*~\s*)+/, '').trim();
+  }
+  function escInfo(t){
+    return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // Fills the "What does it do?" panel under a patch row. RAPatches names its files
+  // "<RA game ID>-<Title>", so the number in front is the hack's own RetroAchievements entry. That gives
+  // its real title (file names squash the words together), and RA's forum thread for it, which is where
+  // the author's notes usually are. The search links use that real title instead of the file name.
+  async function fillPatchInfo(panel, label){
+    const m = String(label).match(/^(\d+)[-_]/);
+    const raId = m ? Number(m[1]) : 0;
+    let info = null;
+    if(raId){
+      try{ info = await getGameExtended(raId); }catch(e){ info = null; }
+      if(info && !info.Title) info = null;
+    }
+    const title = info ? cleanRaTitle(info.Title) : titleFromFileName(label);
+    const facts = [];
+    if(info){
+      if(info.ConsoleName) facts.push(info.ConsoleName);
+      if(info.Developer) facts.push('by ' + info.Developer);
+      if(info.Genre) facts.push(info.Genre);
+      if(info.Released) facts.push(String(info.Released).slice(0, 10));
+      if(Number(info.NumAchievements)) facts.push(info.NumAchievements + ' achievements');
+    }
+    const links = [];
+    if(info && Number(info.ForumTopicID)){
+      links.push(['RA forum thread: the hack\'s notes', `https://retroachievements.org/viewtopic.php?t=${Number(info.ForumTopicID)}`]);
+    }
+    if(raId) links.push(['RetroAchievements page', `https://retroachievements.org/game/${raId}`]);
+    links.push(['ROMhacking.net', `https://duckduckgo.com/?q=${encodeURIComponent('site:romhacking.net ' + title)}`]);
+    links.push(['romhack.ing', romhackIngUrl(title)]);
+    links.push(['Search the web', `https://duckduckgo.com/?q=${encodeURIComponent('"' + title + '" rom hack')}`]);
+    panel.innerHTML = `
+      <div class="patch-info-title">${escInfo(title)}</div>
+      ${facts.length ? `<div class="patch-info-facts">${escInfo(facts.join(' · '))}</div>` : ''}
+      <div class="patch-info-links">
+        ${links.map(([text, href]) => `<a class="patch-info-btn" href="${href}" target="_blank" rel="noopener">${escInfo(text)} ↗</a>`).join('')}
+      </div>`;
+  }
+
   // ROM patch panel
   function setupRomPatchUI(gameId, title, card, consoleName){
     const patchBtn = card.querySelector('#modal-patch-btn');
     const patchWrap = card.querySelector('#modal-patch-panel');
     if(!patchBtn || !patchWrap) return;
+
+    // "What does it do?" opens or closes a small details panel under that row.
+    patchWrap.addEventListener('click', async (ev) => {
+      const btn = ev.target.closest('.patch-info-link');
+      if(!btn) return;
+      const row = btn.closest('.patch-result-row');
+      if(!row) return;
+      const next = row.nextElementSibling;
+      if(next && next.classList.contains('patch-info-panel')){ next.remove(); return; }
+      const panel = document.createElement('div');
+      panel.className = 'patch-info-panel';
+      panel.innerHTML = '<div class="patch-info-facts">Looking it up…</div>';
+      row.insertAdjacentElement('afterend', panel);
+      await fillPatchInfo(panel, decodeURIComponent(btn.getAttribute('data-info') || ''));
+    });
 
     let opened = false;
     let branch = null;
@@ -1279,7 +1342,7 @@
       return `
         <div class="patch-result-row">
           <div class="info"><div class="fn">${entry.label}</div><div class="pth">${badge}</div></div>
-          <a class="patch-info-link" href="${romhackSearchUrl(entry.label)}" target="_blank" rel="noopener">What does it do? ↗</a>
+          <button type="button" class="patch-info-link" data-info="${encodeURIComponent(entry.label)}">What does it do?</button>
           <button data-group="${group}" data-idx="${idx}">Use</button>
         </div>
       `;
@@ -1364,7 +1427,7 @@
       return `
         <div class="patch-result-row">
           <div class="info"><div class="fn">${entry.label}</div><div class="pth">${badge}</div></div>
-          <a class="patch-info-link" href="${romhackSearchUrl(entry.label)}" target="_blank" rel="noopener">What does it do? ↗</a>
+          <button type="button" class="patch-info-link" data-info="${encodeURIComponent(entry.label)}">What does it do?</button>
           <button data-group="${group}" data-url="${encodeURIComponent(entry.url)}">Use</button>
         </div>
       `;
