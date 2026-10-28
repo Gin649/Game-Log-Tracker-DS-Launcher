@@ -26,7 +26,12 @@ function closeDataModal(){
 // Bump this every release, together with CACHE_NAME in sw.js.
 const APP_VERSION = '2.1.2.3';
 function openAboutModal(){
-  $('#about-version').textContent = APP_VERSION;
+  let shown = APP_VERSION;
+  try{
+    // Inside the app, show the APK's own version instead of the web app's.
+    if(window.ThorBridge && window.ThorBridge.appVersion) shown = window.ThorBridge.appVersion() || shown;
+  }catch(e){ /* older app build without it */ }
+  $('#about-version').textContent = shown;
   $('#about-backdrop').classList.add('open');
 }
 function closeAboutModal(){

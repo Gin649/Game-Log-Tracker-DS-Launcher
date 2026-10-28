@@ -56,6 +56,12 @@ final class ThorBridge {
         return "1";
     }
 
+    // The app's own version (from the release tag), shown in About.
+    @JavascriptInterface
+    public String appVersion() {
+        return BuildConfig.VERSION_NAME;
+    }
+
     @JavascriptInterface
     public void setViewing(String json) {
         try {

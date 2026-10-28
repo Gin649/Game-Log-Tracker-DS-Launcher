@@ -20,7 +20,7 @@ android {
         versionName releaseVersionName
 
         // Name shown under the icon; the debug build overrides it (see buildTypes).
-        manifestPlaceholders = [appLabel: 'Game Log Tracker']
+        manifestPlaceholders = [appLabel: 'Game Log Tracker DS Launcher']
 
         buildConfigField 'String', 'UPDATE_REPO', "\"${updateRepo}\""
 
@@ -51,7 +51,7 @@ android {
         debug {
             // Installs next to the release app instead of replacing it.
             applicationIdSuffix '.debug'
-            manifestPlaceholders = [appLabel: 'Debug Game Log Tracker']
+            manifestPlaceholders = [appLabel: 'Debug Game Log Tracker DS Launcher']
         }
         release {
             minifyEnabled false
