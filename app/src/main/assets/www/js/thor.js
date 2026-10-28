@@ -128,7 +128,7 @@ async function thorSeedCredentials(){
   else wire();
 })();
 
-// "Fetch game art" menu item: the app looks up every game in your ROM library on ScreenScraper and builds
+// "Fetch game art" menu item: the app finds the top-screen art for every game in your ROM library (your frontend's art first, then online) and builds
 // the top-screen art for it. It runs in the background; this just starts it and shows how far it has got.
 (function(){
   let timer = null;
@@ -146,7 +146,7 @@ async function thorSeedCredentials(){
     let s = null;
     try{ s = JSON.parse(thorBridge.scrapeStatus()); }catch(e){ show('Fetch game art', 'The app could not be reached.'); return; }
     if(!s.configured){
-      show('Fetch game art', 'ScreenScraper developer keys are missing. See the README.');
+      show('Fetch game art', 'No art source is on. Turn on the free libretro thumbnails in Launcher settings, or add a SteamGridDB key.');
       return;
     }
     if(s.running){
@@ -157,7 +157,7 @@ async function thorSeedCredentials(){
     }
     // "running" blinks off briefly between batches, so wait for a few quiet reads before calling it finished.
     if(++idleReads < 3){ timer = setTimeout(poll, 1500); return; }
-    show('Fetch game art', (s.message ? s.message + ' ' : '') + s.withArt + ' of ' + s.games + ' games have art' + (s.usingEsdeMedia ? ' (your ES-DE media is used where it exists)' : ''));
+    show('Fetch game art', (s.message ? s.message + ' ' : '') + s.withArt + ' of ' + s.games + ' games have art' + (s.usingEsdeMedia ? ' (art you already have is used where it exists)' : '') + (!s.steamgriddb && s.libretro ? ' Online art comes from the free libretro thumbnails.' : ''));
   }
 
   function wire(){
