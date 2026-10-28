@@ -16,7 +16,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 /**
  * Finds art your frontend already has for a ROM. What the top screen shows, best first:
  * 1. fan art, 2. a finished miximage, 3. a miximage built here from the screenshot, box art and marquee
- * (see LibrarySync.buildMiximage), 4. the marquee, 5. box art as the last resort.
+ * (see LibrarySync.buildMiximage), 4. fan art or a miximage fetched online (see LibraryScraper), 5. the marquee,
+ * 6. box art as the last resort.
  * Where it looks, for each kind of picture:
  * - ES-DE: downloaded_media/[system]/[type]/[rom].ext
  * - gamelist.xml (SkraperUI, EmulationStation style) in the system folder or your Daijisho folder
@@ -29,8 +30,10 @@ final class MediaFinder {
 
     /** What the art found for one ROM is, so the caller can pick or build the best top-screen picture. */
     static final class Found {
-        /** Ready to show as it is (fan art, miximage, or when nothing can be built, marquee or box art); else null. */
+        /** Ready to show as it is (fan art or a finished miximage); else null. */
         String direct;
+        /** The marquee or box art, shown only when nothing better is found here or online. */
+        String fallback;
         /** Parts for building a miximage; any may be null. Only filled in when direct is null. */
         String screen, box, logo;
 
@@ -144,7 +147,7 @@ final class MediaFinder {
         f.box = of(w, BOX);
         f.logo = of(w, MARQUEE);
         if (f.screen == null) { // nothing to build a miximage on: the marquee, then box art as the last resort
-            f.direct = f.logo != null ? f.logo : f.box;
+            f.fallback = f.logo != null ? f.logo : f.box;
         }
         return f;
     }

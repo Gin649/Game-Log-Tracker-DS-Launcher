@@ -68,8 +68,10 @@ final class LibrarySync {
             MediaFinder.Found f = MediaFinder.lookup(g.systemId, g.romPath);
             if (f.direct != null) {
                 if (!f.direct.equals(cur)) dao.setMiximagePath(g.id, f.direct);
-            } else if (f.canBuild() && cur != null && Config.isFrontendMedia(cur)) {
-                dao.setMiximagePath(g.id, null); // a miximage can be built now, which beats the raw box art that was linked
+            } else if (cur != null && Config.isFrontendMedia(cur)) {
+                // Only box art or a marquee is left of the frontend's. Let go of it so a miximage can be built or
+                // fan art fetched; artFor() still shows it while there is nothing better.
+                dao.setMiximagePath(g.id, null);
             }
         }
     }
@@ -103,6 +105,7 @@ final class LibrarySync {
     static String artFor(Context ctx, RomIndex.Rom rom) {
         GameEntity g = find(ctx, rom);
         String cur = g == null || g.localMiximagePath == null || !new File(g.localMiximagePath).isFile() ? null : g.localMiximagePath;
+        String fallback = null;
         if (Config.useEsdeMedia()) {
             MediaFinder.Found f = MediaFinder.lookup(rom);
             if (f.direct != null) return f.direct;
@@ -111,8 +114,10 @@ final class LibrarySync {
                 String built = buildMiximage(ctx, g, f);
                 if (built != null) return built;
             }
+            fallback = f.fallback;
         }
-        return cur;
+        if (cur != null && !Config.isFrontendMedia(cur)) return cur; // fetched or built here: better than box art
+        return fallback != null ? fallback : cur;
     }
 
     /** The row for a ROM, or null. */

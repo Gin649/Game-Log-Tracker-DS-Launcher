@@ -30,6 +30,8 @@ final class Recipes {
         String label;
         String activity = "";
         String action = "";
+        /** Other actions to try, in order, when the first one is not understood by the installed version; %PKG% is the emulator's package. */
+        final List<String> actions = new ArrayList<String>();
         String category = "";
         String data = "none";   // none, saf (content address) or path
         boolean clearTask;
@@ -109,6 +111,7 @@ final class Recipes {
             r.label = o.optString("label", r.label == null ? id : r.label);
             if (o.has("activity")) r.activity = o.getString("activity");
             if (o.has("action")) r.action = o.getString("action");
+            if (o.has("actions")) fill(r.actions, o.getJSONArray("actions"));
             if (o.has("category")) r.category = o.getString("category");
             if (o.has("data")) r.data = o.getString("data");
             if (o.has("clearTask")) r.clearTask = o.getBoolean("clearTask");
@@ -190,8 +193,17 @@ final class Recipes {
             if (!acts.contains(a)) acts.add(a);
         }
         if (acts.isEmpty()) acts.add("");
+        List<String> actions = new ArrayList<String>();
+        if (!r.action.isEmpty()) actions.add(r.action);
+        for (String a : r.actions) {
+            String full = a.replace("%PKG%", pkg);
+            if (!actions.contains(full)) actions.add(full);
+        }
+        if (actions.isEmpty()) actions.add("");
         List<Intent> out = new ArrayList<Intent>();
-        for (String a : acts) out.add(build(ctx, r, pkg, rom, a));
+        for (String a : acts) {
+            for (String action : actions) out.add(build(ctx, r, pkg, rom, a, action));
+        }
         return out;
     }
 
@@ -203,9 +215,9 @@ final class Recipes {
         return text.replace("%ROMSAF%", uriText).replace("%ROMBASE%", base).replace("%ROM%", path);
     }
 
-    private static Intent build(Context ctx, Recipe r, String pkg, File rom, String activity) {
+    private static Intent build(Context ctx, Recipe r, String pkg, File rom, String activity, String action) {
         Intent i = new Intent();
-        if (!r.action.isEmpty()) i.setAction(r.action);
+        if (!action.isEmpty()) i.setAction(action);
         if (!r.category.isEmpty()) i.addCategory(r.category);
         if (!activity.isEmpty()) {
             i.setComponent(new ComponentName(pkg, activity));

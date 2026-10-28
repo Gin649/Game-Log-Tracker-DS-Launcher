@@ -86,9 +86,21 @@
    "watermelonds",
    "melondualds"
   ],
-  "activity": "me.magnum.melonds.ui.emulator.EmulatorActivity",
-  "action": "android.intent.action.VIEW",
+  "activities": [
+   "",
+   "me.magnum.melonds.ui.emulator.EmulatorActivity"
+  ],
+  "actions": [
+   "%PKG%.LAUNCH_ROM",
+   "me.magnum.melonds.LAUNCH_ROM",
+   "me.magnum.melonds.dev.LAUNCH_ROM",
+   "me.magnum.melonds.nightly.LAUNCH_ROM",
+   "android.intent.action.VIEW"
+  ],
   "data": "saf",
+  "extras": {
+   "uri": "%ROMSAF%"
+  },
   "dual": true
  },
  {

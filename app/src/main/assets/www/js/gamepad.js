@@ -55,6 +55,8 @@
   function topOverlay(){
     const zoom = $('#img-zoom-overlay');
     if(zoom.classList.contains('open')) return { type: 'zoom', el: zoom };
+    const manual = document.querySelector('.manual-reader.open'); // the PDF manual viewer (manuals.js)
+    if(manual) return { type: 'manual', el: manual };
     const guide = $('#guide-reader-overlay');
     if(guide.classList.contains('open')) return { type: 'guide', el: guide };
     const modals = document.querySelectorAll('.modal-backdrop.open');
@@ -81,6 +83,7 @@
       const top = topOverlay();
       if(top){
         if(top.type === 'guide') return $('#guide-reader-body');
+        if(top.type === 'manual') return top.el.querySelector('.manual-reader-body');
         if(top.type === 'modal') return top.el; // modals and the game profile scroll themselves
         return null;
       }
@@ -253,6 +256,11 @@
     const top = topOverlay();
     if(top){
       if(top.type === 'zoom'){ $('#img-zoom-close').click(); return true; }
+      if(top.type === 'manual'){
+        const close = top.el.querySelector('[data-act="close"]');
+        if(close){ close.click(); return true; }
+        return false;
+      }
       if(top.type === 'guide'){
         if($('#guide-find-bar').classList.contains('open')){ $('#guide-find-close').click(); return true; }
         if($('#guide-marks-panel').classList.contains('open')){ $('#guide-marks-btn').click(); return true; }
@@ -309,6 +317,23 @@
     focusFirstGame();
   }
 
+  // In the manual viewer L1 / R1 turn a page up or down and L2 / R2 zoom out or in. Each returns
+  // false when no manual is open, so the same buttons keep their normal job everywhere else.
+  function manualPage(dir){
+    const top = topOverlay();
+    if(!top || top.type !== 'manual') return false;
+    const body = top.el.querySelector('.manual-reader-body');
+    if(body) body.scrollTop += dir * body.clientHeight * 0.9;
+    return true;
+  }
+  function manualZoom(dir){
+    const top = topOverlay();
+    if(!top || top.type !== 'manual') return false;
+    const btn = top.el.querySelector(dir > 0 ? '[data-act="zin"]' : '[data-act="zout"]');
+    if(btn) btn.click();
+    return true;
+  }
+
   function press(name){
     const wasShowing = padMode;
     if(!padMode){ padMode = true; document.body.classList.add('pad-mode'); }
@@ -325,13 +350,13 @@
     }else if(name === 'x'){
       if(window.padRefresh) window.padRefresh();
     }else if(name === 'l1'){
-      switchSystem(-1);
+      if(!manualPage(-1)) switchSystem(-1);
     }else if(name === 'r1'){
-      switchSystem(1);
+      if(!manualPage(1)) switchSystem(1);
     }else if(name === 'l2'){
-      switchTab(-1);
+      if(!manualZoom(-1)) switchTab(-1);
     }else if(name === 'r2'){
-      switchTab(1);
+      if(!manualZoom(1)) switchTab(1);
     }
   }
 

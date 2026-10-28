@@ -23,9 +23,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Gets the top-screen picture for each game, one game at a time, slowly. In order:
  * 1. your frontend's own art (ES-DE, Daijisho and the like): fan art, miximage, a miximage built here from its screenshot,
- *    box art and marquee, then marquee, then box art
+ *    box art and marquee
  * 2. SteamGridDB fan art (a hero banner), only when you gave an API key
  * 3. the free libretro thumbnails (box art, screenshot, logo), built into a miximage here
+ * 4. last of all, your frontend's marquee, then its box art (never stored, so a later run can still find better)
  */
 final class LibraryScraper {
 
@@ -164,8 +165,10 @@ final class LibraryScraper {
         GameDao dao = GameRepository.get(ctx).dao();
 
         // 1. what your frontend already has: nothing is downloaded for these
+        String frontendFallback = null; // its box art or marquee, used only if nothing better turns up below
         if (Config.useEsdeMedia()) {
             MediaFinder.Found f = MediaFinder.lookup(g.systemId, g.romPath);
+            frontendFallback = f.fallback;
             if (f.direct != null) {
                 dao.setMiximagePath(g.id, f.direct);
                 return true;
@@ -237,7 +240,7 @@ final class LibraryScraper {
 
         NO_ART.add(g.id);
         if (!offline) dao.markNoMatch(g.id); // looked everywhere and found nothing; a manual "Fetch game art" tries again
-        return false;
+        return frontendFallback != null; // the frontend's box art or marquee still shows (LibrarySync.artFor)
     }
 
     private static void refreshTopScreen(String path) {
