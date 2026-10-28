@@ -1036,7 +1036,7 @@
         if(!info || !info.found){ romNotFound = true; return; }
         let chk = { ok: true };
         try{ chk = JSON.parse(deviceBridge.discCheck(info.path)); }catch(e){ /* assume fine */ }
-        discInfo = { name: info.name, folder: info.folder, path: info.path, size: info.size, ok: chk.ok !== false, message: chk.message };
+        discInfo = { name: info.name, folder: info.folder, path: info.path, size: info.size, ok: chk.ok !== false, message: chk.message, note: chk.note };
       }catch(e){
         romNotFound = true;
       }
@@ -1055,7 +1055,7 @@
         <div style="font-size:0.7688rem;color:var(--text);">Disc image: <strong>${escInfo(discInfo.name)}</strong></div>
         <div style="font-size:0.675rem;color:var(--muted);margin-top:2px;">Found in your ${escInfo(discInfo.folder)} folder${isCue ? '' : ' (' + fmtSize(discInfo.size) + ')'}. The patched disc is saved next to it and your original isn't changed.</div>
         ${discInfo.ok
-          ? `<div style="font-size:0.675rem;color:var(--muted);margin-top:6px;line-height:1.5;">Discs are patched straight from storage, so a big one can take a few minutes. Works with BIN/CUE, ISO and CSO games, and IPS, PPF, BPS, UPS and xdelta patches. You'll need about as much free space as the game takes.</div>
+          ? `<div style="font-size:0.675rem;color:var(--muted);margin-top:6px;line-height:1.5;">Discs are patched straight from storage, so a big one can take a few minutes. Works with BIN/CUE, ISO and CSO games, and IPS, PPF, BPS, UPS and xdelta patches. You'll need about as much free space as the game takes.${discInfo.note ? ' ' + escInfo(discInfo.note) : ''}</div>
              <button class="guide-btn guide-btn-primary" id="patch-search-btn" style="width:100%;margin-top:12px;">Search RA Patches</button>`
           : `<div class="hash-status mismatch" style="margin-top:8px;">${escInfo(discInfo.message || "This kind of disc image can't be patched here.")}</div>`}
       `;

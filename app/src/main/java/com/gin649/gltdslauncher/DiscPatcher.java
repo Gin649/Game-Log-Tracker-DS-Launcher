@@ -9,8 +9,11 @@ import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.CRC32;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
@@ -65,6 +68,152 @@ final class DiscPatcher {
         }
     };
 
+    // ---------------------------------------------------------------- native tools (CHD, RVZ)
+
+    /** chdman (from MAME) and dolphin-tool (from Dolphin), when the app ships them. They are separate programs. */
+    static volatile File chdman, dolphinTool;
+
+    static void setTools(File chd, File dolphin) {
+        chdman = chd != null && chd.isFile() ? chd : null;
+        dolphinTool = dolphin != null && dolphin.isFile() ? dolphin : null;
+    }
+
+    static boolean isDolphinFormat(String ext) {
+        return ext.equals("rvz") || ext.equals("wia") || ext.equals("gcz") || ext.equals("wbfs");
+    }
+
+    /** A line about how this kind of image is handled, or null. */
+    static String noteFor(File base) {
+        String ext = ext(base.getName());
+        if (ext.equals("chd") && chdman != null) {
+            return "CHD games are unpacked, patched, then packed into a new CHD. That takes longer and needs free space for the whole unpacked disc.";
+        }
+        if (isDolphinFormat(ext) && dolphinTool != null) {
+            return "This game is unpacked to an ISO, patched, then packed into a new RVZ. That takes longer and needs free space for the whole disc.";
+        }
+        return null;
+    }
+
+    /** Runs a tool and waits. Percentages in its output ("45.2% complete") drive the progress bar. */
+    private static void exec(List<String> cmd, Progress p, String phase) throws IOException {
+        ProcessBuilder pb = new ProcessBuilder(cmd);
+        pb.redirectErrorStream(true);
+        final Process proc = pb.start();
+        final Progress prog = p;
+        final boolean[] done = {false};
+        Thread watcher = new Thread(new Runnable() {
+            public void run() {
+                while (!done[0]) {
+                    if (prog.cancelled()) {
+                        proc.destroy();
+                        return;
+                    }
+                    try {
+                        Thread.sleep(300);
+                    } catch (InterruptedException e) {
+                        return;
+                    }
+                }
+            }
+        }, "tool-watch");
+        watcher.setDaemon(true);
+        watcher.start();
+        Pattern pct = Pattern.compile("(\\d+(?:\\.\\d+)?)% complete");
+        StringBuilder line = new StringBuilder();
+        String last = "";
+        try (InputStream in = proc.getInputStream()) {
+            int ch;
+            while ((ch = in.read()) >= 0) {
+                if (ch == '\r' || ch == '\n') {
+                    if (line.length() > 0) {
+                        String t = line.toString();
+                        Matcher m = pct.matcher(t);
+                        if (m.find()) p.update(phase, (long) (Double.parseDouble(m.group(1)) * 10), 1000);
+                        else last = t.trim();
+                        line.setLength(0);
+                    }
+                } else if (line.length() < 2000) {
+                    line.append((char) ch);
+                }
+            }
+            int code = proc.waitFor();
+            if (p.cancelled()) throw new PatchException("Cancelled.");
+            if (code != 0) throw new PatchException("The conversion tool stopped with an error" + (last.isEmpty() ? "." : ": " + last));
+        } catch (InterruptedException e) {
+            proc.destroy();
+            throw new PatchException("Interrupted.");
+        } finally {
+            done[0] = true;
+        }
+    }
+
+    private static void deleteTree(File f) {
+        File[] kids = f.listFiles();
+        if (kids != null) for (File k : kids) deleteTree(k);
+        f.delete();
+    }
+
+    private static void requireSpace(File dir, long needed) throws PatchException {
+        long free = dir.getUsableSpace();
+        if (free > 0 && free < needed) {
+            throw new PatchException("Not enough free space for this. It needs about " + (needed / 1048576 + 1) + " MB free and "
+                    + (free / 1048576) + " MB is available.");
+        }
+    }
+
+    /** CHD / RVZ and friends: unpack with the real tool, patch the plain image, pack it again. */
+    private static Result viaConversion(File base, byte[] patch, String stem, Progress p, boolean chd) throws IOException {
+        File dir = base.getParentFile();
+        requireSpace(dir, base.length() * (chd ? 4 : 2) + (64L << 20));
+        File work = new File(dir, ".glt-work-" + System.nanoTime());
+        if (!work.mkdir()) throw new PatchException("Could not create a working folder next to the game.");
+        File outFile = null;
+        try {
+            File plain; // the cue or iso that gets patched
+            boolean dvd = false;
+            if (chd) {
+                File cue = new File(work, "disc.cue");
+                p.update("Unpacking the CHD", 0, 1000);
+                try {
+                    exec(Arrays.asList(chdman.getPath(), "extractcd", "-i", base.getPath(), "-o", cue.getPath(), "-ob", new File(work, "disc.bin").getPath()),
+                            p, "Unpacking the CHD");
+                    plain = cue;
+                } catch (PatchException e) {
+                    if ("Cancelled.".equals(e.getMessage())) throw e;
+                    File iso = new File(work, "disc.iso"); // not a CD: a DVD (PS2 and similar)
+                    exec(Arrays.asList(chdman.getPath(), "extractdvd", "-i", base.getPath(), "-o", iso.getPath()), p, "Unpacking the CHD");
+                    plain = iso;
+                    dvd = true;
+                }
+            } else {
+                File iso = new File(work, "disc.iso");
+                p.update("Unpacking the disc", 0, 1000);
+                exec(Arrays.asList(dolphinTool.getPath(), "convert", "-i", base.getPath(), "-o", iso.getPath(), "-f", "iso"), p, "Unpacking the disc");
+                plain = iso;
+            }
+            Result inner = run(plain, patch, "patched", p);
+            File patched = inner.playable();
+            outFile = freeFile(dir, stem, chd ? ".chd" : ".rvz");
+            if (chd) {
+                List<String> cmd = dvd
+                        ? Arrays.asList(chdman.getPath(), "createdvd", "-i", inner.file.getPath(), "-o", outFile.getPath())
+                        : Arrays.asList(chdman.getPath(), "createcd", "-i", patched.getPath(), "-o", outFile.getPath());
+                exec(cmd, p, "Packing the new CHD");
+            } else {
+                exec(Arrays.asList(dolphinTool.getPath(), "convert", "-i", inner.file.getPath(), "-o", outFile.getPath(),
+                        "-f", "rvz", "-c", "zstd", "-l", "5", "-b", "131072"), p, "Packing the new RVZ");
+            }
+            Result r = new Result(outFile, null);
+            r.notes.addAll(inner.notes);
+            r.notes.add(chd ? "Unpacked the CHD, patched it, and packed the result into a new CHD." : "Unpacked the disc, patched it, and packed the result into a new RVZ.");
+            outFile = null; // keep it
+            return r;
+        } finally {
+            if (outFile != null) outFile.delete();
+            deleteTree(work);
+        }
+    }
+
     // ---------------------------------------------------------------- entry point
 
     /**
@@ -79,6 +228,9 @@ final class DiscPatcher {
         String stem = safeName(outStem);
         if (stem.isEmpty()) stem = "patched";
 
+        if (ext.equals("chd") && chdman != null) return viaConversion(base, patchBytes, stem, progress, true);
+        if (isDolphinFormat(ext) && dolphinTool != null) return viaConversion(base, patchBytes, stem, progress, false);
+
         if (ext.equals("chd") || ext.equals("rvz") || ext.equals("wia") || ext.equals("gcz") || ext.equals("wbfs")
                 || ext.equals("zso") || ext.equals("pbp") || ext.equals("ecm") || ext.equals("gdi")
                 || ext.equals("m3u") || ext.equals("7z") || ext.equals("zip") || ext.equals("rar")) {
@@ -92,6 +244,7 @@ final class DiscPatcher {
                 throw new PatchException("The .cue sheet points at a file that isn't there"
                         + (cue.firstName == null ? "." : " (" + cue.firstName + ")."));
             }
+            requireSpace(dir, bin.length() + (64L << 20));
             File outBin = freeFile(dir, stem, ".bin");
             Result r;
             try {
@@ -134,6 +287,7 @@ final class DiscPatcher {
         }
 
         // .iso, .bin, .img and anything else that is a plain image
+        requireSpace(dir, base.length() + (64L << 20));
         String outExt = ext.isEmpty() ? ".iso" : "." + ext;
         File out = freeFile(dir, stem, outExt);
         Result r = new Result(out, null);
@@ -150,7 +304,11 @@ final class DiscPatcher {
     static String unsupportedReason(File base) {
         String ext = ext(base.getName());
         switch (ext) {
-            case "chd": case "rvz": case "wia": case "gcz": case "wbfs": case "zso": case "pbp": case "ecm":
+            case "chd":
+                return chdman != null ? null : unsupportedImageMessage(ext);
+            case "rvz": case "wia": case "gcz": case "wbfs":
+                return dolphinTool != null ? null : unsupportedImageMessage(ext);
+            case "zso": case "pbp": case "ecm":
             case "gdi": case "m3u": case "7z": case "zip": case "rar":
                 return unsupportedImageMessage(ext);
             default:

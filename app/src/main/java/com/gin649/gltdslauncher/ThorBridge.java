@@ -363,9 +363,12 @@ final class ThorBridge {
         JSONObject o = new JSONObject();
         try {
             File f = new File(path);
+            DiscPatcher.setTools(new File(act.getApplicationInfo().nativeLibraryDir, "libchdman.so"),
+                    new File(act.getApplicationInfo().nativeLibraryDir, "libdolphintool.so"));
             String why = insideRoms(f) ? DiscPatcher.unsupportedReason(f) : "That file is not inside your ROMs folder.";
             o.put("ok", why == null);
             if (why != null) o.put("message", why);
+            else if (DiscPatcher.noteFor(f) != null) o.put("note", DiscPatcher.noteFor(f));
         } catch (Exception e) {
             try {
                 o.put("ok", false);
@@ -417,6 +420,8 @@ final class ThorBridge {
         JSONObject o = new JSONObject();
         try {
             final File base = new File(basePath);
+            DiscPatcher.setTools(new File(act.getApplicationInfo().nativeLibraryDir, "libchdman.so"),
+                    new File(act.getApplicationInfo().nativeLibraryDir, "libdolphintool.so"));
             ByteArrayOutputStream staged;
             synchronized (PATCH_STAGE) {
                 staged = PATCH_STAGE.remove(patchId);

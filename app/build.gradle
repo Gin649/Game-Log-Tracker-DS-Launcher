@@ -61,6 +61,14 @@ android {
         }
     }
 
+    // chdman and dolphin-tool ship as libchdman.so / libdolphintool.so in jniLibs and are run as programs,
+    // so they must be extracted to the app's native library folder instead of staying inside the APK.
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging true
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
