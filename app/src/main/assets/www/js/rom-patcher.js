@@ -550,6 +550,19 @@
     return !denylist.some(d => n.includes(d));
   }
 
+  // CD / DVD based systems. Their disc images are far too big to hold in the page, so they are only patched
+  // inside the Thor app, where the launcher does the work natively (DiscPatcher.java).
+  function isDiscConsole(consoleName){
+    if(typeof thorBridge === 'undefined' || !thorBridge || typeof thorBridge.discPatchStart !== 'function') return false;
+    const n = String(consoleName || '').toLowerCase();
+    if(n.includes('vita') || n.includes('wii u')) return false;
+    return ['playstation', 'ps2', 'psp', 'saturn', 'dreamcast', 'sega cd', 'mega cd', 'pc-fx', '3do', 'neo geo cd',
+      'pc engine cd', 'turbografx-cd', 'turbografx cd', 'jaguar cd', 'cd-i', 'wii', 'gamecube'].some(d => n.includes(d));
+  }
+  function canPatchConsole(consoleName){
+    return isCartridgeConsole(consoleName) || isDiscConsole(consoleName);
+  }
+
   // More patch formats: PPF, APS (N64 and GBA), xdelta/VCDIFF
   // Based on the approach in JoeyOS's RomPatcher.kt (used with Joey's permission), with the
   // public specs as reference (RFC 3284 for VCDIFF). Every read is bounds-checked because a
@@ -1012,6 +1025,43 @@
     let romOnDevice = null; // { name, folder, path } when the ROM came from the launcher
     let romNotFound = false;
     const deviceBridge = (typeof thorBridge !== 'undefined' && thorBridge && typeof thorBridge.findRom === 'function') ? thorBridge : null;
+    // Disc games (PlayStation, Saturn, GameCube ...): the image stays on storage and the launcher patches it in pieces.
+    const discMode = !isCartridgeConsole(consoleName) && !!deviceBridge && typeof deviceBridge.discPatchStart === 'function';
+    let discInfo = null; // { name, folder, path, size, ok, message }
+
+    async function loadDiscFromDevice(){
+      discInfo = null; romNotFound = false;
+      try{
+        const info = JSON.parse(deviceBridge.findRom(JSON.stringify({ title: title, console: consoleName })));
+        if(!info || !info.found){ romNotFound = true; return; }
+        let chk = { ok: true };
+        try{ chk = JSON.parse(deviceBridge.discCheck(info.path)); }catch(e){ /* assume fine */ }
+        discInfo = { name: info.name, folder: info.folder, path: info.path, size: info.size, ok: chk.ok !== false, message: chk.message };
+      }catch(e){
+        romNotFound = true;
+      }
+    }
+    function fmtSize(n){
+      if(!(n > 0)) return '';
+      return n >= 1073741824 ? (n / 1073741824).toFixed(1) + ' GB' : Math.max(1, Math.round(n / 1048576)) + ' MB';
+    }
+    function renderDiscStage(){
+      if(!discInfo){
+        patchWrap.innerHTML = `<div class="hash-status mismatch">No disc image for this game was found in your ROMs folder. Put the game's .cue, .iso or .cso there, then open this again.</div>`;
+        return;
+      }
+      const isCue = /\.cue$/i.test(discInfo.name);
+      patchWrap.innerHTML = `
+        <div style="font-size:0.7688rem;color:var(--text);">Disc image: <strong>${escInfo(discInfo.name)}</strong></div>
+        <div style="font-size:0.675rem;color:var(--muted);margin-top:2px;">Found in your ${escInfo(discInfo.folder)} folder${isCue ? '' : ' (' + fmtSize(discInfo.size) + ')'}. The patched disc is saved next to it and your original isn't changed.</div>
+        ${discInfo.ok
+          ? `<div style="font-size:0.675rem;color:var(--muted);margin-top:6px;line-height:1.5;">Discs are patched straight from storage, so a big one can take a few minutes. Works with BIN/CUE, ISO and CSO games, and IPS, PPF, BPS, UPS and xdelta patches. You'll need about as much free space as the game takes.</div>
+             <button class="guide-btn guide-btn-primary" id="patch-search-btn" style="width:100%;margin-top:12px;">Search RA Patches</button>`
+          : `<div class="hash-status mismatch" style="margin-top:8px;">${escInfo(discInfo.message || "This kind of disc image can't be patched here.")}</div>`}
+      `;
+      const sb = patchWrap.querySelector('#patch-search-btn');
+      if(sb) sb.addEventListener('click', runSearch);
+    }
 
     async function loadRomFromDevice(){
       if(!deviceBridge) return false;
@@ -1091,6 +1141,7 @@
     const supportsFSAccess = !!(window.showOpenFilePicker && window.showSaveFilePicker);
 
     async function init(){
+      if(discMode){ patchWrap.innerHTML = '<div class="achievements-list-loading">Looking for your game…</div>'; await loadDiscFromDevice(); renderRomStage(); return; }
       if(deviceBridge && await loadRomFromDevice()){ renderRomStage(); return; }
       const saved = await loadRom(gameId);
       if(saved){ await setRom(saved.bytes, saved.filename); romFromStorage = !!romBytes; }
@@ -1100,6 +1151,7 @@
 
     // Step 1: get the ROM whose hash we're matching against
     function renderRomStage(){
+      if(discMode){ renderDiscStage(); return; }
       if(!romBytes){
         patchWrap.innerHTML = `
           ${romLoadError ? `<div class="hash-status mismatch" style="margin-bottom:10px;">${romLoadError}</div>` : ''}
@@ -1212,7 +1264,7 @@
     async function runSearch(){
       patchWrap.innerHTML = '<div class="achievements-list-loading">Checking RetroAchievements…</div>';
       try{
-        const romCrc = crc32(romBytes);
+        const romCrc = discMode ? null : crc32(romBytes);
         let official = await fetchOfficialPatches();
 
         patchWrap.innerHTML = '<div class="achievements-list-loading">Reading the RAPatches file list…</div>';
@@ -1260,7 +1312,7 @@
         const bpsUpsCandidates = hacksCandidates.concat(otherCandidates);
         const capped = hacksAll.length > hacksCandidates.length || otherAll.length > otherCandidates.length;
 
-        const checked = await mapWithConcurrency(bpsUpsCandidates, 14, async (c) => {
+        const checked = discMode ? [] : await mapWithConcurrency(bpsUpsCandidates, 14, async (c) => {
           const srcCrc = await fetchPatchSourceCrc32(branch, c.path);
           return { path: c.path, matches: srcCrc !== null && srcCrc === romCrc };
         }, (done, total) => {
@@ -1291,7 +1343,8 @@
         // "Super" would match every other "Super ___" game on the console. inFolder stands on
         // its own because the folder-per-game layout is reliable even when the file is just
         // "<RA ID>-Abbrev.ext".
-        const noPreCheck = ipsAll.concat(zipAll).filter(c => c.inFolder || c.score === 1);
+        // A disc is too big to hash up front, so BPS/UPS patches are matched by name too; the patch checks the disc when it is applied.
+        const noPreCheck = (discMode ? bpsUpsAll.concat(ipsAll, zipAll) : ipsAll.concat(zipAll)).filter(c => (c.inFolder || c.score === 1) && !(discMode && /\.aps$/i.test(c.path)));
         const unverifiedPicks = noPreCheck.filter(c => !idPaths.has(c.path) && !officialPaths.has(fetchRAPatchUrl(branch, c.path)) && !isOfficialDup(c.path));
 
         const byLabel = (a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base', numeric: true });
@@ -1302,7 +1355,7 @@
           verified: verifiedDeduped.slice().sort(byLabel),
           unverified: unverifiedPicks.map(c => ({ label: c.path.split('/').pop(), path: c.path, url: fetchRAPatchUrl(branch, c.path) })).sort(byLabel),
           usedFallback,
-          capped,
+          capped: discMode ? false : capped,
         };
         renderResults();
       }catch(e){
@@ -1397,7 +1450,7 @@
             ${officialRows.map(m => resultRowByUrl(m, 'Official — linked by RetroAchievements', 'official')).join('')}
             ${byIdRows.map(m => resultRowByUrl(m, 'Listed for this exact game (RetroAchievements game ID)', 'byId')).join('')}
             ${verifiedRows.map(m => resultRowByUrl(m, 'Verified — checksum matches this ROM', 'verified')).join('')}
-            ${unverifiedRows.map(m => resultRowByUrl(m, /\.(zip|7z)$/i.test(m.path) ? 'Not checked yet — matched by name; downloading it checks the patch(es) inside' : 'Unverified — this format has no checksum to check up front', 'unverified')).join('')}
+            ${unverifiedRows.map(m => resultRowByUrl(m, /\.(zip|7z)$/i.test(m.path) ? 'Not checked yet — matched by name; downloading it checks the patch(es) inside' : (discMode ? 'Matched by name — your disc is checked against the patch when it is applied' : 'Unverified — this format has no checksum to check up front'), 'unverified')).join('')}
           </div>
         `;
         listWrap.querySelectorAll('.patch-result-row button').forEach(btn => {
@@ -1477,19 +1530,24 @@
           showArchiveFallback(entry, "This zip doesn't contain a BPS, IPS or UPS patch that can be applied automatically.");
           return;
         }
-        const romCrcs = [crc32(romBytes)];
-        if(romBytes.length > 512) romCrcs.push(crc32(romBytes.subarray(512))); // headerless version of the same dump
+        const romCrcs = discMode ? [] : [crc32(romBytes)];
+        if(!discMode && romBytes.length > 512) romCrcs.push(crc32(romBytes.subarray(512))); // headerless version of the same dump
         for(const pe of entries){
           const data = await extractZipEntry(zipBytes, pe);
           const kind = patchKindFromName(pe.name);
           let matches = null; // only BPS/UPS carry a checksum that can be compared up front
-          if((kind === 'bps' || kind === 'ups') && data.length >= 12){
+          if(!discMode && (kind === 'bps' || kind === 'ups') && data.length >= 12){
             matches = romCrcs.includes(readU32LEAt(data, data.length - 12));
           }
           items.push({ label: pe.name.split('/').pop(), kind, data, matches });
         }
       }catch(e){
         showArchiveFallback(entry, `Couldn't unpack this zip (${e.message}).`);
+        return;
+      }
+      if(discMode) items = items.filter(i => i.kind !== 'aps');
+      if(!items.length){
+        showArchiveFallback(entry, "This zip doesn't contain a patch that can be applied to a disc.");
         return;
       }
       const matched = items.filter(i => i.matches === true);
@@ -1504,7 +1562,7 @@
         <p style="font-size:0.7688rem;color:var(--muted);margin:10px 0;line-height:1.55;">This zip has more than one patch. Pick the one to apply.</p>
         <div class="patch-result-list">
           ${items.map((m, idx) => resultRow(m,
-            m.matches === true ? 'Checksum matches this ROM' : (m.matches === false ? "Checksum doesn't match this ROM" : 'No checksum to check up front'),
+            m.matches === true ? 'Checksum matches this ROM' : (m.matches === false ? "Checksum doesn't match this ROM" : (discMode ? 'Checked against your disc when applied' : 'No checksum to check up front')),
             idx, 'zip')).join('')}
         </div>
       `;
@@ -1517,7 +1575,81 @@
       });
     }
 
+    // Disc games: hand the (small) patch to the launcher, which patches the big image on storage in the background
+    // and reports progress. Nothing but the patch ever passes through the page.
+    async function applyDiscPatch(label, kind, patchBytes, verifyGameId){
+      const backToResults = () => { const b = patchWrap.querySelector('#patch-back-btn'); if(b) b.addEventListener('click', renderResults); };
+      const fail = (msg) => {
+        patchWrap.innerHTML = `<div class="hash-status mismatch" style="margin-bottom:8px;">${escInfo(msg)}</div><button class="guide-btn guide-btn-ghost" id="patch-back-btn" style="width:100%;">‹ Back to results</button>`;
+        backToResults();
+      };
+      if(!['ips', 'bps', 'ups', 'ppf', 'vcdiff'].includes(kind)){
+        fail("Disc games can be patched with IPS, PPF, BPS, UPS and xdelta patches. This one is a ." + kind + " patch.");
+        return;
+      }
+      const outStem = (label.replace(PATCH_FILE_RE, '') || 'patched').trim();
+      patchWrap.innerHTML = '<div class="achievements-list-loading">Sending the patch to the launcher…</div>';
+      let jobId;
+      try{
+        const sid = deviceBridge.patchStageBegin();
+        const CH = 786432;
+        for(let i = 0; i < patchBytes.length; i += CH){
+          if(!deviceBridge.patchStageChunk(sid, bytesToBase64(patchBytes.subarray(i, Math.min(i + CH, patchBytes.length))))) throw new Error('The patch could not be handed to the launcher.');
+          await new Promise(r => setTimeout(r, 0));
+        }
+        const start = JSON.parse(deviceBridge.discPatchStart(discInfo.path, sid, outStem));
+        if(!start || !start.ok) throw new Error((start && start.message) || 'Could not start patching.');
+        jobId = start.job;
+      }catch(e){
+        fail(e.message || 'Could not start patching.');
+        return;
+      }
+      patchWrap.innerHTML = `
+        <div id="disc-phase" style="font-size:0.7688rem;color:var(--text);">Starting…</div>
+        <div style="height:8px;border-radius:4px;background:var(--border);margin-top:8px;overflow:hidden;"><div id="disc-bar" style="height:100%;width:0;background:var(--gold, #d4a017);"></div></div>
+        <div style="font-size:0.675rem;color:var(--muted);margin-top:6px;">Keep this screen open until it finishes.</div>
+        <button class="guide-btn guide-btn-ghost" id="disc-cancel-btn" style="width:100%;margin-top:10px;">Cancel</button>
+      `;
+      patchWrap.querySelector('#disc-cancel-btn').addEventListener('click', () => { try{ deviceBridge.discPatchCancel(jobId); }catch(e){} });
+      for(;;){
+        await new Promise(r => setTimeout(r, 400));
+        if(!document.body.contains(patchWrap)) return;
+        let st;
+        try{ st = JSON.parse(deviceBridge.discPatchStatus(jobId)); }catch(e){ st = { state: 'error', message: 'Lost contact with the launcher.' }; }
+        if(st.state === 'running'){
+          const phaseEl = patchWrap.querySelector('#disc-phase'), barEl = patchWrap.querySelector('#disc-bar');
+          if(!phaseEl) return; // the panel moved on
+          const pct = st.total > 0 ? Math.min(100, Math.round(st.done * 100 / st.total)) : 0;
+          phaseEl.textContent = (st.phase || 'Working') + '… ' + (st.total > 0 ? pct + '%' : '');
+          if(barEl) barEl.style.width = pct + '%';
+          continue;
+        }
+        if(st.state !== 'done'){ fail(st.message || 'Patching failed.'); return; }
+        const notes = String(st.notes || '').split('\n').filter(Boolean);
+        const hackId = patchGameIdFrom(label, verifyGameId);
+        patchWrap.innerHTML = `
+          ${notes.map(n => `<div class="hash-status ok" style="margin-top:8px;">${escInfo(n)}</div>`).join('')}
+          <div class="hash-status ok" style="margin-top:8px;">Patched and saved as <strong>${escInfo(st.name)}</strong> in your ${escInfo(discInfo.folder)} folder.</div>
+          <button class="guide-btn guide-btn-primary" id="patch-play-btn" style="margin-top:10px;width:100%;">▶ Play patched game</button>
+          ${hackId ? '<button class="guide-btn guide-btn-outline" id="patch-backlog-btn" style="margin-top:8px;width:100%;">＋ Add to my backlog</button>' : ''}
+          <div id="patch-after-msg" style="font-size:0.7188rem;color:var(--muted);margin-top:6px;min-height:1em;"></div>
+          <button class="guide-btn guide-btn-ghost" id="patch-back-btn" style="width:100%;margin-top:8px;">‹ Back to results</button>
+        `;
+        const afterMsg = patchWrap.querySelector('#patch-after-msg');
+        patchWrap.querySelector('#patch-play-btn').addEventListener('click', () => {
+          let res;
+          try{ res = JSON.parse(deviceBridge.launchFile(st.path)); }catch(e){ res = { ok: false, message: 'Could not reach the launcher.' }; }
+          afterMsg.textContent = res.message || (res.ok ? 'Starting the game…' : 'Could not start the game.');
+        });
+        const blBtn = patchWrap.querySelector('#patch-backlog-btn');
+        if(blBtn) blBtn.addEventListener('click', () => addGameToBacklog(hackId, afterMsg, blBtn));
+        backToResults();
+        return;
+      }
+    }
+
     async function applyPatchBytes(label, kind, patchBytes, verifyGameId){
+      if(discMode){ await applyDiscPatch(label, kind, patchBytes, verifyGameId); return; }
       try{
         patchWrap.innerHTML = '<div class="achievements-list-loading">Applying patch…</div>';
         await new Promise(r => setTimeout(r, 30)); // let the message paint before the heavy work

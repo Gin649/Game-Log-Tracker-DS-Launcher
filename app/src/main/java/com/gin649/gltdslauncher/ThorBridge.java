@@ -13,6 +13,7 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.HashMap;
@@ -340,6 +341,172 @@ final class ThorBridge {
         } catch (Exception ignored) {
         }
         if (file != null) file.delete();
+    }
+
+    // ---- Disc images (CD / DVD games) are patched natively, in pieces, because they are far too big to hold in the page.
+
+    /** One disc patch running (or finished) in the background. */
+    private static final class DiscJob {
+        volatile String state = "running"; // running | done | error
+        volatile String phase = "Starting";
+        volatile long done, total;
+        volatile String message, name, path, playPath, notes;
+        volatile boolean cancel;
+    }
+
+    private static final Map<String, DiscJob> DISC_JOBS = new ConcurrentHashMap<String, DiscJob>();
+    private static final Map<String, ByteArrayOutputStream> PATCH_STAGE = new HashMap<String, ByteArrayOutputStream>();
+
+    /** A disc image can be patched here? Returns {ok, message}. */
+    @JavascriptInterface
+    public String discCheck(String path) {
+        JSONObject o = new JSONObject();
+        try {
+            File f = new File(path);
+            String why = insideRoms(f) ? DiscPatcher.unsupportedReason(f) : "That file is not inside your ROMs folder.";
+            o.put("ok", why == null);
+            if (why != null) o.put("message", why);
+        } catch (Exception e) {
+            try {
+                o.put("ok", false);
+                o.put("message", "Could not look at that file.");
+            } catch (Exception ignored) {
+            }
+        }
+        return o.toString();
+    }
+
+    private static boolean insideRoms(File f) {
+        try {
+            return !Config.ROMS_ROOT.isEmpty()
+                    && f.getCanonicalPath().startsWith(new File(Config.ROMS_ROOT).getCanonicalPath() + "/");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** Starts handing over a patch file (small) in pieces. Returns the id for patchStageChunk / discPatchStart. */
+    @JavascriptInterface
+    public String patchStageBegin() {
+        String id = nextId();
+        synchronized (PATCH_STAGE) {
+            PATCH_STAGE.put(id, new ByteArrayOutputStream());
+        }
+        return id;
+    }
+
+    @JavascriptInterface
+    public boolean patchStageChunk(String id, String base64) {
+        ByteArrayOutputStream b;
+        synchronized (PATCH_STAGE) {
+            b = PATCH_STAGE.get(id);
+        }
+        if (b == null) return false;
+        try {
+            byte[] d = Base64.decode(base64, Base64.DEFAULT);
+            b.write(d, 0, d.length);
+            return b.size() < 256 * 1024 * 1024;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** Patches the disc image at basePath with the staged patch, in the background. Returns {ok, job} or {ok:false, message}. */
+    @JavascriptInterface
+    public String discPatchStart(String basePath, String patchId, String outName) {
+        JSONObject o = new JSONObject();
+        try {
+            final File base = new File(basePath);
+            ByteArrayOutputStream staged;
+            synchronized (PATCH_STAGE) {
+                staged = PATCH_STAGE.remove(patchId);
+            }
+            if (staged == null) {
+                o.put("ok", false);
+                o.put("message", "The patch was not received.");
+                return o.toString();
+            }
+            if (!insideRoms(base) || !base.isFile()) {
+                o.put("ok", false);
+                o.put("message", "That disc image is not inside your ROMs folder.");
+                return o.toString();
+            }
+            final byte[] patch = staged.toByteArray();
+            final String stem = outName;
+            final String jobId = nextId();
+            final DiscJob job = new DiscJob();
+            DISC_JOBS.put(jobId, job);
+            Thread t = new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        DiscPatcher.Result r = DiscPatcher.run(base, patch, stem, new DiscPatcher.Progress() {
+                            public void update(String phase, long done, long total) {
+                                job.phase = phase;
+                                job.done = done;
+                                job.total = total;
+                            }
+
+                            public boolean cancelled() {
+                                return job.cancel;
+                            }
+                        });
+                        job.name = r.playable().getName();
+                        job.path = r.playable().getPath();
+                        StringBuilder n = new StringBuilder();
+                        for (String s : r.notes) n.append(n.length() > 0 ? "\n" : "").append(s);
+                        job.notes = n.toString();
+                        Shared.rescan();
+                        job.state = "done";
+                    } catch (Throwable e) {
+                        job.message = e instanceof OutOfMemoryError ? "Ran out of memory while patching this disc."
+                                : (e.getMessage() == null ? "Patching failed." : e.getMessage());
+                        job.state = "error";
+                    }
+                }
+            }, "disc-patch");
+            t.setDaemon(true);
+            t.start();
+            o.put("ok", true);
+            o.put("job", jobId);
+        } catch (Exception e) {
+            try {
+                o.put("ok", false);
+                o.put("message", e.getMessage() == null ? "Could not start." : e.getMessage());
+            } catch (Exception ignored) {
+            }
+        }
+        return o.toString();
+    }
+
+    /** Progress of a disc patch: {state, phase, done, total, message, name, path, notes}. */
+    @JavascriptInterface
+    public String discPatchStatus(String jobId) {
+        JSONObject o = new JSONObject();
+        try {
+            DiscJob j = DISC_JOBS.get(jobId);
+            if (j == null) {
+                o.put("state", "error");
+                o.put("message", "That patch is no longer running.");
+                return o.toString();
+            }
+            o.put("state", j.state);
+            o.put("phase", j.phase);
+            o.put("done", j.done);
+            o.put("total", j.total);
+            if (j.message != null) o.put("message", j.message);
+            if (j.name != null) o.put("name", j.name);
+            if (j.path != null) o.put("path", j.path);
+            if (j.notes != null) o.put("notes", j.notes);
+            if (!"running".equals(j.state)) DISC_JOBS.remove(jobId);
+        } catch (Exception ignored) {
+        }
+        return o.toString();
+    }
+
+    @JavascriptInterface
+    public void discPatchCancel(String jobId) {
+        DiscJob j = DISC_JOBS.get(jobId);
+        if (j != null) j.cancel = true;
     }
 
     /** Plays a ROM file by its path, such as a patched ROM that was just saved. */

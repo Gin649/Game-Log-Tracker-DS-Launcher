@@ -164,7 +164,7 @@ function renderCustomGameModal(gameId, local, card){
       <button class="btn-view-achievements" id="modal-link-ra-btn"><span class="arrow">▸</span> Link to RetroAchievements</button>
       <div class="guide-panel" id="modal-link-ra-panel" style="display:none;"></div>
 
-      ${isCartridgeConsole(local.ConsoleName) ? `
+      ${canPatchConsole(local.ConsoleName) ? `
       <button class="btn-view-achievements" id="modal-patch-btn"><span class="arrow">▸</span> ROM Hacks</button>
       <div class="guide-panel" id="modal-patch-panel" style="display:none;"></div>
       ` : ''}
@@ -234,7 +234,7 @@ function renderCustomGameModal(gameId, local, card){
   setupCheatsUI(gameId, local.Title, card, local.ConsoleName);
   setupWalkthroughUI(gameId, local.Title, card, local.ConsoleName);
   setupLinkRaUI(gameId, local, card);
-  if(isCartridgeConsole(local.ConsoleName)) setupRomPatchUI(gameId, local.Title, card, local.ConsoleName);
+  if(canPatchConsole(local.ConsoleName)) setupRomPatchUI(gameId, local.Title, card, local.ConsoleName);
 }
 
 // Lets the user search RetroAchievements for a real match to an existing
@@ -465,7 +465,7 @@ async function openGameModal(gameId, opts){
 
       <button class="btn-view-achievements" id="modal-cheats-btn"><span class="arrow">↗</span> Need Cheats?</button>
 
-      ${isCartridgeConsole(console_) ? `
+      ${canPatchConsole(console_) ? `
       <button class="btn-view-achievements" id="modal-patch-btn"><span class="arrow">▸</span> ROM Hacks</button>
       <div class="guide-panel" id="modal-patch-panel" style="display:none;"></div>
       ` : ''}
@@ -512,7 +512,7 @@ async function openGameModal(gameId, opts){
   setupGameGuideUI(gameId, title, card, ext.ConsoleID || (local && local.ConsoleID));
   setupCheatsUI(gameId, title, card, console_);
   setupWalkthroughUI(gameId, title, card, console_);
-  if(isCartridgeConsole(console_)) setupRomPatchUI(gameId, title, card, console_);
+  if(canPatchConsole(console_)) setupRomPatchUI(gameId, title, card, console_);
 
   const achBtn = card.querySelector('#modal-view-ach-btn');
   const achWrap = card.querySelector('#modal-achievements');

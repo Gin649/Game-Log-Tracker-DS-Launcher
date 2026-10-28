@@ -30,6 +30,7 @@ The web version has the full details: https://github.com/Gin649/Game-Log-Tracker
 - **Walkthroughs.** Find a walkthrough opens a browser inside the app. Back, or a swipe from the edge, returns to the tracker, and Save video keeps the link in the game's profile.
 - Game guides, a Need Cheats? button, review scores, and the time other players take to beat the game.
 - **ROM Hacks.** The app finds your base ROM for you. The patched ROM is saved next to it, with a "Play patched ROM" button and an "Add to my backlog" option. I don't host or supply any ROMs.
+- **Disc games too.** ROM Hacks also works for CD and DVD games (PlayStation, Saturn, Sega CD, GameCube and so on). Discs are patched straight from storage, with a progress bar, and the patched copy is saved next to the original, which is never changed. It works with BIN/CUE, ISO and CSO games, and with IPS, PPF, BPS, UPS and xdelta patches. CHD and RVZ games need converting to BIN/CUE or ISO first; the app tells you how.
 
 ### On the top screen
 
