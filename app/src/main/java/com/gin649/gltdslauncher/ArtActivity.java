@@ -179,6 +179,11 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     }
 
     @Override
+    public void onMenuScroll(double dy) {
+        if (panelReady) panel.evaluateJavascript("GLTTop.scrollMenu(" + dy + ")", null);
+    }
+
+    @Override
     public void onPanel(String html, String bodyClass) {
         panelHtml = html == null ? "" : html;
         applyPanel();

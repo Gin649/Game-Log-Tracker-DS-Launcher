@@ -421,6 +421,12 @@ public class MainActivity extends Activity {
         }
 
         /** True while the top screen is showing the header, so the page should hide its own. */
+        /** The right stick scrolled the open menu, which is on the top screen. */
+        @JavascriptInterface
+        public void scrollTopMenu(double dy) {
+            TopPanel.scrollMenu(dy);
+        }
+
         @JavascriptInterface
         public boolean topPanelActive() {
             return TopPanel.viewAlive();

@@ -69,8 +69,14 @@
     return top ? top.el : document.body;
   }
 
+  // With the header on the top screen the open menu is drawn and scrolled there, so the stick and the
+  // D-pad scroll that menu and leave the tracker page on the bottom screen where it is.
+  const TOP_MENU = { topMenu: true };
+  const topPanelOn = () => document.documentElement.classList.contains('top-panel');
+
   // What the right stick scrolls.
   function getScroller(){
+    if(menuOpen() && topPanelOn()) return TOP_MENU;
     if(!menuOpen()){
       const top = topOverlay();
       if(top){
@@ -83,6 +89,10 @@
   }
   function scrollBy(sc, dy){
     if(!sc) return;
+    if(sc === TOP_MENU){
+      try{ if(nativePad) nativePad.scrollTopMenu(dy); }catch(e){ /* not in the app */ }
+      return;
+    }
     if(sc === window) window.scrollBy(0, dy); else sc.scrollTop += dy;
   }
 
@@ -251,7 +261,7 @@
     if(!wrap || !wrap.getClientRects().length) return; // not connected yet, no menu to open
     if(menuOpen()){ closeDropdownMenu(); return; }
     for(let i = 0; i < 8 && topOverlay(); i++) goBack(); // the menu lives on the main screen
-    window.scrollTo(0, 0);
+    if(!topPanelOn()) window.scrollTo(0, 0); // with the menu on the top screen, the bottom page stays put
     $('#dropdown-menu').classList.add('open');
     ensureFocus();
   }

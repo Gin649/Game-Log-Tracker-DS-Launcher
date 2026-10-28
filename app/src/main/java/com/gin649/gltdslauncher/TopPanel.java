@@ -12,6 +12,9 @@ final class TopPanel {
 
     interface Listener {
         void onPanel(String html, String bodyClass);
+
+        /** The controller scrolled the open menu on the top screen. */
+        void onMenuScroll(double dy);
     }
 
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
@@ -73,6 +76,21 @@ final class TopPanel {
                 }
             });
         }
+    }
+
+    /** The controller scrolled the open menu; the top screen scrolls its copy. */
+    static void scrollMenu(final double dy) {
+        final Listener l;
+        synchronized (TopPanel.class) {
+            l = listener;
+        }
+        if (l == null) return;
+        MAIN.post(new Runnable() {
+            @Override
+            public void run() {
+                l.onMenuScroll(dy);
+            }
+        });
     }
 
     /** The top screen's copy was tapped. An empty id means a tap outside the menu. */

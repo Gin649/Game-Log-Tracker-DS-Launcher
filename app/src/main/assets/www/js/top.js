@@ -5,20 +5,60 @@
   const stage = document.getElementById('stage');
   const DESIGN_WIDTH = 720; // the width the tracker lays this out at
 
+  const MENU_ZOOM = 0.7;  // keep in step with the zoom on .dropdown-menu in top.html
+  let stageZoom = 1;
+
+  const openMenu = () => stage.querySelector('#dropdown-menu.open');
+
   function fit(){
     stage.style.zoom = 1;
     const natural = stage.offsetHeight || 1;
+    // Where the open menu starts, measured at zoom 1 so it doesn't depend on how zoom is reported.
+    const menu = openMenu();
+    let menuTop = 0;
+    if(menu){
+      menu.style.maxHeight = 'none';
+      menuTop = menu.getBoundingClientRect().top;
+    }
     const scale = Math.min(window.innerWidth * 0.97 / DESIGN_WIDTH, window.innerHeight * 0.97 / natural);
-    stage.style.zoom = Math.max(0.5, scale);
+    stageZoom = Math.max(0.5, scale);
+    stage.style.zoom = stageZoom;
+    if(menu){
+      // Room left under the button, in the menu's own units. The list scrolls inside this.
+      const room = window.innerHeight / stageZoom - menuTop - 8 / stageZoom;
+      menu.style.maxHeight = Math.max(60, room / MENU_ZOOM) + 'px';
+    }
+  }
+
+  // Keeps the controller highlight visible inside the menu by scrolling the menu itself (never the page).
+  function keepFocusInMenu(){
+    const menu = openMenu();
+    const el = menu && menu.querySelector('.pad-focus');
+    if(!el) return;
+    const k = stageZoom * MENU_ZOOM;
+    for(let i = 0; i < 3; i++){
+      const m = menu.getBoundingClientRect(), r = el.getBoundingClientRect();
+      if(r.top < m.top) menu.scrollTop -= (m.top - r.top) / k + 2;
+      else if(r.bottom > m.bottom) menu.scrollTop += (r.bottom - m.bottom) / k + 2;
+      else break;
+    }
   }
 
   window.GLTTop = {
     set(html, bodyClass){
+      const before = openMenu();
+      const kept = before ? before.scrollTop : 0;
       stage.innerHTML = html;
       document.body.className = bodyClass || '';
       fit();
-      const focused = stage.querySelector('.pad-focus'); // keep the controller highlight in view
-      if(focused) focused.scrollIntoView({ block: 'nearest' });
+      const menu = openMenu();
+      if(menu && before) menu.scrollTop = kept; // a redraw shouldn't send the list back to the top
+      keepFocusInMenu();
+    },
+    // The controller's right stick (or D-pad past the end) scrolls the menu here, not the tracker page.
+    scrollMenu(dy){
+      const menu = openMenu();
+      if(menu) menu.scrollTop += dy * 0.6;
     },
   };
   window.addEventListener('resize', fit);
