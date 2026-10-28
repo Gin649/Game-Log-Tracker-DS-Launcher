@@ -101,6 +101,53 @@ public final class MiximageCompositor {
         return BitmapFactory.decodeByteArray(data, 0, data.length, opts);
     }
 
+    /** Decodes an image file, shrinking anything larger than maxSide. Null if it can't be read. */
+    public static Bitmap decodeFile(String path, int maxSide) {
+        if (path == null) return null;
+        try {
+            BitmapFactory.Options bounds = new BitmapFactory.Options();
+            bounds.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(path, bounds);
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null;
+            int sample = 1;
+            while (Math.max(bounds.outWidth, bounds.outHeight) / (sample * 2) >= maxSide) sample *= 2;
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inSampleSize = sample;
+            return BitmapFactory.decodeFile(path, opts);
+        } catch (Throwable t) { // includes out of memory on a huge picture
+            return null;
+        }
+    }
+
+    /** Saves a picture as it is (fan art is not mixed with anything) as a JPEG. Returns targetFile, or null on failure. */
+    public static File saveJpeg(Bitmap b, File targetFile) {
+        if (b == null) return null;
+        File tmp = new File(targetFile.getPath() + ".tmp");
+        try {
+            File parent = targetFile.getParentFile();
+            if (parent != null) parent.mkdirs();
+            FileOutputStream out = new FileOutputStream(tmp);
+            try {
+                if (!b.compress(Bitmap.CompressFormat.JPEG, 90, out)) {
+                    tmp.delete();
+                    return null;
+                }
+            } finally {
+                out.close();
+            }
+            if (targetFile.exists() && !targetFile.delete()) {
+                tmp.delete();
+                return null;
+            }
+            if (tmp.renameTo(targetFile)) return targetFile;
+            tmp.delete();
+            return null;
+        } catch (Exception e) {
+            tmp.delete();
+            return null;
+        }
+    }
+
     private static void drawCover(Canvas canvas, Bitmap b, Paint paint) {
         float scale = Math.max((float) WIDTH / b.getWidth(), (float) HEIGHT / b.getHeight());
         int srcW = Math.round(WIDTH / scale);
