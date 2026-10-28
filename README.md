@@ -30,7 +30,7 @@ The web version has the full details: https://github.com/Gin649/Game-Log-Tracker
 - **Walkthroughs.** Find a walkthrough opens a browser inside the app. Back, or a swipe from the edge, returns to the tracker, and Save video keeps the link in the game's profile.
 - Game guides, a Need Cheats? button, review scores, and the time other players take to beat the game.
 - **ROM Hacks.** The app finds your base ROM for you. The patched ROM is saved next to it, with a "Play patched ROM" button and an "Add to my backlog" option. I don't host or supply any ROMs.
-- **Disc games too.** ROM Hacks also works for CD and DVD games (PlayStation, Saturn, Sega CD, GameCube and so on). Discs are patched straight from storage, with a progress bar, and the patched copy is saved next to the original, which is never changed. It works with BIN/CUE, ISO and CSO games, and with IPS, PPF, BPS, UPS and xdelta patches. CHD and RVZ games need converting to BIN/CUE or ISO first; the app tells you how.
+- **Disc games too.** ROM Hacks also works for CD and DVD games (PlayStation, Saturn, Sega CD, GameCube and so on). Discs are patched straight from storage, with a progress bar, and the patched copy is saved next to the original, which is never changed. It works with BIN/CUE, ISO, CSO, CHD and RVZ games, and with IPS, PPF, BPS, UPS and xdelta patches. CHD and RVZ games are unpacked, patched and packed again, which takes longer and needs free space for the whole disc.
 
 ### On the top screen
 
@@ -121,6 +121,8 @@ Other sites the app contacts, and why:
 ## Thanks
 
 Joey (https://www.joeysretrohandhelds.com) helped make this possible, and his JoeyOS app inspired the guide lookup and the ROM patcher. I used his approach with his permission.
+
+CHD and RVZ patching uses chdman (from MAME) and dolphin-tool (from Dolphin), both GPL-2.0, built with Joey's scripts. Licences are in the licences folder.
 
 Achievement data comes from RetroAchievements and ratings and box art from RAWG. Fan art comes from SteamGridDB and free thumbnails from the libretro project. Text guides come from the GameFAQs archive on archive.org, indexed by the Guide Watch project. I'm not affiliated with any of them.
 
