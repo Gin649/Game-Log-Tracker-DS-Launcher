@@ -1,0 +1,227 @@
+{
+ "gb": [
+  "dmg",
+  "gameboy",
+  "gb",
+  "nintendogameboy"
+ ],
+ "gbc": [
+  "gameboycolor",
+  "gbc",
+  "gbcolor",
+  "nintendogameboycolor"
+ ],
+ "gba": [
+  "gameboyadvance",
+  "gba",
+  "nintendogameboyadvance"
+ ],
+ "nes": [
+  "nes",
+  "nintendoentertainmentsystem",
+  "nintendones",
+  "nintendonintendoentertainmentsystem"
+ ],
+ "famicom": [
+  "famicom",
+  "nintendofamicom"
+ ],
+ "snes": [
+  "nintendosnes",
+  "nintendosupernintendoentertainmentsystem",
+  "snes",
+  "supernes",
+  "supernintendo",
+  "supernintendoentertainmentsystem"
+ ],
+ "sfc": [
+  "nintendosuperfamicom",
+  "sfc",
+  "superfamicom"
+ ],
+ "genesis": [
+  "genesis",
+  "genesismegadrive",
+  "megadrive",
+  "segagenesis",
+  "segagenesismegadrive",
+  "segamegadrive",
+  "segamegadrivegenesis"
+ ],
+ "megadrive": [
+  "megadrive"
+ ],
+ "mastersystem": [
+  "mastersystem",
+  "segamastersystem",
+  "segamastersystemmarkiii",
+  "sms"
+ ],
+ "gamegear": [
+  "gamegear",
+  "gg",
+  "segagamegear"
+ ],
+ "segacd": [
+  "megacd",
+  "segacd",
+  "segamegacd",
+  "segamegacdsegacd"
+ ],
+ "sega32x": [
+  "32x",
+  "sega32x"
+ ],
+ "sg-1000": [
+  "segasg1000",
+  "sg1000"
+ ],
+ "n64": [
+  "n64",
+  "nintendo64",
+  "nintendon64",
+  "nintendonintendo64"
+ ],
+ "psx": [
+  "playstation",
+  "playstation1",
+  "ps1",
+  "psone",
+  "psx",
+  "sonyplaystation"
+ ],
+ "ps2": [
+  "playstation2",
+  "ps2",
+  "sonyplaystation2"
+ ],
+ "psp": [
+  "playstationportable",
+  "psp",
+  "sonyplaystationportable"
+ ],
+ "nds": [
+  "ds",
+  "nds",
+  "nintendods",
+  "nintendonintendods"
+ ],
+ "gc": [
+  "gamecube",
+  "gc",
+  "nintendogamecube"
+ ],
+ "wii": [
+  "nintendowii",
+  "wii"
+ ],
+ "pcengine": [
+  "necpcengine",
+  "necpcengineturbografx16",
+  "pcengine",
+  "pcengineturbografx16",
+  "tg16",
+  "turbografx16"
+ ],
+ "pcenginecd": [
+  "necpcenginecdturbografxcd",
+  "pcenginecd",
+  "pcenginecdrom",
+  "tgcd",
+  "turbografxcd"
+ ],
+ "atari2600": [
+  "atari2600"
+ ],
+ "atari5200": [
+  "atari5200"
+ ],
+ "atari7800": [
+  "atari7800"
+ ],
+ "atarilynx": [
+  "atarilynx",
+  "lynx"
+ ],
+ "atarijaguar": [
+  "atarijaguar",
+  "jaguar"
+ ],
+ "ngp": [
+  "neogeopocket",
+  "ngp",
+  "snkneogeopocket"
+ ],
+ "ngpc": [
+  "neogeopocketcolor",
+  "ngpc",
+  "snkneogeopocketcolor"
+ ],
+ "wonderswan": [
+  "bandaiwonderswan",
+  "wonderswan",
+  "ws"
+ ],
+ "wonderswancolor": [
+  "bandaiwonderswancolor",
+  "wonderswancolor",
+  "wsc"
+ ],
+ "virtualboy": [
+  "nintendovirtualboy",
+  "virtualboy"
+ ],
+ "pokemini": [
+  "nintendopokemonmini",
+  "pokemini",
+  "pokemonmini",
+  "pokmonmini"
+ ],
+ "colecovision": [
+  "colecocolecovision",
+  "colecovision"
+ ],
+ "intellivision": [
+  "intellivision",
+  "mattelintellivision"
+ ],
+ "vectrex": [
+  "gcevectrex",
+  "vectrex"
+ ],
+ "arcade": [
+  "arcade",
+  "arcademame",
+  "fbneo",
+  "finalburnneo",
+  "mame"
+ ],
+ "msx": [
+  "microsoftmsx",
+  "msx",
+  "msx2"
+ ],
+ "channelf": [
+  "channelf",
+  "fairchildchannelf"
+ ],
+ "odyssey2": [
+  "magnavoxodyssey2",
+  "odyssey2",
+  "videopac"
+ ],
+ "dreamcast": [
+  "dc",
+  "dreamcast",
+  "segadreamcast"
+ ],
+ "saturn": [
+  "saturn",
+  "segasaturn"
+ ],
+ "3do": [
+  "3do",
+  "3dointeractivemultiplayer",
+  "the3docompany3do"
+ ]
+}
