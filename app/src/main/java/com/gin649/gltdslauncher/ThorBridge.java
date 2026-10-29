@@ -8,12 +8,14 @@ import android.util.Base64;
 import android.webkit.JavascriptInterface;
 import android.widget.Toast;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -130,6 +132,109 @@ final class ThorBridge {
     @JavascriptInterface
     public String scrapeStatus() {
         return LibraryScraper.status(act);
+    }
+
+    // Adding games to the backlog from your ROM files
+
+    /** Opens the system file picker (several files at once). The page gets the result in window.thorRomsPicked. */
+    @JavascriptInterface
+    public void pickRoms() {
+        act.pickRoms();
+    }
+
+    /** The systems that have ROMs, as [{folder, ra:[names], count}]. */
+    @JavascriptInterface
+    public String romSystems() {
+        JSONArray out = new JSONArray();
+        try {
+            Map<String, SystemMap.Sys> sysOf = new java.util.TreeMap<String, SystemMap.Sys>();
+            Map<String, Integer> counts = new HashMap<String, Integer>();
+            for (RomIndex.Rom r : Shared.index().all()) {
+                sysOf.put(r.sys.folder, r.sys);
+                Integer n = counts.get(r.sys.folder);
+                counts.put(r.sys.folder, n == null ? 1 : n + 1);
+            }
+            for (Map.Entry<String, SystemMap.Sys> e : sysOf.entrySet()) {
+                JSONObject o = new JSONObject();
+                o.put("folder", e.getKey());
+                o.put("ra", new JSONArray(e.getValue().ra));
+                o.put("count", counts.get(e.getKey()));
+                out.put(o);
+            }
+        } catch (Exception ignored) {
+        }
+        return out.toString();
+    }
+
+    /** Every game in one system folder, as [{title, folder, ra:[names]}]. */
+    @JavascriptInterface
+    public String romsIn(String folder) {
+        JSONArray out = new JSONArray();
+        try {
+            for (RomIndex.Rom r : Shared.index().all()) {
+                if (r.sys.folder.equals(folder)) out.put(romJson(r.name, r.sys));
+            }
+        } catch (Exception ignored) {
+        }
+        return out.toString();
+    }
+
+    private static JSONObject romJson(String title, SystemMap.Sys sys) throws org.json.JSONException {
+        JSONObject o = new JSONObject();
+        o.put("title", title);
+        o.put("folder", sys == null ? "" : sys.folder);
+        o.put("ra", sys == null ? new JSONArray() : new JSONArray(sys.ra));
+        return o;
+    }
+
+    /** Describes files picked with the file picker: their titles and, where it can be told, their system. */
+    static String describePicked(android.content.Context ctx, java.util.List<android.net.Uri> uris) {
+        JSONArray out = new JSONArray();
+        List<RomIndex.Rom> all = Shared.index().all();
+        SystemMap map = Shared.systems();
+        for (android.net.Uri u : uris) {
+            try {
+                String path = PathUtil.fromDocument(u);
+                String name = path != null ? new File(path).getName() : displayName(ctx, u);
+                if (name == null || name.isEmpty()) continue;
+                int dot = name.lastIndexOf('.');
+                String title = dot > 0 ? name.substring(0, dot) : name;
+
+                SystemMap.Sys sys = null;
+                if (path != null) {
+                    for (RomIndex.Rom r : all) {
+                        if (r.file.getPath().equals(path)) {
+                            sys = r.sys;
+                            break;
+                        }
+                    }
+                    if (sys == null && map != null) {
+                        String parent = new File(path).getParentFile() == null ? "" : new File(path).getParentFile().getName();
+                        for (SystemMap.Sys s : map.all) {
+                            if (s.folder.equalsIgnoreCase(parent)) {
+                                sys = s;
+                                break;
+                            }
+                        }
+                    }
+                }
+                out.put(romJson(title, sys));
+            } catch (Exception ignored) {
+            }
+        }
+        return out.toString();
+    }
+
+    private static String displayName(android.content.Context ctx, android.net.Uri u) {
+        android.database.Cursor c = null;
+        try {
+            c = ctx.getContentResolver().query(u, new String[]{android.provider.OpenableColumns.DISPLAY_NAME}, null, null, null);
+            if (c != null && c.moveToFirst()) return c.getString(0);
+        } catch (Exception ignored) {
+        } finally {
+            if (c != null) c.close();
+        }
+        return null;
     }
 
     // The tracker's saved data, kept as files in the app's data folder (see DataStore). window.storage uses these.

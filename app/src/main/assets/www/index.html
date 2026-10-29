@@ -213,6 +213,19 @@
       </div>
       <button class="btn-primary" id="addgame-search-btn">Search</button>
 
+      <div id="addgame-roms" class="addgame-roms" style="display:none;">
+        <div class="addgame-roms-title">Or add from your ROM files</div>
+        <div class="hint">Pick games in your ROMs folder and they go straight to your Backlog. You can tick several in the same folder.</div>
+        <div class="addgame-roms-actions">
+          <button class="btn-ghost" id="addgame-pick-roms" type="button">Pick ROM files…</button>
+          <button class="btn-ghost" id="addgame-all-toggle" type="button">Add all from a system…</button>
+        </div>
+        <div id="addgame-all-row" class="addgame-all-row" style="display:none;">
+          <select id="addgame-all-system"></select>
+          <button class="btn-primary" id="addgame-all-go" type="button">Add all</button>
+        </div>
+      </div>
+
       <div id="addgame-results"></div>
       <div id="addgame-selection-bar" class="addgame-selection-bar" style="display:none;">
         <span id="addgame-selection-count"></span>
@@ -316,6 +329,7 @@
 <script src="js/game-details.js"></script>
 <script src="js/game-modal.js"></script>
 <script src="js/add-game.js"></script>
+<script src="js/rom-backlog.js"></script>
 <script src="js/social.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/sync.js"></script>

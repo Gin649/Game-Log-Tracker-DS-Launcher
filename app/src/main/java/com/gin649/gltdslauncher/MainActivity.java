@@ -33,6 +33,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONObject;
 
@@ -40,6 +41,7 @@ import org.json.JSONObject;
 public class MainActivity extends Activity {
 
     private static final int REQ_FILE = 1;
+    private static final int REQ_PICK_ROMS = 2;
     private static final int BG = Color.rgb(21, 18, 31);
 
     private FrameLayout root;
@@ -438,7 +440,58 @@ public class MainActivity extends Activity {
             }
             return;
         }
+        if (requestCode == REQ_PICK_ROMS) {
+            if (resultCode != RESULT_OK || data == null) return;
+            final java.util.List<Uri> uris = new java.util.ArrayList<Uri>();
+            if (data.getClipData() != null) {
+                for (int i = 0; i < data.getClipData().getItemCount(); i++) uris.add(data.getClipData().getItemAt(i).getUri());
+            } else if (data.getData() != null) {
+                uris.add(data.getData());
+            }
+            if (uris.isEmpty() || webView == null) return;
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    final String json = ThorBridge.describePicked(MainActivity.this, uris);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (webView != null) {
+                                webView.evaluateJavascript("window.thorRomsPicked&&window.thorRomsPicked("
+                                        + JSONObject.quote(json) + ")", null);
+                            }
+                        }
+                    });
+                }
+            }, "rom-pick").start();
+            return;
+        }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    /** Lets the person pick one or more ROM files; the result goes to the page as window.thorRomsPicked. */
+    void pickRoms() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                i.addCategory(Intent.CATEGORY_OPENABLE);
+                i.setType("*/*");
+                i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                String tree = Prefs.get(MainActivity.this, "romsTree", "");
+                if (!tree.isEmpty()) {
+                    try {
+                        i.putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, Uri.parse(tree));
+                    } catch (Exception ignored) {
+                    }
+                }
+                try {
+                    startActivityForResult(i, REQ_PICK_ROMS);
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this, "No file picker is available on this device.", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
     }
 
     /** True while the tracker is on screen and should receive controller input. */

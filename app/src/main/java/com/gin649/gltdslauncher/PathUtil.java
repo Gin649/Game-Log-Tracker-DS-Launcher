@@ -20,4 +20,19 @@ final class PathUtil {
             return null;
         }
     }
+
+    /** Real path of a file picked with the system file picker, or null when it doesn't live on storage we can name. */
+    static String fromDocument(Uri doc) {
+        try {
+            if (!"com.android.externalstorage.documents".equals(doc.getAuthority())) return null;
+            String id = DocumentsContract.getDocumentId(doc);
+            int colon = id.indexOf(':');
+            if (colon < 0) return null;
+            String volume = id.substring(0, colon);
+            String base = "primary".equals(volume) ? "/storage/emulated/0" : "/storage/" + volume;
+            return base + "/" + id.substring(colon + 1);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }
