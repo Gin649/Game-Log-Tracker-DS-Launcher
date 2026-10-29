@@ -17,30 +17,28 @@
       </button>
       <div class="dropdown-menu" id="dropdown-menu">
         <button class="dropdown-item" id="btn-thor-exit" style="display:none;">Exit app</button>
+        <button class="dropdown-item" id="btn-thor-settings" style="display:none;">Launcher settings</button>
         <button class="dropdown-item dropdown-heading" id="btn-ra-heading">RetroAchievements <span id="ra-heading-arrow">▸</span></button>
         <div id="ra-submenu" style="display:none;">
           <button class="dropdown-item dropdown-subitem" id="btn-hardcore-toggle">Switch to Hardcore Mode</button>
         </div>
-        <button class="dropdown-item" id="btn-thor-settings" style="display:none;">Launcher settings</button>
-        <button class="dropdown-item dropdown-gold" id="btn-social-open">Social</button>
+        <button class="dropdown-item" id="btn-social-open">Social</button>
         <button class="dropdown-item" id="btn-data-settings-open">Data</button>
-        <button class="dropdown-item dropdown-heading" id="btn-textsize-heading">Text Size <span id="textsize-heading-arrow">▸</span></button>
-        <div id="textsize-submenu" style="display:none;">
+        <button class="dropdown-item dropdown-heading" id="btn-display-heading">Display Options <span id="display-heading-arrow">▸</span></button>
+        <div id="display-submenu" style="display:none;">
           <div class="textsize-row">
+            <span class="display-note" style="margin:0 4px 0 0;">Text size</span>
             <button class="textsize-btn" id="textsize-dec" aria-label="Smaller text">A−</button>
             <span class="size-label" id="textsize-label">100%</span>
             <button class="textsize-btn" id="textsize-inc" aria-label="Larger text">A+</button>
             <button class="textsize-reset" id="textsize-reset">Reset</button>
           </div>
-        </div>
-        <button class="dropdown-item dropdown-heading dropdown-plain" id="btn-display-heading">Display <span id="display-heading-arrow">▸</span></button>
-        <div id="display-submenu" style="display:none;">
           <div class="display-row">
             <span>Clock and battery<span class="display-note" id="display-status-note">Shows the time and a battery of hearts</span></span>
             <button class="display-switch" id="display-status-switch" role="switch" aria-checked="false" aria-label="Clock and battery"></button>
           </div>
         </div>
-        <button class="dropdown-item dropdown-heading dropdown-plain" id="btn-pad-heading">Controller <span id="pad-heading-arrow">▸</span></button>
+        <button class="dropdown-item dropdown-heading" id="btn-pad-heading">Gamepad Config <span id="pad-heading-arrow">▸</span></button>
         <div id="pad-submenu" style="display:none;">
           <div class="display-row">
             <span>Swap A and B<span class="display-note" id="pad-swap-note">A confirms, B goes back</span></span>
@@ -48,7 +46,7 @@
           </div>
           <p class="pad-help">D-pad or left stick: move<br>Right stick: scroll<br>Select: this menu<br>X: refresh<br>L1 / R1: change console<br>L2 / R2: change tab<br>In a manual: L1 / R1 page, L2 / R2 zoom</p>
         </div>
-        <button class="dropdown-item dropdown-gold" id="btn-about-open">About</button>
+        <button class="dropdown-item" id="btn-about-open">About</button>
       </div>
     </div>
   </div>

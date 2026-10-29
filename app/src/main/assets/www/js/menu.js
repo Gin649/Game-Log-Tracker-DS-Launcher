@@ -25,7 +25,7 @@ function wireSubmenu(name){
     $('#' + name + '-heading-arrow').textContent = isOpen ? '▸' : '▾';
   });
 }
-['ra', 'textsize', 'display'].forEach(wireSubmenu);
+['ra', 'display'].forEach(wireSubmenu);
 
 // Text size: every font size is in rem, so the size on <html> scales them all (art keeps its size).
 const TEXTSIZE_MIN = 80, TEXTSIZE_MAX = 160, TEXTSIZE_STEP = 10, TEXTSIZE_DEFAULT = 100, TEXTSIZE_BASE_PX = 16;
