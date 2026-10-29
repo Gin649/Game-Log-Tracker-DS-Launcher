@@ -1,16 +1,16 @@
 # Game Log Tracker DS Launcher
 
-Game Log Tracker as an Android app, built for the AYN Thor and its two screens. Track your RetroAchievements and completions on the bottom screen, see your game's art on the top screen, and start your games in RetroArch or a standalone emulator with one tap. It also works on single-screen Android devices (Android 11 or newer). Everything you add is saved on your own device.
+Game Log Tracker as an Android app, built for two screen devices like the AYN Thor and the Retroid Pocket Duo. Track your RetroAchievements and completions on the bottom screen, see your game's art on the top screen, and start your games in RetroArch or a standalone emulator with one tap. It also works on single-screen Android devices (Android 11 or newer). Everything you add is saved on your own device.
 
-Join the Discord: https://discord.gg/6dgZA4yD2
+Join the Gin649sRetroGameHub Discord: https://discord.gg/6dgZA4yD2
 
-Play some games with us.
+For all app related discussions and my Game of the Month Competition. Play some games with us.
 
 ## What it does
 
-**Two screens, one app.** The bottom screen is the Game Log Tracker. The top screen shows art for the game you have open, or the logo on the main menu. Open a game, press Play, and it starts on the top screen. Emulators that draw both DS or 3DS screens themselves start on the bottom screen instead. When the game closes, the tracker comes back.
+**Two screens, one app.** The bottom screen is the Game Log Tracker. The top screen shows art for the game you have open, or the logo on the main menu. Open a game, press Play, and it starts on the top screen. The tracker remains on the bottom screen to keep track of your game. When the game closes, the top screen returns to showing fan art and menus etc.
 
-**The tracker** is the full Game Log Tracker, bundled inside the app. Everything in the web version is here:
+**The tracker** is the full Game Log Tracker web app, bundled along with many improvements. 
 
 - **Overview** with your RetroAchievements profile, recently played games and your latest unlocks.
 - **Game Library** with every game you've played on RA. Search it, filter by system, and see progress, awards and playtime. The three games you played most recently sit at the top, then everything else is listed by name. Tap a column heading to sort by anything else. Pick a console and the top three are the last ones you played on that console.
@@ -23,12 +23,10 @@ The web version has the full details: https://github.com/Gin649/Game-Log-Tracker
 
 ### Inside a game
 
-- Achievement list with points and unlock dates, missable achievements marked with a "!", and a Missable Only filter.
-- Put achievements in your own order, and export or import an order as a file.
-- Subsets, if the game has any, each with its own achievement list.
+- **Retro Achievements** list with points and unlock dates, missable achievements marked with a "!", and a Missable Only filter. Put achievements in your own order, and export or import an order as a file. Also included are Subsets, if the game has any, each with its own achievement list.
+- **Game Details** More information about a game, including its RA time to beat and master.
 - **Game manuals.** Find and download a manual for the game, then read it in the built-in viewer. It's saved on your device and works with the controller too.
-- **Walkthroughs.** Find a walkthrough opens a browser inside the app. Back, or a swipe from the edge, returns to the tracker, and Save video keeps the link in the game's profile.
-- Game guides, a Need Cheats? button, review scores, and the time other players take to beat the game.
+- **Guides and Walkthroughs.** Find a walkthrough opens a browser inside the app. Back, or a swipe from the edge, returns to the tracker, and Save video keeps the link in the game's profile.
 - **ROM Hacks.** The app finds your base ROM for you. The patched ROM is saved next to it, with a "Play patched ROM" button and an "Add to my backlog" option. Translations are listed in their own section. Hacks that were made for your exact ROM are found from a ready-made list that updates itself, so the search is quick. I don't host or supply any ROMs.
 - **Disc games too.** ROM Hacks also works for CD and DVD games (PlayStation, Saturn, Sega CD, GameCube and so on). Discs are patched straight from storage, with a progress bar, and the patched copy is saved next to the original, which is never changed. It works with BIN/CUE, ISO, CSO, CHD and RVZ games, and with IPS, PPF, BPS, UPS and xdelta patches. CHD and RVZ games are unpacked, patched and packed again, which takes longer and needs free space for the whole disc.
 
@@ -44,7 +42,7 @@ The picture it shows is the best one available, in this order:
 4. **A miximage built from LaunchBox's** box art, screenshot and logo.
 5. **Your marquee, then box art**, if nothing better turns up.
 
-Art you already have is never downloaded again. Opening a game that has no art fetches it in the background, and Fetch game art (in the menu under Data) does the games in your Library and Backlog (not every ROM in your folders).
+Art you already have is never downloaded again. Opening a game that has no art fetches it in the background, and Fetch game art (in the menu under Data) does the games in your Library and Backlog.
 
 When a game has several fan arts online (up to six), swipe left or right on the top screen to pick one; the choice is remembered. The extra ones are downloaded the first time you open the game. Art from your frontend (ES-DE or Daijisho) is used as it is and has no alternatives to swipe between.
 
@@ -125,7 +123,6 @@ Other sites the app contacts, and why:
 ## Thanks
 
 Joey (https://www.joeysretrohandhelds.com) helped make this possible, and his JoeyOS app inspired the guide lookup and the ROM patcher. I used his approach with his permission.
-
 CHD and RVZ patching uses chdman (from MAME) and dolphin-tool (from Dolphin), both GPL-2.0, built with Joey's scripts. Licences are in the licences folder.
 
 Achievement data comes from RetroAchievements and ratings and box art from RAWG. Fan art comes from SteamGridDB and the LaunchBox games database. Text guides come from the GameFAQs archive on archive.org, indexed by the Guide Watch project. I'm not affiliated with any of them.
@@ -133,3 +130,5 @@ Achievement data comes from RetroAchievements and ratings and box art from RAWG.
 ## Contact
 
 Questions or bugs: open an issue here, or find me on Discord.
+
+Email: ginsretrogamehub@gmail.com   
