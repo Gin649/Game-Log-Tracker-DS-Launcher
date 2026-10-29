@@ -44,7 +44,7 @@ The picture it shows is the best one available, in this order:
 4. **A miximage built from LaunchBox's** box art, screenshot and logo.
 5. **Your marquee, then box art**, if nothing better turns up.
 
-Art you already have is never downloaded again. Opening a game that has no art fetches it in the background, and Fetch game art in the menu does your whole library.
+Art you already have is never downloaded again. Opening a game that has no art fetches it in the background, and Fetch game art in the menu does the games in your Library and Backlog (not every ROM in your folders).
 
 ### Playing your games
 

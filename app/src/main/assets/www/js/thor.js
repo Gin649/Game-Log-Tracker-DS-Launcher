@@ -178,7 +178,8 @@ onDomReady(() => {
 
   b.style.display = '';
   b.addEventListener('click', () => {
-    try{ thorBridge.scrapeAll(); }catch(e){ return; }
+    const games = libraryData.map(g => ({ title: g.Title, console: g.ConsoleName }));
+    try{ thorBridge.scrapeAll(JSON.stringify(games)); }catch(e){ return; }
     idleReads = 0;
     show('Fetching art…', 'Starting…');
     timer = setTimeout(poll, 1500);

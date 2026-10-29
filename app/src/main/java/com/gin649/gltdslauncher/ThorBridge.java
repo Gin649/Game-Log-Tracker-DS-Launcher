@@ -123,10 +123,22 @@ final class ThorBridge {
         return o.toString();
     }
 
-    /** Starts fetching art for every game that has none yet. Safe to call again. */
+    /**
+     * Starts fetching art for the games in the tracker's Library and Backlog (not every ROM in your folders).
+     * gamesJson is [{title, console}]. Safe to call again.
+     */
     @JavascriptInterface
-    public void scrapeAll() {
-        LibraryScraper.scrapeAll(act);
+    public void scrapeAll(String gamesJson) {
+        List<String[]> games = new java.util.ArrayList<String[]>();
+        try {
+            JSONArray a = new JSONArray(gamesJson);
+            for (int i = 0; i < a.length(); i++) {
+                JSONObject o = a.optJSONObject(i);
+                if (o != null) games.add(new String[]{o.optString("title"), o.optString("console")});
+            }
+        } catch (Exception ignored) {
+        }
+        LibraryScraper.scrapeAll(act, games);
     }
 
     @JavascriptInterface

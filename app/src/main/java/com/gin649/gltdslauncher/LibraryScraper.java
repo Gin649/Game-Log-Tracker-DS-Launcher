@@ -75,37 +75,52 @@ final class LibraryScraper {
         });
     }
 
-    /** Fetches art for every game that has none. Does nothing if it is already running. */
-    static void scrapeAll(final Context ctx) {
+    /** The games of the current "Fetch game art" run: those in the tracker's Library and Backlog that have a ROM. */
+    private static volatile int targetTotal;
+    private static volatile int targetHadArt;
+
+    /**
+     * Fetches art for the games in the tracker (its Library and Backlog), not for every ROM in your folders. games is a
+     * list of {title, console}; each is matched to its ROM the same way Play does. Does nothing if already running.
+     */
+    static void scrapeAll(final Context ctx, final List<String[]> games) {
         if (running) return;
         stopRequested = false;
         sgdbOffUntil = 0;
         NO_ART.clear();
         FAN_TRIED.clear();
+        DONE.set(0);
+        FAILED.set(0);
+        message = "";
+        running = true; // set now so a second tap can't start another run while the games are being matched
         EXEC.execute(new Runnable() {
             @Override
             public void run() {
-                GameDao dao = GameRepository.get(ctx).dao();
-                dao.resetNoMatch(); // a manual run tries everything again, in case a key or a source was added
-                Set<Integer> tried = new HashSet<Integer>();
-                boolean more = true;
-                while (more && !stopRequested) {
-                    more = false;
-                    // games that fail stay in this query, so ask for enough rows to get past the ones already tried
-                    int lim = 40 + tried.size();
-                    List<GameEntity> batch = dao.getUnmatched(lim);
-                    batch.addAll(dao.getNeedingMiximage(lim));
-                    batch.addAll(dao.getBuiltMiximages(lim)); // frontend-built ones: look for fan art to replace them
-                    java.util.Iterator<GameEntity> it = batch.iterator();
-                    while (it.hasNext()) {
-                        if (!tried.add(it.next().id)) it.remove();
+                try {
+                    GameDao dao = GameRepository.get(ctx).dao();
+                    dao.resetNoMatch(); // a manual run tries everything again, in case a key or a source was added
+                    List<GameEntity> todo = new java.util.ArrayList<GameEntity>();
+                    Set<Integer> seen = new HashSet<Integer>();
+                    int had = 0;
+                    for (String[] tg : games) {
+                        if (stopRequested) return;
+                        RomIndex.Rom rom = Shared.findRom(tg[0], tg[1]);
+                        GameEntity g = rom == null ? null : LibrarySync.find(ctx, rom);
+                        if (g == null || !seen.add(g.id)) continue;
+                        boolean hasArt = g.localMiximagePath != null && new File(g.localMiximagePath).isFile();
+                        if (hasArt && !g.localMiximagePath.endsWith(LibrarySync.BUILT_SUFFIX)) {
+                            had++;
+                        } else {
+                            todo.add(g);
+                        }
                     }
-                    if (!batch.isEmpty()) {
-                        more = true;
-                        if (!runBatch(ctx, batch)) return;
-                    }
+                    targetTotal = seen.size();
+                    targetHadArt = had;
+                    if (!todo.isEmpty()) runBatch(ctx, todo);
+                    if (!stopRequested) message = "Finished.";
+                } finally {
+                    running = false;
                 }
-                if (!stopRequested) message = "Finished.";
             }
         });
     }
@@ -113,7 +128,6 @@ final class LibraryScraper {
     static String status(Context ctx) {
         JSONObject o = new JSONObject();
         try {
-            GameDao dao = GameRepository.get(ctx).dao();
             boolean sgdb = SteamGridDbClient.enabled(ctx);
             o.put("configured", sgdb || Config.LAUNCHBOX_ART || Config.useEsdeMedia());
             o.put("steamgriddb", sgdb);
@@ -121,8 +135,8 @@ final class LibraryScraper {
             o.put("running", running);
             o.put("done", DONE.get());
             o.put("failed", FAILED.get());
-            o.put("games", dao.countAll());
-            o.put("withArt", dao.countWithMiximage());
+            o.put("games", targetTotal);
+            o.put("withArt", Math.min(targetTotal, targetHadArt + DONE.get()));
             o.put("usingEsdeMedia", Config.useEsdeMedia());
             o.put("message", message);
         } catch (Exception ignored) {
