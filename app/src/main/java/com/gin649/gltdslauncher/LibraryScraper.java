@@ -36,6 +36,8 @@ final class LibraryScraper {
     private static final Set<Integer> NO_ART = Collections.synchronizedSet(new HashSet<Integer>());
     /** Games with a built miximage that already had their online fan art search this session. */
     private static final Set<Integer> FAN_TRIED = Collections.synchronizedSet(new HashSet<Integer>());
+    /** The last few games nothing was found for, and why. */
+    private static final java.util.LinkedList<String> NOTES = new java.util.LinkedList<String>();
     private static final AtomicInteger DONE = new AtomicInteger();
     private static final AtomicInteger FAILED = new AtomicInteger();
     private static final long API_PAUSE_MS = 700;
@@ -113,6 +115,9 @@ final class LibraryScraper {
         sgdbOffUntil = 0;
         NO_ART.clear();
         FAN_TRIED.clear();
+        synchronized (NOTES) {
+            NOTES.clear();
+        }
         DONE.set(0);
         FAILED.set(0);
         message = "";
@@ -163,6 +168,11 @@ final class LibraryScraper {
             o.put("withArt", Math.min(targetTotal, targetHadArt + DONE.get()));
             o.put("usingEsdeMedia", Config.useEsdeMedia());
             o.put("message", message);
+            org.json.JSONArray notes = new org.json.JSONArray();
+            synchronized (NOTES) {
+                for (String n : NOTES) notes.put(n);
+            }
+            o.put("notes", notes);
         } catch (Exception ignored) {
         }
         return o.toString();
@@ -289,6 +299,12 @@ final class LibraryScraper {
         }
 
         NO_ART.add(g.id);
+        synchronized (NOTES) {
+            String why = offline ? "could not reach the internet" : !Config.LAUNCHBOX_ART && !SteamGridDbClient.enabled(ctx)
+                    ? "no online art source is switched on" : LaunchBoxArt.lastWhy;
+            NOTES.addFirst(g.title + ": " + (why == null || why.isEmpty() ? "nothing found" : why));
+            while (NOTES.size() > 4) NOTES.removeLast();
+        }
         if (!offline) dao.markNoMatch(g.id); // looked everywhere and found nothing; a manual "Fetch game art" tries again
         return frontendFallback != null; // the frontend's box art or marquee still shows (LibrarySync.artFor)
     }

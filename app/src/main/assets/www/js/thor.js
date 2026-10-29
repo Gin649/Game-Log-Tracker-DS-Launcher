@@ -173,7 +173,8 @@ onDomReady(() => {
     if(++idleReads < 3){ timer = setTimeout(poll, 1500); return; }
     show('Fetch game art', (s.message ? s.message + ' ' : '') + s.withArt + ' of ' + s.games + ' games have art'
       + (s.usingEsdeMedia ? ' (art you already have is used where it exists)' : '')
-      + (!s.steamgriddb && s.launchbox ? ' Online art comes from the free LaunchBox database.' : ''));
+      + (!s.steamgriddb && s.launchbox ? ' Online art comes from the free LaunchBox database.' : '')
+      + (s.notes && s.notes.length ? ' Not found: ' + s.notes.join(' | ') : ''));
   };
 
   const field = document.getElementById('thor-art-field');

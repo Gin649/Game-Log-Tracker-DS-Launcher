@@ -44,6 +44,9 @@ final class LaunchBoxArt {
             .readTimeout(30, TimeUnit.SECONDS)
             .build();
 
+    /** Why the last lookup found nothing, for the Fetch game art note. */
+    static volatile String lastWhy = "";
+
     private static Map<String, String> platforms;
     private static final Map<String, Index> INDEXES = new HashMap<String, Index>();
 
@@ -73,12 +76,22 @@ final class LaunchBoxArt {
      * network could not be reached (so the caller does not remember it as "no art").
      */
     static Art fetch(Context ctx, String folder, String title, boolean fanOnly) throws IOException {
+        lastWhy = "";
         String platform = platformFor(ctx, folder);
-        if (platform == null) return null;
+        if (platform == null) {
+            lastWhy = "folder \"" + folder + "\" is not matched to a LaunchBox console";
+            return null;
+        }
         Index idx = index(ctx, Matcher.compact(platform));
-        if (idx == null) return null;
+        if (idx == null || idx.rows.isEmpty()) {
+            lastWhy = "no LaunchBox list for " + platform;
+            return null;
+        }
         String[] row = match(idx, title);
-        if (row == null) return null;
+        if (row == null) {
+            lastWhy = "not found in LaunchBox's " + platform + " list";
+            return null;
+        }
 
         Art a = new Art();
         if (fanOnly) {
@@ -88,7 +101,10 @@ final class LaunchBoxArt {
             if (!row[3].isEmpty()) a.screen = image(row[3], 1600);
             if (!row[4].isEmpty()) a.logo = image(row[4], 900);
         }
-        if (a.fan == null && a.box == null && a.screen == null && a.logo == null) return null;
+        if (a.fan == null && a.box == null && a.screen == null && a.logo == null) {
+            lastWhy = fanOnly && row[1].isEmpty() ? "LaunchBox has no fan art for it" : "LaunchBox pictures could not be downloaded";
+            return null;
+        }
         return a;
     }
 
