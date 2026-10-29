@@ -73,8 +73,8 @@ public class SetupActivity extends Activity {
     private String raUser, raKey, rawgKey, romsRoot, romsTree, esRoot, raPackage, siteUrl;
     /** "esde", "daijisho" or "none" (any other frontend, or no frontend at all). */
     private String frontend, djRoot;
-    private CheckBox cbLibretro;
-    private boolean libretroFallback;
+    private CheckBox cbLaunchBox;
+    private boolean launchBoxArt;
     private String origUser, origKey, origRawg;
     private String sgdbKey;
     private EditText etSgdb;
@@ -115,7 +115,7 @@ public class SetupActivity extends Activity {
             // first run, or an install from before this choice existed: ES-DE if it is there, otherwise none
             frontend = (!esRoot.isEmpty() || !guessEsRoot().isEmpty()) ? "esde" : "none";
         }
-        libretroFallback = Prefs.getInt(this, "libretroFallback", 1) == 1;
+        launchBoxArt = Prefs.getInt(this, "launchboxArt", 1) == 1;
         raPackage = get("raPackage", "");
         siteUrl = get("siteUrl", Config.DEFAULT_URL);
         if (siteUrl.startsWith("https://gin649.github.io/")) siteUrl = Config.DEFAULT_URL; // old default = built-in
@@ -358,7 +358,7 @@ public class SetupActivity extends Activity {
         etRawg = null;
         etSgdb = null;
         cbEsdeMedia = null;
-        cbLibretro = null;
+        cbLaunchBox = null;
         spRa = null;
         spDisplay = null;
         spZoom = null;
@@ -471,7 +471,7 @@ public class SetupActivity extends Activity {
         text("SteamGridDB (optional)", 17, TEXT);
         text("Fan art for games that have none in your frontend. It needs your own free API key (steamgriddb.com, your "
                 + "profile, Preferences, API), not a developer account. It looks games up by title only, so retro coverage "
-                + "is uneven. Leave blank to skip it; the free libretro thumbnails are used instead.", 13, MUTED);
+                + "is uneven. Leave blank to skip it; the free LaunchBox art is used instead.", 13, MUTED);
         etSgdb = field("SteamGridDB API key", sgdbKey, false);
         action("Open SteamGridDB", new View.OnClickListener() {
             @Override
@@ -565,13 +565,13 @@ public class SetupActivity extends Activity {
         text("Art for games that have none", 17, TEXT);
         text("The top screen shows fan art first, then a miximage, then the marquee, then box art. If your frontend has a "
                 + "screenshot but no miximage, one is built for you. For games with nothing, SteamGridDB (if you gave a key) "
-                + "supplies fan art, then the free libretro thumbnails (box art, screenshot, logo; no account) make a miximage.", 13, MUTED);
-        cbLibretro = new CheckBox(this);
-        cbLibretro.setText("Use the free libretro thumbnails for games that have no art yet.");
-        cbLibretro.setTextColor(TEXT);
-        cbLibretro.setTextSize(14);
-        cbLibretro.setChecked(libretroFallback);
-        content.addView(cbLibretro);
+                + "supplies fan art, then the free LaunchBox database (fan art, or box art, screenshot and logo; no account) fills in the rest.", 13, MUTED);
+        cbLaunchBox = new CheckBox(this);
+        cbLaunchBox.setText("Use the free LaunchBox art for games that have none yet.");
+        cbLaunchBox.setTextColor(TEXT);
+        cbLaunchBox.setTextSize(14);
+        cbLaunchBox.setChecked(launchBoxArt);
+        content.addView(cbLaunchBox);
 
         String summary = folderSummary();
         if (!summary.isEmpty()) text(summary, 13, MUTED);
@@ -651,9 +651,9 @@ public class SetupActivity extends Activity {
         put("djRoot", djRoot);
         put("frontend", frontend);
         Prefs.putInt(this, "useEsdeMedia", useEsdeMedia ? 1 : 0);
-        Prefs.putInt(this, "libretroFallback", libretroFallback ? 1 : 0);
+        Prefs.putInt(this, "launchboxArt", launchBoxArt ? 1 : 0);
         Config.load(this);
-        LibretroThumbs.reset();
+        LaunchBoxArt.reset();
         EsdeImport.run(this, Config.ES_ROOT);
         Recipes.reset();
         Shared.reload(this);
@@ -774,7 +774,7 @@ public class SetupActivity extends Activity {
         sb.append("RetroAchievements: ").append(raUser.isEmpty() ? "not set" : raUser).append("\n");
         sb.append("RAWG key: ").append(rawgKey.isEmpty() ? "not set" : "set").append("\n");
         sb.append("SteamGridDB: ").append(sgdbKey.isEmpty() ? "not set" : "key set").append("\n");
-        sb.append("Free libretro thumbnails: ").append(libretroFallback ? "on" : "off").append("\n");
+        sb.append("Free LaunchBox art: ").append(launchBoxArt ? "on" : "off").append("\n");
         sb.append("ROMs: ").append(romsRoot.isEmpty() ? "not chosen" : romsRoot).append("\n");
         sb.append("Frontend: ").append(frontend.equals("esde") ? "ES-DE" : frontend.equals("daijisho") ? "Daijish\u014d" : "none / other").append("\n");
         if (frontend.equals("esde")) sb.append("ES-DE: ").append(esRoot.isEmpty() ? "none" : esRoot).append("\n");
@@ -793,7 +793,7 @@ public class SetupActivity extends Activity {
         if (etRawg != null) rawgKey = etRawg.getText().toString().trim();
         if (etSgdb != null) sgdbKey = etSgdb.getText().toString().trim();
         if (cbEsdeMedia != null) useEsdeMedia = cbEsdeMedia.isChecked();
-        if (cbLibretro != null) libretroFallback = cbLibretro.isChecked();
+        if (cbLaunchBox != null) launchBoxArt = cbLaunchBox.isChecked();
         if (spRa != null && spRa.getSelectedItem() != null) raPackage = (String) spRa.getSelectedItem();
         for (Map.Entry<String, Spinner> e : emuSpinners.entrySet()) {
             List<String> values = emuValues.get(e.getKey());
@@ -850,7 +850,7 @@ public class SetupActivity extends Activity {
         put("esRoot", esRoot);
         put("djRoot", djRoot);
         put("frontend", frontend);
-        Prefs.putInt(this, "libretroFallback", libretroFallback ? 1 : 0);
+        Prefs.putInt(this, "launchboxArt", launchBoxArt ? 1 : 0);
         put("raPackage", raPackage.isEmpty() ? "com.retroarch.aarch64" : raPackage);
         put("siteUrl", siteUrl.startsWith("http") ? siteUrl : Config.DEFAULT_URL);
         put("sgdbKey", sgdbKey);

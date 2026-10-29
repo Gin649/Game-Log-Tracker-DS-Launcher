@@ -160,7 +160,7 @@ onDomReady(() => {
     let s = null;
     try{ s = JSON.parse(thorBridge.scrapeStatus()); }catch(e){ show('Fetch game art', 'The app could not be reached.'); return; }
     if(!s.configured){
-      show('Fetch game art', 'No art source is on. Turn on the free libretro thumbnails in Launcher settings, or add a SteamGridDB key.');
+      show('Fetch game art', 'No art source is on. Turn on the free LaunchBox art in Launcher settings, or add a SteamGridDB key.');
       return;
     }
     if(s.running){
@@ -173,7 +173,7 @@ onDomReady(() => {
     if(++idleReads < 3){ timer = setTimeout(poll, 1500); return; }
     show('Fetch game art', (s.message ? s.message + ' ' : '') + s.withArt + ' of ' + s.games + ' games have art'
       + (s.usingEsdeMedia ? ' (art you already have is used where it exists)' : '')
-      + (!s.steamgriddb && s.libretro ? ' Online art comes from the free libretro thumbnails.' : ''));
+      + (!s.steamgriddb && s.launchbox ? ' Online art comes from the free LaunchBox database.' : ''));
   };
 
   b.style.display = '';

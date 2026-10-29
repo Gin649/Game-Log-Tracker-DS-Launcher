@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 1. your frontend's own art (ES-DE, Daijisho and the like): fan art, miximage, a miximage built here from its screenshot,
  *    box art and marquee
  * 2. SteamGridDB fan art (a hero banner), only when you gave an API key
- * 3. the free libretro thumbnails (box art, screenshot, logo), built into a miximage here
+ * 3. LaunchBox's games database: fan art, or else its box art, screenshot and logo built into a miximage here
  * 4. last of all, your frontend's marquee, then its box art (never stored, so a later run can still find better)
  */
 final class LibraryScraper {
@@ -110,9 +110,9 @@ final class LibraryScraper {
         try {
             GameDao dao = GameRepository.get(ctx).dao();
             boolean sgdb = SteamGridDbClient.enabled(ctx);
-            o.put("configured", sgdb || Config.LIBRETRO_FALLBACK || Config.useEsdeMedia());
+            o.put("configured", sgdb || Config.LAUNCHBOX_ART || Config.useEsdeMedia());
             o.put("steamgriddb", sgdb);
-            o.put("libretro", Config.LIBRETRO_FALLBACK);
+            o.put("launchbox", Config.LAUNCHBOX_ART);
             o.put("running", running);
             o.put("done", DONE.get());
             o.put("failed", FAILED.get());
@@ -206,16 +206,15 @@ final class LibraryScraper {
             }
         }
 
-        // 3. free libretro thumbnails, mixed into a miximage
-        if (Config.LIBRETRO_FALLBACK) {
+        // 3. LaunchBox: fan art if it has some, else a miximage from its box art, screenshot and logo
+        if (Config.LAUNCHBOX_ART) {
             try {
-                String romName = new File(g.romPath).getName();
-                int dot = romName.lastIndexOf('.');
-                if (dot > 0) romName = romName.substring(0, dot);
-                LibretroThumbs.Art art = LibretroThumbs.fetch(ctx, g.systemId, romName, g.title);
+                LaunchBoxArt.Art art = LaunchBoxArt.fetch(ctx, g.systemId, g.title);
                 if (art != null) {
                     try {
-                        File out = MiximageCompositor.createMiximage(art.screen, art.box, art.logo, target);
+                        File out = art.fan != null
+                                ? MiximageCompositor.saveJpeg(art.fan, target)
+                                : MiximageCompositor.createMiximage(art.screen, art.box, art.logo, target);
                         if (out != null) {
                             dao.setMiximagePath(g.id, out.getPath());
                             if (g.id == viewingId) refreshTopScreen(out.getPath());

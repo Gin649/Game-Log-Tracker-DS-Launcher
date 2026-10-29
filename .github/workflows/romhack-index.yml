@@ -2,7 +2,8 @@
 # branch, which the app reads from raw.githubusercontent.com. Hourly it asks whether RAPatches has a
 # new commit (one cheap `git ls-remote`) and stops there when it hasn't. When it has, only new or
 # changed archives are read (the cache lives on the data branch). The data branch is replaced by a
-# single commit each time, so nothing builds up in history, and `main` is never touched.
+# single commit each time, so nothing builds up in history, and `main` is never touched. The game art
+# index (launchbox/) lives on the same branch and is carried over.
 name: Romhack index
 
 on:
@@ -24,7 +25,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: romhack-index
+  group: data-branch
   cancel-in-progress: false
 
 jobs:
@@ -62,6 +63,10 @@ jobs:
       - name: Publish to the data branch
         if: steps.check.outputs.skip != 'true'
         run: |
+          # the game art index shares this branch; carry it over
+          if git fetch --depth 1 origin data 2>/dev/null; then
+            git archive FETCH_HEAD launchbox 2>/dev/null | tar -x -C out || true
+          fi
           cd out
           git init -q
           git checkout -q -b data

@@ -35,8 +35,8 @@ final class Config {
 
     private Config() {}
 
-    /** Free libretro-thumbnails fallback for games that have no art yet. */
-    static boolean LIBRETRO_FALLBACK = true;
+    /** LaunchBox art for games that have none from the frontend or SteamGridDB. */
+    static boolean LAUNCHBOX_ART = true;
 
     /**
      * True when the choice to use frontend media is on and there is somewhere to look: ES-DE's downloaded_media,
@@ -71,10 +71,10 @@ final class Config {
         ES_ROOT = fe.equals("esde") ? trim(Prefs.get(c, "esRoot", "")) : "";
         MEDIA_ROOT = ES_ROOT.isEmpty() ? "" : ES_ROOT + "/downloaded_media";
         DJ_ROOT = fe.equals("daijisho") ? trim(Prefs.get(c, "djRoot", "")) : "";
-        // hand-edited overrides (systems.json, emulators.json, libretro.json) live in a gltthor folder in either frontend folder
+        // hand-edited overrides (systems.json, emulators.json, launchbox.json) live in a gltthor folder in either frontend folder
         USER_DIR = !ES_ROOT.isEmpty() ? ES_ROOT + "/gltthor" : (DJ_ROOT.isEmpty() ? "" : DJ_ROOT + "/gltthor");
         USE_ESDE_MEDIA = Prefs.getInt(c, "useEsdeMedia", 1) == 1;
-        LIBRETRO_FALLBACK = Prefs.getInt(c, "libretroFallback", 1) == 1;
+        LAUNCHBOX_ART = Prefs.getInt(c, "launchboxArt", 1) == 1;
 
         RA_PACKAGE = Prefs.get(c, "raPackage", "com.retroarch.aarch64");
         RA_CORES_DIR = "/data/data/" + RA_PACKAGE + "/cores";

@@ -1,0 +1,75 @@
+# Keeps the game-art index current (tools/build_launchbox.py) and publishes it to this repo's `data`
+# branch under launchbox/, which the app reads from raw.githubusercontent.com. Weekly it checks whether
+# LaunchBox's Metadata.zip changed (one HEAD request) and stops there when it hasn't. The romhack index
+# lives on the same branch, so it is carried over untouched. `main` is never touched.
+name: Game art index
+
+on:
+  schedule:
+    - cron: "41 5 * * 1"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Rebuild even if LaunchBox's file is unchanged"
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths:
+      - "tools/build_launchbox.py"
+      - "app/src/main/assets/launchbox.json"
+      - ".github/workflows/launchbox-index.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: data-branch
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Has LaunchBox changed?
+        id: check
+        run: |
+          url=https://gamesdb.launchbox-app.com/Metadata.zip
+          stamp=$(curl -sIL "$url" | tr -d '\r' | grep -iE '^(etag|last-modified|content-length):' | sort | tr '\n' ' ')
+          echo "stamp=$stamp" >> "$GITHUB_OUTPUT"
+          echo "Remote: $stamp"
+          mkdir -p out
+          if git fetch --depth 1 origin data 2>/dev/null; then
+            git archive FETCH_HEAD | tar -x -C out
+            old=$(python3 -c "import json;print(json.load(open('out/launchbox/index.json')).get('source',''))" 2>/dev/null || echo "")
+            if [ "$old" = "$stamp" ] && [ "${{ github.event_name }}" = "schedule" ] && [ "${{ inputs.force }}" != "true" ]; then
+              echo "LaunchBox is unchanged since the last build."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Download the metadata
+        if: steps.check.outputs.skip != 'true'
+        run: curl -fsSL -o Metadata.zip https://gamesdb.launchbox-app.com/Metadata.zip && ls -l Metadata.zip
+
+      - name: Build the index
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          rm -rf out/launchbox
+          python3 tools/build_launchbox.py --zip Metadata.zip --systems app/src/main/assets/launchbox.json --out out --stamp "${{ steps.check.outputs.stamp }}"
+          du -sh out/launchbox
+
+      - name: Publish to the data branch
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          cd out
+          rm -rf .git
+          git init -q
+          git checkout -q -b data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Game art index"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data

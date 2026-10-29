@@ -41,7 +41,7 @@ The picture it shows is the best one available, in this order:
 1. **Fan art or a finished miximage** from your frontend.
 2. **A miximage built for you** from your frontend's screenshot, box art and marquee.
 3. **Fan art from SteamGridDB**, if you gave the app a free key.
-4. **Free libretro thumbnails**, which need no account. The app builds a miximage from the box art, screenshot and logo.
+4. **Free LaunchBox art**, which needs no account. It uses LaunchBox's fan art when there is some, otherwise builds a miximage from its box art, screenshot and logo.
 5. **Your marquee, then box art**, if nothing better turns up.
 
 Art you already have is never downloaded again. Opening a game that has no art fetches it in the background, and Fetch game art in the menu does your whole library.
@@ -111,7 +111,7 @@ Other sites the app contacts, and why:
 - RetroAchievements and media.retroachievements.org, for your profile, achievements and images.
 - RAWG, for ratings and game details (only if you added a key).
 - SteamGridDB, for fan art (only if you added a key).
-- thumbnails.libretro.com, for free box art, screenshots and logos. This is on by default and can be switched off in Launcher settings.
+- LaunchBox's games database, for free fan art, box art, screenshots and logos. A small index per console is downloaded from this repo and the pictures from images.launchbox-app.com. This is on by default and can be switched off in Launcher settings.
 - YouTube, for walkthrough videos.
 - archive.org, for text guides.
 - gamesdatabase.org, for game manuals. Those requests go through a private proxy I run on Cloudflare Workers that stores nothing.
@@ -124,7 +124,7 @@ Joey (https://www.joeysretrohandhelds.com) helped make this possible, and his Jo
 
 CHD and RVZ patching uses chdman (from MAME) and dolphin-tool (from Dolphin), both GPL-2.0, built with Joey's scripts. Licences are in the licences folder.
 
-Achievement data comes from RetroAchievements and ratings and box art from RAWG. Fan art comes from SteamGridDB and free thumbnails from the libretro project. Text guides come from the GameFAQs archive on archive.org, indexed by the Guide Watch project. I'm not affiliated with any of them.
+Achievement data comes from RetroAchievements and ratings and box art from RAWG. Fan art comes from SteamGridDB and the LaunchBox games database. Text guides come from the GameFAQs archive on archive.org, indexed by the Guide Watch project. I'm not affiliated with any of them.
 
 ## Contact
 
