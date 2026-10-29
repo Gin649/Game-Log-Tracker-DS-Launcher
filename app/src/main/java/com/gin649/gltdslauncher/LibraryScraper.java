@@ -57,7 +57,7 @@ final class LibraryScraper {
         viewingId = g == null ? 0 : g.id;
         if (g == null) return;
         topUp(ctx, g);
-        if (g.screenscraperId < 0 || NO_ART.contains(g.id)) return;
+        if (NO_ART.contains(g.id)) return; // a game that came up empty before is tried again once per app session
         boolean hasPicture = g.localMiximagePath != null && new File(g.localMiximagePath).isFile();
         // a miximage built from your frontend's pictures still gets one look for online fan art per session
         boolean builtOnly = hasPicture && g.localMiximagePath.endsWith(LibrarySync.BUILT_SUFFIX);
