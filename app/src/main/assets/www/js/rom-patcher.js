@@ -742,13 +742,21 @@ function romhackIngUrl(title){
 
 // The details panel under a patch row. The number in front of a RAPatches file name is the hack's
 // RetroAchievements game, which gives its real title and its forum thread (where the notes are).
-async function fillPatchInfo(panel, label){
+async function fillPatchInfo(panel, label, gameTitle){
   const m = String(label).match(/^(\d+)[-_]/);
-  const raId = m ? Number(m[1]) : 0;
+  let raId = m ? Number(m[1]) : 0;
   let info = null;
   if(raId){
     try{ info = await getGameExtended(raId); }catch(e){ info = null; }
     if(info && !info.Title) info = null;
+  }
+  // Some RAPatches numbers belong to a different game (a Subset file can carry a hack's ID), so the
+  // game found must share a word with the file name or the game being viewed. If not, ignore it.
+  if(info){
+    const squash = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const hay = squash(label) + squash(gameTitle);
+    const words = String(info.Title).toLowerCase().replace(/~[^~]*~/g, ' ').split(/[^a-z0-9]+/).filter(w => w.length >= 3);
+    if(!words.some(w => hay.includes(w))){ info = null; raId = 0; }
   }
   const title = info ? String(info.Title).replace(/^(?:~[^~]*~\s*)+/, '').trim() : titleFromFileName(label);
   const facts = [];
@@ -806,7 +814,7 @@ function setupRomPatchUI(gameId, title, card, consoleName){
     panel.className = 'patch-info-panel';
     panel.innerHTML = '<div class="patch-info-facts">Looking it up…</div>';
     row.insertAdjacentElement('afterend', panel);
-    await fillPatchInfo(panel, decodeURIComponent(btn.getAttribute('data-info') || ''));
+    await fillPatchInfo(panel, decodeURIComponent(btn.getAttribute('data-info') || ''), title);
   });
 
   let opened = false;
