@@ -95,6 +95,23 @@ final class ThorBridge {
         return o.toString();
     }
 
+    /** Closes the whole app: the tracker, the top screen and the setup window. */
+    @JavascriptInterface
+    public void exitApp() {
+        act.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                act.finishAndRemoveTask();
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        android.os.Process.killProcess(android.os.Process.myPid());
+                    }
+                }, 300);
+            }
+        });
+    }
+
     @JavascriptInterface
     public void openSettings() {
         act.runOnUiThread(new Runnable() {

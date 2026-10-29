@@ -115,6 +115,9 @@
   }
   .dropdown-heading #ra-heading-arrow,.dropdown-heading #textsize-heading-arrow,.dropdown-heading #display-heading-arrow{font-size:0.625rem;color:var(--muted);}
   .dropdown-plain{color:var(--text);font-weight:400;}
+  /* The main menu entries alternate gold and white (set by colorMenuItems in menu.js). */
+  #dropdown-menu .menu-gold{color:var(--gold);font-weight:700;}
+  #dropdown-menu .menu-white{color:var(--text);font-weight:700;}
   .dropdown-subitem{
     padding-left:26px;font-size:0.7188rem;color:var(--muted);background:var(--bg-alt);
   }

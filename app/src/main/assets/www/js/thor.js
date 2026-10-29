@@ -189,3 +189,12 @@ onDomReady(() => {
 
 // Pins the hamburger menu button to the top right of the screen (see .thor-app in the stylesheet).
 onDomReady(() => { if(thorBridge) document.body.classList.add('thor-app'); });
+
+// "Exit app" closes the launcher completely.
+onDomReady(() => {
+  const b = document.getElementById('btn-thor-exit');
+  if(!thorBridge || !b) return;
+  b.style.display = '';
+  b.addEventListener('click', () => { try{ thorBridge.exitApp(); }catch(e){} });
+  if(typeof colorMenuItems === 'function') colorMenuItems();
+});

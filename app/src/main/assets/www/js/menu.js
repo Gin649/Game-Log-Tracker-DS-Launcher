@@ -66,3 +66,19 @@ $('#textsize-reset').addEventListener('click', (e) => {
   textSizePct = TEXTSIZE_DEFAULT;
   applyTextSize(); saveTextSize();
 });
+
+// The main menu entries alternate gold and white. Items that are hidden don't count, so the pattern stays unbroken.
+function colorMenuItems(){
+  const menu = $('#dropdown-menu');
+  if(!menu) return;
+  let n = 0;
+  Array.from(menu.children).forEach(el => {
+    if(!el.classList.contains('dropdown-item')) return;
+    if(getComputedStyle(el).display === 'none') return;
+    el.classList.toggle('menu-gold', n % 2 === 0);
+    el.classList.toggle('menu-white', n % 2 === 1);
+    n++;
+  });
+}
+$('#btn-menu').addEventListener('click', colorMenuItems);
+setTimeout(colorMenuItems, 300);
