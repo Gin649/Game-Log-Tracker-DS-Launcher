@@ -1,28 +1,21 @@
-// People you follow on RetroAchievements.
-
-// Social: people you follow on RetroAchievements
-// "Following" list from API_GetUsersIFollow.php, then one API_GetUserSummary.php
-// call per person (rich presence + last game). Tapping a person shows their
-// recent unlocks and a link to their RA profile. The list is also saved on the device, so the
-// tab opens instantly with the last known statuses and refreshes behind them.
-const SOCIAL_MAX_FRIENDS = 100;          // RA's default page size for the Following list
-const SOCIAL_PLAYING_MS = 10 * 60 * 1000; // presence newer than this counts as "Playing now"
-const SOCIAL_CACHE_MS = 2 * 60 * 1000;    // reopening within this window reuses what's loaded
+// Social: the people you follow on RetroAchievements (API_GetUsersIFollow), with one
+// API_GetUserSummary call each for what they're playing. Tapping a person shows their recent unlocks.
+// The list is saved on the device, so the tab opens with the last known statuses and refreshes behind them.
+const SOCIAL_MAX_FRIENDS = 100;           // RA's page size for the Following list
+const SOCIAL_PLAYING_MS = 10 * 60 * 1000; // presence newer than this is "Playing now"
+const SOCIAL_CACHE_MS = 2 * 60 * 1000;    // reopening within this reuses what's loaded
 const SOCIAL_UNLOCK_DAYS = 14;
-const SOCIAL_WORKERS = 6;                  // summary requests in flight at once
+const SOCIAL_WORKERS = 6;                 // summary requests at once
 const SOCIAL_FRIENDS_URL = 'https://retroachievements.org/friends.php';
 let socialFriends = [];   // [{ name, points, summary, failed }]
 let socialTotal = 0;
 let socialLoadedAt = 0;
-let socialToken = 0;      // bumped on every load so a stale load can't overwrite a newer one
+let socialToken = 0;      // bumped on every load so an older load can't overwrite a newer one
 let socialLoading = false;
 let socialError = '';
 let socialView = { mode: 'list', name: null };
 const socialUnlocksCache = {}; // lowercased name -> { at, list }
 
-function socialEsc(v){
-  return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
 // Only the fields the tab shows are kept, so the saved copy stays small.
 function socialSlim(s){
   if(!s) return null;
@@ -49,7 +42,7 @@ async function socialLoadSaved(){
         };
       }
     }
-  }catch(e){ /* nothing saved yet */ }
+  }catch(e){}
   return null;
 }
 async function socialSave(){
@@ -58,11 +51,10 @@ async function socialSave(){
       ts: Date.now(), total: socialTotal,
       friends: socialFriends.map(f => ({ name: f.name, points: f.points, summary: f.summary, at: f.at }))
     }), false);
-  }catch(e){ /* non-fatal */ }
+  }catch(e){}
 }
-// How old a person's saved status may get before it is fetched again. Someone active in the
-// last day is always refreshed; people who have been quiet for a while change rarely, so they
-// are checked less often. The Refresh button ignores this and refreshes everyone.
+// How old a saved status may get before it's fetched again: always for anyone active in the last
+// day, less often for people who have been quiet. Refresh ignores this.
 function socialTtl(f){
   const info = socialInfo(f);
   if(!info.date) return 60 * 60 * 1000;
@@ -106,10 +98,10 @@ function socialStatusHtml(info){
   if(info.playing) return '<span class="soc-status playing"><span class="soc-dot" style="background:var(--teal)"></span>Playing now</span>';
   if(!info.date) return '<span class="soc-status"><span class="soc-dot" style="background:var(--muted)"></span>—</span>';
   const recent = (Date.now() - info.date.getTime()) < 86400 * 1000;
-  return `<span class="soc-status"><span class="soc-dot" style="background:${recent ? 'var(--gold)' : 'var(--muted)'}"></span>${socialEsc(socialAgo(info.date))}</span>`;
+  return `<span class="soc-status"><span class="soc-dot" style="background:${recent ? 'var(--gold)' : 'var(--muted)'}"></span>${esc(socialAgo(info.date))}</span>`;
 }
 function socialAvatarHtml(name, cls){
-  return `<span class="soc-av-wrap ${cls || ''}"><img class="soc-av" src="${MEDIA}/UserPic/${encodeURIComponent(name)}.png" alt=""><span class="soc-av-fallback">${socialEsc(socialInitials(name))}</span></span>`;
+  return `<span class="soc-av-wrap ${cls || ''}"><img class="soc-av" src="${MEDIA}/UserPic/${encodeURIComponent(name)}.png" alt=""><span class="soc-av-fallback">${esc(socialInitials(name))}</span></span>`;
 }
 function socialWireAvatars(root){
   root.querySelectorAll('img.soc-av').forEach(img => {
@@ -133,7 +125,7 @@ function renderSocialList(){
   let html = `<h2 style="margin-bottom:4px;">Social</h2>
       <p class="sub" style="margin-bottom:12px;">People you follow on RetroAchievements</p>`;
   if(socialError){
-    html += `<div class="error-box">Could not load your following list: ${socialEsc(socialError)}${socialFriends.length ? ' Showing the last saved list.' : ''}</div>`;
+    html += `<div class="error-box">Could not load your following list: ${esc(socialError)}${socialFriends.length ? ' Showing the last saved list.' : ''}</div>`;
   }
   if(socialFriends.length === 0){
     if(!socialError && socialLoading) html += '<div class="loading">Loading</div>';
@@ -143,10 +135,10 @@ function renderSocialList(){
       const info = socialInfo(f);
       const sub = f.failed ? '<p class="soc-rp">Couldn\u2019t load activity</p>'
         : !f.summary ? '<p class="soc-rp">Loading…</p>'
-        : `<p class="soc-game">${socialEsc(info.game || 'No recent games')}</p>${info.presence ? `<p class="soc-rp">${socialEsc(info.presence)}</p>` : ''}`;
-      return `<button class="soc-row" type="button" data-name="${socialEsc(f.name)}">
+        : `<p class="soc-game">${esc(info.game || 'No recent games')}</p>${info.presence ? `<p class="soc-rp">${esc(info.presence)}</p>` : ''}`;
+      return `<button class="soc-row" type="button" data-name="${esc(f.name)}">
           ${socialAvatarHtml(f.name)}
-          <span class="soc-main"><span class="soc-name">${socialEsc(f.name)}</span>${sub}</span>
+          <span class="soc-main"><span class="soc-name">${esc(f.name)}</span>${sub}</span>
           ${f.summary ? socialStatusHtml(info) : ''}
         </button>`;
     }).join('') + '</div>';
@@ -177,8 +169,7 @@ async function loadSocial(force){
   const token = ++socialToken;
   socialLoading = true;
   socialError = '';
-  // Show what is already known straight away: this session's list, or else the copy saved
-  // on this device. The refresh below then updates it in place instead of blanking it.
+  // Show what's known straight away (this session's list or the saved copy), then refresh it in place.
   if(!socialFriends.length){
     const saved = await socialLoadSaved();
     if(token !== socialToken) return;
@@ -199,8 +190,7 @@ async function loadSocial(force){
     }).filter(f => f.name);
     renderSocialList();
 
-    // One summary call per person, but only for those who need it: people with nothing
-    // loaded yet first, then anyone whose saved status is older than socialTtl allows.
+    // Summaries for whoever needs one: nothing loaded yet first, then anyone older than socialTtl allows.
     const now = Date.now();
     const queue = socialFriends
       .filter(f => force || !f.summary || (now - (f.at || 0)) >= socialTtl(f))
@@ -220,7 +210,7 @@ async function loadSocial(force){
           f.at = Date.now();
           f.failed = false;
         }catch(e){
-          if(!f.summary) f.failed = true; // a failed refresh keeps the older status instead of blanking it
+          if(!f.summary) f.failed = true; // a failed refresh keeps the older status
         }
         done++;
         if(token === socialToken && socialView.mode === 'list' && $('#social-backdrop').classList.contains('open')){
@@ -250,21 +240,21 @@ function renderSocialDetail(f, unlocks, unlocksError){
       <div class="soc-head">
         ${socialAvatarHtml(f.name, 'lg')}
         <div style="min-width:0;flex:1;">
-          <h2 style="margin:0 0 3px;">${socialEsc(f.name)}</h2>
+          <h2 style="margin:0 0 3px;">${esc(f.name)}</h2>
           <div>${f.summary ? socialStatusHtml(info) : ''}</div>
         </div>
       </div>`;
   if(f.summary){
     html += `<div class="soc-now">
-        ${info.game ? `<p class="soc-game">${socialEsc(info.game)}${f.summary.LastGame && f.summary.LastGame.ConsoleName ? ` <span class="soc-console">· ${socialEsc(f.summary.LastGame.ConsoleName)}</span>` : ''}</p>` : ''}
-        ${info.presence ? `<p class="soc-rp">${socialEsc(info.presence)}</p>` : ''}
-        <p class="soc-rp">${socialEsc(Number(f.points || f.summary.TotalPoints || 0).toLocaleString())} hardcore points</p>
+        ${info.game ? `<p class="soc-game">${esc(info.game)}${f.summary.LastGame && f.summary.LastGame.ConsoleName ? ` <span class="soc-console">· ${esc(f.summary.LastGame.ConsoleName)}</span>` : ''}</p>` : ''}
+        ${info.presence ? `<p class="soc-rp">${esc(info.presence)}</p>` : ''}
+        <p class="soc-rp">${esc(Number(f.points || f.summary.TotalPoints || 0).toLocaleString())} hardcore points</p>
       </div>`;
   }
   html += `<a class="btn-primary soc-profile-link" href="${profileUrl}" target="_blank" rel="noopener">View profile on RetroAchievements ↗</a>
       <div class="section-title" style="margin-top:18px;">Recent unlocks</div>`;
   if(unlocksError){
-    html += `<div class="error-box">Could not load unlocks: ${socialEsc(unlocksError)}</div>`;
+    html += `<div class="error-box">Could not load unlocks: ${esc(unlocksError)}</div>`;
   }else if(!unlocks){
     html += '<div class="loading">Loading</div>';
   }else if(unlocks.length === 0){
@@ -274,13 +264,13 @@ function renderSocialDetail(f, unlocks, unlocksError){
       const hc = Number(a.HardcoreMode) === 1;
       return `<div class="unlock">
           <div class="unlock-row">
-            <img src="${socialEsc(imgUrl('/Badge/' + a.BadgeName + '.png'))}" alt="">
-            <div class="info"><p class="t">${socialEsc(a.Title)}</p><p class="g">${socialEsc(a.GameTitle)}</p></div>
+            <img src="${esc(imgUrl('/Badge/' + a.BadgeName + '.png'))}" alt="">
+            <div class="info"><p class="t">${esc(a.Title)}</p><p class="g">${esc(a.GameTitle)}</p></div>
             ${hc ? '<span class="pill pill-muted">HC</span>' : ''}
-            <div class="pts" style="color:${hc ? 'var(--muted)' : 'var(--teal)'}">${socialEsc(a.Points)}</div>
-            <div class="when">${socialEsc(timeAgo(a.Date))}</div>
+            <div class="pts" style="color:${hc ? 'var(--muted)' : 'var(--teal)'}">${esc(a.Points)}</div>
+            <div class="when">${esc(timeAgo(a.Date))}</div>
           </div>
-          <p class="unlock-desc">${socialEsc(a.Description || 'No description available.')}</p>
+          <p class="unlock-desc">${esc(a.Description || 'No description available.')}</p>
         </div>`;
     }).join('') + '</div>';
   }

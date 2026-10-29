@@ -1,9 +1,6 @@
 // Games added by hand, moving them into the library, and the RA console/game lists used to add them.
 
-// Manually added ("wishlist") games
-// Keyed by a normalized (lowercase, trimmed) username so that reconnecting
-// with different capitalization, RA logins are case-insensitive, can't
-// silently land on a different storage slot and appear empty.
+// Keyed by the lowercased username: RA logins ignore case, so a different capitalisation must find the same list.
 function manualGamesKey(){
   return `ra-manual-games:${creds.username.trim().toLowerCase()}`;
 }
@@ -12,32 +9,29 @@ async function loadManualGames(){
   try{
     const r = await window.storage.get(manualGamesKey(), false);
     if(r && r.value) return JSON.parse(r.value);
-  }catch(e){ /* not found under the normalized key, check the old format below */ }
+  }catch(e){}
 
-  // Fallback for games saved before this key was normalized, keyed by the
-  // exact username string as originally typed.
+  // Older saves used the username exactly as typed.
   try{
     const legacyKey = `ra-manual-games:${creds.username}`;
     if(legacyKey !== manualGamesKey()){
       const r = await window.storage.get(legacyKey, false);
       if(r && r.value){
         const migrated = JSON.parse(r.value);
-        await saveManualGames(migrated); // re-save under the normalized key going forward
+        await saveManualGames(migrated);
         return migrated;
       }
     }
-  }catch(e){ /* nothing under the old key either */ }
+  }catch(e){}
 
   return [];
 }
 async function saveManualGames(list){
-  try{ await window.storage.set(manualGamesKey(), JSON.stringify(list), false); }
-  catch(e){ /* non-fatal */ }
+  try{ await window.storage.set(manualGamesKey(), JSON.stringify(list), false); }catch(e){}
 }
 
-// Games the per-game endpoint has confirmed progress on but the bulk
-// API_GetUserCompletionProgress has not caught up to yet. Keeps them out of the
-// Backlog across reloads; loadAll() drops an entry once the bulk fetch agrees.
+// Games the per-game call shows progress on that the bulk progress list hasn't caught up with.
+// Keeps them out of the Backlog across restarts; loadAll() drops them once the list agrees.
 function pendingRealGamesKey(){
   return `ra-pending-real:${creds.username.trim().toLowerCase()}`;
 }
@@ -45,20 +39,16 @@ async function loadPendingRealGames(){
   try{
     const r = await window.storage.get(pendingRealGamesKey(), false);
     if(r && r.value) return JSON.parse(r.value);
-  }catch(e){ /* none saved yet */ }
+  }catch(e){}
   return [];
 }
 async function savePendingRealGames(list){
-  try{ await window.storage.set(pendingRealGamesKey(), JSON.stringify(list), false); }
-  catch(e){ /* non-fatal */ }
+  try{ await window.storage.set(pendingRealGamesKey(), JSON.stringify(list), false); }catch(e){}
 }
 
-// A manual RA game normally leaves the Backlog on the next full load, but the bulk
-// completion-progress endpoint can lag a play session by a while. The per-game endpoint
-// (already fetched by getEstimatedHours for every game) shows it sooner, so promote
-// from there. The storage write and re-render are debounced so a burst of promotions
-// costs one write and one render pass instead of one per game.
-const pendingPromotions = new Map(); // GameID -> entry, collected until the flush fires
+// Moves a manually added RA game out of the Backlog as soon as the per-game call shows progress.
+// The save and re-render are batched, so a burst of promotions costs one of each.
+const pendingPromotions = new Map(); // GameID -> entry
 let promotionFlushTimer = null;
 function schedulePromotionFlush(){
   if(promotionFlushTimer) return;
@@ -76,10 +66,7 @@ function schedulePromotionFlush(){
       await savePendingRealGames([...pending.filter(g => !idsToRemove.has(g.GameID)), ...batch]);
     });
 
-    renderSystemChips();
-    renderBacklog();
-    renderLibrary();
-    renderByYear();
+    renderLibraryViews();
   }, 250);
 }
 
@@ -101,8 +88,6 @@ async function promoteManualGameToReal(gameId, data){
     NumAwardedHardcore: Number(data.NumAwardedToUserHardcore ?? 0),
     HighestAwardKind: data.HighestAwardKind ?? null,
     HighestAwardDate: data.HighestAwardDate ?? null,
-    // This endpoint doesn't report MostRecentAwardedDate, keep whatever
-    // the entry already had (usually nothing yet, this early).
     MostRecentAwardedDate: old.MostRecentAwardedDate ?? null,
     lastPlayed: old.lastPlayed || old.MostRecentAwardedDate || null,
     pct: maxPossible ? Math.round((numAwarded / maxPossible) * 100) : 0,
@@ -117,19 +102,12 @@ async function removeManualGame(gameId){
     libraryData = libraryData.filter(g => g.GameID !== gameId);
     const manual = await loadManualGames();
     await saveManualGames(manual.filter(g => g.GameID !== gameId));
-    renderSystemChips();
-    renderBacklog();
-    renderLibrary();
-    renderByYear();
+    renderLibraryViews();
   });
 }
 
-// Console + game list lookups, for manually adding a game
-// RAWG names its platforms differently from RetroAchievements ("NES" vs "NES/Famicom"), which
-// would leave a manually added NES game under its own System chip. This maps a RAWG platform
-// (lowercase) to [RA console id, pattern that RA's name for that id must match]. The pattern
-// is a safety check: if RA's list doesn't look like what's expected, the RAWG name is kept.
-// Platforms RA doesn't cover at all (PS4, Switch, PC, ...) aren't listed and stay as they are.
+// RAWG platform (lowercase) -> [RA console id, pattern RA's name for it must match], so a game added
+// from RAWG lands under RA's console name ("NES" -> "NES/Famicom"). Platforms RA lacks keep RAWG's name.
 const RAWG_TO_RA_CONSOLE = {
   'genesis': [1, /genesis|mega drive/i],
   'nintendo 64': [2, /64/],
@@ -176,8 +154,7 @@ async function raConsoleNameFor(rawgName, consoleList){
   }catch(e){ return rawgName; }
 }
 
-// Renames custom games already saved under a RAWG name. Safe to run every load: a name that's
-// already RA's isn't in the table, so it comes back unchanged. Returns true if anything changed.
+// Renames custom games saved under a RAWG platform name. Returns true if anything changed.
 async function normalizeCustomConsoleNames(games){
   const needs = games.some(g => g.customConsole && RAWG_TO_RA_CONSOLE[String(g.ConsoleName || '').toLowerCase()]);
   if(!needs) return false;
@@ -192,24 +169,22 @@ async function normalizeCustomConsoleNames(games){
   return changed;
 }
 
-// RA's full system list also has consoles it doesn't officially support (and hubs/events), which
-// only clutter the pickers. Systems for non-RA games like PS3 go through "Other" instead.
+// Leaves out systems RA doesn't support yet, hubs and events. Non-RA systems go through "Other".
 function onlySupportedConsoles(list){
   return (list || []).filter(c => (c.Active ?? c.active) !== false && (c.IsGameSystem ?? c.isGameSystem) !== false);
 }
 
 async function getConsoleList(){
-  const cacheKey = 'ra-consoles-supported'; // separate from the old full-list cache
+  const cacheKey = 'ra-consoles-supported';
   try{
     const r = await window.storage.get(cacheKey, false);
     if(r && r.value){
       const parsed = JSON.parse(r.value);
       if(Date.now() - parsed.ts < 30 * 24 * 60 * 60 * 1000) return parsed.data;
     }
-  }catch(e){ /* not cached yet */ }
+  }catch(e){}
 
-  // a=1 asks RA for active systems only and g=1 drops hubs and events; the filter below covers
-  // the case where those parameters don't make it through a proxy.
+  // a=1: active systems only, g=1: no hubs or events.
   const data = onlySupportedConsoles(await raFetch('API_GetConsoleIDs.php', { a: 1, g: 1 }));
   try{ await window.storage.set(cacheKey, JSON.stringify({ data, ts: Date.now() }), false); }catch(e){}
   return data;
@@ -223,7 +198,7 @@ async function getGameListForConsole(consoleId){
       const parsed = JSON.parse(r.value);
       if(Date.now() - parsed.ts < 7 * 24 * 60 * 60 * 1000) return parsed.data;
     }
-  }catch(e){ /* not cached yet */ }
+  }catch(e){}
 
   const data = await raFetch('API_GetGameList.php', { i: consoleId, f: 1 });
   try{ await window.storage.set(cacheKey, JSON.stringify({ data, ts: Date.now() }), false); }catch(e){}

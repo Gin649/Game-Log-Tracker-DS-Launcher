@@ -1,9 +1,5 @@
-// Walkthrough videos: saved links, the embedded player, and resume position.
-
-// Walkthrough videos (YouTube)
-// "Find a walkthrough" opens a YouTube search in the browser; the user pastes
-// links back here, which are saved per game (so they're part of Data backups)
-// and played in a built-in embedded player that can be maximised.
+// Walkthrough videos. "Find a walkthrough" opens a YouTube search; links pasted back are saved per
+// game (so backups include them) and play in an embedded player that can go full screen.
 function walkthroughKey(gameId){
   return `walkthroughs:${creds.username.trim().toLowerCase()}:${gameId}`;
 }
@@ -11,20 +7,17 @@ async function loadWalkthroughs(gameId){
   try{
     const r = await window.storage.get(walkthroughKey(gameId), false);
     if(r && r.value){ const a = JSON.parse(r.value); if(Array.isArray(a)) return a; }
-  }catch(e){ /* none saved yet */ }
+  }catch(e){}
   return [];
 }
 async function saveWalkthroughs(gameId, list){
   try{
     if(list.length) await window.storage.set(walkthroughKey(gameId), JSON.stringify(list), false);
     else await window.storage.delete(walkthroughKey(gameId), false);
-  }catch(e){ /* non-fatal */ }
+  }catch(e){}
 }
-function ytEsc(str){
-  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-// Accepts watch / youtu.be / shorts / embed / live / playlist links (with or without a timestamp).
-// Returns { vid, list, start } or null if it isn't a YouTube link we can play.
+// Watch, youtu.be, shorts, embed, live and playlist links, with or without a timestamp.
+// Returns { vid, list, start }, or null if it isn't a playable YouTube link.
 function parseYouTubeLink(raw){
   let text = String(raw || '').trim();
   if(!text) return null;
@@ -77,11 +70,9 @@ async function fetchYouTubeTitle(e){
     return j && j.title ? String(j.title) : null;
   }catch(err){ return null; }
 }
-// Resume position: playback goes through the YouTube IFrame API so we can read the
-// current time. It is saved on the video entry (it.resume in seconds, plus
-// it.resumeIndex for playlists), so it is included in Data backups. If the API can't
-// load, the plain embed is used and only saving new positions is lost.
-const ytLive = new Set(); // active playback sessions: { flush(), destroy() }
+// Playback goes through the YouTube IFrame API to read the position, saved on the entry (it.resume in
+// seconds, it.resumeIndex for playlists). If the API can't load, a plain embed plays without saving.
+const ytLive = new Set(); // playing sessions: { flush(), destroy() }
 let ytApiPromise = null;
 function loadYouTubeApi(){
   if(window.YT && window.YT.Player) return Promise.resolve(window.YT);
@@ -99,8 +90,7 @@ function loadYouTubeApi(){
   });
   return ytApiPromise;
 }
-// Where to restart a video: a few seconds before where it was left (for context), or from the
-// link's own timestamp if nothing has been watched yet. Under 10s watched counts as not started.
+// Resume a few seconds before where it was left, or at the link's timestamp. Under 10s counts as not started.
 function ytStartSeconds(it){
   const r = Number(it.resume) || 0;
   if(r >= 10) return Math.max(0, r - 3);
@@ -110,10 +100,9 @@ function ytFlushAll(){ ytLive.forEach(sess => { try{ sess.flush(); }catch(e){} }
 document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden') ytFlushAll(); });
 window.addEventListener('pagehide', ytFlushAll);
 
-// Clears every walkthrough player (called when the game profile closes) so audio never
-// keeps playing behind a closed screen, and leaves full screen if it was on.
+// Stops every player when the profile closes, so audio doesn't carry on, and leaves full screen.
 function stopWalkthroughPlayers(){
-  Array.from(ytLive).forEach(sess => { try{ sess.flush(); sess.destroy(); }catch(e){} }); // save positions before clearing
+  Array.from(ytLive).forEach(sess => { try{ sess.flush(); sess.destroy(); }catch(e){} });
   document.querySelectorAll('.yt-player-wrap').forEach(w => {
     w.classList.remove('yt-max');
     const b = w.querySelector('.yt-player-box');
@@ -126,12 +115,11 @@ function stopWalkthroughPlayers(){
 }
 
 function setupWalkthroughUI(gameId, title, card, consoleName){
-  const inApp = () => (typeof thorBridge !== 'undefined' && thorBridge && typeof thorBridge.openViewer === 'function');
+  const inApp = () => !!(thorBridge && typeof thorBridge.openViewer === 'function');
   const btn = card.querySelector('#modal-yt-btn');
   const panel = card.querySelector('#modal-yt-panel');
   if(!btn || !panel) return;
-  // RA hack titles carry a tag like "~Hack~", drop the tildes and everything between them,
-  // since YouTube can't handle them in the search.
+  // Drop RA tags like "~Hack~", which spoil the YouTube search.
   const cleanTitle = String(title || '').replace(/~[^~]*~/g, ' ').replace(/~/g, ' ');
   const searchQuery = `${cleanTitle} ${consoleName || ''} walkthrough`.replace(/\s+/g, ' ').trim();
   const searchUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(searchQuery);
@@ -146,10 +134,10 @@ function setupWalkthroughUI(gameId, title, card, consoleName){
       return;
     }
     els.list.innerHTML = items.map(it => `
-        <div class="yt-item ${it.id === playingId ? 'playing' : ''}" data-id="${ytEsc(it.id)}">
+        <div class="yt-item ${it.id === playingId ? 'playing' : ''}" data-id="${esc(it.id)}">
           <button class="yt-item-main" type="button">
             ${it.vid ? `<img class="yt-thumb" src="https://i.ytimg.com/vi/${it.vid}/mqdefault.jpg" alt="" loading="lazy">` : '<span class="yt-thumb yt-thumb-list">☰</span>'}
-            <span class="yt-item-title">${ytEsc(it.title)}</span>
+            <span class="yt-item-title">${esc(it.title)}</span>
           </button>
           <button class="yt-item-del" type="button" aria-label="Remove link">✕</button>
         </div>`).join('');
@@ -166,8 +154,8 @@ function setupWalkthroughUI(gameId, title, card, consoleName){
     }
   }
 
-  let session = null;   // the active API-driven playback session, if any
-  let playToken = 0;    // bumped on every play/stop so a slow API load can't start a stale video
+  let session = null;
+  let playToken = 0; // bumped on every play / stop so a slow API load can't start an old video
 
   function endSession(){
     if(!session) return;
@@ -198,7 +186,7 @@ function setupWalkthroughUI(gameId, title, card, consoleName){
           it.resume = Math.floor(t);
           if(!it.vid){ const i = player.getPlaylistIndex(); if(i >= 0) it.resumeIndex = i; }
         }
-      }catch(e){ /* player not ready or already gone */ }
+      }catch(e){}
     };
     const sess = {
       flush(){ if(!player || ended) return; snap(); persist(); },
@@ -208,8 +196,7 @@ function setupWalkthroughUI(gameId, title, card, consoleName){
         try{ player && player.destroy(); }catch(e){}
       }
     };
-    // Some videos refuse to play inside another page (embedding off, or the app's address is blocked); in the app the
-    // video then opens in the in-app viewer instead of showing an error box.
+    // A video that refuses to be embedded opens in the in-app viewer instead of showing an error.
     opts.events.onError = () => {
       if(inApp()){
         msg('This video can\'t play here, so it is opening in the viewer.');
@@ -241,7 +228,7 @@ function setupWalkthroughUI(gameId, title, card, consoleName){
         clearInterval(timer);
         let lastInList = true;
         try{ if(!it.vid){ const n = (player.getPlaylist() || []).length; lastInList = n === 0 || player.getPlaylistIndex() >= n - 1; } }catch(e){}
-        if(lastInList){ ended = true; delete it.resume; delete it.resumeIndex; persist(); } // watched to the end: next time starts over
+        if(lastInList){ ended = true; delete it.resume; delete it.resumeIndex; persist(); } // watched to the end: start over next time
       }
     };
     ytLive.add(sess);
@@ -262,12 +249,11 @@ function setupWalkthroughUI(gameId, title, card, consoleName){
     renderList();
     els.wrap.scrollIntoView({ behavior:'smooth', block:'nearest' });
     let YTapi = null;
-    try{ YTapi = await loadYouTubeApi(); }catch(e){ console.error(e); }
-    if(token !== playToken || playingId !== it.id) return; // another video or Stop was chosen meanwhile
+    try{ YTapi = await loadYouTubeApi(); }catch(e){}
+    if(token !== playToken || playingId !== it.id) return; // something else was chosen meanwhile
     if(YTapi){
-      try{ startSession(YTapi, it, startAt); return; }catch(e){ console.error('YouTube player API failed, using plain player:', e); }
+      try{ startSession(YTapi, it, startAt); return; }catch(e){}
     }
-    // Fallback: plain embed (no position tracking), still starting from the last saved position.
     els.box.innerHTML = `<iframe src="${ytEmbedUrl({ ...it, start: startAt })}" title="Walkthrough video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
   }
 
@@ -306,8 +292,8 @@ function setupWalkthroughUI(gameId, title, card, consoleName){
   function build(){
     built = true;
     panel.innerHTML = `
-        <a class="guide-btn guide-btn-primary yt-find" href="${ytEsc(searchUrl)}" target="_blank" rel="noopener">Find a walkthrough ↗</a>
-        <p class="yt-hint">Opens a YouTube search for “${ytEsc(searchQuery)}”. On a video, tap <b>Share</b> → <b>Copy link</b>, come back here, and paste it below.</p>
+        <a class="guide-btn guide-btn-primary yt-find" href="${esc(searchUrl)}" target="_blank" rel="noopener">Find a walkthrough ↗</a>
+        <p class="yt-hint">Opens a YouTube search for “${esc(searchQuery)}”. On a video, tap <b>Share</b> → <b>Copy link</b>, come back here, and paste it below.</p>
         <div class="yt-add-row">
           <input type="url" class="yt-input" placeholder="Paste a YouTube link" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
           <button class="yt-save-btn" type="button">Save</button>
@@ -346,7 +332,7 @@ function setupWalkthroughUI(gameId, title, card, consoleName){
     });
     panel.querySelector('.yt-max-btn').addEventListener('click', () => setMax(true));
     panel.querySelector('.yt-max-close').addEventListener('click', () => setMax(false));
-    // Leaving native full screen with the system gesture/Esc should also drop the maximised layout.
+    // Leaving full screen with the system gesture also drops the maximised layout.
     const onFsChange = () => {
       const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
       if(!fsEl && els.wrap.classList.contains('yt-max')) els.wrap.classList.remove('yt-max');
@@ -358,7 +344,7 @@ function setupWalkthroughUI(gameId, title, card, consoleName){
     });
     loadedP = loadWalkthroughs(gameId).then(list => { items = list; renderList(); });
     if(inApp()){
-      // "Find a walkthrough" and "Open on YouTube" use the in-app viewer so swiping back returns here.
+      // These open in the in-app viewer, so swiping back returns here.
       panel.querySelector('.yt-find').addEventListener('click', (ev) => {
         ev.preventDefault();
         try{ thorBridge.openViewer(searchUrl, 'walkthrough'); }catch(e){}
@@ -390,6 +376,6 @@ function setupWalkthroughUI(gameId, title, card, consoleName){
     panel.style.display = opening ? 'block' : 'none';
     btn.classList.toggle('open', opening);
     if(opening){ if(!built) build(); }
-    else if(built){ stopPlayer(); renderList(); } // collapsing the panel stops playback
+    else if(built){ stopPlayer(); renderList(); }
   });
 }

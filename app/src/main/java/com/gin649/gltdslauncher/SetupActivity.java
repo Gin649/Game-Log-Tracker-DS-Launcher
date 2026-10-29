@@ -12,7 +12,6 @@ import android.os.Environment;
 import android.provider.Settings;
 import android.text.InputType;
 import android.view.Display;
-import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -196,8 +195,7 @@ public class SetupActivity extends Activity {
         goBack();
     }
 
-    // ---------- small helpers ----------
-
+    // small helpers
     private String get(String key, String def) {
         return Prefs.get(this, key, def);
     }
@@ -352,8 +350,7 @@ public class SetupActivity extends Activity {
         return "";
     }
 
-    // ---------- steps ----------
-
+    // steps
     private void render() {
         content.removeAllViews();
         etUser = null;
@@ -789,8 +786,7 @@ public class SetupActivity extends Activity {
         text("Tap Finish to start the tracker.", 14, MUTED);
     }
 
-    // ---------- navigation ----------
-
+    // navigation
     private void collect() {
         if (etUser != null) raUser = etUser.getText().toString().trim();
         if (etKey != null) raKey = etKey.getText().toString().trim();

@@ -1,30 +1,24 @@
 // RetroAchievements requests, the saved login, and playtime lookups.
 
-// Networking: our Worker first, then public CORS proxies, direct call as a last resort
-// (RetroAchievements normally blocks direct browser requests, so trying it first only wasted a
-// round trip on every call.)
-const WORKER_TIMEOUT_MS = 12000; // a hung Worker must fall through to the proxies, not stall the load
 function fetchWithTimeout(url, ms){
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), ms);
   return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(timer));
 }
-async function raFetch(endpoint, params){
-  const qs = new URLSearchParams({ u: creds.username, ...params, y: creds.apiKey }); // params.u lets Social look up another user
-  const targetUrl = `https://retroachievements.org/API/${endpoint}?${qs.toString()}`;
 
-  async function validate(label, res){
+// The app calls RetroAchievements itself (no CORS), at /ra/<endpoint>. If that fails for any reason
+// other than a rejected login, the request goes through the Cloudflare Worker instead.
+async function raFetch(endpoint, params){
+  const qs = new URLSearchParams({ u: creds.username, ...params, y: creds.apiKey }).toString(); // params.u lets Social ask about another user
+
+  async function attempt(label, url, ms){
+    let res;
+    try{ res = await fetchWithTimeout(url, ms); }
+    catch(e){ throw new Error(`${label}: blocked (${e.message})`); }
     if(res.status === 401 || res.status === 403){
-      if(label === 'direct' || label === 'worker' || label === 'native'){
-        // Direct and our own Worker both reach RetroAchievements server-to-server
-        // with nothing in between to misattribute a 401/403 to, a public proxy
-        // returning 401/403 is often the proxy's own auth wall, not RA's, so only
-        // these two are trusted as a real signal from RetroAchievements itself.
-        const err = new Error('RetroAchievements rejected the username or API key (HTTP ' + res.status + ').');
-        err.authFailure = true;
-        throw err;
-      }
-      throw new Error(`${label}: HTTP ${res.status} (likely the proxy, not RetroAchievements)`);
+      const err = new Error('RetroAchievements rejected the username or API key (HTTP ' + res.status + ').');
+      err.authFailure = true;
+      throw err;
     }
     if(!res.ok) throw new Error(`${label}: HTTP ${res.status}`);
     let data;
@@ -37,74 +31,19 @@ async function raFetch(endpoint, params){
     return data;
   }
 
-  async function attempt(label, run){
-    let res;
-    try{ res = await run(); }
-    catch(networkErr){ throw new Error(`${label}: blocked (${networkErr.message})`); }
-    return validate(label, res);
-  }
-
-  // Races a set of promises, resolving with whichever succeeds first.
-  // Only rejects once every single one has failed, collecting all reasons.
-  // (Written by hand instead of using Promise.any for wider compatibility.)
-  function raceFirstSuccess(promises){
-    return new Promise((resolve, reject) => {
-      let remaining = promises.length;
-      const errors = [];
-      promises.forEach(p => {
-        p.then(resolve, (err) => {
-          errors.push(err && err.message ? err.message : String(err));
-          remaining--;
-          if(remaining === 0) reject(new Error(errors.join('; ')));
-        });
-      });
-    });
-  }
-
-  // Inside the Thor app the app itself calls RetroAchievements (no CORS, no proxy hops), so this is
-  // the fast path. If it fails for any reason the normal routes below still run.
-  if(window.ThorBridge && location.hostname === 'appassets.androidplatform.net'){
-    try{
-      return await attempt('native', () => fetchWithTimeout(`/ra/${endpoint}?${qs.toString()}`, 20000));
-    }catch(nativeErr){
-      if(nativeErr.authFailure) throw nativeErr;
+  let nativeErr = null;
+  if(thorBridge){
+    try{ return await attempt('app', `/ra/${endpoint}?${qs}`, 20000); }
+    catch(e){
+      if(e.authFailure) throw e;
+      nativeErr = e;
     }
   }
-
-  // Our own Cloudflare Worker, one reliable hop we control, instead of going
-  // straight to racing five shared public proxies. Falls through to those only
-  // if the Worker itself is unreachable or erroring (e.g. its free daily
-  // request quota is exhausted), so the public proxies stay as a genuine
-  // safety net rather than being replaced outright.
   try{
-    return await attempt('worker', () => fetchWithTimeout(`https://ra-proxy.gin649.workers.dev/${endpoint}?${qs.toString()}`, WORKER_TIMEOUT_MS));
-  }catch(workerErr){
-    if(workerErr.authFailure) throw workerErr;
-    // Otherwise fall through and race the public proxies below.
-  }
-
-  const proxyAttempts = [
-    attempt('allorigins', () => fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl))),
-    attempt('codetabs',   () => fetch('https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(targetUrl))),
-    attempt('corsproxy',  () => fetch('https://corsproxy.io/?url=' + encodeURIComponent(targetUrl))),
-    attempt('thingproxy', () => fetch('https://thingproxy.freeboard.io/fetch/' + targetUrl)),
-    attempt('corseu',     () => fetch('https://cors.eu.org/' + targetUrl)),
-  ];
-
-  let proxyErrMsg = '';
-  try{
-    return await raceFirstSuccess(proxyAttempts);
-  }catch(aggregateErr){
-    proxyErrMsg = aggregateErr.message;
-  }
-
-  // Last resort: ask RetroAchievements directly. Usually blocked in browsers, but costs nothing
-  // to try once everything else has failed, and its status is a trustworthy signal from RA itself.
-  try{
-    return await attempt('direct', () => fetch(targetUrl));
-  }catch(directErr){
-    if(directErr.authFailure) throw directErr;
-    throw new Error('Every connection route failed — ' + proxyErrMsg + '; ' + directErr.message);
+    return await attempt('worker', `https://ra-proxy.gin649.workers.dev/${endpoint}?${qs}`, 12000);
+  }catch(e){
+    if(e.authFailure || !nativeErr) throw e;
+    throw new Error('Could not reach RetroAchievements (' + nativeErr.message + '; ' + e.message + ')');
   }
 }
 
@@ -113,10 +52,10 @@ function imgUrl(path){
   return path.startsWith('http') ? path : MEDIA + path;
 }
 
-// Persistence via window.storage (local only, no cloud copy)
+// The login is stored on this device only.
 async function saveCreds(username, apiKey){
   try{ await window.storage.set('ra-credentials', JSON.stringify({ username, apiKey }), false); }
-  catch(e){ /* non-fatal */ }
+  catch(e){}
 }
 async function loadCreds(){
   try{
@@ -129,9 +68,9 @@ async function clearCreds(){
   try{ await window.storage.delete('ra-credentials', false); }catch(e){}
 }
 
-// Casual/Hardcore mode survives reloads (including "Update app") so it doesn't reset to Casual.
+// Casual/Hardcore mode is remembered across restarts.
 async function saveStatsMode(mode){
-  try{ await window.storage.set('stats-mode', mode, false); }catch(e){ /* non-fatal */ }
+  try{ await window.storage.set('stats-mode', mode, false); }catch(e){}
 }
 async function loadStatsMode(){
   try{
@@ -145,11 +84,9 @@ function applyStatsModeLabel(){
   if(btn) btn.textContent = statsMode === 'hardcore' ? 'Switch to Casual Mode' : 'Switch to Hardcore Mode';
 }
 
-// Playtime: RA reports UserTotalPlaytime (seconds) in the GetGameInfoAndUserProgress
-// call we already make. Some clients never send it, so when it is 0 or missing we
-// estimate: for beaten/completed/mastered games, the span from first unlock to the
-// award; otherwise unlock timestamps grouped into sessions (gaps under 30 minutes
-// count as continuous play) and summed. Rough, and only used when RA has nothing.
+// Playtime: RA reports UserTotalPlaytime (seconds) in GetGameInfoAndUserProgress, but some
+// emulators never send it. Then it is estimated from unlock times: for a beaten game, first unlock
+// to last; otherwise unlocks grouped into sessions (gaps under 30 minutes count as one) and summed.
 const SESSION_GAP_MIN = 30;
 const SESSION_START_MIN = 5;
 
@@ -197,8 +134,8 @@ function findLibraryGame(gameId){
   return libraryData.find(g => g.GameID === gameId) || null;
 }
 
-// A game nobody has touched for a few days can't gain playtime, so its cached data
-// is kept longer. New unlocks still show up through awardedCountChanged().
+// A game not played for a few days can't gain playtime, so its cache lasts longer.
+// New unlocks still show up through awardedCountChanged().
 function cachedDataTtl(gameId){
   const g = findLibraryGame(gameId);
   const played = g && g.lastPlayed ? Date.parse(g.lastPlayed) : NaN;
@@ -206,8 +143,7 @@ function cachedDataTtl(gameId){
   return idle ? CACHE_TTL_IDLE : CACHE_TTL_ACTIVE;
 }
 
-// Entries remember the library's unlock count from when they were saved. If the
-// library now reports a different count, the cached data is out of date.
+// Cached entries keep the library's unlock count from when they were saved; a different count now means they are stale.
 function awardedCountChanged(entry, gameId){
   if(entry.libAwarded == null) return false;
   const g = findLibraryGame(gameId);
@@ -239,12 +175,11 @@ async function readStoredAchList(gameId){
 async function storeAchList(gameId, list){
   const entry = { list, ts: Date.now(), libAwarded: libraryAwardedFor(gameId) };
   try{ await window.storage.set(achCacheKey(gameId), JSON.stringify(entry), false); }
-  catch(e){ /* non-fatal */ }
+  catch(e){}
 }
 
-// RA's API only reports total playtime as of now. To know the playtime at the moment a
-// game was beaten or mastered, it is saved the first time a fresh award is seen. It can't
-// be rebuilt later, so these entries are kept in backups.
+// RA only reports playtime as of now, so the playtime at the moment a game was beaten or mastered
+// is saved the first time a fresh award is seen. It can't be rebuilt later, so backups keep it.
 const SNAP_WINDOW_MS = 24 * 60 * 60 * 1000;
 const SNAP_SLOTS_BY_AWARD = {
   'beaten-softcore': ['beatCasual'],
@@ -254,7 +189,7 @@ const SNAP_SLOTS_BY_AWARD = {
 };
 const snapKey = (gameId) => `ra-snap:${creds.username}:${gameId}`;
 
-// Slots the game's current top award could fill, only while that award is new.
+// Slots the game's top award could fill, only while the award is new.
 function recentAwardSlots(gameId){
   const g = findLibraryGame(gameId);
   if(!g || !g.HighestAwardKind || !g.HighestAwardDate) return [];
@@ -272,12 +207,12 @@ async function readSnap(gameId){
   }
 }
 
-// 0 means RA had no playtime when the award was seen, which stops it being asked again.
+// 0 means RA had no playtime when the award was seen, so it isn't asked again.
 async function saveSnap(gameId, existing, slots, hours){
   const next = { ...(existing || {}) };
   slots.forEach(s => { next[s] = hours; });
   try{ await window.storage.set(snapKey(gameId), JSON.stringify(next), false); }
-  catch(e){ /* non-fatal */ }
+  catch(e){}
 }
 
 async function getEstimatedHours(gameId, force){
@@ -285,11 +220,7 @@ async function getEstimatedHours(gameId, force){
 
   const localGame = libraryIndex[gameId];
   const officialAward = !!(localGame && localGame.HighestAwardKind);
-  // RA only assigns an official "beaten" award when the achievement set's
-  // author tagged specific win-condition achievements, many sets never
-  // do. A 100%-complete game is functionally beaten either way, so treat
-  // it the same regardless of whether that formal tag exists. (Only
-  // matters for the estimate fallback below, not for real RA data.)
+  // Many sets have no "beaten" award at all, so a 100% game counts as beaten for the estimate.
   const fullyCompleted = !!(localGame && Number(localGame.MaxPossible) > 0 &&
     Number(localGame.NumAwarded) >= Number(localGame.MaxPossible));
   const beaten = officialAward || fullyCompleted;
@@ -298,25 +229,22 @@ async function getEstimatedHours(gameId, force){
   const snap = wantedSlots.length ? await readSnap(gameId) : null;
   const missingSlots = wantedSlots.filter(s => !snap || snap[s] === undefined);
   if(!force){
-  try{
-    const r = await window.storage.get(cacheKey, false);
-    if(r && r.value){
-      const parsed = JSON.parse(r.value);
-      // Only trust a cached *miss* (hours: null) for a much shorter window,
-      // RA may simply not have finished computing playtime for this game
-      // yet, and we don't want that temporary gap sticking around for the
-      // full 12h once RA does have it.
-      const ttl = parsed.hours == null ? 5 * 60 * 1000 : cachedDataTtl(gameId);
-      if(Date.now() - parsed.ts < ttl && !awardedCountChanged(parsed, gameId) && missingSlots.length === 0){
-        estHoursCache[gameId] = { hours: parsed.hours, beaten, real: !!parsed.real };
-        if(!achievementsListCache[gameId]){
-          const stored = await readStoredAchList(gameId);
-          if(stored) achievementsListCache[gameId] = stored;
+    try{
+      const r = await window.storage.get(cacheKey, false);
+      if(r && r.value){
+        const parsed = JSON.parse(r.value);
+        // A cached miss (hours: null) is only trusted for 5 minutes: RA may just not have the playtime yet.
+        const ttl = parsed.hours == null ? 5 * 60 * 1000 : cachedDataTtl(gameId);
+        if(Date.now() - parsed.ts < ttl && !awardedCountChanged(parsed, gameId) && missingSlots.length === 0){
+          estHoursCache[gameId] = { hours: parsed.hours, beaten, real: !!parsed.real };
+          if(!achievementsListCache[gameId]){
+            const stored = await readStoredAchList(gameId);
+            if(stored) achievementsListCache[gameId] = stored;
+          }
+          return estHoursCache[gameId];
         }
-        return estHoursCache[gameId];
       }
-    }
-  }catch(e){ /* not cached yet */ }
+    }catch(e){}
   }
 
   let hours = null;
@@ -348,9 +276,8 @@ async function getEstimatedHours(gameId, force){
 
     if(missingSlots.length) await saveSnap(gameId, snap, missingSlots, real ? hours : 0);
 
-    // This per-game call sees real progress sooner than RA's bulk
-    // completion-progress fetch does, use it to move a manually-added
-    // game out of the Backlog right away instead of waiting on that.
+    // This call sees progress sooner than the bulk progress list, so use it to move a
+    // manually added game out of the Backlog straight away.
     const hasRealProgress = real || Number(data && data.NumAwardedToUser) > 0;
     if(hasRealProgress){
       try{ await promoteManualGameToReal(gameId, data); }
@@ -359,7 +286,7 @@ async function getEstimatedHours(gameId, force){
   }catch(e){ hours = null; }
 
   estHoursCache[gameId] = { hours, beaten, real };
-  try{ await window.storage.set(cacheKey, JSON.stringify({ hours, real, ts: Date.now(), libAwarded: libraryAwardedFor(gameId) }), false); }catch(e){ /* non-fatal */ }
+  try{ await window.storage.set(cacheKey, JSON.stringify({ hours, real, ts: Date.now(), libAwarded: libraryAwardedFor(gameId) }), false); }catch(e){}
   return estHoursCache[gameId];
 }
 
@@ -381,5 +308,5 @@ async function loadEstimatedHoursFor(games, onProgress, forceIds){
     }
   }
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, targets.length) }, worker));
-  if(onProgress) onProgress(); // final render to catch any remainder
+  if(onProgress) onProgress();
 }

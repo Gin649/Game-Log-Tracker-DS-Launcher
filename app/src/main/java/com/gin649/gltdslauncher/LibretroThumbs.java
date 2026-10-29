@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -66,11 +65,6 @@ final class LibretroThumbs {
 
     private LibretroThumbs() {}
 
-    /** True when this system has a libretro-thumbnails folder. */
-    static boolean supports(Context ctx, String folder) {
-        return dirFor(ctx, folder) != null;
-    }
-
     /**
      * Downloads what exists for the game. Returns null when the system is unknown or nothing matched, and throws
      * IOException when the network could not be reached (so the caller does not remember it as "no art").
@@ -97,8 +91,7 @@ final class LibretroThumbs {
         }
     }
 
-    // ---------- finding the right picture name ----------
-
+    // finding the right picture name
     private static String pickName(Context ctx, String sysDir, String romName, String title) throws IOException {
         // 1. the ROM's own name, when it is a No-Intro name
         String direct = sanitize(romName);
@@ -150,8 +143,7 @@ final class LibretroThumbs {
         return name.replaceAll("[&*/:`<>?\\\\|\"]", "_");
     }
 
-    // ---------- the list of box arts for a system, cached on disk ----------
-
+    // the list of box arts for a system, cached on disk
     private static synchronized List<String> list(Context ctx, String sysDir) throws IOException {
         List<String> cached = LISTS.get(sysDir);
         if (cached != null) return cached;
@@ -209,8 +201,7 @@ final class LibretroThumbs {
         }
     }
 
-    // ---------- network ----------
-
+    // network
     private static HttpUrl url(String sysDir, String type, String name) {
         return HttpUrl.parse(HOST).newBuilder().addPathSegment(sysDir).addPathSegment(type).addPathSegment(name + ".png").build();
     }
@@ -261,8 +252,7 @@ final class LibretroThumbs {
         }
     }
 
-    // ---------- system folders ----------
-
+    // system folders
     /** libretro-thumbnails folder for one of your system folders, or null. */
     private static synchronized String dirFor(Context ctx, String folder) {
         if (systemDirs == null) {

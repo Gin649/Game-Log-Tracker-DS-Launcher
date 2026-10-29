@@ -14,17 +14,11 @@ import java.util.Map;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 /**
- * Finds art your frontend already has for a ROM. What the top screen shows, best first:
- * 1. fan art, 2. a finished miximage, 3. a miximage built here from the screenshot, box art and marquee
- * (see LibrarySync.buildMiximage), 4. fan art or a miximage fetched online (see LibraryScraper), 5. the marquee,
- * 6. box art as the last resort.
- * Where it looks, for each kind of picture:
- * - ES-DE: downloaded_media/[system]/[type]/[rom].ext
- * - gamelist.xml (SkraperUI, EmulationStation style) in the system folder or your Daijisho folder
- * - Daijisho-style folders: [your Daijisho/media folder]/[system]/[rom].jpg, with or without type sub-folders
- * - art next to the ROMs: [ROMs]/[system]/[rom].png, images/, media/...
- * A flat folder of plain pictures (the usual Daijisho layout) counts as box art.
- * Folder listings are cached for a short while so scanning a big library does not hit the disk once per file name.
+ * Finds art your frontend already has for a ROM. The top screen uses, best first: fan art, a finished
+ * miximage, a miximage built from the screenshot, box art and marquee (LibrarySync.buildMiximage), art fetched
+ * online (LibraryScraper), the marquee, then box art.
+ * It looks in ES-DE's downloaded_media/[system]/[type]/, gamelist.xml files, Daijisho media folders (a flat
+ * folder of pictures counts as box art) and next to the ROMs. Folder listings are cached briefly.
  */
 final class MediaFinder {
 
@@ -214,8 +208,7 @@ final class MediaFinder {
         return l.byName.get(base.toLowerCase(Locale.ROOT));
     }
 
-    // ---------- gamelist.xml ----------
-
+    // gamelist.xml
     /** ROM file name or base name (lower case) -> kind -> image path, for one folder's gamelist.xml; null if none. */
     @SuppressWarnings("unchecked")
     private static synchronized Map<String, Map<Integer, String>> gamelist(File dir) {

@@ -1,7 +1,5 @@
-// Add Game modal: RA system search, RAWG search, and the bulk add.
+// Add Game: RA system search, RAWG search for other systems, and adding several at once.
 
-// Add game (manual + RAWG search)
-// Add game manually
 function rankGames(games, query){
   const q = foldText(query.trim());
   if(!q || !games) return [];
@@ -40,7 +38,6 @@ async function openAddGameModal(){
   }catch(e){
     sel.innerHTML = '<option value="__custom__">Other system (not on RetroAchievements)…</option><option value="">Could not load systems</option>';
   }
-  // "Other" is the first option and starts selected, so a non-RA game is just a title away.
   sel.value = '__custom__';
   syncAddGameSystem();
 }
@@ -49,12 +46,12 @@ function syncAddGameSystem(){
   const isCustom = $('#addgame-system').value === '__custom__';
   $('#addgame-custom-console-field').style.display = isCustom ? 'block' : 'none';
   const multiHint = $('#addgame-multi-hint');
-  if(multiHint) multiHint.style.display = isCustom ? 'none' : 'block'; // the multi-select checkboxes are RA-search only
+  if(multiHint) multiHint.style.display = isCustom ? 'none' : 'block'; // ticking several is RA search only
 }
 
 $('#addgame-system').addEventListener('change', syncAddGameSystem);
 
-// Reflects addGameSelections (checked but not yet committed) in the modal.
+// Shows how many games are ticked.
 function renderAddGameSelectionBar(){
   const bar = $('#addgame-selection-bar');
   if(!bar) return;
@@ -86,10 +83,7 @@ async function searchAddGame(){
         resultsEl.innerHTML = '<div class="ag-empty">No matching games found on RAWG.</div>';
         return;
       }
-      // Platform choices come straight from each result's own RAWG data
-      // instead of being typed in, no typos, and the same real-world
-      // platform (e.g. "PlayStation 4") always ends up spelled the same
-      // way across every custom game, which keeps the System filter tidy.
+      // The platform is picked from RAWG's list for the game, so it's always spelled the same way.
       resultsEl.innerHTML = results.map(g => {
         const plats = (g.platforms || [])
           .map(p => p && p.platform && p.platform.name)
@@ -163,9 +157,7 @@ async function searchAddGame(){
         }
         renderAddGameSelectionBar();
       };
-      // Checking the box toggles it natively; clicking elsewhere on the row
-      // toggles it manually, either way applySelection reads the box's
-      // resulting state, so the two paths never fight each other.
+      // Tapping anywhere on the row toggles the box.
       row.addEventListener('click', (e) => {
         if(e.target === checkbox) return;
         checkbox.checked = !checkbox.checked;
@@ -180,15 +172,13 @@ async function searchAddGame(){
 
 async function searchRawgForAddGame(title){
   if(!rawgCreds) rawgCreds = await loadRawgCreds();
-  if(!rawgCreds || !rawgCreds.apiKey) throw new Error('RAWG isn\'t set up — add a key under RAWG Ratings in the menu first.');
+  if(!rawgCreds || !rawgCreds.apiKey) throw new Error('RAWG isn\'t set up. Add a key under RAWG Ratings in the menu first.');
   const url = `https://api.rawg.io/api/games?key=${encodeURIComponent(rawgCreds.apiKey)}&search=${encodeURIComponent(title)}&page_size=10`;
   const json = await rawgGet(url);
   return (json && json.results) || [];
 }
 
-// Shared by addManualGamesBulk (fresh adds) and convertCustomToRaGame (linking an
-// existing custom entry to its real RA game), same shape of "tracked but
-// not yet actually played" entry either way.
+// A manually added RA game that hasn't been played yet.
 function buildManualRaEntry(g, consoleId, consoleName){
   return {
     GameID: Number(g.ID ?? g.id),
@@ -208,10 +198,7 @@ function buildManualRaEntry(g, consoleId, consoleName){
   };
 }
 
-// Adds every checked search result in one shot: a single manual-games
-// read/write and a single set of re-renders, rather than the old
-// one-at-a-time flow's read/write/render/close per game, that's what
-// made checking off several games and adding them together practical.
+// Adds every ticked result with one save and one redraw.
 async function addManualGamesBulk(selections){
   return enqueueTask(async () => {
     const manual = await loadManualGames();
@@ -219,7 +206,7 @@ async function addManualGamesBulk(selections){
     const newEntries = [];
     selections.forEach(({ g, consoleId, consoleName }) => {
       const gameId = Number(g.ID ?? g.id);
-      if(existingIds.has(gameId)) return; // already tracked for real, or a duplicate selection
+      if(existingIds.has(gameId)) return;
       existingIds.add(gameId);
       newEntries.push(buildManualRaEntry(g, consoleId, consoleName));
     });
@@ -227,17 +214,14 @@ async function addManualGamesBulk(selections){
       libraryData = [...libraryData, ...newEntries];
       await saveManualGames([...manual, ...newEntries]);
     }
-    renderSystemChips();
-    renderBacklog();
-    renderLibrary();
-    renderByYear();
+    renderLibraryViews();
     closeAddGameModal();
   });
 }
 
 async function addManualGameFromRawg(rawgGame, customConsole){
   return enqueueTask(async () => {
-    const gameId = -Date.now(); // synthetic, always negative, never collides with a real RA GameID
+    const gameId = -Date.now(); // negative, so it never clashes with a real RA GameID
     if(libraryData.some(x => x.GameID === gameId)){
       closeAddGameModal();
       return;
@@ -259,7 +243,7 @@ async function addManualGameFromRawg(rawgGame, customConsole){
       pct: 0,
       lastPlayed: null,
       manual: true,
-      customConsole: true, // not on RA at all, no achievement data will ever exist for this entry
+      customConsole: true, // not on RA
       genre: genre,
       released: rawgGame.released || null,
       manualStarted: false,
@@ -269,17 +253,12 @@ async function addManualGameFromRawg(rawgGame, customConsole){
     libraryData = [...libraryData, entry];
     const manual = await loadManualGames();
     await saveManualGames([...manual, entry]);
-    renderSystemChips();
-    renderBacklog();
-    renderLibrary();
-    renderByYear();
+    renderLibraryViews();
     closeAddGameModal();
   });
 }
 
-// Turns a customConsole entry into a real RA-tracked one once it shows up on RA.
-// Replaces the synthetic entry with a normal manual RA entry (same shape as
-// addManualGamesBulk makes), so it stays in the Backlog until RA reports progress.
+// Replaces a non-RA entry with a manually added RA game, which stays in the Backlog until RA sees progress.
 async function convertCustomToRaGame(oldGameId, g, consoleId, consoleName){
   return enqueueTask(async () => {
     const gameId = Number(g.ID ?? g.id);
@@ -292,10 +271,7 @@ async function convertCustomToRaGame(oldGameId, g, consoleId, consoleName){
       manual = [...manual, entry];
     }
     await saveManualGames(manual);
-    renderSystemChips();
-    renderBacklog();
-    renderLibrary();
-    renderByYear();
+    renderLibraryViews();
     closeGameModal();
   });
 }

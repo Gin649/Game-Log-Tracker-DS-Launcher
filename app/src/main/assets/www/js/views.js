@@ -1,14 +1,10 @@
-// Dashboard, library, backlog, and beaten-by-year rendering.
+// Dashboard, library, backlog and Beaten by Year rendering.
 
-// Dashboard, library table & year-view rendering
-// Rendering
 function renderProfile(p){
   lastProfile = p;
 
-  // Both computed stats below are derived from the library data this app
-  // already pulls (RA's public API has no direct field for either), so
-  // they're only accurate once library data has loaded; renderProfile()
-  // gets called again after that finishes to fill these in for real.
+  // Unlock count and "started games beaten" come from the library (RA has no field for either),
+  // so they fill in when renderProfile() runs again after the library loads.
   let unlocksLabel = '—';
   let startedBeatenLabel = '—';
   if(libraryData && libraryData.length > 0){
@@ -16,7 +12,7 @@ function renderProfile(p){
     let startedCasual = 0, beatenCasual = 0;
     let startedHardcore = 0, beatenHardcore = 0;
     libraryData.forEach(g => {
-      if(g.customConsole) return; // manually-tracked, non-RA games never count toward RA stats
+      if(g.customConsole) return; // non-RA games don't count
       const awarded = Number(g.NumAwarded || 0);
       const hardcore = Number(g.NumAwardedHardcore || 0);
       casualUnlocks += Math.max(0, awarded - hardcore);
@@ -37,13 +33,10 @@ function renderProfile(p){
     startedBeatenLabel = started > 0 ? ((beaten / started) * 100).toFixed(2) + '%' : '0%';
   }
 
-  // Real hardcore/softcore points from API_GetUserPoints.php, these are
-  // disjoint totals RA tracks directly (not TotalPoints minus softcore;
-  // that undercounts, since hardcore points aren't a subset of TotalPoints
-  // the way the profile endpoint's field naming might suggest).
+  // Hardcore and softcore points from API_GetUserPoints.php (two separate totals).
   const points = userPoints
     ? (statsMode === 'hardcore' ? Number(userPoints.Points || 0) : Number(userPoints.SoftcorePoints || 0))
-    : (statsMode === 'hardcore' ? null : Number(p.TotalSoftcorePoints || 0)); // fallback casual-only, before the points endpoint has loaded
+    : (statsMode === 'hardcore' ? null : Number(p.TotalSoftcorePoints || 0)); // until the points call has loaded
   const pointsLabel = points == null ? '—' : points.toLocaleString();
   const modeColor = statsMode === 'hardcore' ? 'var(--gold)' : 'var(--teal)';
   const ptsLabel = statsMode === 'hardcore' ? 'hardcore pts' : 'casual pts';
@@ -101,7 +94,6 @@ function renderRecentGames(games){
     const hoursHtml = est
       ? `<span class="val" style="color:var(--gold)">${est.real ? '' : '≈ '}${formatDuration(est)}</span>`
       : '<span class="pt-pending" title="Loading playtime…"></span>';
-    // Beaten / Mastered label on the corner of the box art
     const lib = libById.get(g.GameID);
     const award = lib && isGameAwarded(lib) ? awardInfo(lib.HighestAwardKind) : null;
     const badge = award ? `<span class="pill pill-corner ${award.cls}">${award.label}</span>` : '';
@@ -178,40 +170,29 @@ function renderSystemChips(){
   chipRow.querySelectorAll('.chip').forEach(chip => {
     chip.addEventListener('click', () => {
       systemFilter = chip.getAttribute('data-sys');
-      renderSystemChips();
-      renderBacklog();
-      renderLibrary();
-      renderByYear();
+      renderLibraryViews();
     });
   });
 }
 
-// App-wide title-comparison rule: ignore case AND accents, so "Pokémon" and "Pokemon" are the same
-// (é = e, ñ = n, etc.). Use this on both sides whenever titles are searched or compared.
+// Title comparison everywhere ignores case and accents ("Pokémon" = "Pokemon").
 function foldText(s){
   return String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
 
-// RA titles often carry a leading tag like "~Hack~" or "~Homebrew~", still
-// shown in the UI, but ignored for sorting so these games fall alphabetically
-// under the real title instead of clumping together under "~".
+// Sorting ignores leading tags like "~Hack~", so those games sort under their real title.
 function sortableTitle(title){
   return foldText(String(title || '').replace(/^(?:~[^~]*~\s*)+/, ''));
 }
 
-// Whether a game currently shows as "done" rather than "in progress", the
-// same rule awardPill() uses to choose a pill, kept in sync with it so the
-// Award column sorts into exactly the two groups it visibly displays,
-// including how the casual/hardcore toggle changes what counts as done.
+// Whether a game shows as done in the current mode (the same rule awardPill() uses).
 function isGameAwarded(g){
   if(g.customConsole) return !!g.manualBeaten;
   return awardCountsInMode(g.HighestAwardKind);
 }
 
-// Backlog vs Library: a manual RA game (not customConsole) stays in the Backlog until
-// RA reports progress, then loadAll() drops it from the manual list. A customConsole
-// game stays until "Now Playing" is checked. manualBeaten with no manualStarted counts
-// as started (older saves).
+// A manually added RA game stays in the Backlog until RA reports progress; a non-RA game until
+// "Now Playing" is ticked. Beaten without started counts as started (older saves).
 function isBacklogGame(g){
   if(g.manual !== true) return false;
   if(!g.customConsole) return true;
@@ -238,7 +219,7 @@ function renderLibrary(){
       const bRank = isGameAwarded(b) ? 0 : 1;
       const rankDiff = dir === 'desc' ? (aRank - bRank) : (bRank - aRank);
       if(rankDiff !== 0) return rankDiff;
-      return sortableTitle(a.Title).localeCompare(sortableTitle(b.Title)); // beaten-then-in-progress, alphabetical within each group either way
+      return sortableTitle(a.Title).localeCompare(sortableTitle(b.Title));
     }
     let av = a[key], bv = b[key];
     if(key === 'Title'){ av = sortableTitle(av); bv = sortableTitle(bv); }
@@ -248,9 +229,7 @@ function renderLibrary(){
     return 0;
   });
 
-  // In the default name order the three most recently played games go first, then the rest by
-  // name. With a console picked, rows only holds that console's games, so these are the last
-  // three played on it. Any other sort, or a search, shows the plain order.
+  // Default order: the three most recently played (on the picked console, if any), then by name.
   if(key === 'Title' && dir === 'asc' && !searchVal){
     const recent = rows
       .filter(g => parseRADate(g.lastPlayed))
@@ -282,9 +261,7 @@ function renderLibrary(){
           ${rows.map(g => {
           const isCustom = g.customConsole === true;
           const est = estHoursCache[g.GameID];
-          const earned = Number(g.NumAwarded || 0);
           const hoursLabel = isCustom ? '—' : (est ? formatDuration(est, true) : '<span class="pt-pending" title="Loading playtime…"></span>');
-          const hoursColor = 'var(--gold)';
           const awardCell = isCustom
             ? (g.manualBeaten ? '<span class="pill pill-teal">Beaten</span>' : '<span class="pill pill-muted">In progress</span>')
             : awardPill(g.HighestAwardKind);
@@ -307,7 +284,7 @@ function renderLibrary(){
               <td><div class="g-title"><img src="${imgUrl(g.ImageIcon)}" alt=""><span>${g.Title}</span>${g.manual ? `<button class="manual-remove" data-remove-id="${g.GameID}" title="Remove">✕</button>` : ''}</div></td>
               <td>${awardCell}</td>
               <td>${progressCell}</td>
-              <td style="font-family:'Space Mono',monospace;font-size:0.75rem;color:${hoursColor}">${hoursLabel}</td>
+              <td style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--gold)">${hoursLabel}</td>
               <td style="color:var(--muted);font-size:0.75rem;">${lastPlayedLabel}</td>
             </tr>
           `;
@@ -324,6 +301,11 @@ function renderLibrary(){
       renderLibrary();
     });
   });
+  wireGameRows(wrap);
+}
+
+// Opens a game from a table row; ✕ removes a manually added game.
+function wireGameRows(wrap){
   wrap.querySelectorAll('tbody tr').forEach(row => {
     row.addEventListener('click', () => openGameModal(Number(row.getAttribute('data-game-id'))));
   });
@@ -335,10 +317,7 @@ function renderLibrary(){
   });
 }
 
-// Games that have been added but never actually played: manually-added RA
-// games RA hasn't seen progress on yet, and customConsole games the user
-// hasn't checked "Now Playing" on. No award/progress/playtime columns here
-// since none of that exists yet for any of these.
+// Games added but not played yet.
 function renderBacklog(){
   const wrap = $('#backlog-table-wrap');
   if(!wrap) return;
@@ -355,7 +334,7 @@ function renderBacklog(){
   if(countEl) countEl.textContent = rows.length ? `(${rows.length})` : '';
 
   if(rows.length === 0){
-    wrap.innerHTML = '<div class="empty">Nothing in your backlog — add a game to start tracking it.</div>';
+    wrap.innerHTML = '<div class="empty">Nothing in your backlog. Add a game to start tracking it.</div>';
     return;
   }
 
@@ -378,15 +357,7 @@ function renderBacklog(){
       </table>
     `;
 
-  wrap.querySelectorAll('tbody tr').forEach(row => {
-    row.addEventListener('click', () => openGameModal(Number(row.getAttribute('data-game-id'))));
-  });
-  wrap.querySelectorAll('.manual-remove').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      removeManualGame(Number(btn.getAttribute('data-remove-id')));
-    });
-  });
+  wireGameRows(wrap);
 }
 
 // Small floating label with a game's title, used when a Beaten by Year tile is held.
@@ -426,7 +397,7 @@ function renderByYear(){
   );
   const done = [...raBeaten, ...manualBeaten];
   if(done.length === 0){
-    el.innerHTML = '<div class="empty">No completions yet — beat or master a game and it\'ll show up here.</div>';
+    el.innerHTML = '<div class="empty">No completions yet. Beat or master a game and it\'ll show up here.</div>';
     return;
   }
 
@@ -457,7 +428,7 @@ function renderByYear(){
           <div class="year-heading">${year} <span class="n">${games.length} completion${games.length===1?'':'s'}</span></div>
           <div class="year-icons">
             ${games.map(g => {
-              // Only Mastered gets a pill here (drawn on the icon), a plain beat is already the default for this tab.
+              // Only Mastered gets a pill; a plain beat is what this tab shows anyway.
               const award = g.customConsole ? null : awardInfo(g.HighestAwardKind);
               const pill = award && award.label === 'Mastered'
                 ? `<span class="pill pill-year ${award.cls}">Mastered</span>` : '';
@@ -475,10 +446,10 @@ function renderByYear(){
   let lastLongPress = 0;
   el.querySelectorAll('.year-item').forEach(item => {
     item.addEventListener('click', () => {
-      if(Date.now() - lastLongPress < 600) return; // the release of a long-press isn't a tap
+      if(Date.now() - lastLongPress < 600) return; // letting go of a long press isn't a tap
       openGameModal(Number(item.getAttribute('data-game-id')));
     });
-    // Touch screens have no hover, so holding a tile shows the game's title instead.
+    // Holding a tile shows the game's title (no hover on touch screens).
     let holdTimer = null, startX = 0, startY = 0, held = false;
     const cancelHold = () => { clearTimeout(holdTimer); holdTimer = null; };
     item.addEventListener('touchstart', (e) => {
@@ -497,6 +468,6 @@ function renderByYear(){
       if(held){ lastLongPress = Date.now(); if(e.cancelable) e.preventDefault(); }
     });
     item.addEventListener('touchcancel', cancelHold);
-    item.addEventListener('contextmenu', (e) => e.preventDefault()); // no image menu on long-press
+    item.addEventListener('contextmenu', (e) => e.preventDefault());
   });
 }

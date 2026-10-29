@@ -1,6 +1,5 @@
-// Clock and battery readout at the top of the screen, on by default (Display in the menu).
-// The Android app has no system status bar on this screen, so this is the clock and battery.
-// The battery comes from navigator.getBattery(), which thor.js provides inside the app.
+// Clock and battery (as pixel hearts) at the top of the screen, which has no Android status bar.
+// On by default; toggled under Display in the menu. thor.js provides navigator.getBattery().
 
 const STATUS_KEY = 'device-status-on';
 const STATUS_SUPPORTED = typeof navigator.getBattery === 'function';
@@ -8,7 +7,7 @@ let deviceStatusOn = false;
 let batteryManager = null;
 let clockTimer = null;
 
-// 13x11 pixel heart. X marks the heart, and its outer ring of pixels becomes the outline.
+// 13x11 pixel heart; its outer ring of pixels is drawn as the outline.
 const HEART_SHAPE = [
   '..XXX...XXX..',
   '.XXXXX.XXXXX.',
@@ -68,7 +67,7 @@ function drawDeviceStatus(){
   $('#status-time').textContent = clockText();
 }
 
-// Redraw on the minute so the clock never lags more than a second or two.
+// Redraw on the minute.
 function scheduleClock(){
   clearTimeout(clockTimer);
   clockTimer = setTimeout(() => { drawDeviceStatus(); scheduleClock(); }, 60000 - (Date.now() % 60000) + 50);
@@ -88,9 +87,9 @@ async function applyDeviceStatus(on){
     try{
       batteryManager = await navigator.getBattery();
       batteryManager.addEventListener('levelchange', drawDeviceStatus);
-    }catch(e){ /* no battery info, the clock still shows */ }
+    }catch(e){}
   }
-  if(!deviceStatusOn) return; // switched off while waiting for the battery
+  if(!deviceStatusOn) return; // switched off while waiting
   drawDeviceStatus();
   scheduleClock();
 }
@@ -101,30 +100,23 @@ async function initDeviceStatus(){
     $('#display-status-note').textContent = 'Not available on this device or browser';
     return;
   }
-  let on = true; // visible unless it was switched off in the Display menu
+  let on = true;
   try{
     const saved = await window.storage.get(STATUS_KEY, false);
     if(saved && saved.value === '0') on = false;
-  }catch(e){ /* nothing saved yet */ }
+  }catch(e){}
   await applyDeviceStatus(on);
 }
 initDeviceStatus();
 
-// Timers are paused while the app is in the background, so catch up when it comes back.
+// Timers pause in the background, so catch up on return.
 document.addEventListener('visibilitychange', () => {
   if(deviceStatusOn && document.visibilityState === 'visible'){ drawDeviceStatus(); scheduleClock(); }
 });
 
-$('#btn-display-heading').addEventListener('click', (e) => {
-  e.stopPropagation();
-  const submenu = $('#display-submenu');
-  const isOpen = submenu.style.display === 'block';
-  submenu.style.display = isOpen ? 'none' : 'block';
-  $('#display-heading-arrow').textContent = isOpen ? '▸' : '▾';
-});
 $('#display-status-switch').addEventListener('click', async (e) => {
   e.stopPropagation();
   const next = !deviceStatusOn;
   applyDeviceStatus(next);
-  try{ await window.storage.set(STATUS_KEY, next ? '1' : '0', false); }catch(err){ /* non-fatal */ }
+  try{ await window.storage.set(STATUS_KEY, next ? '1' : '0', false); }catch(err){}
 });

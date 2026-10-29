@@ -13,14 +13,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Puts the tracker's art screen back on the top screen after a game closes.
- *
- * When the emulator exits (the save-and-exit hotkey, quitting from its menu), Android sometimes
- * shows its own home screen on the top display instead of this app's art screen. Nothing in the
- * app is told when another app closes, so after a game starts this checks every few seconds
- * whether the emulator still has a screen up (this needs "Usage access"). Once it has been gone
- * for a moment, the art screen is brought back. If usage access isn't allowed it does nothing,
- * so a game that is still running is never interrupted by a guess.
+ * Puts the art screen back on the top screen after a game closes. Android sometimes shows its home
+ * screen there instead, and nothing tells the app when another app closes, so after a game starts this
+ * checks every few seconds (with Usage access) whether the emulator is still up. Without Usage access it
+ * does nothing, so a running game is never interrupted by a guess.
  */
 final class ArtWatch {
 

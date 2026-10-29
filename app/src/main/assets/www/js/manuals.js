@@ -1,5 +1,4 @@
-// Manual section of a game profile: finds the game's manual on gamesdatabase.org (through our
-// own Worker), saves the PDF on this device, and reads it in a built-in viewer.
+// Game manuals: found on gamesdatabase.org through the Worker, saved on the device, read in a built-in viewer.
 
 const MANUAL_WORKER = 'https://manuals-proxy.gin649.workers.dev';
 const PDFJS_VERSION = '3.11.174';
@@ -9,7 +8,7 @@ const MANUAL_HIT_TTL = 30 * 24 * 60 * 60 * 1000;
 const MANUAL_MISS_TTL = 7 * 24 * 60 * 60 * 1000;
 const MANUAL_LIST_URL = 'https://www.gamesdatabase.org/list.aspx?manual=1';
 
-// The site's system names (same list the scraper project uses).
+// The site's system names.
 const MANUAL_SYSTEM_NAMES = [
   'Acorn Atom', 'Amstrad CPC', 'Amstrad GX4000', 'Apple II', 'Arcade', 'Atari 2600', 'Atari 5200',
   'Atari 7800', 'Atari 8-bit', 'Atari Jaguar', 'Atari Jaguar CD', 'Atari Lynx', 'Atari ST',
@@ -79,16 +78,15 @@ function manualSystemsFor(consoleName){
   return hits.slice(0, 2);
 }
 
-// Title spellings to try on the site, best guess first. Follows the guide matcher's ideas:
-// the article moved back to the front, "Version"/"Edition" dropped, accents folded, either
-// half of a "Title: Subtitle", and the publisher brand ("Disney's") left off or put on.
+// Title spellings to try, best guess first: article moved to the front, "Version" / "Edition" dropped,
+// accents folded, either half of "Title: Subtitle", and the brand ("Disney's") dropped or added.
 function manualTitleVariants(title, strict){
-  const full = (typeof cheatsCleanTitle === 'function' ? cheatsCleanTitle(title) : String(title || '')).trim();
+  const full = cheatsCleanTitle(title).trim();
   if(!full) return [];
   const fold = t => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const noArticle = t => t.replace(/^(the|a|an)\s+/i, '');
   const noNoise = t => t.replace(/\b(version|edition)\b/gi, ' ').replace(/\s+/g, ' ').trim();
-  const noBrand = t => (typeof cheatsStripBrand === 'function' ? cheatsStripBrand(t) : t);
+  const noBrand = cheatsStripBrand;
 
   const out = [];
   const add = t => {
@@ -104,11 +102,10 @@ function manualTitleVariants(title, strict){
   add(noNoise(fold(noArticle(full))));
   add(noBrand(fold(full)));
 
-  // Strict is for the alternative search, which collects every manual it finds, so it sticks to
-  // spellings of this exact game and skips the looser guesses below.
+  // The alternative search keeps everything it finds, so it only uses spellings of this exact game.
   if(strict) return out.slice(0, 5);
 
-  // Each side of a subtitle, when it still reads like a title (two words or more).
+  // Each side of a subtitle, if it is two words or more.
   [' - ', ': '].forEach(sep => {
     const i = full.indexOf(sep);
     if(i < 0) return;
@@ -118,7 +115,6 @@ function manualTitleVariants(title, strict){
     });
   });
 
-  // The archive-style "Disney's X" for a plain "X", as the last and least likely guess.
   const base = noNoise(noBrand(fold(noArticle(full))));
   if(base && !/^disney/i.test(base)) add("Disney's " + base);
 
@@ -141,8 +137,7 @@ function manualSizeLabel(bytes){
   return bytes >= 1048576 ? (bytes / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(bytes / 1024)) + ' KB';
 }
 
-// Downloaded PDFs live in their own IndexedDB database, so they stay out of the Data export
-// (which would balloon with them) and out of the key/value store the app reads at startup.
+// Downloaded PDFs have their own IndexedDB database, so they stay out of backups and the main store.
 let manualDbPromise = null;
 function openManualDb(){
   if(manualDbPromise) return manualDbPromise;
@@ -177,20 +172,19 @@ async function loadManualMeta(gameId){
       const ttl = m.found ? MANUAL_HIT_TTL : MANUAL_MISS_TTL;
       if(m && Date.now() - (m.ts || 0) < ttl) return m;
     }
-  }catch(e){ /* nothing saved yet */ }
+  }catch(e){}
   return null;
 }
 async function saveManualMeta(gameId, meta){
-  try{ await window.storage.set(manualMetaKey(gameId), JSON.stringify({ ...meta, ts: Date.now() }), false); }
-  catch(e){ /* non-fatal */ }
+  try{ await window.storage.set(manualMetaKey(gameId), JSON.stringify({ ...meta, ts: Date.now() }), false); }catch(e){}
 }
 
 async function findManual(gameId, title, consoleName){
   const qs = new URLSearchParams();
   manualSystemsFor(consoleName).forEach(s => qs.append('system', s));
   manualTitleVariants(title).forEach(g => qs.append('game', g));
-  // RA games usually have a release year and publisher, which lets the Worker rebuild the file name if the page lookup misses.
-  const ext = typeof gameExtendedCache !== 'undefined' ? gameExtendedCache[gameId] : null;
+  // The release year and publisher let the Worker guess the file name if the page lookup misses.
+  const ext = gameExtendedCache[gameId];
   if(ext){
     const released = ext.Released ? parseRADate(ext.Released) : null;
     if(released) qs.set('year', String(released.getFullYear()));
@@ -240,8 +234,7 @@ async function downloadManualPdf(path, onProgress){
   }finally{ clearTimeout(timer); }
 }
 
-// The section under a game's write-up. Starts from what's saved on the device: a downloaded
-// manual shows Read / Save / Remove, otherwise there's one Download button.
+// The Manual section under a game's write-up.
 function addManualSection(wrap, ctx){
   if(!ctx || !manualSupported(ctx.title, ctx.consoleName)) return;
   const section = document.createElement('div');
@@ -264,7 +257,6 @@ function setupManualUI(body, ctx){
     const file = await manualFileGet(gameId);
     const meta = await loadManualMeta(gameId);
     if(file){
-      // "copy 2 of 3" only shows once an alternative search has found more than one manual.
       const alts = meta && meta.alts && meta.alts.length > 1 ? meta.alts : null;
       const at = alts ? alts.indexOf(file.path || meta.path) : -1;
       const copy = alts && at >= 0 ? `, copy ${at + 1} of ${alts.length}` : '';
@@ -286,9 +278,8 @@ function setupManualUI(body, ctx){
     set(`${note(text)}${bar}`);
   }
 
-  // Downloads a manual and keeps it as this game's one saved copy. Saving under the same id
-  // replaces whatever was there, and only once the new download has finished, so a failed
-  // attempt leaves the old manual alone and a swap never leaves two copies on the device.
+  // Downloads a manual and saves it as the game's only copy, replacing the old one only once the
+  // download has finished.
   async function fetchAndKeep(path){
     showProgress('Downloading…', null);
     const blob = await downloadManualPdf(path, (got, total) => {
@@ -326,14 +317,13 @@ function setupManualUI(body, ctx){
       await showIdle();
       if(body.isConnected) openManualReader(gameId, title);
     }catch(e){
-      console.error('Manual failed:', e && e.message);
       busy = false;
       showIdle(note(FAILED));
     }
   }
 
-  // Swaps the saved manual for another one the site has for this game (another region or
-  // scan, possibly filed under a related system). Repeated taps cycle through what was found.
+  // Swaps the saved manual for another the site has for the game (another region or scan, maybe
+  // under a related system). Repeated taps cycle through them.
   async function runAlternative(){
     if(busy) return;
     busy = true;
@@ -359,7 +349,6 @@ function setupManualUI(body, ctx){
       await showIdle();
       if(body.isConnected) openManualReader(gameId, title);
     }catch(e){
-      console.error('Alternative manual failed:', e && e.message);
       busy = false;
       showIdle(note(FAILED));
     }
@@ -395,9 +384,7 @@ function saveManualFile(file){
   setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
-// Viewer
-// PDF.js loads from cdnjs the first time a manual is opened. Pages are drawn as canvases only
-// when they scroll near the screen, so a 100-page manual doesn't render all at once.
+// Viewer. PDF.js loads from cdnjs on first use; pages are only drawn when they scroll near the screen.
 let pdfjsPromise = null;
 function loadPdfJs(){
   if(window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
@@ -488,7 +475,6 @@ async function openManualReader(gameId, title){
     manualReader.doc = doc;
     await layoutManualPages(token);
   }catch(e){
-    console.error('Manual viewer failed:', e && e.message);
     if(token !== manualReader.token) return;
     body.innerHTML = `<div class="manual-reader-msg">The built-in viewer could not start (it needs a connection the first time).<br><br>
       <button class="gd-manual-btn primary" data-act="external">Open in browser viewer</button></div>`;
@@ -550,7 +536,6 @@ async function renderManualPage(index, token){
     p.box.appendChild(canvas);
     p.rendered = true;
   }catch(e){
-    if(!(e && e.name === 'RenderingCancelledException')) console.error('Manual page failed:', e && e.message);
   }finally{ p.rendering = false; }
 }
 
@@ -558,7 +543,7 @@ async function setManualZoom(z){
   const next = Math.min(3, Math.max(0.5, z));
   if(next === manualReader.zoom || !manualReader.doc) return;
   const body = manualReader.el.querySelector('.manual-reader-body');
-  const frac = body.scrollHeight ? body.scrollTop / body.scrollHeight : 0; // keep roughly the same spot in the manual
+  const frac = body.scrollHeight ? body.scrollTop / body.scrollHeight : 0; // stay at about the same spot
   manualReader.zoom = next;
   const token = manualReader.token;
   await layoutManualPages(token);

@@ -4,8 +4,6 @@ function showError(msg){
   $('#connect-error').innerHTML = `<div class="error-box">${msg}</div>`;
 }
 
-// Game detail modal (manually-added games)
-// Game detail modal
 async function getGameExtended(gameId){
   if(gameExtendedCache[gameId]) return gameExtendedCache[gameId];
 
@@ -19,11 +17,11 @@ async function getGameExtended(gameId){
         return parsed.data;
       }
     }
-  }catch(e){ /* not cached yet */ }
+  }catch(e){}
 
   const data = await raFetch('API_GetGameExtended.php', { i: gameId });
   gameExtendedCache[gameId] = data;
-  try{ await window.storage.set(cacheKey, JSON.stringify({ data, ts: Date.now() }), false); }catch(e){ /* non-fatal */ }
+  try{ await window.storage.set(cacheKey, JSON.stringify({ data, ts: Date.now() }), false); }catch(e){}
   return data;
 }
 
@@ -44,7 +42,7 @@ async function attachRawgLookup(gameId, title, card){
 
     const runRawgLookup = (force) => {
       getRawgRating(title, force).then(rating => {
-        if(card.dataset.gameId !== String(gameId)) return; // modal moved on to another game
+        if(card.dataset.gameId !== String(gameId)) return; // another game was opened meanwhile
         const badgeEl = card.querySelector('#rawg-badge');
         if(!badgeEl) return;
 
@@ -66,45 +64,28 @@ async function attachRawgLookup(gameId, title, card){
   }
 }
 
-async function updateManualBeatenStatus(gameId, beaten, dateStr){
+// Saves changes to a manually added game and redraws the lists.
+function updateManualGame(gameId, changes){
   return enqueueTask(async () => {
     const idx = libraryData.findIndex(g => g.GameID === gameId);
     if(idx === -1) return;
-    libraryData[idx] = { ...libraryData[idx], manualBeaten: beaten, manualBeatenDate: beaten ? dateStr : null };
+    libraryData[idx] = { ...libraryData[idx], ...changes };
 
     const manual = await loadManualGames();
     const manualIdx = manual.findIndex(g => g.GameID === gameId);
     if(manualIdx !== -1){
-      manual[manualIdx] = { ...manual[manualIdx], manualBeaten: beaten, manualBeatenDate: beaten ? dateStr : null };
+      manual[manualIdx] = { ...manual[manualIdx], ...changes };
       await saveManualGames(manual);
     }
-    renderSystemChips();
-    renderBacklog();
-    renderLibrary();
-    renderByYear();
+    renderLibraryViews();
   });
 }
-
-// Moves a customConsole game out of the Backlog and into the Library once
-// the user starts it, separate from "beaten" so a game can sit in the
-// Library as in-progress before it's ever marked complete.
-async function updateManualStartedStatus(gameId, started){
-  return enqueueTask(async () => {
-    const idx = libraryData.findIndex(g => g.GameID === gameId);
-    if(idx === -1) return;
-    libraryData[idx] = { ...libraryData[idx], manualStarted: started };
-
-    const manual = await loadManualGames();
-    const manualIdx = manual.findIndex(g => g.GameID === gameId);
-    if(manualIdx !== -1){
-      manual[manualIdx] = { ...manual[manualIdx], manualStarted: started };
-      await saveManualGames(manual);
-    }
-    renderSystemChips();
-    renderBacklog();
-    renderLibrary();
-    renderByYear();
-  });
+function updateManualBeatenStatus(gameId, beaten, dateStr){
+  return updateManualGame(gameId, { manualBeaten: beaten, manualBeatenDate: beaten ? dateStr : null });
+}
+// "Now Playing" moves a non-RA game from the Backlog into the library, before it's beaten.
+function updateManualStartedStatus(gameId, started){
+  return updateManualGame(gameId, { manualStarted: started });
 }
 
 function renderCustomGameModal(gameId, local, card){
@@ -176,7 +157,7 @@ function renderCustomGameModal(gameId, local, card){
         <a href="https://howlongtobeat.com/?q=${encodeURIComponent(local.Title)}" target="_blank" rel="noopener">Search HowLongToBeat ↗</a>
       </div>
 
-      <p class="modal-note">Not on RetroAchievements — tracked manually, and not included in any RetroAchievements-based stats. Ratings via <a href="https://rawg.io" target="_blank" rel="noopener" style="color:var(--teal)">RAWG</a>.</p>
+      <p class="modal-note">Not on RetroAchievements: tracked by hand and left out of RetroAchievements stats. Ratings via <a href="https://rawg.io" target="_blank" rel="noopener" style="color:var(--teal)">RAWG</a>.</p>
     `;
 
   const startedCheckbox = card.querySelector('#manual-started-checkbox');
@@ -184,13 +165,12 @@ function renderCustomGameModal(gameId, local, card){
   const dateWrap = card.querySelector('#manual-beaten-date-wrap');
   const dateInput = card.querySelector('#manual-beaten-date');
 
-  // A game can't be "not playing" and "beaten" at once, unchecking Now
-  // Playing clears a beaten mark too, moving the game back to the Backlog.
   const refreshManualStatus = () => {
     const el = card.querySelector('#manual-status-val');
     if(el) el.innerHTML = manualStatusHtml(local);
   };
 
+  // Unticking Now Playing also clears Beaten, moving the game back to the Backlog.
   startedCheckbox.addEventListener('change', async () => {
     const nowStarted = startedCheckbox.checked;
     if(!nowStarted && checkbox.checked){
@@ -209,7 +189,7 @@ function renderCustomGameModal(gameId, local, card){
     if(checkbox.checked && !dateInput.value){
       dateInput.value = new Date().toISOString().slice(0, 10);
     }
-    // Being beaten implies having been played, start it too if it wasn't already.
+    // Beaten implies played.
     if(checkbox.checked && !startedCheckbox.checked){
       startedCheckbox.checked = true;
       await updateManualStartedStatus(gameId, true);
@@ -237,9 +217,7 @@ function renderCustomGameModal(gameId, local, card){
   if(canPatchConsole(local.ConsoleName)) setupRomPatchUI(gameId, local.Title, card, local.ConsoleName);
 }
 
-// Lets the user search RetroAchievements for a real match to an existing
-// customConsole entry, and convert it once they pick one. Same collapsible-
-// panel pattern as the guide and cheats buttons.
+// "Link to RetroAchievements": find a non-RA game on RA and convert it.
 function setupLinkRaUI(gameId, local, card){
   const btn = card.querySelector('#modal-link-ra-btn');
   const panel = card.querySelector('#modal-link-ra-panel');
@@ -326,33 +304,31 @@ function setupLinkRaUI(gameId, local, card){
   });
 }
 
+let openAchievementsGameId = null; // game whose achievements panel is showing, so a mode switch can redraw it
+let openBeatenAchievementsGameId = null; // same, for Beaten Achievements
 
-let openAchievementsGameId = null; // gameId whose achievements panel is currently rendered in the modal, if any, lets the hardcore toggle refresh it in place without re-fetching
-let openBeatenAchievementsGameId = null; // same, for the Beaten Achievements panel
-
-// Back button / back gesture. Opening a profile adds a history entry, so Back closes the
-// profile (same as swiping it away) instead of leaving the app. Closing it any other way
-// (the X, a swipe, Escape) takes that entry off again so the history stays in step.
+// Opening a profile adds a history entry, so Back closes the profile instead of leaving the app.
+// Closing it any other way removes the entry again.
 let profileHistoryPushed = false;
 function pushProfileHistory(){
-  if(profileHistoryPushed) return; // already open, e.g. redrawn by pull-to-refresh
+  if(profileHistoryPushed) return; // already open (redrawn by pull-to-refresh)
   profileHistoryPushed = true;
   history.pushState({ gltProfile: true }, '');
 }
 window.addEventListener('popstate', () => {
   if(!profileHistoryPushed) return;
-  profileHistoryPushed = false; // Back already removed the entry
+  profileHistoryPushed = false;
   if($('#modal-backdrop').classList.contains('open')) closeGameModal({ fromHistory: true });
 });
 
-// Ids of the profile's section buttons (achievements, guide, ...) that are currently expanded.
+// Ids of the profile's expanded section buttons.
 function openProfilePanelIds(){
   return Array.from($('#modal-card').querySelectorAll('.btn-view-achievements.open'))
     .map(btn => btn.id)
     .filter(Boolean);
 }
 
-// Expand the sections named in ids again, in page order, after the profile was redrawn.
+// Expands those sections again after the profile is redrawn.
 function reopenProfilePanels(card, ids){
   ids.forEach(id => {
     const btn = card.querySelector('#' + id);
@@ -360,8 +336,7 @@ function reopenProfilePanels(card, ids){
   });
 }
 
-// restorePanels: button ids from openProfilePanelIds(), used when the profile is redrawn in
-// place (pull-to-refresh) so the sections you had open stay open.
+// opts.restorePanels: ids from openProfilePanelIds(), to keep sections open across a pull-to-refresh.
 async function openGameModal(gameId, opts){
   const restorePanels = (opts && opts.restorePanels) || [];
   const card = $('#modal-card');
@@ -395,7 +370,7 @@ async function openGameModal(gameId, opts){
     card.querySelector('.modal-body').innerHTML = `<div class="error-box">Could not load game details: ${e.message}</div>`;
     return;
   }
-  if(card.dataset.gameId !== String(gameId)) return; // user moved on to another game while this loaded
+  if(card.dataset.gameId !== String(gameId)) return; // another game was opened meanwhile
 
   const title = ext.Title || (local && local.Title) || 'Unknown game';
   const console_ = ext.ConsoleName || (local && local.ConsoleName) || '—';
@@ -413,8 +388,7 @@ async function openGameModal(gameId, opts){
   const pct = totalAch ? Math.round((earned/totalAch)*100) : 0;
   const est = estHoursCache[gameId];
   const awardKind = local ? local.HighestAwardKind : null;
-  // Show the award date beside the badge, but only when the badge itself says "done" for the current mode
-  // (each mode only counts its own awards).
+  // The award date shows only when the badge says done in the current mode.
   const raBeatenDateLabel = (local && local.HighestAwardDate && awardCountsInMode(awardKind))
     ? formatBeatenDate(parseRADate(local.HighestAwardDate)) : '';
 
@@ -487,17 +461,15 @@ async function openGameModal(gameId, opts){
       ptRefreshBtn.disabled = true;
       ptRefreshBtn.classList.add('spinning');
       try{
-        const fresh = await getEstimatedHours(gameId, true); // force: bypass the 12h cache
-        if(card.dataset.gameId !== String(gameId)) return; // user moved on to another game
+        const fresh = await getEstimatedHours(gameId, true);
+        if(card.dataset.gameId !== String(gameId)) return;
         const valEl = card.querySelector('#modal-playtime-val');
         const labelEl = card.querySelector('#modal-playtime-label');
         if(valEl) valEl.textContent = formatDuration(fresh);
         if(labelEl) labelEl.textContent = fresh.real ? 'Playtime' : (fresh.beaten ? 'Time to beat' : 'Est. playtime');
-        // Keep the recent-games/library views in sync with the fresh value too.
         renderRecentGames(recentGamesData);
-        try{ renderLibrary(); }catch(e){ /* non-fatal */ }
+        try{ renderLibrary(); }catch(e){}
       }catch(e){
-        console.error('Manual playtime refresh failed:', e);
       }finally{
         if(card.dataset.gameId === String(gameId)){
           ptRefreshBtn.disabled = false;
@@ -524,19 +496,19 @@ async function openGameModal(gameId, opts){
     achBtn.classList.toggle('open', nowOpen);
     if(nowOpen && !achLoaded){
       achLoaded = true;
-      resetAchState(gameId); // a fresh game's list starts unfiltered and not in reorder mode
+      resetAchState(gameId);
       achWrap.innerHTML = '<div class="achievements-list-loading">Loading achievements…</div>';
       try{
         const list = await getAchievementsList(gameId);
         attachAchievementTypes(list, ext);
         await loadAchOrder(gameId);
-        if(card.dataset.gameId !== String(gameId)) return; // user moved on
+        if(card.dataset.gameId !== String(gameId)) return;
         renderAchWrapContent(achWrap, gameId);
         openAchievementsGameId = gameId;
       }catch(e){
         if(card.dataset.gameId !== String(gameId)) return;
         achWrap.innerHTML = `<div class="achievements-list-loading">Could not load achievements: ${e.message}</div>`;
-        achLoaded = false; // allow retry on next click
+        achLoaded = false;
       }
     }
   });
@@ -556,22 +528,21 @@ async function openGameModal(gameId, opts){
       try{
         const list = await getAchievementsList(gameId);
         attachAchievementTypes(list, ext);
-        if(card.dataset.gameId !== String(gameId)) return; // user moved on
+        if(card.dataset.gameId !== String(gameId)) return;
         beatenAchWrap.innerHTML = renderBeatenAchievementsList(list, statsMode === 'hardcore');
         openBeatenAchievementsGameId = gameId;
       }catch(e){
         if(card.dataset.gameId !== String(gameId)) return;
         beatenAchWrap.innerHTML = `<div class="achievements-list-loading">Could not load achievements: ${e.message}</div>`;
-        beatenAchLoaded = false; // allow retry on next click
+        beatenAchLoaded = false;
       }
     }
   });
 
-  // Subsets only get their button once the subset lookup finishes, so wait for it when that
-  // section was open.
+  // The Subsets button only appears once its lookup finishes, so wait for it if it was open.
   const subsetsReady = setupSubsetsUI(card, gameId, ext);
   if(restorePanels.includes('modal-subsets-btn')) await subsetsReady.catch(() => {});
-  if(card.dataset.gameId !== String(gameId)) return; // user moved on while subsets loaded
+  if(card.dataset.gameId !== String(gameId)) return;
   reopenProfilePanels(card, restorePanels);
 }
 
@@ -583,18 +554,14 @@ function closeGameModal(opts){
   clearSubsetPanels();
   stopWalkthroughPlayers();
   closeGuideReader();
-  // Closed by something other than Back: drop the history entry the open added. (opts is an
-  // event object when this is used directly as a click handler, which has no fromHistory.)
+  // Closed by something other than Back: drop the history entry (opts may be a click event).
   if(profileHistoryPushed && !(opts && opts.fromHistory === true)){
     profileHistoryPushed = false;
     history.back();
   }
 }
 
-// Box art pinch-to-zoom viewer
-// Installed/fullscreen PWAs generally block native page pinch-zoom, so this
-// gives the box art its own dedicated zoom/pan using Pointer Events (works
-// for touch and mouse alike). Tap/click the box art to open it.
+// Box art viewer with pinch zoom and pan. Tap the box art to open it.
 (function(){
   const overlay = $('#img-zoom-overlay');
   const img = $('#img-zoom-target');
@@ -626,7 +593,6 @@ function closeGameModal(opts){
     lastDist = null; lastMid = null; dragStart = null;
   }
 
-  // Any box art image in the game profile opens the zoom viewer.
   document.addEventListener('click', (e) => {
     const art = e.target.closest('.modal-art');
     if(art && art.src) openZoom(art.src);

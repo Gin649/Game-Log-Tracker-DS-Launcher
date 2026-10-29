@@ -1,15 +1,10 @@
-// "Need Cheats?" button. Finds the game's GameFAQs page through Wikidata.
-
-// "Need Cheats?" opens the game's GameFAQs cheats page in a new tab (GameFAQs blocks
-// in-app fetching). The page needs GameFAQs' numeric ID, looked up on Wikidata the
-// first time and cached per game; any platform's ID works since the cheats are shared.
-// No match falls back to a GameFAQs title search.
-const CHEATS_URL = id => `https://gamefaqs.gamespot.com/-/${id}-/cheats`; // if this pattern doesn't reach the cheats page, fix it here only
-const CHEATS_CACHE_V = 3; // bump to make every game re-run its lookup once
+// "Need Cheats?" opens the game's GameFAQs cheats page. That needs GameFAQs' numeric game ID,
+// looked up on Wikidata once and cached per game. No match falls back to a GameFAQs search.
+const CHEATS_URL = id => `https://gamefaqs.gamespot.com/-/${id}-/cheats`;
+const CHEATS_CACHE_V = 3; // bump to redo every game's lookup once
 const WD_API = 'https://www.wikidata.org/w/api.php';
 const WD_SPARQL = 'https://query.wikidata.org/sparql';
-// RA console name (lowercase) -> Wikidata platform labels (lowercase) that count as a match.
-// Consoles not listed here are matched on title only.
+// RA console name -> Wikidata platform labels that count as a match (lowercase). Others match on title only.
 const WD_PLATFORMS = {
   'game boy': ['game boy'],
   'game boy color': ['game boy color'],
@@ -36,20 +31,20 @@ const WD_PLATFORMS = {
   'wonderswan': ['wonderswan', 'wonderswan color']
 };
 
-// RA titles carry tags and "X, The" ordering that Wikidata doesn't use.
+// RA titles have tags and "X, The" ordering that Wikidata doesn't.
 function cheatsCleanTitle(t){
   let s = String(t || '').replace(/\[[^\]]*\]/g, ' ').replace(/~[^~]*~/g, ' ').replace(/\s+/g, ' ').trim();
   s = s.replace(/^(.*?),\s*(the|a|an)\b(.*)$/i, '$2 $1$3');
   return s.replace(/\s+/g, ' ').trim();
 }
-// Publisher/brand possessives that some databases include and others drop.
+// Brand possessives some databases include and others drop.
 function cheatsStripBrand(t){
   return String(t || '').replace(/^(?:walt\s+disney|disney|tom\s+clancy|sid\s+meier|marvel|clive\s+barker|nickelodeon)['’]?s\s+(?=\S)/i, '').trim();
 }
 function cheatsNormTitle(t){
   return foldText(cheatsStripBrand(cheatsCleanTitle(t))).replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim();
 }
-// 2 = same title, 1 = one contains the other (without a sequel number/numeral tacked on), 0 = no match
+// 2 = same title, 1 = one contains the other (but not with a sequel number added), 0 = no match
 function cheatsTitleScore(a, b){
   if(!a || !b) return 0;
   if(a === b) return 2;
@@ -71,8 +66,7 @@ function pickWikidataMatch(title, consoleName, cands){
     if(!ts || !c.statements || !c.statements.length) return;
     const itemHasConsole = accepted && c.itemPlats.length ? c.itemPlats.some(p => accepted.includes(p)) : null;
     c.statements.forEach(s => {
-      // true = ID is confirmed to be this console's version; false = wrong console;
-      // null = can't tell (e.g. the game is on several platforms and Wikidata doesn't say which one this ID is for)
+      // true = the ID is this console's version, false = another console's, null = can't tell
       let ok = null;
       if(accepted){
         if(s.qplats.length) ok = s.qplats.some(p => accepted.includes(p));
@@ -95,14 +89,12 @@ async function wdJson(url){
     return await r.json();
   }finally{ clearTimeout(timer); }
 }
-// Resolves to { found, id?, qid?, title?, platformOk?, at }. Throws on network/API errors
-// (those are shown to the user and not cached).
+// Resolves to { found, id?, qid?, title?, platformOk?, at }. Throws on network errors, which aren't cached.
 async function lookupCheats(title, consoleName){
   if(/^\s*~/.test(title || '')) return { v:CHEATS_CACHE_V, found:false, reason:'hack', at:Date.now() };
   const search = cheatsCleanTitle(title);
   if(!search) return { v:CHEATS_CACHE_V, found:false, at:Date.now() };
-  // Wikidata's search is prefix-based, so try the title as given, without a leading brand
-  // ("Disney's Goof Troop" -> "Goof Troop"), and with "Disney's" added ("Goof Troop" -> "Disney's Goof Troop").
+  // Wikidata's search is prefix based, so also try without a leading brand and with "Disney's" added.
   const variants = [];
   const stripped = cheatsStripBrand(search);
   [search, stripped, /^disney/i.test(search) ? '' : `Disney's ${stripped}`, /pokemon/i.test(search) ? search.replace(/pokemon/gi, 'Pokémon') : ''].forEach(v => { if(v && !variants.includes(v)) variants.push(v); });
@@ -150,19 +142,17 @@ async function loadCheatsAuto(gameId){
       const o = JSON.parse(r.value);
       if(o && typeof o === 'object' && o.v === CHEATS_CACHE_V && (!o.found || /^\d+$/.test(String(o.id)))) return o;
     }
-  }catch(e){ /* not looked up yet */ }
+  }catch(e){}
   return null;
 }
 async function saveCheatsAuto(gameId, o){
-  try{ await window.storage.set(cheatsAutoKey(gameId), JSON.stringify(o), false); }catch(e){ /* non-fatal */ }
+  try{ await window.storage.set(cheatsAutoKey(gameId), JSON.stringify(o), false); }catch(e){}
 }
-// Cached match if we have one, otherwise a Wikidata lookup. Falls back to GameFAQs' own search.
-// Resolves to { url, final }: final=false means a network problem, so it isn't remembered and
-// the next tap should try again.
+// Resolves to { url, final }. final=false means a network problem: not remembered, the next tap retries.
 async function resolveCheatsUrl(gameId, title, consoleName){
   const searchUrl = `https://gamefaqs.gamespot.com/search?game=${encodeURIComponent(title)}`;
   let auto = await loadCheatsAuto(gameId);
-  const retryMissAfter = 7 * 24 * 3600 * 1000; // re-check "not found" results weekly
+  const retryMissAfter = 7 * 24 * 3600 * 1000; // "not found" is checked again weekly
   if(!auto || (!auto.found && Date.now() - (auto.at || 0) > retryMissAfter)){
     try{
       auto = await lookupCheats(title, consoleName);
@@ -175,9 +165,7 @@ async function resolveCheatsUrl(gameId, title, consoleName){
 function setupCheatsUI(gameId, title, card, consoleName){
   const btn = card.querySelector('#modal-cheats-btn');
   if(!btn) return;
-  // The lookup starts as soon as the game profile opens, so by the time the button is tapped the
-  // link is usually already known and the page opens instantly, inside the tap itself (which
-  // browsers require to allow a new tab). The saved result means it's only ever done once per game.
+  // The lookup starts when the profile opens, so the link is usually ready when the button is tapped.
   let readyUrl = null, blockedUrl = null, failed = false, pending = null, busy = false;
   const idleHtml = btn.innerHTML;
   function start(){
@@ -191,7 +179,6 @@ function setupCheatsUI(gameId, title, card, consoleName){
   start();
 
   btn.addEventListener('click', () => {
-    // A page the browser refused to open earlier (see below) opens on this tap.
     if(blockedUrl){ const u = blockedUrl; blockedUrl = null; btn.innerHTML = idleHtml; window.open(u, '_blank', 'noopener'); return; }
     if(readyUrl){ window.open(readyUrl, '_blank', 'noopener'); return; }
     if(busy) return;
@@ -200,7 +187,6 @@ function setupCheatsUI(gameId, title, card, consoleName){
     btn.setAttribute('aria-busy', 'true');
     btn.innerHTML = '<span class="cheats-spinner" aria-hidden="true"></span>Finding cheats…';
     (failed ? start() : pending).then(r => {
-      // This tap ended a moment ago, so some browsers (phones especially) may block a new tab opened now.
       const tab = window.open(r.url, '_blank');
       if(tab){
         try{ tab.opener = null; }catch(e){}

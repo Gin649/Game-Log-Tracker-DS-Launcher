@@ -1,8 +1,4 @@
-// Pull-to-refresh and swipe to go back from a game profile.
-
-// Custom pull-to-refresh: refreshes app data instead of the browser doing
-// a full native page reload (which was resetting in-memory state and
-// looking like it signed you out of RetroAchievements).
+// Pull to refresh (reloads the data, not the page), the X button refresh, and swipe to close a profile.
 (function(){
   let touchStartY = 0;
   let pulling = false;
@@ -15,8 +11,7 @@
   indicator.textContent = 'Pull to refresh';
   document.body.insertBefore(indicator, document.body.firstChild);
 
-  // dataset.gameId is always text ("123") but the app's own game data keys on the real value
-  // (123), so find the game's real id first or the profile can't match it to its progress and awards.
+  // dataset.gameId is text; the game data uses the real value, so look it up.
   const resolveGameId = (idText) => {
     const hit = libraryData.find(g => String(g.GameID) === idText)
       || recentGamesData.find(g => String(g.GameID) === idText);
@@ -27,15 +22,13 @@
     const gameId = resolveGameId(idText);
     let fresh;
     try{
-      // One call for just this game: current progress, award status, achievement list and playtime.
+      // One call for this game: progress, award, achievements and playtime.
       fresh = await raFetch('API_GetGameInfoAndUserProgress.php', { g: gameId, a: 1 });
     }catch(e){
-      console.error('Game refresh failed:', e);
-      return; // offline / proxy trouble: leave the profile exactly as it was
+      return; // offline: leave the profile as it is
     }
     if(!fresh || fresh.ID === undefined && fresh.Title === undefined) return;
 
-    // Update this game's entry in place (same fields the full library load fills in).
     const maxPossible = Number(fresh.NumAchievements ?? 0);
     const numAwarded = Number(fresh.NumAwardedToUser ?? 0);
     const numAwardedHC = Number(fresh.NumAwardedToUserHardcore ?? 0);
@@ -62,38 +55,33 @@
       };
     }
 
-    // Drop what's cached for this game so the profile draws fresh details, achievements and playtime.
+    // Drop this game's caches so the profile redraws with fresh data.
     delete gameExtendedCache[gameId];
-    try{ await window.storage.delete(`ra-gameinfo:${gameId}`, false); }catch(e){ /* nothing cached */ }
+    try{ await window.storage.delete(`ra-gameinfo:${gameId}`, false); }catch(e){}
     if(fresh.Achievements){
       achievementsListCache[gameId] = Object.values(fresh.Achievements)
         .sort((a, b) => (a.DisplayOrder ?? 0) - (b.DisplayOrder ?? 0));
     }else{
       delete achievementsListCache[gameId];
-      try{ await window.storage.delete(achCacheKey(gameId), false); }catch(e){ /* nothing stored */ }
+      try{ await window.storage.delete(achCacheKey(gameId), false); }catch(e){}
     }
-    try{ await getEstimatedHours(gameId, true); }catch(e){ console.error('Playtime refresh failed:', e); }
+    try{ await getEstimatedHours(gameId, true); }catch(e){}
 
-    // Keep the screens behind the profile in step with the new numbers.
-    try{ renderRecentGames(recentGamesData); }catch(e){ console.error(e); }
-    try{ renderLibrary(); }catch(e){ console.error(e); }
-    try{ renderBacklog(); }catch(e){ console.error(e); }
-    try{ renderByYear(); }catch(e){ console.error(e); }
+    try{ renderRecentGames(recentGamesData); }catch(e){}
+    renderLibraryViews();
 
     const card = $('#modal-card');
-    if(!profileOpen() || card.dataset.gameId !== String(gameId)) return; // closed or moved to another game meanwhile
-    const openPanels = openProfilePanelIds(); // sections to expand again after the redraw
-    stopWalkthroughPlayers(); // saves the watch position before the profile is redrawn
+    if(!profileOpen() || card.dataset.gameId !== String(gameId)) return; // closed or another game opened
+    const openPanels = openProfilePanelIds();
+    stopWalkthroughPlayers(); // saves the watch position before the redraw
     await openGameModal(gameId, { restorePanels: openPanels });
   }
 
-  // The game profile is a full-screen overlay that scrolls itself (#modal-backdrop),
-  // so pulling down there is measured against its own scrollTop instead of the window's.
+  // The profile scrolls itself (#modal-backdrop), so pulls there use its scrollTop.
   let profileMode = false;
   const profileEl = () => $('#modal-backdrop');
   const profileOpen = () => profileEl().classList.contains('open');
-  // True if the touch began inside something that is itself scrolled down (a nested list), so
-  // pulling down should scroll that list rather than refresh.
+  // A touch inside a list that is itself scrolled down scrolls that list instead of refreshing.
   const insideScrolledChild = (node) => {
     for(let el = node; el && el !== profileEl(); el = el.parentElement){
       if(el.scrollTop > 1) return true;
@@ -101,7 +89,7 @@
     return false;
   };
 
-  // Controller X button: the same refresh a pull-down does, without the pulling.
+  // Controller X: the same refresh as a pull.
   let padRefreshing = false;
   window.padRefresh = () => {
     if(padRefreshing || !creds) return;
@@ -132,7 +120,7 @@
       pulling = !!creds && !!card.dataset.gameId
         && e.touches.length === 1
         && profileEl().contains(e.target)
-        && profileEl().scrollTop <= 1 // <=1: scroll offsets can be fractional on scaled screens
+        && profileEl().scrollTop <= 1 // offsets can be fractional on scaled screens
         && !insideScrolledChild(e.target);
       profileMode = pulling;
     }else{
@@ -143,7 +131,7 @@
 
   document.addEventListener('touchmove', (e) => {
     if(!pulling) return;
-    // An achievement being dragged to a new position (reorder) has already claimed this gesture.
+    // An achievement being dragged has already claimed this gesture.
     if(e.defaultPrevented){ pulling = false; currentPull = 0; indicator.style.height = '0px'; return; }
     const atTop = profileMode ? profileEl().scrollTop <= 1 : window.scrollY === 0;
     const delta = e.touches[0].clientY - touchStartY;
@@ -164,7 +152,6 @@
       indicator.textContent = 'Refreshing…';
       let job;
       if(wasProfile && profileOpen()){
-        // Refresh just this game (one API call, not the whole library) and redraw its profile.
         job = refreshOpenGameProfile($('#modal-card').dataset.gameId);
       }else{
         job = loadAll({ forceRecentPlaytime: true });
@@ -181,16 +168,14 @@
   }, { passive: true });
 })();
 
-// Swipe left or right on the game profile to go back to where you came from. The profile is a
-// full-screen layer over the page, so closing it drops you back on the tab you opened it from.
+// Swipe left or right on a profile to close it.
 (function(){
   const MIN_DISTANCE = 80; // px
-  const MAX_TIME = 700;    // ms, so a slow drag isn't mistaken for a swipe
+  const MAX_TIME = 700;    // ms; a slow drag isn't a swipe
   const profile = $('#modal-backdrop');
   let start = null;
 
-  // Leave alone anything that needs sideways movement itself: form fields, the video player,
-  // achievement reordering, and lists that scroll horizontally.
+  // Not over things that use sideways movement: fields, the video player, reordering, sideways lists.
   function ignoresSwipe(target){
     if(target.closest('input, textarea, select, iframe, .yt-player-wrap')) return true;
     const row = target.closest('.ach-row');
@@ -209,7 +194,6 @@
     start = { x: e.touches[0].clientX, y: e.touches[0].clientY, time: Date.now() };
   }, { passive: true });
   profile.addEventListener('touchmove', (e) => {
-    // A second finger (pinch) or a drag already claimed by reordering cancels the swipe.
     if(e.touches.length > 1 || e.defaultPrevented) start = null;
   }, { passive: true });
   profile.addEventListener('touchend', (e) => {

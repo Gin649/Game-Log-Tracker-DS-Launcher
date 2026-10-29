@@ -14,8 +14,7 @@ import java.util.List;
 @Dao
 public interface GameDao {
 
-    // ---- From the spec ----
-
+    // From the spec
     @Query("SELECT * FROM game_library WHERE system_id = :systemId ORDER BY title COLLATE NOCASE")
     List<GameEntity> getGamesBySystem(String systemId);
 
@@ -33,8 +32,7 @@ public interface GameDao {
     @Query("UPDATE game_library SET play_count = play_count + 1 WHERE id = :id")
     void incrementPlayCount(int id);
 
-    // ---- Lookups ----
-
+    // Lookups
     @Query("SELECT * FROM game_library WHERE id = :id")
     GameEntity getById(int id);
 
@@ -59,8 +57,7 @@ public interface GameDao {
     @Query("SELECT COUNT(*) FROM game_library WHERE local_miximage_path IS NOT NULL")
     int countWithMiximage();
 
-    // ---- Scanning ----
-
+    // Scanning
     /** Returns the new row id, or -1 if this system/ROM pair is already in the table (row left untouched). */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     long insertIfAbsent(GameEntity game);
@@ -68,8 +65,7 @@ public interface GameDao {
     @Query("DELETE FROM game_library WHERE id IN (:ids)")
     void deleteByIds(List<Integer> ids);
 
-    // ---- Online art search status (the column is still called screenscraper_id) ----
-
+    // Online art search status (the column is still called screenscraper_id)
     /** screenscraper_id: 0 = not searched yet, -1 = searched and nothing found. (Older builds stored a ScreenScraper id above 0.) */
     @Query("SELECT * FROM game_library WHERE screenscraper_id = 0 AND local_miximage_path IS NULL ORDER BY id LIMIT :limit")
     List<GameEntity> getUnmatched(int limit);
@@ -89,9 +85,4 @@ public interface GameDao {
 
     @Query("UPDATE game_library SET local_miximage_path = :path WHERE id = :id")
     void setMiximagePath(int id, String path);
-
-    // ---- User actions ----
-
-    @Query("UPDATE game_library SET favorite = :favorite WHERE id = :id")
-    void setFavorite(int id, boolean favorite);
 }

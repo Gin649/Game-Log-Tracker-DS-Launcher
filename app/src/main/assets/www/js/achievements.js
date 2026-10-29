@@ -1,8 +1,6 @@
 // Achievement lists, custom ordering, the missable filter, and beaten achievements.
 
-// Almost always already populated by getEstimatedHours() (it fetches
-// this exact endpoint for every game in the library on load), this only
-// hits the network itself if that hasn't happened yet for this game.
+// Usually already filled by getEstimatedHours(), which fetches the same endpoint on load.
 async function getAchievementsList(gameId){
   if(achievementsListCache[gameId]) return achievementsListCache[gameId];
   const stored = await readStoredAchList(gameId);
@@ -19,10 +17,8 @@ async function getAchievementsList(gameId){
   return list;
 }
 
-// GetGameInfoAndUserProgress (used for earn-dates/progress) doesn't reliably
-// include each achievement's Missable/Progression/WinCondition type, but
-// GetGameExtended (already fetched for the modal) does, so borrow it from
-// there instead of a second network round-trip.
+// GetGameInfoAndUserProgress doesn't always carry each achievement's type (missable,
+// progression, win condition), but GetGameExtended does, and the modal already has it.
 function attachAchievementTypes(list, ext){
   const extAch = ext && ext.Achievements;
   if(!extAch) return list;
@@ -57,25 +53,20 @@ function achRowHtml(a, isLocked, isHardcoreMode, reorderMode){
           <p class="d">${a.Description || ''}</p>
           ${!isLocked ? `<p class="when">Unlocked ${timeAgo(earnedDate)}</p>` : ''}
         </div>
-        ${isMissable(a) ? '<span class="ach-missable-badge" title="Missable — can be permanently missed during a playthrough">!</span>' : ''}
+        ${isMissable(a) ? '<span class="ach-missable-badge" title="Missable: can be missed for good during a playthrough">!</span>' : ''}
         ${(!reorderMode && (a.ID ?? a.id)) ? `<a class="ach-ra-link" href="https://retroachievements.org/achievement/${encodeURIComponent(a.ID ?? a.id)}" target="_blank" rel="noopener" title="Open this achievement on RetroAchievements (comments &amp; discussion)" aria-label="Open ${String(a.Title || 'achievement').replace(/"/g,'&quot;')} on RetroAchievements">RA</a>` : ''}
         <div class="pts">${a.Points ?? ''}</div>
       </div>
     `;
 }
 
-// Custom achievement order (per game, saved on-device)
-// Stored as an array of achievement IDs under its own key, so it rides along
-// in the Data export/import backup automatically. Achievements added to the
-// set later (not in the saved array) are appended at the end; IDs that no
-// longer exist are ignored.
-const achOrderCache = {}; // gameId -> array of IDs, or null when no custom order
+// Custom achievement order, per game: an array of achievement IDs under its own key, so backups
+// include it. Achievements added to the set later go at the end; IDs that no longer exist are ignored.
+const achOrderCache = {}; // gameId -> array of IDs, or null
 
-// Filter and reorder state for each achievements list, keyed by game ID. A game's own list
-// and its subset lists can be open at the same time, so they can't share one set of flags.
+// Filter and reorder state per list, keyed by game ID (a game's list and its subsets' lists can be
+// open together). The Missable / Locked toggles are remembered in localStorage.
 const achPanelStates = {};
-// The Missable / Locked filter toggles are remembered across page refreshes
-// (per user + game/subset, in localStorage). Reorder mode and import errors are not.
 function achFilterKey(gameId){
   return `ach-filters:${(creds && creds.username ? creds.username : '').trim().toLowerCase()}:${gameId}`;
 }
@@ -91,7 +82,7 @@ function saveAchFilters(gameId){
   try{
     if(st.missableOnly || st.lockedOnly) localStorage.setItem(achFilterKey(gameId), JSON.stringify({ missableOnly: st.missableOnly, lockedOnly: st.lockedOnly }));
     else localStorage.removeItem(achFilterKey(gameId));
-  }catch(e){ /* storage unavailable: filters just won't persist */ }
+  }catch(e){}
 }
 function achState(gameId){
   if(!achPanelStates[gameId]) achPanelStates[gameId] = { ...loadAchFilters(gameId), reorderMode: false, importError: '' };
@@ -110,22 +101,20 @@ async function loadAchOrder(gameId){
       const arr = JSON.parse(r.value);
       if(Array.isArray(arr)){ achOrderCache[gameId] = arr; return arr; }
     }
-  }catch(e){ /* no custom order saved */ }
+  }catch(e){}
   achOrderCache[gameId] = null;
   return null;
 }
 async function saveAchOrder(gameId, ids){
   achOrderCache[gameId] = ids;
   try{ await window.storage.set(achOrderKey(gameId), JSON.stringify(ids), false); }
-  catch(e){ /* non-fatal */ }
+  catch(e){}
 }
 async function clearAchOrder(gameId){
   achOrderCache[gameId] = null;
   try{ await window.storage.delete(achOrderKey(gameId), false); }catch(e){}
 }
-// Export/import a custom order as a .json file. Stores full IDs rather than indices
-// so it still works if the achievement set has changed. Uses a throwaway file input,
-// like the Data export/import.
+// Export / import a custom order as a .json file. IDs, not positions, so it survives set changes.
 function downloadAchOrderFile(gameId, gameTitle, ids){
   const payload = { type: 'glt-achievement-order', version: 1, gameId, gameTitle: gameTitle || '', order: ids };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -172,10 +161,7 @@ function applyAchOrder(list, order){
   return known.concat(fresh);
 }
 
-// Default order when there's no custom one: earned achievements first with the most
-// recently unlocked on top, then locked ones in the set's own order. Array.sort is
-// stable, so equal unlock times keep set order. Shared by the full list and the
-// beaten list.
+// Default order: earned first, latest unlock on top, then locked in the set's order.
 function splitEarnedLocked(list, isHardcoreMode){
   const date = (a) => isHardcoreMode ? a.DateEarnedHardcore : a.DateEarned;
   const unlockTime = (a) => {
@@ -190,24 +176,17 @@ function splitEarnedLocked(list, isHardcoreMode){
 
 function renderAchievementsList(list, isHardcoreMode, order, reorderMode){
   if(!list || list.length === 0) return '<div class="achievements-list-loading">No achievement data available.</div>';
-  // Match the rest of the app's hardcore/casual convention: hardcore mode
-  // only counts an achievement as earned if it was unlocked in hardcore
-  // (DateEarnedHardcore); casual mode counts any unlock at all
-  // (DateEarned is set on every unlock, hardcore or not).
+  // Hardcore only counts hardcore unlocks; casual counts any (DateEarned is set on every unlock).
   const isEarned = (a) => isHardcoreMode ? a.DateEarnedHardcore : a.DateEarned;
-  // Custom order wins over the default earned-first grouping.
   if(order){
     return applyAchOrder(list, order).map(a => achRowHtml(a, !isEarned(a), isHardcoreMode, reorderMode)).join('');
   }
-  // No custom order: earned first (latest unlock on top), then locked in set order.
   const { earned, locked } = splitEarnedLocked(list, isHardcoreMode);
   return earned.map(a => achRowHtml(a, false, isHardcoreMode, reorderMode)).join('') + locked.map(a => achRowHtml(a, true, isHardcoreMode, reorderMode)).join('');
 }
 
-// Wraps renderAchievementsList with the "Missable Only" filter bar RA's own
-// site shows, only rendered when the set actually has any missable
-// achievements, since most sets on RA haven't been typed at all yet.
-function renderAchievementsPanel(list, isHardcoreMode, missableOnly, lockedOnly, order, reorderMode, gameId, gameTitle, importError){
+// The list with its filter bar (Reorder, Missable, Locked) and the export / import footer.
+function renderAchievementsPanel(list, isHardcoreMode, missableOnly, lockedOnly, order, reorderMode, importError){
   if(!list || list.length === 0) return '<div class="achievements-list-loading">No achievement data available.</div>';
   const missableCount = list.filter(isMissable).length;
   const showMissable = missableCount > 0 && !reorderMode;
@@ -242,8 +221,6 @@ function renderAchievementsPanel(list, isHardcoreMode, missableOnly, lockedOnly,
     ? `<div class="achievements-list-loading">No ${filterLabel} achievements in this set.</div>`
     : `<div class="ach-rows${reorderMode ? ' reordering' : ''}" id="ach-rows">${renderAchievementsList(rows, isHardcoreMode, order, reorderMode)}</div>`;
 
-  // Share/import buttons go below the list: sharing a custom order is a niche
-  // feature and shouldn't compete with Reorder / Missable Only up top.
   const shareFooterBtns = (order ? `<button class="ach-share-footer-btn" id="ach-share-download" type="button">⇪ Export order (file)</button>` : '')
     + `<button class="ach-share-footer-btn" id="ach-import-file-btn" type="button">⇩ Import order (file)</button>`;
   const shareFooter = `<div class="ach-share-footer-row">${shareFooterBtns}</div>
@@ -252,9 +229,7 @@ function renderAchievementsPanel(list, isHardcoreMode, missableOnly, lockedOnly,
   return filterBar + body + shareFooter;
 }
 
-// Shared by the initial "View Achievements" open and the casual/hardcore
-// toggle's refresh, so the missable filter and reorder state survive a mode
-// switch instead of resetting back to the full list.
+// Renders (or re-renders after a mode switch) one achievements panel, keeping its filters.
 function renderAchWrapContent(achWrap, gameId, gameTitle){
   const list = achievementsListCache[gameId];
   if(!achWrap || !list) return;
@@ -262,7 +237,7 @@ function renderAchWrapContent(achWrap, gameId, gameTitle){
   const order = achOrderCache[gameId] || null;
   const local = findGameLocal(gameId);
   const title = gameTitle || (local ? local.Title : '');
-  achWrap.innerHTML = renderAchievementsPanel(list, statsMode === 'hardcore', state.missableOnly, state.lockedOnly, order, state.reorderMode, gameId, title, state.importError);
+  achWrap.innerHTML = renderAchievementsPanel(list, statsMode === 'hardcore', state.missableOnly, state.lockedOnly, order, state.reorderMode, state.importError);
   const toggleBtn = achWrap.querySelector('#ach-missable-toggle');
   if(toggleBtn){
     toggleBtn.addEventListener('click', () => {
@@ -282,9 +257,7 @@ function renderAchWrapContent(achWrap, gameId, gameTitle){
   const reorderBtn = achWrap.querySelector('#ach-reorder-toggle');
   if(reorderBtn){
     reorderBtn.addEventListener('click', () => {
-      state.reorderMode = !state.reorderMode;
-      // Can't reorder a filtered subset. The list is shown unfiltered while reordering,
-      // so the saved filter toggles are left alone and come back when Done is pressed.
+      state.reorderMode = !state.reorderMode; // reordering shows the whole list; the filters come back on Done
       renderAchWrapContent(achWrap, gameId, title);
     });
   }
@@ -314,7 +287,7 @@ function renderAchWrapContent(achWrap, gameId, gameTitle){
           }else{
             await saveAchOrder(gameId, parsed.ids);
             state.importError = '';
-            state.reorderMode = false; // show the imported order applied, not mid-edit
+            state.reorderMode = false;
           }
         }catch(e){
           state.importError = e.message;
@@ -326,8 +299,7 @@ function renderAchWrapContent(achWrap, gameId, gameTitle){
   if(state.reorderMode) wireAchReorder(achWrap, gameId);
 }
 
-// Drag (pointer events, touch + mouse) and ▲▼ buttons. Every change writes
-// the full ID order straight to storage.
+// Drag to reorder (touch or mouse), or the ▲▼ buttons. Every change saves the whole order.
 function wireAchReorder(achWrap, gameId){
   const container = achWrap.querySelector('#ach-rows');
   if(!container) return;
@@ -349,22 +321,19 @@ function wireAchReorder(achWrap, gameId){
     });
   });
 
-  // Press-and-hold anywhere on a row to pick it up, then drag. A quick swipe
-  // (finger moves before the hold completes) is left alone so the page still scrolls.
-  // The held row follows the finger via a CSS transform and the rows it passes
-  // slide out of the way; the DOM is only reordered once, on release (moving the
-  // held element mid-drag makes browsers drop the pointer).
+  // Press and hold a row to pick it up; moving before the hold completes is a scroll. The held row
+  // follows the finger with a transform and the DOM is only reordered on release (moving the
+  // element mid-drag makes the browser drop the pointer).
   const HOLD_MS = 350;
   const HOLD_SLOP = 10; // px of movement that means "this is a scroll, not a hold"
   let dragActive = false;
-  // Once a drag is live, stop the browser from also scrolling the page under the finger.
   container.addEventListener('touchmove', (ev) => { if(dragActive) ev.preventDefault(); }, { passive: false });
   container.addEventListener('contextmenu', (ev) => ev.preventDefault()); // no long-press menu on badge images
 
   container.querySelectorAll('.ach-row').forEach(row => {
     row.addEventListener('pointerdown', (e) => {
       if(dragActive) return;
-      if(e.target.closest('.ach-move-btn')) return; // arrows do their own thing
+      if(e.target.closest('.ach-move-btn')) return;
       if(e.pointerType === 'mouse' && e.button !== 0) return;
       const pointerId = e.pointerId;
       let pointerY = e.clientY;
@@ -393,7 +362,7 @@ function wireAchReorder(achWrap, gameId){
   function startDrag(row, pointerId, initialY){
     const rows = rowsEl();
     const startIdx = rows.indexOf(row);
-    // Layout snapshot (offsetTop is relative to the container, scroll-independent).
+    // Layout snapshot (offsetTop is relative to the container, so scrolling doesn't change it).
     const tops = rows.map(r => r.offsetTop);
     const heights = rows.map(r => r.offsetHeight);
     const dragH = heights[startIdx] + 1; // +1 for the 1px gap between rows
@@ -410,19 +379,18 @@ function wireAchReorder(achWrap, gameId){
     try{ row.setPointerCapture(pointerId); }catch(err){}
 
     const tick = () => {
-      // Auto-scroll near the screen edges (faster the closer you get).
+      // Auto-scroll near the screen edges, faster closer to the edge.
       const edge = 90;
       if(pointerY < edge) scroller.scrollTop -= Math.ceil((edge - pointerY) / 5);
       else if(pointerY > window.innerHeight - edge) scroller.scrollTop += Math.ceil((pointerY - (window.innerHeight - edge)) / 5);
 
-      // Held row tracks the finger (contentY is recomputed, so scrolling counts too).
       let dy = contentY(pointerY) - startContentY;
       const minDy = tops[0] - tops[startIdx];
       const maxDy = tops[rows.length - 1] + heights[rows.length - 1] - tops[startIdx] - heights[startIdx];
       dy = Math.max(minDy, Math.min(maxDy, dy));
       row.style.transform = `translateY(${dy}px)`;
 
-      // Where would it land? Count the other rows whose midpoint is above its centre.
+      // Its new slot: how many other rows have their middle above its centre.
       const centre = tops[startIdx] + heights[startIdx] / 2 + dy;
       let idx = 0;
       rows.forEach((r, i) => { if(i !== startIdx && tops[i] + heights[i] / 2 < centre) idx++; });
@@ -447,7 +415,6 @@ function wireAchReorder(achWrap, gameId){
       row.removeEventListener('pointerup', onEnd);
       row.removeEventListener('pointercancel', onEnd);
       dragActive = false;
-      // Commit once: clear transforms, then move the row to its final slot.
       rows.forEach(r => { r.style.transform = ''; r.classList.remove('ach-shifting'); });
       row.classList.remove('dragging');
       if(newIdx !== startIdx){
@@ -463,9 +430,8 @@ function wireAchReorder(achWrap, gameId){
   }
 }
 
-// RA counts a game as Beaten once every "progression" achievement is earned plus at
-// least one "win_condition" (if any exist). Plenty of sets are not typed yet, so an
-// empty result does not mean the game cannot be beaten.
+// RA counts a game as beaten once every progression achievement and one win condition (if any)
+// are earned. Many sets aren't typed yet, so an empty result doesn't mean it can't be beaten.
 function getBeatenAchievements(list){
   return (list || []).filter(a => {
     const t = String(a.Type || a.type || '').toLowerCase();

@@ -2,15 +2,12 @@ package com.gin649.gltdslauncher;
 
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.hardware.display.DisplayManager;
 import android.os.BatteryManager;
 import android.os.Environment;
 import android.util.Base64;
-import android.view.Display;
 import android.webkit.JavascriptInterface;
 import android.widget.Toast;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
@@ -50,11 +47,6 @@ final class ThorBridge {
 
     private static synchronized String nextId() {
         return String.valueOf(counter++);
-    }
-
-    @JavascriptInterface
-    public String version() {
-        return "1";
     }
 
     // The app's own version (from the release tag), shown in About.
@@ -129,36 +121,10 @@ final class ThorBridge {
         return o.toString();
     }
 
-    // ---- Game library (Room database) ----
-
-    /** JSON array of games in the library. Pass a system folder such as "snes", or "" for all. */
-    @JavascriptInterface
-    public String libraryGames(String systemId) {
-        try {
-            return LibrarySync.gamesJson(act, systemId);
-        } catch (Exception e) {
-            return "[]";
-        }
-    }
-
-    @JavascriptInterface
-    public void setFavorite(int id, boolean favorite) {
-        try {
-            com.gin649.gltdslauncher.database.GameRepository.get(act).setFavorite(id, favorite);
-        } catch (Exception ignored) {
-        }
-    }
-
     /** Starts fetching art for every game that has none yet. Safe to call again. */
     @JavascriptInterface
     public void scrapeAll() {
         LibraryScraper.scrapeAll(act);
-    }
-
-    /** Lets games that found no art be searched again. */
-    @JavascriptInterface
-    public void retryUnmatched() {
-        LibraryScraper.retryUnmatched(act);
     }
 
     @JavascriptInterface
@@ -166,40 +132,7 @@ final class ThorBridge {
         return LibraryScraper.status(act);
     }
 
-    @JavascriptInterface
-    public void rescan() {
-        Shared.rescan();
-    }
-
-    @JavascriptInterface
-    public void setTopDisplay(int id) {
-        DisplayPicker.save(act, id);
-    }
-
-    @JavascriptInterface
-    public String status() {
-        JSONObject o = new JSONObject();
-        try {
-            o.put("storageAccess", Environment.isExternalStorageManager());
-            o.put("indexReady", Shared.index().isReady());
-            o.put("roms", Shared.index().count());
-            o.put("topDisplay", DisplayPicker.topDisplayId(act));
-            JSONArray displays = new JSONArray();
-            DisplayManager dm = (DisplayManager) act.getSystemService(android.content.Context.DISPLAY_SERVICE);
-            for (Display d : dm.getDisplays()) {
-                JSONObject dj = new JSONObject();
-                dj.put("id", d.getDisplayId());
-                dj.put("name", d.getName());
-                displays.put(dj);
-            }
-            o.put("displays", displays);
-        } catch (Exception ignored) {
-        }
-        return o.toString();
-    }
-
-    // ---- ROM hacks: use the ROM the launcher already found, and save the patched one beside it ----
-
+    // ROM hacks: use the ROM the launcher already found, and save the patched one beside it
     /**
      * Looks for the ROM of a game the same way Play does. Returns {found, name, folder, path, size, token}. The page
      * reads the file from /rom/<token>, so a big ROM never has to be pushed through this bridge as text.
@@ -328,8 +261,7 @@ final class ThorBridge {
         return o.toString();
     }
 
-    @JavascriptInterface
-    public void romSaveAbort(String id) {
+    private void romSaveAbort(String id) {
         FileOutputStream fos;
         File file;
         synchronized (SAVES) {
@@ -343,7 +275,7 @@ final class ThorBridge {
         if (file != null) file.delete();
     }
 
-    // ---- Disc images (CD / DVD games) are patched natively, in pieces, because they are far too big to hold in the page.
+    // Disc images (CD and DVD games) are patched here in pieces; they are far too big for the page.
 
     /** One disc patch running (or finished) in the background. */
     private static final class DiscJob {
@@ -538,8 +470,7 @@ final class ThorBridge {
         return out[0] == null ? "{\"ok\":false,\"message\":\"Could not start the game.\"}" : out[0];
     }
 
-    // ---- In-app web pages (YouTube searches, links) ----
-
+    // In-app web pages (YouTube searches, links)
     /**
      * Opens a web page in the app's own viewer, which Back, a swipe or Close leaves. Pass mode "walkthrough" to
      * show a Save video button that sends the open YouTube link back to the tracker.

@@ -3,7 +3,6 @@ package com.gin649.gltdslauncher;
 import android.content.Context;
 import android.net.Uri;
 
-import java.io.File;
 
 /** Paths and addresses, loaded from the setup wizard's choices. */
 final class Config {
@@ -54,10 +53,6 @@ final class Config {
         if (!DJ_ROOT.isEmpty() && path.startsWith(DJ_ROOT + "/")) return true;
         if (path.startsWith("/storage/emulated/0/DaijishoMedia/")) return true;
         return !ROMS_ROOT.isEmpty() && path.startsWith(ROMS_ROOT + "/");
-    }
-
-    static boolean isBuiltIn() {
-        return BUILTIN_URL.equals(START_URL);
     }
 
     static void load(Context c) {

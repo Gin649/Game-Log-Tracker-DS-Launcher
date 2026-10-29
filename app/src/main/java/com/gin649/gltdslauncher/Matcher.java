@@ -168,8 +168,7 @@ final class Matcher {
         return bestScore >= 40 ? best : null;
     }
 
-    // ---------- title similarity for online art lookups ----------
-
+    // title similarity for online art lookups
     private static final Set<String> SIM_STOP = new HashSet<String>(java.util.Arrays.asList("the", "a", "an", "of", "and"));
 
     private static final Map<String, String> SIM_ROMAN = new HashMap<String, String>();

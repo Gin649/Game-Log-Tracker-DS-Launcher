@@ -10,10 +10,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 
 /**
- * Builds one flat 1280x720 image from a screenshot, box art and a logo, entirely in memory.
- * Based on the implementation spec, with three changes: every layer is optional, layers keep their
- * aspect ratio instead of being stretched, and the result is saved as JPEG (quality 90) because the
- * PNG quality setting is ignored by Android and PNGs this size are several times larger.
+ * Builds one flat 1280x720 image from a screenshot, box art and a logo, in memory. Every layer is optional,
+ * layers keep their aspect ratio, and the result is a JPEG (quality 90): Android ignores PNG quality and a PNG
+ * this size is several times larger.
  */
 public final class MiximageCompositor {
 

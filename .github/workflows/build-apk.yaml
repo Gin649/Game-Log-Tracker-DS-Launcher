@@ -9,18 +9,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The tracker bundled in the APK carries two index files (RetroAchievements patches and guides).
-      # Refresh them here so each build ships current ones. If GitHub can't be reached, the copies
-      # already in the repo are used and the build carries on.
+      # Refresh the bundled guides index. If GitHub can't be reached, the copy in the repo is used.
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Refresh RA patches index
-        continue-on-error: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node tools/build-ra-index.mjs app/src/main/assets/www/ra-patches-index.json
 
       - name: Refresh RA guides index
         continue-on-error: true

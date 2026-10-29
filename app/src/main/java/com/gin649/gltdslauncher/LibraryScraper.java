@@ -105,14 +105,6 @@ final class LibraryScraper {
         });
     }
 
-    /** Lets games that found nothing be searched again. */
-    static void retryUnmatched(Context ctx) {
-        try {
-            GameRepository.get(ctx).dao().resetNoMatch();
-        } catch (Exception ignored) {
-        }
-    }
-
     static String status(Context ctx) {
         JSONObject o = new JSONObject();
         try {

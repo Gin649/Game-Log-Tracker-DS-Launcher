@@ -1,15 +1,13 @@
-// Top screen header. On a two-screen handheld the app shows the header (logo, hamburger menu) and
-// the profile card on the top screen, and this page starts at the tabs. The real elements stay in
-// this page, hidden, so every button and the controller navigation keep working; this file sends
-// a copy of them to the top screen whenever they change, and presses the real button when the
-// copy is tapped.
+// On two screens the header (logo, menu) and profile card show on the top screen. The real elements
+// stay here, hidden, so buttons and controller navigation keep working: a copy is sent to the top
+// screen whenever they change, and a tap on the copy presses the real button.
 (function(){
   const native = window.PadNative || null;
   let active = false, timer = 0, last = null;
 
   function snapshot(){
     const wrap = $('#menu-wrap');
-    if(!wrap || wrap.style.display === 'none') return null; // dashboard not up yet
+    if(!wrap || wrap.style.display === 'none') return null;
     const hero = $('#profile-hero');
     const heroShown = hero.children.length > 0 && $('#ra-content').style.display !== 'none';
     return {
@@ -25,7 +23,7 @@
     const key = s ? s.body + '|' + s.html : '';
     if(key === last) return;
     last = key;
-    try{ native.pushPanel(s ? s.html : '', s ? s.body : ''); }catch(e){ /* app side not ready */ }
+    try{ native.pushPanel(s ? s.html : '', s ? s.body : ''); }catch(e){}
   }
   const schedule = () => { if(active && !timer) timer = setTimeout(push, 60); };
 
@@ -52,5 +50,5 @@
     },
   };
 
-  try{ if(native && native.topPanelActive()) setActive(true); }catch(e){ /* not in the app */ }
+  try{ if(native && native.topPanelActive()) setActive(true); }catch(e){}
 })();

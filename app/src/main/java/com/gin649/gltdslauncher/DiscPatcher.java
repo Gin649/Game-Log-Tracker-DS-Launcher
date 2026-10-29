@@ -68,7 +68,7 @@ final class DiscPatcher {
         }
     };
 
-    // ---------------------------------------------------------------- native tools (CHD, RVZ)
+    // Native tools (CHD, RVZ)
 
     /** chdman (from MAME) and dolphin-tool (from Dolphin), when the app ships them. They are separate programs. */
     static volatile File chdman, dolphinTool;
@@ -214,7 +214,7 @@ final class DiscPatcher {
         }
     }
 
-    // ---------------------------------------------------------------- entry point
+    // Entry point
 
     /**
      * Patches the disc image `base` (an .iso, .bin, .cue, .cso ...) with `patchBytes`.
@@ -340,7 +340,7 @@ final class DiscPatcher {
         }
     }
 
-    // ---------------------------------------------------------------- one image
+    // One image
 
     /** Applies the patch to a single image file, writing `out`. */
     static void patchFile(File src, byte[] patch, File out, Progress p, List<String> notes) throws IOException {
@@ -381,7 +381,7 @@ final class DiscPatcher {
         return null;
     }
 
-    // ---------------------------------------------------------------- helpers
+    // Helpers
 
     static String ext(String name) {
         int dot = name.lastIndexOf('.');
@@ -617,7 +617,7 @@ final class DiscPatcher {
         }
     }
 
-    // ---------------------------------------------------------------- IPS / IPS32
+    // IPS / IPS32
 
     private static void applyIps(File src, byte[] p, File out, Progress pr, List<String> notes) throws IOException {
         boolean ips32 = p[0] == 'I';
@@ -670,7 +670,7 @@ final class DiscPatcher {
         return ((b[o] & 0xFFL) << 24) | ((b[o + 1] & 0xFFL) << 16) | ((b[o + 2] & 0xFFL) << 8) | (b[o + 3] & 0xFFL);
     }
 
-    // ---------------------------------------------------------------- PPF 1 / 2 / 3
+    // PPF 1 / 2 / 3
 
     private static void applyPpf(File src, byte[] p, File out, Progress pr, List<String> notes) throws IOException {
         if (p.length < 56) throw damaged();
@@ -759,7 +759,7 @@ final class DiscPatcher {
         }
     }
 
-    // ---------------------------------------------------------------- BPS
+    // BPS
 
     private static void applyBps(File src, byte[] p, File outFile, Progress pr, List<String> notes) throws IOException {
         if (p.length < 19) throw damaged();
@@ -832,7 +832,7 @@ final class DiscPatcher {
         notes.add("Checksums verified: the patch matches your disc image, and the result is exactly what the patch's author made.");
     }
 
-    // ---------------------------------------------------------------- UPS
+    // UPS
 
     private static void applyUps(File src, byte[] p, File outFile, Progress pr, List<String> notes) throws IOException {
         if (p.length < 18) throw damaged();
@@ -882,7 +882,7 @@ final class DiscPatcher {
         notes.add("Checksums verified: the patch matches your disc image, and the result is exactly what the patch's author made.");
     }
 
-    // ---------------------------------------------------------------- xdelta / VCDIFF
+    // Xdelta / VCDIFF
 
     private static final int T_NOOP = 0, T_ADD = 1, T_RUN = 2, T_COPY = 3;
     private static final int[][] CODE = new int[256][6]; // type1, size1, mode1, type2, size2, mode2
@@ -963,7 +963,10 @@ final class DiscPatcher {
                     + "Ask for it to be made again with the xdelta option \"secondary compression: none\", or use a BPS or PPF version of the patch.");
         }
         if ((hi & 0x02) != 0) throw new PatchException("This xdelta patch uses a custom code table, which isn't supported.");
-        if ((hi & 0x04) != 0) h.pos += (int) h.v7();
+        if ((hi & 0x04) != 0) {
+            int appHeaderLength = (int) h.v7(); // read first: h.pos += h.v7() would lose the length's own bytes
+            h.pos += appHeaderLength;
+        }
         boolean checked = false;
         AddrCache cache = new AddrCache();
 
@@ -1048,7 +1051,7 @@ final class DiscPatcher {
         else notes.add("This xdelta patch has no checksums, so there's no way to confirm this is the exact disc it was made for.");
     }
 
-    // ---------------------------------------------------------------- CSO / CISO
+    // CSO / CISO
 
     /** Unpacks a PSP/PS2 style .cso (version 0 or 1, deflate) to a plain ISO. */
     static void csoToIso(File in, File out, Progress pr) throws IOException {
@@ -1119,7 +1122,7 @@ final class DiscPatcher {
         }
     }
 
-    // ---------------------------------------------------------------- .cue
+    // .cue
 
     static final class Cue {
         final List<String> lines = new ArrayList<String>();

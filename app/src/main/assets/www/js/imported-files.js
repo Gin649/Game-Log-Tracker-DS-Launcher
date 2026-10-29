@@ -1,8 +1,6 @@
 // Storage for files imported per game: guides and base ROMs.
 
-// Game guides, imported manually (see the Game Guide panel for why). One key per game
-// holds an array of guides. A key saved before that held a single object, which is
-// read back as a one-item list.
+// Game guides: one key per game holds an array of guides (older saves held a single object).
 function guideKey(gameId){
   return `guide:${creds.username.trim().toLowerCase()}:${gameId}`;
 }
@@ -13,25 +11,19 @@ async function loadGuides(gameId){
       const parsed = JSON.parse(r.value);
       let list = null;
       if(Array.isArray(parsed)) list = parsed;
-      else if(parsed && typeof parsed === 'object') list = [parsed]; // pre-multi-guide format
+      else if(parsed && typeof parsed === 'object') list = [parsed];
       if(list){
-        // Guides saved before the multi-guide change have no id, which made
-        // Read/Remove silently do nothing. Give each one a stable id on load
-        // (it gets written back the next time the list is saved).
+        // Older guides have no id; give them one (saved with the list next time).
         list.forEach((g, i) => { if(g && !g.id) g.id = 'legacy-' + i; });
         return list.filter(g => g && typeof g === 'object');
       }
     }
-  }catch(e){ /* none imported yet */ }
+  }catch(e){}
   return [];
 }
 async function saveGuides(gameId, guides){
-  try{ await window.storage.set(guideKey(gameId), JSON.stringify(guides), false); }
-  catch(e){ /* non-fatal */ }
+  try{ await window.storage.set(guideKey(gameId), JSON.stringify(guides), false); }catch(e){}
 }
-// Adds a newly downloaded/pasted/imported guide, giving it a stable id so
-// a specific guide, not just "whichever one is saved", can later be
-// read, updated (scroll position, bookmarks), or removed on its own.
 async function addGuide(gameId, guide){
   guide.id = guide.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const guides = await loadGuides(gameId);
@@ -39,7 +31,7 @@ async function addGuide(gameId, guide){
   await saveGuides(gameId, guides);
   return guide;
 }
-// Re-saves one guide's own fields (scroll position, bookmarks) in place, without touching the others.
+// Saves one guide's fields (scroll position, bookmarks) in place.
 async function updateGuide(gameId, guide){
   const guides = await loadGuides(gameId);
   const idx = guides.findIndex(g => g.id === guide.id);
@@ -73,18 +65,14 @@ function readFileAsDataURL(file){
     r.readAsDataURL(file);
   });
 }
-// Strips anything that could execute when an imported HTML guide is later
-// rendered, <script> tags, inline event handlers, javascript: URLs. This
-// runs on every HTML import regardless of source, since a guide file is
-// just an arbitrary file the person picked off their device.
+// Removes anything in an imported HTML guide that could run code: scripts, event handlers, javascript: links.
 function sanitizeGuideHtml(rawHtml){
   const doc = new DOMParser().parseFromString(rawHtml, 'text/html');
   doc.querySelectorAll('script,style,link,meta,iframe,frame,frameset,object,embed,applet,form,base').forEach(el => el.remove());
   doc.querySelectorAll('*').forEach(el => {
     [...el.attributes].forEach(attr => {
       const n = attr.name.toLowerCase();
-      // Author colours/backgrounds assume a white page; on the reader's
-      // black background they render text invisible.
+      // The author's colours assume a white page and vanish on the dark reader.
       if(n === 'style' || n === 'color' || n === 'bgcolor' || n === 'text' || n === 'background') el.removeAttribute(attr.name);
       if(n.startsWith('on')) el.removeAttribute(attr.name);
       if(n === 'srcdoc' || n === 'formaction') el.removeAttribute(attr.name);
@@ -105,9 +93,7 @@ async function importGuideFile(gameId, file){
     kind = 'html';
     content = sanitizeGuideHtml(await readFileAsText(file));
   }else{
-    // .txt, .md, or anything unrecognized, plain text is the safest
-    // default, and matches how GameFAQs guides are almost always shared
-    kind = 'text';
+    kind = 'text'; // .txt, .md and anything else
     content = await readFileAsText(file);
   }
   const guide = { filename: name, kind, content, scrollFrac: 0, savedAt: Date.now() };
@@ -115,11 +101,7 @@ async function importGuideFile(gameId, file){
   return guide;
 }
 
-// Saved base ROMs (used by the ROM patcher)
-// Stored as a raw { filename, bytes: Uint8Array } via structured clone,
-// deliberately not JSON-stringified like everything else here, since
-// base64-encoding a multi-megabyte ROM would bloat it by another third
-// for no reason. IndexedDB stores typed arrays natively.
+// Remembered base ROMs for the ROM patcher, stored as { filename, bytes } (IndexedDB keeps typed arrays as they are).
 function romKey(gameId){
   return `rom:${creds.username.trim().toLowerCase()}:${gameId}`;
 }
@@ -129,8 +111,8 @@ async function saveRom(gameId, filename, bytes){
 async function loadRom(gameId){
   try{
     const r = await window.storage.get(romKey(gameId), false);
-    if(r && r.value) return r.value; // { filename, bytes }
-  }catch(e){ /* none saved */ }
+    if(r && r.value) return r.value;
+  }catch(e){}
   return null;
 }
 async function deleteRom(gameId){

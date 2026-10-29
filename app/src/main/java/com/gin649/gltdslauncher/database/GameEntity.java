@@ -7,12 +7,7 @@ import androidx.room.Entity;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
-/**
- * One row per ROM file in the library.
- *
- * Columns match the implementation spec. The unique index on (system_id, rom_path) is an addition:
- * it stops a rescan from creating duplicate rows for the same file.
- */
+/** One row per ROM file. The unique index on (system_id, rom_path) stops a rescan adding duplicates. */
 @Entity(
         tableName = "game_library",
         indices = {

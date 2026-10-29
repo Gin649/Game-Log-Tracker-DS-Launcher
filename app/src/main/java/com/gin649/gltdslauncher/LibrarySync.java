@@ -136,10 +136,4 @@ final class LibrarySync {
         } catch (Exception ignored) {
         }
     }
-
-    static String gamesJson(Context ctx, String systemId) {
-        GameDao dao = GameRepository.get(ctx).dao();
-        List<GameEntity> list = (systemId == null || systemId.isEmpty()) ? dao.getAllGames() : dao.getGamesBySystem(systemId);
-        return GameRepository.toJson(list);
-    }
 }

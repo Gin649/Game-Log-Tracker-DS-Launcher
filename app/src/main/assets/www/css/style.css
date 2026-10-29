@@ -20,7 +20,7 @@
   body.show-status{--status-h:28px;}
 
   *{box-sizing:border-box;}
-  html{font-size:16px;} /* base for all the rem font sizes below, changed at runtime to scale app-wide text size */
+  html{font-size:16px;} /* the rem base; Text Size changes it */
   html,body{margin:0;padding:0;background:var(--bg);overscroll-behavior-y:contain;height:100%;}
   body{
     font-family:'Inter',sans-serif;
@@ -87,13 +87,6 @@
   }
   .btn-hamburger:hover{border-color:var(--muted);}
   .btn-hamburger{position:relative;}
-  /* Gold dot shown only while an app update is waiting (see the update code in app.js). */
-  .btn-hamburger.has-update::after{
-    content:'';position:absolute;top:-4px;right:-4px;width:10px;height:10px;border-radius:50%;
-    background:var(--gold);box-shadow:0 0 0 2px var(--bg);
-  }
-  .dropdown-update{color:var(--gold);font-weight:700;}
-  .dropdown-update:disabled{opacity:0.7;cursor:default;}
   .btn-hamburger .bar{width:18px;height:2px;background:var(--text);border-radius:1px;}
   .dropdown-menu{
     display:none;position:absolute;top:calc(100% + 6px);right:0;
@@ -159,12 +152,8 @@
   .display-switch.on::after{left:18px;background:var(--bg);}
   .display-switch:disabled{opacity:0.4;cursor:default;}
 
-  /* Optional clock and battery readout (Display menu). A solid strip pinned to the top of the screen:
-     page content scrolls underneath it instead of through it, and the page reserves its height
-     (body padding below) so nothing starts hidden behind it. Full-screen layers (z-index 100-300)
-     leave room for it through --status-h, which is 0 unless the readout is on.
-     translateZ/will-change give it its own compositor layer so Android WebView keeps painting it
-     above the scrolling page. */
+  /* Clock and battery strip pinned to the top. Full-screen layers leave room for it through --status-h
+     (0 when it is off). translateZ keeps the WebView painting it above the scrolling page. */
   .device-status{
     display:none;position:fixed;top:0;left:0;right:0;
     height:calc(var(--status-h) + env(safe-area-inset-top, 0px));
@@ -198,7 +187,6 @@
   /* Dashboard */
   #dashboard{display:none;}
 
-  .topbar{display:flex;justify-content:flex-end;align-items:center;margin-bottom:22px;gap:12px;flex-wrap:wrap;}
 
   .profile-hero{
     background:linear-gradient(135deg, var(--panel-2), var(--panel));
@@ -250,16 +238,14 @@
     width:100%;aspect-ratio:1/1;object-fit:cover;background:var(--bg-alt);
     display:block;
   }
-  /* The body grows to fill the card and stacks its contents in a column, so the progress group
-     below can be pushed to the bottom edge (see .cart-progress-group). */
+
   .cart .body{padding:8px;flex:1;display:flex;flex-direction:column;}
   .cart .title{
     font-size:0.7188rem;font-weight:600;margin:0 0 2px;line-height:1.3;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
   }
   .cart .console{font-size:0.5938rem;color:var(--muted);margin:0 0 6px;}
-  /* Progress bar + achievement count/% + playtime: always pinned to the bottom of the card, so titles
-     that wrap to one or two lines still leave those lines level across the whole row. */
+  /* Progress, count and playtime sit at the bottom of the card, so they line up across a row. */
   .cart .cart-progress-group{margin-top:auto;}
   .progress-track{
     background:var(--bg-alt);border-radius:20px;height:5px;overflow:hidden;margin-bottom:4px;
@@ -360,10 +346,9 @@
   /* System filter chips */
   .chip-row{
     display:none;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:6px;
-    
+
   }
-  /* Grabbing-hand cursor and no accidental text selection while a drag is in progress
-     (the achievement reorder drag uses this class). */
+  /* While dragging an achievement. */
   .dragging, .dragging *{cursor:grabbing !important;user-select:none;-webkit-user-select:none;}
   .chip-row.visible{display:flex;}
   .chip-row::-webkit-scrollbar{height:4px;}
@@ -393,14 +378,11 @@
     width:30px;height:30px;border-radius:50%;font-size:1rem;line-height:1;z-index:2;
   }
 
-  /* Game profile: its own full-screen view, not a popup over the
-     dashboard. Same open/close JS as the other modals (.modal-backdrop),
-     but styled to fill the entire viewport solidly so nothing from the
-     dashboard shows behind or around it. */
+  /* The game profile fills the screen. */
   .game-profile-view{
     background:var(--bg);padding:0;overflow-x:hidden;overflow-y:auto;
-    
-    overscroll-behavior-y:contain; /* keep the browser's own pull-to-reload out of the profile; the app handles it */
+
+    overscroll-behavior-y:contain;
   }
   .game-profile-card{
     max-width:none;margin:0;border:none;border-radius:0;
@@ -414,9 +396,7 @@
   .game-profile-card .modal-close{
     top:calc(10px + env(safe-area-inset-top) + var(--status-h));right:calc(10px + env(safe-area-inset-right));
   }
-  /* Game profile text runs 10% larger than the shared modal baseline used by
-     the settings dialogs (Connect RA, Add game, RAWG, Data), scoped so it
-     doesn't affect those. */
+  /* Profile text is 10% larger than in the settings dialogs. */
   .game-profile-card .modal-body h2{font-size:1.3125rem;}
   .game-profile-card .modal-body .sub{font-size:0.8938rem;}
   .game-profile-card .modal-links a{font-size:0.7937rem;}
@@ -485,8 +465,7 @@
   }
   .ach-row.locked .pts{color:var(--muted);}
 
-  /* Gold "!" badge for a missable achievement, matches RA's own site marker.
-     Shown on the achievement row itself, and doubles as the filter toggle's icon. */
+  /* Gold "!" for a missable achievement, as on RA's site; also the filter icon. */
   .ach-missable-badge{
     flex-shrink:0;width:22px;height:22px;border-radius:50%;
     border:2px dotted var(--gold);color:var(--gold);
@@ -516,9 +495,7 @@
   .ach-filter-btn.active .ach-missable-badge{border-color:var(--bg);color:var(--bg);}
   .ach-filter-count{font-family:'Space Mono',monospace;font-size:0.6875rem;opacity:0.85;}
 
-  /* Share/import a saved achievement order, tucked below the achievement
-     list itself and visually quiet, since it's a niche feature most people
-     browsing their achievements will never need. */
+  /* Export / import an achievement order, below the list. */
   .ach-share-footer-row{
     display:flex;gap:8px;justify-content:center;flex-wrap:wrap;
     padding:12px;border-top:1px solid var(--border);
@@ -566,9 +543,7 @@
   .guide-status-text{font-size:0.725rem;color:var(--muted);margin:0;line-height:1.5;}
   .guide-status-text.err{color:var(--danger);}
 
-  /* Several guides saved per game, each its own row with its own saved
-     reading position shown as a percentage (set under the guide's name,
-     per guideVisibleTextLength/scrollFrac tracking in guides.js). */
+  /* Saved guides, one row each with its reading position. */
   .guide-list{display:flex;flex-direction:column;gap:1px;background:var(--border);border-radius:6px;overflow:hidden;}
   .guide-list-item{
     background:var(--bg-alt);padding:9px 10px;display:flex;align-items:center;
@@ -597,8 +572,7 @@
   }
   .guide-list-item-btn.danger{border-color:var(--danger);color:var(--danger);}
   .guide-list-item-btn:disabled{opacity:0.6;cursor:default;}
-  /* RetroAchievements guide results: the "GitHub" link is an <a> styled like the buttons, and long
-     page names wrap instead of being cut off so two similar guides can be told apart. */
+  /* RetroAchievements guide results. Long page names wrap so similar guides can be told apart. */
   a.guide-list-item-btn{display:inline-block;text-decoration:none;}
   .guide-list-item[data-ra-page] .guide-list-item-name{white-space:normal;overflow:visible;line-height:1.35;}
 
@@ -770,10 +744,7 @@
   .rawg-setup-note{font-size:0.6875rem;color:var(--muted);margin:2px 0 0;}
   .rawg-setup-note a{color:var(--teal);cursor:pointer;}
 
-  /* Box art pinch-to-zoom viewer ----
-     Installed/fullscreen PWAs typically block native page pinch-zoom on most
-     platforms, so box art can't be zoomed the normal browser way. This is a
-     dedicated full-screen viewer with its own pinch/pan handling. */
+  /* Box art zoom viewer */
   .img-zoom-overlay{
     display:none;position:fixed;inset:0;background:rgba(8,6,14,0.96);
     z-index:300;overflow:hidden;touch-action:none;
@@ -805,8 +776,7 @@
   }
   #addgame-card select:focus, .field select:focus{outline:none;border-color:var(--gold);}
 
-  /* Open dropdown lists: the phone/OS draws these itself and defaults to black or white
-     depending on its own theme, so set the app's purple and gold explicitly. */
+  /* Dropdown lists are drawn by the system, so set the app's colours on them. */
   select{color-scheme:dark;}
   select option, select optgroup{background:var(--panel);color:var(--gold);}
   select option:checked{background:var(--panel-2);}
@@ -830,9 +800,7 @@
   .addgame-selection-bar span{font-size:0.8125rem;color:var(--text);}
   .addgame-selection-bar .btn-primary{width:auto;padding:8px 16px;}
 
-  /* Custom (non-RA) add-game results: platform comes from a dropdown built
-     from that game's own RAWG data, plus an explicit add button, instead of
-     the whole row being one big "click to add" target. */
+  /* Non-RA add-game results: a platform dropdown and an add button. */
   .ag-result-custom{cursor:default;flex-wrap:wrap;}
   .ag-result-custom:hover{background:transparent;}
   .ag-platform-select{
@@ -876,8 +844,7 @@
   }
   .year-tip.show{opacity:1;visibility:visible;}
 
-  /* Mastered label sitting on the bottom edge of a Beaten by Year icon. The 5px offset is
-     the gap under the icon, so the pill lands just inside the art. */
+  /* Mastered label on the bottom edge of a Beaten by Year icon. */
   .year-item .pill-year{
     position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
     padding:1px 4px;text-align:center;
@@ -902,8 +869,7 @@
     .lib-table .bar{display:none;}
   }
 
-  /* Reorder mode: rows are pick-up-and-drag, so suppress text selection and the
-     image long-press callout that would otherwise fight the hold gesture. */
+  /* Reorder mode: no text selection or long-press menu to fight the hold. */
   .ach-rows.reordering .ach-row{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}
   .ach-rows.reordering .ach-row img{pointer-events:none;-webkit-user-drag:none;}
   .ach-row.dragging{transform-origin:center;}
@@ -1072,10 +1038,13 @@ body.pad-mode .pad-focus.chip{outline-offset:2px;}
 .pad-help{margin:6px 14px 10px;font-size:0.6562rem;line-height:1.7;color:var(--muted);}
 
 
-/* With the header on the top screen (mirror.js) this page starts at the tabs. The real header stays
-   laid out, just off to the side, so its buttons and the controller navigation keep working. */
+/* With the header on the top screen (mirror.js), the real header stays laid out off to the side
+   so its buttons and controller navigation keep working. */
 html.top-panel .brand{position:fixed;left:-10000px;top:0;width:720px;margin:0;visibility:hidden;pointer-events:none;}
 html.top-panel #profile-hero{display:none;}
 
 .patch-group-title{font-size:0.7188rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px;}
 .patch-group-title:first-child{margin-top:4px;}
+.btn-line{background:transparent;border:1px solid currentColor;border-radius:var(--radius);font-family:'Space Mono',monospace;font-weight:700;font-size:0.8125rem;cursor:pointer;padding:11px 20px;}
+.btn-line.danger{color:var(--danger);}
+.btn-line.gold{color:var(--gold);}

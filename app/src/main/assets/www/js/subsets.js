@@ -1,11 +1,10 @@
-// Subsets: extra RetroAchievements sets that belong to a game, named "Title [Subset - Name]".
-// They're listed in the base game's profile (the Subsets button) and kept out of Overview
-// and Game Library, since a subset can't be played without its base game.
+// Subsets: extra RetroAchievements sets named "Title [Subset - Name]". They're listed under the base
+// game's Subsets button and kept out of Overview and the library, since they can't be played on their own.
 
 const SUBSET_TITLE = /^(.*?)\s*\[Subset\s*-\s*(.+?)\]\s*$/i;
 const subsetListCache = {};          // base game ID -> its subsets
-const openSubsetPanels = new Map();  // subset game ID -> { wrap, title, meta, subset } for lists that are open
-const subsetMetaEls = new Map();     // subset game ID -> { meta, subset } for every row in the open Subsets list
+const openSubsetPanels = new Map();  // subset ID -> { wrap, title, meta, subset }, lists that are open
+const subsetMetaEls = new Map();     // subset ID -> { meta, subset }, rows in the open Subsets list
 
 function subsetParts(title){
   const m = SUBSET_TITLE.exec(String(title || ''));
@@ -16,12 +15,7 @@ function isSubsetGame(g){
   return !g.customConsole && subsetParts(g.Title) !== null;
 }
 
-function subsetEsc(s){
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-// RA has no "subsets of this game" call, so match on title in the console's game list
-// (already cached for a week by the Add Game search).
+// RA has no "subsets of this game" call, so match titles in the console's game list (cached by Add Game).
 async function findSubsets(baseId, baseTitle, consoleId){
   if(subsetListCache[baseId]) return subsetListCache[baseId];
   const all = await getGameListForConsole(consoleId);
@@ -44,8 +38,7 @@ async function findSubsets(baseId, baseTitle, consoleId){
   return found;
 }
 
-// Always shows earned/total with a percentage. Until the achievement list has loaded
-// we don't know the earned count yet, so it shows a placeholder instead of a bare total.
+// "earned/total (pct)", with "?" for earned until the list has loaded.
 function subsetMetaText(subset, list){
   if(!list) return `?/${subset.count} achievements earned \u00b7 ${subset.points} pts`;
   const hardcore = statsMode === 'hardcore';
@@ -54,8 +47,7 @@ function subsetMetaText(subset, list){
   return `${earned}/${list.length} achievements earned (${pct}%) \u00b7 ${subset.points} pts`;
 }
 
-// Loads every subset's achievements in the background so the progress shows without
-// having to open each one first.
+// Loads every subset's achievements in the background so progress shows without opening each one.
 function loadSubsetProgress(subsets){
   subsets.forEach(async subset => {
     try{
@@ -77,7 +69,7 @@ function subsetRowHtml(s){
         <span class="arrow">▸</span>
         <img class="subset-icon" src="${imgUrl(s.icon)}" alt="">
         <span class="subset-text">
-          <span class="subset-name">${subsetEsc(s.name)}</span>
+          <span class="subset-name">${esc(s.name)}</span>
           <span class="subset-meta">${subsetMetaText(s, achievementsListCache[s.id])}</span>
         </span>
         ${award}
@@ -98,9 +90,9 @@ async function toggleSubset(item, subset){
   body.innerHTML = '<div class="achievements-list-loading">Loading achievements…</div>';
   try{
     const list = await getAchievementsList(subset.id);
-    try{ attachAchievementTypes(list, await getGameExtended(subset.id)); }catch(e){ /* missable badges are optional */ }
+    try{ attachAchievementTypes(list, await getGameExtended(subset.id)); }catch(e){}
     await loadAchOrder(subset.id);
-    if(!body.isConnected) return; // profile was closed or switched
+    if(!body.isConnected) return; // the profile was closed
     resetAchState(subset.id);
     const meta = item.querySelector('.subset-meta');
     openSubsetPanels.set(subset.id, { wrap: body, title: subset.title, meta, subset });
@@ -108,18 +100,17 @@ async function toggleSubset(item, subset){
     renderAchWrapContent(body, subset.id, subset.title);
   }catch(e){
     if(!body.isConnected) return;
-    body.innerHTML = `<div class="achievements-list-loading">Could not load achievements: ${subsetEsc(e.message)}</div>`;
-    delete item.dataset.loaded; // allow a retry
+    body.innerHTML = `<div class="achievements-list-loading">Could not load achievements: ${esc(e.message)}</div>`;
+    delete item.dataset.loaded;
   }
 }
 
-// Called once the base game's profile has loaded. The button stays hidden unless the game
-// actually has subsets, and the lookup runs in the background so the profile never waits on it.
+// Runs once the profile has loaded. The button only appears if the game has subsets.
 async function setupSubsetsUI(card, gameId, ext){
   if(!ext || ext.ParentGameID || subsetParts(ext.Title)) return;
   let subsets;
   try{ subsets = await findSubsets(gameId, ext.Title, ext.ConsoleID); }
-  catch(e){ return; } // game list unavailable right now, so skip it quietly
+  catch(e){ return; }
   if(!subsets.length || card.dataset.gameId !== String(gameId)) return;
   const btn = card.querySelector('#modal-subsets-btn');
   const wrap = card.querySelector('#modal-subsets');

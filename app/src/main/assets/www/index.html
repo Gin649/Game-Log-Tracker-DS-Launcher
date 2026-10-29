@@ -3,25 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=0.75, minimum-scale=0.3, maximum-scale=5, user-scalable=yes, viewport-fit=cover">
-<title>Game Log — Tracker</title>
-
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#15121f">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<script src="js/bootstrap.js"></script>
+<title>Game Log Tracker</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div class="wrap">
 
   <div class="brand">
-    <img class="mark" src="icon-192.png" alt="Game Log Tracker"><span class="name">What will you beat Today?</span>
+    <img class="mark" src="icon-192.webp" alt="Game Log Tracker"><span class="name">What will you beat Today?</span>
     <div class="menu-wrap" id="menu-wrap" style="display:none;">
       <button class="btn-hamburger" id="btn-menu" aria-label="Menu">
         <span class="bar"></span><span class="bar"></span><span class="bar"></span>
       </button>
       <div class="dropdown-menu" id="dropdown-menu">
-        <button class="dropdown-item dropdown-update" id="btn-update-app" style="display:none;">Update available — tap to install</button>
         <button class="dropdown-item dropdown-heading" id="btn-ra-heading">RetroAchievements <span id="ra-heading-arrow">▸</span></button>
         <div id="ra-submenu" style="display:none;">
           <button class="dropdown-item dropdown-subitem" id="btn-ra-connect-open">Connect RA</button>
@@ -62,7 +56,6 @@
     </div>
   </div>
 
-  <!-- RetroAchievements connect modal, opened from the hamburger menu -->
   <div id="ra-connect-backdrop" class="modal-backdrop">
     <div class="modal-card" id="ra-connect-card">
       <button class="modal-close" id="ra-connect-close-btn">✕</button>
@@ -211,12 +204,12 @@
         <select id="addgame-system"><option>Loading systems…</option></select>
       </div>
       <div class="field" id="addgame-custom-console-field" style="display:none;">
-        <div class="hint">Not on RetroAchievements — pick the platform after you find a match below. Box art and details are pulled from RAWG, and this game won't count toward any RetroAchievements-based stats.</div>
+        <div class="hint">Not on RetroAchievements: pick the platform once you find a match below. Box art and details come from RAWG, and the game won't count toward RetroAchievements stats.</div>
       </div>
       <div class="field">
         <label>Game title</label>
         <input id="addgame-title" type="text" placeholder="e.g. Chrono Trigger" autocomplete="off">
-        <div class="hint" id="addgame-multi-hint">Tip: check off several results to add them all at once — handy for adding a batch from the same system.</div>
+        <div class="hint" id="addgame-multi-hint">Tick several results to add them all at once.</div>
       </div>
       <button class="btn-primary" id="addgame-search-btn">Search</button>
 
@@ -234,16 +227,16 @@
     <button class="modal-close" id="rawg-close-btn">✕</button>
     <div class="modal-body">
       <h2 style="margin-bottom:4px;">RAWG ratings</h2>
-      <p class="sub" style="margin-bottom:18px;">Optional — shows a review-score badge on each game's detail view, pulled from RAWG (includes real Metacritic scores where RAWG has them).</p>
+      <p class="sub" style="margin-bottom:18px;">Optional. Shows a review score on each game's profile, from RAWG (Metacritic scores where RAWG has them).</p>
 
       <div class="field">
         <label>API Key</label>
         <input id="rawg-api-key" type="text" autocomplete="off">
-        <div class="hint">Free — get a key at <a href="https://rawg.io/apidocs" target="_blank" rel="noopener">rawg.io/apidocs</a> (20,000 requests/month free, no OAuth, just this one key).</div>
+        <div class="hint">Free: get a key at <a href="https://rawg.io/apidocs" target="_blank" rel="noopener">rawg.io/apidocs</a> (20,000 requests a month).</div>
       </div>
       <div style="display:flex; gap:8px;">
         <button class="btn-primary" id="rawg-save-btn" style="flex:1;">Save</button>
-        <button id="rawg-remove-btn" style="flex:1; background: transparent; border: 1px solid var(--danger); color: var(--danger); border-radius: var(--radius); font-family: 'Space Mono', monospace; font-weight: 700; font-size:0.8125rem; cursor: pointer;">Remove key</button>
+        <button class="btn-line danger" id="rawg-remove-btn" style="flex:1;">Remove key</button>
       </div>
       <div id="rawg-status"></div>
     </div>
@@ -255,19 +248,19 @@
     <button class="modal-close" id="data-close-btn">✕</button>
     <div class="modal-body">
       <h2 style="margin-bottom:4px;">Data</h2>
-      <p class="sub" style="margin-bottom:18px;">Everything — RA credentials, RAWG key, and your manually-added games — lives only on this device. Export a backup before switching devices, clearing browser data, or reinstalling, and import it wherever you want that data to show up next.</p>
+      <p class="sub" style="margin-bottom:18px;">Everything (your RA login, RAWG key and added games) is stored only on this device. Export a backup before reinstalling or moving to another device, then import it there.</p>
 
       <div class="field">
         <label>Export</label>
         <button class="btn-primary" id="data-export-btn" style="width:100%;">Download backup (.json)</button>
-        <div class="hint">Saves a file containing everything stored locally by this app.</div>
+        <div class="hint">Saves a file with everything this app stores.</div>
       </div>
 
       <div class="field">
         <label>Import</label>
         <input type="file" id="data-import-file" accept="application/json" style="display:none;">
-        <button id="data-import-btn" style="width:100%; background: transparent; border: 1px solid var(--gold); color: var(--gold); border-radius: var(--radius); font-family: 'Space Mono', monospace; font-weight: 700; font-size:0.8125rem; cursor: pointer; padding: 11px 20px;">Choose backup file…</button>
-        <div class="hint">Loads a previously exported backup into this device. Existing local data with matching keys will be overwritten.</div>
+        <button class="btn-line gold" id="data-import-btn" style="width:100%;">Choose backup file…</button>
+        <div class="hint">Loads a backup onto this device. Anything already here with the same key is replaced.</div>
       </div>
 
       <div id="data-status"></div>
@@ -306,7 +299,7 @@
 
 <div class="device-status" id="device-status" aria-hidden="true"><span class="ds-hearts" id="status-hearts"></span><span id="status-time"></span></div>
 
-<!-- order matters: each script uses globals from the ones above it -->
+<!-- Each script uses globals from the ones above it. -->
 <script src="js/storage.js"></script>
 <script src="js/thor.js"></script>
 <script src="js/state.js"></script>

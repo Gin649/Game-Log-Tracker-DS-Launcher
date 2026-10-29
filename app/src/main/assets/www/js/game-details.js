@@ -1,13 +1,12 @@
-// Game Details section in a game's profile: other players' typical playtime from
-// RetroAchievements (for the mode you're in), a write-up from RAWG and the game's manual (manuals.js).
+// Game Details: other players' median playtime from RA (in the current mode), your own times,
+// a write-up from RAWG and the manual (manuals.js).
 
 const PLAYTIME_TTL = 7 * 24 * 60 * 60 * 1000; // medians barely move
 const PLAYTIME_MISS_TTL = 10 * 60 * 1000;
 const DESCRIPTION_TTL = 30 * 24 * 60 * 60 * 1000;
 const DESCRIPTION_MISS_TTL = 24 * 60 * 60 * 1000;
 
-// Median times in seconds, for casual and hardcore players. RA calls the casual 100% a
-// completion and the hardcore one a mastery; the profile labels both "time to master".
+// Median times in seconds for casual and hardcore. The profile calls both 100% times "time to master".
 async function getPlaytimeStats(gameId){
   const cacheKey = `ra-playtime-stats:${gameId}`;
   try{
@@ -17,7 +16,7 @@ async function getPlaytimeStats(gameId){
       const has = parsed.stats && [parsed.stats.casual, parsed.stats.hardcore].some(m => m.beat || m.master);
       if(Date.now() - parsed.ts < (has ? PLAYTIME_TTL : PLAYTIME_MISS_TTL)) return parsed.stats;
     }
-  }catch(e){ /* not cached yet */ }
+  }catch(e){}
 
   const data = await raFetch('API_GetGameProgression.php', { i: gameId });
   const secs = n => (Number(n) > 0 ? Number(n) : null);
@@ -32,7 +31,7 @@ async function getPlaytimeStats(gameId){
       master: secs(data && data.MedianTimeToMaster), masterN: count(data && data.TimesUsedInMasteryMedian),
     },
   };
-  try{ await window.storage.set(cacheKey, JSON.stringify({ stats, ts: Date.now() }), false); }catch(e){ /* non-fatal */ }
+  try{ await window.storage.set(cacheKey, JSON.stringify({ stats, ts: Date.now() }), false); }catch(e){}
   return stats;
 }
 
@@ -49,7 +48,7 @@ async function getRawgDescription(title){
       const parsed = JSON.parse(r.value);
       if(Date.now() - parsed.ts < (parsed.text ? DESCRIPTION_TTL : DESCRIPTION_MISS_TTL)) return parsed.text;
     }
-  }catch(e){ /* not cached yet */ }
+  }catch(e){}
 
   const key = encodeURIComponent(rawgCreds.apiKey);
   const search = await rawgGetShared(`https://api.rawg.io/api/games?key=${key}&search=${encodeURIComponent(clean)}&page_size=5`);
@@ -65,22 +64,21 @@ async function getRawgDescription(title){
     const detail = await rawgGet(`https://api.rawg.io/api/games/${match.id}?key=${key}`);
     text = cleanDescription(detail && detail.description_raw);
   }
-  try{ await window.storage.set(cacheKey, JSON.stringify({ text, ts: Date.now() }), false); }catch(e){ /* non-fatal */ }
+  try{ await window.storage.set(cacheKey, JSON.stringify({ text, ts: Date.now() }), false); }catch(e){}
   return text;
 }
 
 function cleanDescription(raw){
   let text = String(raw || '').replace(/\r/g, '').trim();
-  // RAWG often adds a Spanish copy after the English text, started by a line that just says "Español".
+  // RAWG often adds a Spanish copy after a line that just says "Español".
   const es = text.search(/\n\s*espa[ñn]ol\s*:?\s*(\n|$)/i);
   if(es > 0) text = text.slice(0, es).trim();
   text = tidyDescription(text);
   return text.length >= 40 ? text : null;
 }
 
-// RAWG text often has hard line breaks in the middle of sentences ("It's panic or" / "perish..."),
-// which show up as stray short lines. A line break only stays when the line before it ends a
-// sentence and the next one starts a new one; every other break becomes a space.
+// RAWG text has line breaks mid-sentence. A break only stays between a sentence end and a new
+// sentence; the rest become spaces.
 function tidyDescription(text){
   return String(text || '').replace(/\r/g, '').split(/\n{2,}/).map(para => {
     const lines = para.split('\n').map(l => l.trim()).filter(Boolean);
@@ -99,21 +97,20 @@ function achievementType(a){
   return String((a && (a.Type || a.type)) || '').toLowerCase();
 }
 
-// RA's API doesn't report your own time to beat or master, so both come from your unlock
-// dates. The beat time ends at the unlock that met the beaten requirements (every
-// progression achievement plus a win condition). The master time uses your tracked
-// playtime when RA has it, and an estimate otherwise.
+// RA doesn't report your own time to beat or master, so both come from your unlock dates. Beating
+// ends at the unlock that completed the requirements (every progression achievement plus a win
+// condition). The master time is RA's tracked playtime when there is one, otherwise an estimate.
 async function getMyTimes(gameId){
   const list = await getAchievementsList(gameId);
   if(!list || !list.length) return null;
   try{ attachAchievementTypes(list, await getGameExtended(gameId)); }
-  catch(e){ /* without the tags there is no beat time */ }
+  catch(e){}
   const cached = estHoursCache[gameId];
   const real = cached && cached.real ? cached.hours : null;
   const snap = await readSnap(gameId);
 
-  // Unlock dates in either mode. The share of unlocks made by the beat moment, scaled to
-  // RA's real total playtime, gives a better estimate than the raw unlock gaps alone.
+  // Unlocks in either mode. The share made by the beat moment, scaled to RA's real playtime,
+  // beats the raw unlock gaps as an estimate.
   const anyStamps = list
     .map(a => { const d = parseRADate(a.DateEarned || a.DateEarnedHardcore); return d ? d.getTime() : null; })
     .filter(t => t != null);
@@ -174,9 +171,9 @@ function playtimeBox(label, seconds, players, mine){
   return `<div class="gd-box"><div class="gd-main"><div class="gd-k">${label}</div><div class="gd-v">${value}</div><div class="gd-n">${n}</div></div>${you}</div>`;
 }
 
-// aboutOnly: games tracked by hand (not on RA) have no playtime data, so only the write-up shows.
+// aboutOnly: non-RA games have no playtime data, so only the write-up shows.
 function renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine){
-  if(description) description = tidyDescription(description); // also fixes write-ups saved before this was added
+  if(description) description = tidyDescription(description); // fixes write-ups cached before tidying existed
   const hard = statsMode === 'hardcore';
   const m = (!aboutOnly && stats) ? (hard ? stats.hardcore : stats.casual) : null;
   const my = (!aboutOnly && mine) ? (hard ? mine.hardcore : mine.casual) : null;
@@ -204,7 +201,7 @@ function renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine)
 
   const aboutEl = wrap.querySelector('.gd-about');
   if(aboutEl){
-    aboutEl.textContent = description; // plain text, never parsed as HTML
+    aboutEl.textContent = description;
     const more = wrap.querySelector('.gd-more');
     if(more){
       aboutEl.classList.add('clamp');
@@ -218,15 +215,13 @@ function renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine)
 }
 
 function setupGameDetailsUI(gameId, title, card, opts){
-  const aboutOnly = !!(opts && opts.aboutOnly); // manual games: no RA playtime to fetch
+  const aboutOnly = !!(opts && opts.aboutOnly);
   const manualCtx = { gameId, title, consoleName: opts && opts.consoleName };
   const btn = card.querySelector('#modal-details-btn');
   const wrap = card.querySelector('#modal-details');
   if(!btn || !wrap) return;
 
-  // Start loading in the background shortly after the profile opens, so the data is usually
-  // there by the time the section is tapped. Everything is cached, so this only costs
-  // requests the first time a game is opened.
+  // Loads in the background just after the profile opens, so it's usually ready when tapped.
   let pending = null;
   const load = () => pending || (pending = Promise.allSettled([
     aboutOnly ? Promise.resolve(null) : getPlaytimeStats(gameId),
@@ -245,15 +240,12 @@ function setupGameDetailsUI(gameId, title, card, opts){
     loaded = true;
     wrap.innerHTML = '<div class="achievements-list-loading">Loading details…</div>';
     const [statsRes, descRes, mineRes] = await load();
-    if(card.dataset.gameId !== String(gameId)) return; // user moved on to another game
-    if(statsRes.status === 'rejected') console.error('Playtime stats failed:', statsRes.reason && statsRes.reason.message);
-    if(descRes.status === 'rejected') console.error('RAWG description failed:', descRes.reason && descRes.reason.message);
+    if(card.dataset.gameId !== String(gameId)) return; // another game was opened meanwhile
 
     const stats = statsRes.status === 'fulfilled' ? statsRes.value : null;
     const description = descRes.status === 'fulfilled' ? descRes.value : null;
-    if(mineRes.status === 'rejected') console.error('Your times failed:', mineRes.reason && mineRes.reason.message);
     const mine = mineRes.status === 'fulfilled' ? mineRes.value : null;
     renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine);
-    if(!stats && !description){ loaded = false; pending = null; } // both failed: try again next time it's opened
+    if(!stats && !description){ loaded = false; pending = null; } // both failed: retry next time
   });
 }

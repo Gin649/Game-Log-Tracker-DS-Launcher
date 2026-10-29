@@ -2,10 +2,6 @@ package com.gin649.gltdslauncher.database;
 
 import android.content.Context;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -79,33 +75,5 @@ public final class GameRepository {
 
     public void markPlayed(int id) {
         dao.incrementPlayCount(id);
-    }
-
-    public void setFavorite(int id, boolean favorite) {
-        dao.setFavorite(id, favorite);
-    }
-
-    // ---- JSON for the web UI ----
-
-    public static JSONObject toJson(GameEntity g) throws JSONException {
-        JSONObject o = new JSONObject();
-        o.put("id", g.id);
-        o.put("screenscraperId", g.screenscraperId);
-        o.put("title", g.title);
-        o.put("romPath", g.romPath);
-        o.put("systemId", g.systemId);
-        o.put("miximage", g.localMiximagePath == null ? JSONObject.NULL : g.localMiximagePath);
-        o.put("favorite", g.favorite);
-        o.put("playCount", g.playCount);
-        return o;
-    }
-
-    public static String toJson(List<GameEntity> games) {
-        JSONArray arr = new JSONArray();
-        try {
-            for (GameEntity g : games) arr.put(toJson(g));
-        } catch (JSONException ignored) {
-        }
-        return arr.toString();
     }
 }

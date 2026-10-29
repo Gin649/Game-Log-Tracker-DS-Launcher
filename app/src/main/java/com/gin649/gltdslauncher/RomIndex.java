@@ -40,10 +40,6 @@ final class RomIndex {
         return ready;
     }
 
-    int count() {
-        return roms.size();
-    }
-
     void awaitReady(long maxMillis) {
         long end = System.currentTimeMillis() + maxMillis;
         while (!ready && System.currentTimeMillis() < end) {

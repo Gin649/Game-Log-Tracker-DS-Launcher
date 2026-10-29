@@ -37,11 +37,10 @@
 
   const nativePad = window.PadNative || null;
   const showKeyboard = (on) => {
-    try{ if(nativePad) on ? nativePad.showKeyboard() : nativePad.hideKeyboard(); }catch(e){ /* not in the app */ }
+    try{ if(nativePad) on ? nativePad.showKeyboard() : nativePad.hideKeyboard(); }catch(e){}
   };
 
-  // ---- what is on screen ---------------------------------------------------------------------
-
+  // What is on screen
   const isVisible = (el) => {
     const r = el.getBoundingClientRect();
     return r.width > 0 && r.height > 0; // display:none gives an empty box
@@ -93,7 +92,7 @@
   function scrollBy(sc, dy){
     if(!sc) return;
     if(sc === TOP_MENU){
-      try{ if(nativePad) nativePad.scrollTopMenu(dy); }catch(e){ /* not in the app */ }
+      try{ if(nativePad) nativePad.scrollTopMenu(dy); }catch(e){}
       return;
     }
     if(sc === window) window.scrollBy(0, dy); else sc.scrollTop += dy;
@@ -115,8 +114,7 @@
     return out;
   }
 
-  // ---- the highlight -------------------------------------------------------------------------
-
+  // The highlight
   const cls = (el) => el.className.replace(/\bpad-focus\b/, '').trim();
   const signature = (el) => ({ id: el.id, gid: el.getAttribute('data-game-id'), tag: el.tagName, cls: cls(el) });
 
@@ -228,8 +226,7 @@
     if(first) setFocus(first.el);
   }
 
-  // ---- buttons -------------------------------------------------------------------------------
-
+  // Buttons
   function confirm(){
     const el = ensureFocus();
     if(!el) return;
@@ -420,8 +417,7 @@
     }, 120);
   }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
 
-  // ---- Controller settings in the hamburger menu ---------------------------------------------
-
+  // Controller settings in the hamburger menu
   function syncSwapUi(){
     const sw = $('#pad-swap-switch');
     sw.classList.toggle('on', swapAB);
@@ -439,13 +435,13 @@
     e.stopPropagation();
     swapAB = !swapAB;
     syncSwapUi();
-    try{ await window.storage.set(SWAP_KEY, swapAB ? '1' : '0', false); }catch(err){ /* non-fatal */ }
+    try{ await window.storage.set(SWAP_KEY, swapAB ? '1' : '0', false); }catch(err){}
   });
   (async () => {
     try{
       const saved = await window.storage.get(SWAP_KEY, false);
       swapAB = !!saved && saved.value === '1';
-    }catch(e){ /* nothing saved yet */ }
+    }catch(e){}
     syncSwapUi();
   })();
 })();
