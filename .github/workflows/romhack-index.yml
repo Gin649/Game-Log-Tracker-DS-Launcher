@@ -1,0 +1,72 @@
+# Keeps the romhack index current (tools/build_rapatches.py) and publishes it to this repo's `data`
+# branch, which the app reads from raw.githubusercontent.com. Hourly it asks whether RAPatches has a
+# new commit (one cheap `git ls-remote`) and stops there when it hasn't. When it has, only new or
+# changed archives are read (the cache lives on the data branch). The data branch is replaced by a
+# single commit each time, so nothing builds up in history, and `main` is never touched.
+name: Romhack index
+
+on:
+  schedule:
+    - cron: "23 * * * *"
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Rebuild from scratch (ignore the cache)"
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths:
+      - "tools/build_rapatches.py"
+      - ".github/workflows/romhack-index.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: romhack-index
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Has RAPatches changed?
+        id: check
+        run: |
+          head=$(git ls-remote https://github.com/RetroAchievements/RAPatches HEAD | cut -f1)
+          echo "head=$head" >> "$GITHUB_OUTPUT"
+          mkdir -p out/ra-patches
+          if git fetch --depth 1 origin data 2>/dev/null; then
+            git show FETCH_HEAD:ra-patches/index.json > old-index.json 2>/dev/null || true
+            if [ "${{ inputs.full }}" != "true" ]; then
+              git show FETCH_HEAD:ra-patches/cache.json > out/ra-patches/cache.json 2>/dev/null || true
+            fi
+          fi
+          old=$(python3 -c "import json;print(json.load(open('old-index.json')).get('commit',''))" 2>/dev/null || echo "")
+          if [ "$old" = "$head" ] && [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "RAPatches is unchanged since the last build."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Clone RAPatches (file list only)
+        if: steps.check.outputs.skip != 'true'
+        run: git clone --depth 1 --filter=blob:none https://github.com/RetroAchievements/RAPatches RAPatches
+
+      - name: Build the index
+        if: steps.check.outputs.skip != 'true'
+        run: python3 tools/build_rapatches.py --repo RAPatches --source http --out out
+
+      - name: Publish to the data branch
+        if: steps.check.outputs.skip != 'true'
+        run: |
+          cd out
+          git init -q
+          git checkout -q -b data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Romhack index for RAPatches ${{ steps.check.outputs.head }}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data

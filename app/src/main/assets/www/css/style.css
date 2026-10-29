@@ -1076,3 +1076,6 @@ body.pad-mode .pad-focus.chip{outline-offset:2px;}
    laid out, just off to the side, so its buttons and the controller navigation keep working. */
 html.top-panel .brand{position:fixed;left:-10000px;top:0;width:720px;margin:0;visibility:hidden;pointer-events:none;}
 html.top-panel #profile-hero{display:none;}
+
+.patch-group-title{font-size:0.7188rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px;}
+.patch-group-title:first-child{margin-top:4px;}

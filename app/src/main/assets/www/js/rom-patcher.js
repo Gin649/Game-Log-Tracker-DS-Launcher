@@ -340,6 +340,29 @@
   // tree API from every visitor's browser (60 requests/hour per IP, which a shared or
   // carrier IP can burn through). If the file is missing or fails to load, fall back to
   // asking GitHub directly.
+  // The pre-built romhack index (tools/build_rapatches.py, published to this repo's `data` branch by the
+  // "Romhack index" workflow): every patch archive in RAPatches, what is inside it, and for BPS/UPS the checksum
+  // of the ROM it was made for. One small download replaces listing the repo and probing thousands of patches.
+  // Resolves to null when it can't be had, and the search falls back to the slower way.
+  const ROMHACK_INDEX_URL = 'https://raw.githubusercontent.com/Gin649/Game-Log-Tracker-DS-Launcher/data/ra-patches/index.json';
+  let romhackIndexPromise = null;
+  function getRomhackIndex(){
+    if(!romhackIndexPromise){
+      romhackIndexPromise = (async () => {
+        try{
+          const r = await fetch(ROMHACK_INDEX_URL, { cache: 'no-cache' });
+          if(!r.ok) return null;
+          const d = await r.json();
+          if(!d || !Array.isArray(d.patches) || d.patches.length < 100) return null;
+          const byPath = new Map();
+          for(const p of d.patches) byPath.set(p.p, p);
+          return { branch: d.branch || 'main', patches: d.patches, byPath };
+        }catch(e){ return null; }
+      })().then(v => { if(!v) romhackIndexPromise = null; return v; }); // try again next time if it failed
+    }
+    return romhackIndexPromise;
+  }
+
   async function getRAPatchesTree(){
     const cacheKey = 'rapatches-tree-cache-v3'; // v3: prefers the prebuilt static index
     try{
@@ -403,7 +426,7 @@
     const titleWords = normalizeForMatch(title).split(' ').filter(w => w.length > 1);
     return files.map(f => {
       const base = f.path.split('/').pop().replace(/\.(bps|ips|ups|ppf|aps|xdelta3?|vcdiff|vcd|zip|7z)$/i, '');
-      const norm = normalizeForMatch(base);
+      const norm = normalizeForMatch(base + ' ' + (f.names ? f.names.join(' ') : ''));
       const hits = titleWords.length ? titleWords.filter(w => norm.includes(w)).length / titleWords.length : 0;
       // RAPatches nests most patches under console/Category/<Game Title>/file, but the file is
       // usually named "<RA ID>-AbbreviatedName.ext" (e.g. "98765-SMWLearn2Kaizo.zip"), which
@@ -1267,8 +1290,11 @@
         const romCrc = discMode ? null : crc32(romBytes);
         let official = await fetchOfficialPatches();
 
-        patchWrap.innerHTML = '<div class="achievements-list-loading">Reading the RAPatches file list…</div>';
-        const tree = await getRAPatchesTree();
+        patchWrap.innerHTML = '<div class="achievements-list-loading">Reading the RAPatches list…</div>';
+        const idx = await getRomhackIndex();
+        const tree = idx
+          ? { branch: idx.branch, files: idx.patches.map(p => ({ path: p.p, names: (p.i || []).map(x => x[0]) })) }
+          : await getRAPatchesTree();
         branch = tree.branch;
 
         // RA often links its patches through github.com (".../raw/main/..."), which redirects to
@@ -1312,15 +1338,32 @@
         const bpsUpsCandidates = hacksCandidates.concat(otherCandidates);
         const capped = hacksAll.length > hacksCandidates.length || otherAll.length > otherCandidates.length;
 
-        const checked = discMode ? [] : await mapWithConcurrency(bpsUpsCandidates, 14, async (c) => {
+        const checked = (discMode || idx) ? [] : await mapWithConcurrency(bpsUpsCandidates, 14, async (c) => {
           const srcCrc = await fetchPatchSourceCrc32(branch, c.path);
           return { path: c.path, matches: srcCrc !== null && srcCrc === romCrc };
         }, (done, total) => {
           patchWrap.innerHTML = `<div class="achievements-list-loading">Checking patch checksums… (${done}/${total})</div>`;
         });
-        const verified = checked.filter(c => c && c.matches).map(c => ({
-          label: c.path.split('/').pop(), path: c.path, url: fetchRAPatchUrl(branch, c.path),
-        }));
+        // With the index, every patch whose BPS/UPS says it was made for this exact ROM is known up front,
+        // zipped ones included. Without it, only loose files could be checked, one request each.
+        const romCrcSet = new Set();
+        if(idx && !discMode){
+          romCrcSet.add(romCrc);
+          if(romBytes.length > 512) romCrcSet.add(crc32(romBytes.subarray(512))); // the same dump without its header
+        }
+        const verified = idx
+          ? (discMode ? [] : idx.patches
+              .filter(p => (p.i || []).some(x => x[2] && romCrcSet.has(parseInt(x[2], 16))))
+              .map(p => ({ label: p.p.split('/').pop(), path: p.p, url: fetchRAPatchUrl(branch, p.p) })))
+          : checked.filter(c => c && c.matches).map(c => ({
+              label: c.path.split('/').pop(), path: c.path, url: fetchRAPatchUrl(branch, c.path),
+            }));
+        // Known not to fit: every patch inside carries a checksum and none of them is this ROM's.
+        const knownMismatch = (path) => {
+          if(!idx || discMode) return false;
+          const r = idx.byPath.get(path);
+          return !!(r && r.i && r.i.length && r.i.every(x => x[2]));
+        };
 
         // RAPatches names its files "<RA game ID>-<Title>" (e.g. 12736-SMWLearn2Kaizo.zip), so
         // anything starting with this game's own ID is listed for exactly this game.
@@ -1344,18 +1387,26 @@
         // its own because the folder-per-game layout is reliable even when the file is just
         // "<RA ID>-Abbrev.ext".
         // A disc is too big to hash up front, so BPS/UPS patches are matched by name too; the patch checks the disc when it is applied.
-        const noPreCheck = (discMode ? bpsUpsAll.concat(ipsAll, zipAll) : ipsAll.concat(zipAll)).filter(c => (c.inFolder || c.score === 1) && !(discMode && /\.aps$/i.test(c.path)));
+        const noPreCheck = (discMode ? bpsUpsAll.concat(ipsAll, zipAll) : ipsAll.concat(zipAll)).filter(c => (c.inFolder || c.score === 1) && !(discMode && /\.aps$/i.test(c.path)) && !knownMismatch(c.path));
         const unverifiedPicks = noPreCheck.filter(c => !idPaths.has(c.path) && !officialPaths.has(fetchRAPatchUrl(branch, c.path)) && !isOfficialDup(c.path));
 
         const byLabel = (a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base', numeric: true });
 
+        // Translations get their own section, whatever else is known about them.
+        const isTranslation = (e) => /^[^/]+\/Translation\//i.test(e.path || '');
+        const tag = (list, how) => list.map(e => ({ ...e, how }));
+        const unverifiedList = unverifiedPicks.map(c => ({ label: c.path.split('/').pop(), path: c.path, url: fetchRAPatchUrl(branch, c.path) })).sort(byLabel);
+        const translations = tag(byId.filter(isTranslation), 'byId')
+          .concat(tag(verifiedDeduped.filter(isTranslation), 'verified'), tag(unverifiedList.filter(isTranslation), 'unverified'))
+          .sort(byLabel);
         results = {
           official: official.slice().sort(byLabel),
-          byId: byId.slice().sort(byLabel),
-          verified: verifiedDeduped.slice().sort(byLabel),
-          unverified: unverifiedPicks.map(c => ({ label: c.path.split('/').pop(), path: c.path, url: fetchRAPatchUrl(branch, c.path) })).sort(byLabel),
+          byId: byId.filter(e => !isTranslation(e)).sort(byLabel),
+          verified: verifiedDeduped.filter(e => !isTranslation(e)).sort(byLabel),
+          unverified: unverifiedList.filter(e => !isTranslation(e)),
+          translations,
           usedFallback,
-          capped: discMode ? false : capped,
+          capped: (discMode || idx) ? false : capped,
         };
         renderResults();
       }catch(e){
@@ -1402,7 +1453,7 @@
     }
 
     function renderResults(){
-      const totalCount = results.official.length + results.byId.length + results.verified.length + results.unverified.length;
+      const totalCount = results.official.length + results.byId.length + results.verified.length + results.unverified.length + results.translations.length;
       const fallbackNote = (results.usedFallback && !results.byId.length)
         ? `<p style="font-size:0.6875rem;color:var(--muted);margin:0 0 8px;line-height:1.5;">Couldn't confidently identify this console's folder in the repo, so this fell back to a filename-only search — hacks with unrelated names may be missing.</p>`
         : '';
@@ -1434,24 +1485,36 @@
 
       function renderList(){
         const q = filterInput.value.trim().toLowerCase();
-        const matches = (m) => !q || m.label.toLowerCase().includes(q);
+        const matches = (m) => !q || m.label.toLowerCase().includes(q) || (m.path || '').toLowerCase().includes(q);
         const officialRows = results.official.filter(matches);
         const byIdRows = results.byId.filter(matches);
         const verifiedRows = results.verified.filter(matches);
         const unverifiedRows = results.unverified.filter(matches);
+        const translationRows = results.translations.filter(matches);
 
-        if(officialRows.length + byIdRows.length + verifiedRows.length + unverifiedRows.length === 0){
+        if(officialRows.length + byIdRows.length + verifiedRows.length + unverifiedRows.length + translationRows.length === 0){
           listWrap.innerHTML = `<p style="font-size:0.7688rem;color:var(--muted);margin:8px 0 0;">No hacks match “${filterInput.value.trim()}”.</p>`;
           return;
         }
 
+        const mainCount = officialRows.length + byIdRows.length + verifiedRows.length + unverifiedRows.length;
+        const trBadge = (m) => {
+          const lang = (m.path || '').split('/')[2];
+          const how = m.how === 'verified' ? 'checksum matches this ROM' : (m.how === 'byId' ? 'listed for this exact game' : 'matched by name');
+          return `Translation${lang && (m.path || '').split('/').length > 3 ? ' (' + lang + ')' : ''} — ${how}`;
+        };
         listWrap.innerHTML = `
-          <div class="patch-result-list">
+          ${mainCount && translationRows.length ? '<div class="patch-group-title">Hacks and other patches</div>' : ''}
+          ${mainCount ? `<div class="patch-result-list">
             ${officialRows.map(m => resultRowByUrl(m, 'Official — linked by RetroAchievements', 'official')).join('')}
             ${byIdRows.map(m => resultRowByUrl(m, 'Listed for this exact game (RetroAchievements game ID)', 'byId')).join('')}
             ${verifiedRows.map(m => resultRowByUrl(m, 'Verified — checksum matches this ROM', 'verified')).join('')}
             ${unverifiedRows.map(m => resultRowByUrl(m, /\.(zip|7z)$/i.test(m.path) ? 'Not checked yet — matched by name; downloading it checks the patch(es) inside' : (discMode ? 'Matched by name — your disc is checked against the patch when it is applied' : 'Unverified — this format has no checksum to check up front'), 'unverified')).join('')}
-          </div>
+          </div>` : ''}
+          ${translationRows.length ? `<div class="patch-group-title">Translations</div>
+          <div class="patch-result-list">
+            ${translationRows.map(m => resultRowByUrl(m, trBadge(m), 'translations')).join('')}
+          </div>` : ''}
         `;
         listWrap.querySelectorAll('.patch-result-row button').forEach(btn => {
           btn.addEventListener('click', () => {
