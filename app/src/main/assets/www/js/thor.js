@@ -28,6 +28,12 @@ function thorClearViewing(){
   try{ thorBridge.clearViewing(); }catch(e){}
 }
 
+// Coming back to the app (after quitting a game) clears the "Starting…" line under the Play button.
+window.thorResumed = function(){
+  document.querySelectorAll('.thor-play-msg').forEach(m => { m.style.display = 'none'; m.textContent = ''; });
+};
+document.addEventListener('visibilitychange', () => { if(!document.hidden) window.thorResumed(); });
+
 function thorPlayButtonHtml(){
   if(!thorBridge) return '';
   return `<button class="btn-view-achievements btn-play-thor" id="modal-play-btn"><span class="arrow">▶</span> Play on this device</button>

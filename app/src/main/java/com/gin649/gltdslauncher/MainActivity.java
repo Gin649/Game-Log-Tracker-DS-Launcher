@@ -355,7 +355,10 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         if (relaunching) return;
-        if (webView != null) webView.onResume();
+        if (webView != null) {
+            webView.onResume();
+            webView.evaluateJavascript("window.thorResumed&&window.thorResumed()", null);
+        }
 
         boolean granted = Environment.isExternalStorageManager();
         if (granted && !hadStorage) Shared.rescan();
