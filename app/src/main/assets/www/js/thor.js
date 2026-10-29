@@ -28,9 +28,30 @@ function thorClearViewing(){
   try{ thorBridge.clearViewing(); }catch(e){}
 }
 
+// Games started from here. When the app is back in front, one that is still a Backlog entry has now
+// been played, so it moves to the Library even if RetroAchievements has no playtime for it.
+const thorLaunched = new Set();
+function thorMarkLaunched(gameId){
+  if(gameId) thorLaunched.add(Number(gameId));
+}
+
+async function thorPromoteLaunched(){
+  const ids = [...thorLaunched];
+  thorLaunched.clear();
+  for(const id of ids){
+    const entry = libraryData.find(g => Number(g.GameID) === id);
+    if(!entry || !entry.manual || entry.customConsole) continue;
+    try{
+      const data = await raFetch('API_GetGameInfoAndUserProgress.php', { g: id, a: 1 });
+      if(data && (data.Title || data.ID)) await promoteManualGameToReal(id, data);
+    }catch(e){}
+  }
+}
+
 // Coming back to the app (after quitting a game) clears the "Starting…" line under the Play button.
 window.thorResumed = function(){
   document.querySelectorAll('.thor-play-msg').forEach(m => { m.style.display = 'none'; m.textContent = ''; });
+  thorPromoteLaunched();
 };
 document.addEventListener('visibilitychange', () => { if(!document.hidden) window.thorResumed(); });
 
@@ -53,6 +74,7 @@ function thorWirePlay(card, gameId, title, consoleName, artUrl){
     let res;
     try{ res = JSON.parse(thorBridge.launch(JSON.stringify(info))); }
     catch(e){ res = { ok: false, message: 'Could not reach the launcher.' }; }
+    if(res.ok) thorMarkLaunched(gameId);
     msg.style.display = 'block';
     msg.classList.toggle('error', !res.ok);
     msg.textContent = res.message || (res.ok ? 'Starting the game…' : 'Could not start the game.');

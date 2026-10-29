@@ -924,7 +924,7 @@ function setupRomPatchUI(gameId, title, card, consoleName){
     if(libraryData.some(x => Number(x.GameID) === Number(raGameId))){
       statusEl.textContent = 'This game is already in your library or backlog.';
       if(btn) btn.disabled = true;
-      return;
+      return Number(raGameId);
     }
     statusEl.textContent = 'Adding…';
     try{
@@ -938,6 +938,7 @@ function setupRomPatchUI(gameId, title, card, consoleName){
       await addManualGamesBulk([{ g: { ID: g.ID || raGameId, Title: g.Title, ConsoleName: g.ConsoleName, ImageIcon: g.ImageIcon, NumAchievements: g.NumAchievements }, consoleId: g.ConsoleID, consoleName: g.ConsoleName }]);
       statusEl.textContent = 'Added to your Backlog.';
       if(btn) btn.disabled = true;
+      return Number(g.ID || raGameId);
     }catch(e){
       statusEl.textContent = "Couldn't add it to your backlog. Try again in a moment.";
     }
@@ -945,6 +946,7 @@ function setupRomPatchUI(gameId, title, card, consoleName){
 
   // The result after a patch: notes, Play, Add to backlog, Back.
   function showPatched(lines, savedName, folder, playPath, hackId){
+    let backlogId = null; // the game the Backlog button added, so Play can mark that one as played
     patchWrap.innerHTML = `
       ${lines.map(n => `<div class="hash-status ${n.cls || 'ok'}" style="margin-top:8px;">${esc(n.text)}</div>`).join('')}
       <div class="hash-status ok" style="margin-top:8px;">Patched and saved as <strong>${esc(savedName)}</strong> in your ${esc(folder)} folder.</div>
@@ -957,10 +959,11 @@ function setupRomPatchUI(gameId, title, card, consoleName){
     patchWrap.querySelector('#patch-play-btn').addEventListener('click', () => {
       let res;
       try{ res = JSON.parse(deviceBridge.launchFile(playPath)); }catch(e){ res = { ok: false, message: 'Could not reach the launcher.' }; }
+      if(res.ok) thorMarkLaunched(backlogId || hackId || gameId);
       afterMsg.textContent = res.message || (res.ok ? 'Starting the game…' : 'Could not start the game.');
     });
     const blBtn = patchWrap.querySelector('#patch-backlog-btn');
-    if(blBtn) blBtn.addEventListener('click', () => addGameToBacklog(hackId, afterMsg, blBtn));
+    if(blBtn) blBtn.addEventListener('click', async () => { backlogId = await addGameToBacklog(hackId, afterMsg, blBtn) || backlogId; });
     patchWrap.querySelector('#patch-back-btn').addEventListener('click', renderResults);
   }
 
