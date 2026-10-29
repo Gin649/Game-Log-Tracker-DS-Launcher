@@ -186,3 +186,6 @@ onDomReady(() => {
     timer = setTimeout(poll, 1500);
   });
 });
+
+// Pins the hamburger menu button to the top right of the screen (see .thor-app in the stylesheet).
+onDomReady(() => { if(thorBridge) document.body.classList.add('thor-app'); });
