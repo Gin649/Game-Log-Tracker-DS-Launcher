@@ -55,6 +55,8 @@ async function raFetchOnce(endpoint, params){
     try{ res = await fetchWithTimeout(url, ms); }
     catch(e){ throw new Error(`${label}: blocked (${e.message})`); }
     if(res.status === 401 || res.status === 403){
+      // Only our own routes speak for RetroAchievements; a public proxy's 401/403 is its own wall.
+      if(!['app', 'worker', 'direct'].includes(label)) throw new Error(`${label}: HTTP ${res.status}`);
       const err = new Error('RetroAchievements rejected the username or API key (HTTP ' + res.status + ').');
       err.authFailure = true;
       throw err;
@@ -79,15 +81,47 @@ async function raFetchOnce(endpoint, params){
   if(thorBridge){
     try{ return await attempt('app', `/ra/${endpoint}?${qs}`, 20000); }
     catch(e){
-      if(e.authFailure || e.rateLimited) throw e;
+      if(e.authFailure) throw e;
       nativeErr = e;
     }
   }
+  let workerErr = null;
   try{
     return await attempt('worker', `https://ra-proxy.gin649.workers.dev/${endpoint}?${qs}`, 12000);
   }catch(e){
-    if(e.authFailure || e.rateLimited || !nativeErr) throw e;
-    throw new Error('Could not reach RetroAchievements (' + nativeErr.message + '; ' + e.message + ')');
+    if(e.authFailure) throw e;
+    workerErr = e;
+  }
+
+  // The app and the Worker both failed (a 429 from either lands here too): try the public CORS
+  // proxies, then RetroAchievements directly. A 429 is only reported once all of them fail.
+  const target = `https://retroachievements.org/API/${endpoint}?${qs}`;
+  const routes = [
+    ['allorigins', 'https://api.allorigins.win/raw?url=' + encodeURIComponent(target)],
+    ['codetabs', 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(target)],
+    ['corsproxy', 'https://corsproxy.io/?url=' + encodeURIComponent(target)],
+    ['thingproxy', 'https://thingproxy.freeboard.io/fetch/' + target],
+    ['corseu', 'https://cors.eu.org/' + target],
+  ];
+  const proxyErrors = [];
+  const viaProxy = await new Promise(resolve => {
+    let left = routes.length;
+    routes.forEach(([label, url]) => {
+      attempt(label, url, 12000).then(resolve, err => {
+        proxyErrors.push(err.message);
+        if(--left === 0) resolve(null);
+      });
+    });
+  });
+  if(viaProxy) return viaProxy;
+
+  try{
+    return await attempt('direct', target, 12000);
+  }catch(e){
+    if(e.authFailure) throw e;
+    const limited = [nativeErr, workerErr, e].find(x => x && x.rateLimited);
+    if(limited) throw limited;
+    throw new Error('Could not reach RetroAchievements (' + [nativeErr && nativeErr.message, workerErr.message, ...proxyErrors, e.message].filter(Boolean).join('; ') + ')');
   }
 }
 
