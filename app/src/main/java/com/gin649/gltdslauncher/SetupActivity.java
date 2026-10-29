@@ -171,6 +171,10 @@ public class SetupActivity extends Activity {
         });
 
         setContentView(root);
+        // A window over the tracker rather than a full-screen page
+        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+        getWindow().setLayout((int) (dm.widthPixels * 0.94f), (int) (dm.heightPixels * 0.92f));
+        setFinishOnTouchOutside(false);
 
         if (frontend.equals("esde") && esRoot.isEmpty()) esRoot = guessEsRoot();
         if (frontend.equals("daijisho") && djRoot.isEmpty()) djRoot = guessDjRoot();
@@ -231,70 +235,8 @@ public class SetupActivity extends Activity {
         e.setTextSize(15);
         e.setSingleLine(true);
         e.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
-        wireBottomKeyboard(e, hint);
         content.addView(e);
         return e;
-    }
-
-    /**
-     * Setup lives on the top screen, but the keyboard should come up on the bottom one. So on a
-     * two-screen device, picking a field opens a small entry screen on the bottom display and the
-     * text comes back here. On a single screen the field just works in place.
-     */
-    private void wireBottomKeyboard(final EditText e, final String label) {
-        int bottom = DisplayPicker.bottomDisplayId(this);
-        if (bottom < 0 || DisplayPicker.displayOf(this) == bottom) return;
-        e.setShowSoftInputOnFocus(false);
-        e.setFocusableInTouchMode(false);
-        e.setCursorVisible(false);
-        e.setLongClickable(false);
-        e.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                editOnBottom(e, label);
-            }
-        });
-        // A controller's A button (or Enter) on a field opens the entry screen too.
-        e.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                boolean confirm = keyCode == KeyEvent.KEYCODE_DPAD_CENTER
-                        || keyCode == KeyEvent.KEYCODE_ENTER
-                        || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER
-                        || keyCode == KeyEvent.KEYCODE_BUTTON_A;
-                if (!confirm) return false;
-                if (event.getAction() == KeyEvent.ACTION_UP) editOnBottom(e, label);
-                return true;
-            }
-        });
-    }
-
-    private void editOnBottom(final EditText e, String label) {
-        if (TextEntryActivity.pending != null) return; // already open
-        int bottom = DisplayPicker.bottomDisplayId(this);
-        Intent i = new Intent(this, TextEntryActivity.class);
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        i.putExtra(TextEntryActivity.EXTRA_LABEL, label);
-        i.putExtra(TextEntryActivity.EXTRA_TEXT, e.getText().toString());
-        i.putExtra(TextEntryActivity.EXTRA_INPUT_TYPE, e.getInputType());
-        TextEntryActivity.pending = new TextEntryActivity.Result() {
-            @Override
-            public void onText(String text) {
-                e.setText(text);
-            }
-        };
-        try {
-            if (bottom >= 0) {
-                ActivityOptions options = ActivityOptions.makeBasic();
-                options.setLaunchDisplayId(bottom);
-                startActivity(i, options.toBundle());
-            } else {
-                startActivity(i);
-            }
-        } catch (Exception ex) {
-            TextEntryActivity.pending = null;
-            Toast.makeText(this, "Couldn't open the keyboard screen", Toast.LENGTH_SHORT).show();
-        }
     }
 
     private Button action(String label, View.OnClickListener l) {

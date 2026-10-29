@@ -151,15 +151,15 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** Opens the setup wizard on the top screen, leaving the logo here. */
+    /** Opens the setup wizard as a window on this (the tracker's) screen. */
     void openSetup() {
         if (SetupActivity.running) return;
         splash.setVisibility(View.VISIBLE);
-        splashHint.setText("Setup is open on the other screen");
+        splashHint.setText("Setup is open");
 
         Intent i = new Intent(this, SetupActivity.class);
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        int id = DisplayPicker.topDisplayId(this);
+        int id = DisplayPicker.bottomDisplayId(this);
         try {
             if (id >= 0) {
                 ActivityOptions options = ActivityOptions.makeBasic();

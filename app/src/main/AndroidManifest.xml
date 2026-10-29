@@ -34,6 +34,7 @@
 
         <activity
             android:name=".SetupActivity"
+            android:theme="@android:style/Theme.DeviceDefault.Dialog.NoActionBar"
             android:exported="false"
             android:excludeFromRecents="true"
             android:launchMode="singleTask"
@@ -47,15 +48,6 @@
             android:exported="false"
             android:resizeableActivity="true"
             android:windowSoftInputMode="adjustResize"
-            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density|keyboardHidden|keyboard|navigation|uiMode" />
-
-        <activity
-            android:name=".TextEntryActivity"
-            android:exported="false"
-            android:excludeFromRecents="true"
-            android:taskAffinity="${applicationId}.entry"
-            android:resizeableActivity="true"
-            android:windowSoftInputMode="adjustResize|stateAlwaysVisible"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density|keyboardHidden|keyboard|navigation|uiMode" />
 
         <activity

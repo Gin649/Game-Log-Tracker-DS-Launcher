@@ -31,10 +31,16 @@
   }
 
   // Keeps the controller highlight visible inside the menu by scrolling the menu itself (never the page).
+  // Only follows the highlight when it has moved. A tap that opens a section redraws the menu with the
+  // highlight where it was, and chasing it would send the list back to the top.
+  let lastFocusKey = '';
   function keepFocusInMenu(){
     const menu = openMenu();
     const el = menu && menu.querySelector('.pad-focus');
-    if(!el) return;
+    if(!el){ lastFocusKey = ''; return; }
+    const key = Array.prototype.indexOf.call(menu.querySelectorAll('*'), el) + ':' + (el.id || el.textContent.slice(0, 20));
+    if(key === lastFocusKey) return;
+    lastFocusKey = key;
     const k = stageZoom * MENU_ZOOM;
     for(let i = 0; i < 3; i++){
       const m = menu.getBoundingClientRect(), r = el.getBoundingClientRect();
@@ -47,6 +53,7 @@
   window.GLTTop = {
     set(html, bodyClass){
       const before = openMenu();
+      if(!before) lastFocusKey = '';
       const kept = before ? before.scrollTop : 0;
       stage.innerHTML = html;
       document.body.className = bodyClass || '';
