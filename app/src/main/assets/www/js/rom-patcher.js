@@ -1034,7 +1034,7 @@ function setupRomPatchUI(gameId, title, card, consoleName){
 
   function renderDiscStage(){
     if(!discInfo){
-      patchWrap.innerHTML = '<div class="hash-status mismatch">No disc image for this game was found in your ROMs folder. Put the game\'s .cue, .iso or .cso there, then open this again.</div>';
+      patchWrap.innerHTML = '<div class="hash-status mismatch">No disc image for this game was found in your ROMs folder. Put the game\'s disc image (.cue, .iso, .cso, .chd or .rvz) there, then open this again.</div>';
       return;
     }
     const isCue = /\.cue$/i.test(discInfo.name);
@@ -1042,7 +1042,7 @@ function setupRomPatchUI(gameId, title, card, consoleName){
       <div style="font-size:0.7688rem;color:var(--text);">Disc image: <strong>${esc(discInfo.name)}</strong></div>
       ${smallNote(`Found in your ${esc(discInfo.folder)} folder${isCue ? '' : ' (' + fmtSize(discInfo.size) + ')'}. The patched disc is saved next to it and your original isn't changed.`)}
       ${discInfo.ok
-        ? `<div style="font-size:0.675rem;color:var(--muted);margin-top:6px;line-height:1.5;">Discs are patched straight from storage, so a big one can take a few minutes. Works with BIN/CUE, ISO and CSO games, and IPS, PPF, BPS, UPS and xdelta patches. You'll need about as much free space as the game takes.${discInfo.note ? ' ' + esc(discInfo.note) : ''}</div>
+        ? `<div style="font-size:0.675rem;color:var(--muted);margin-top:6px;line-height:1.5;">Discs are patched straight from storage, so a big one can take a few minutes. Works with BIN/CUE, ISO, CSO, CHD and RVZ games, and IPS, PPF, BPS, UPS and xdelta patches. You'll need about as much free space as the game takes.${discInfo.note ? ' ' + esc(discInfo.note) : ''}</div>
            <button class="guide-btn guide-btn-primary" id="patch-search-btn" style="width:100%;margin-top:12px;">Search RA Patches</button>`
         : `<div class="hash-status mismatch" style="margin-top:8px;">${esc(discInfo.message || "This kind of disc image can't be patched here.")}</div>`}
     `;

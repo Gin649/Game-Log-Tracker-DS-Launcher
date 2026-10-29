@@ -87,11 +87,17 @@ final class Matcher {
         return out;
     }
 
+    private static String dropThe(String s) {
+        return (" " + s + " ").replace(" the ", " ").trim().replace(" ", "");
+    }
+
     private static int score(String t, String r) {
         String tc = t.replace(" ", "");
         String rc = r.replace(" ", "");
         if (tc.isEmpty() || rc.isEmpty()) return 0;
         if (tc.equals(rc)) return 100;
+        // "Simpsons, The - Hit & Run" is the same game as "The Simpsons: Hit & Run"
+        if (dropThe(t).equals(dropThe(r))) return 95;
 
         boolean tShorter = tc.length() <= rc.length();
         String shortS = tShorter ? t : r;
