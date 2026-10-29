@@ -8,7 +8,46 @@ function fetchWithTimeout(url, ms){
 
 // The app calls RetroAchievements itself (no CORS), at /ra/<endpoint>. If that fails for any reason
 // other than a rejected login, the request goes through the Cloudflare Worker instead.
+// RetroAchievements rate-limits per key (HTTP 429). Requests go through a small gate so a bulk load
+// can't trip the limit, and a 429 backs off and retries instead of failing or switching route.
+const RA_MAX_PARALLEL = 3;
+const RA_MIN_GAP_MS = 120;
+let raActive = 0;
+let raLastStart = 0;
+let raCooldownUntil = 0;
+const raWaiting = [];
+
+function raPump(){
+  while(raActive < RA_MAX_PARALLEL && raWaiting.length){
+    const wait = Math.max(raCooldownUntil, raLastStart + RA_MIN_GAP_MS) - Date.now();
+    if(wait > 0){ setTimeout(raPump, wait); return; }
+    const job = raWaiting.shift();
+    raActive++;
+    raLastStart = Date.now();
+    job.run().then(job.resolve, job.reject).finally(() => { raActive--; raPump(); });
+  }
+}
+
+function raGate(run){
+  return new Promise((resolve, reject) => {
+    raWaiting.push({ run, resolve, reject });
+    raPump();
+  });
+}
+
 async function raFetch(endpoint, params){
+  for(let tries = 0; ; tries++){
+    try{ return await raGate(() => raFetchOnce(endpoint, params)); }
+    catch(e){
+      if(!e.rateLimited || tries >= 3) throw e;
+      const backoff = 2000 * Math.pow(2, tries);
+      raCooldownUntil = Math.max(raCooldownUntil, Date.now() + backoff);
+      await new Promise(r => setTimeout(r, backoff));
+    }
+  }
+}
+
+async function raFetchOnce(endpoint, params){
   const qs = new URLSearchParams({ u: creds.username, ...params, y: creds.apiKey }).toString(); // params.u lets Social ask about another user
 
   async function attempt(label, url, ms){
@@ -18,6 +57,11 @@ async function raFetch(endpoint, params){
     if(res.status === 401 || res.status === 403){
       const err = new Error('RetroAchievements rejected the username or API key (HTTP ' + res.status + ').');
       err.authFailure = true;
+      throw err;
+    }
+    if(res.status === 429){
+      const err = new Error('RetroAchievements is rate-limiting requests (HTTP 429). Try again in a minute.');
+      err.rateLimited = true;
       throw err;
     }
     if(!res.ok) throw new Error(`${label}: HTTP ${res.status}`);
@@ -35,14 +79,14 @@ async function raFetch(endpoint, params){
   if(thorBridge){
     try{ return await attempt('app', `/ra/${endpoint}?${qs}`, 20000); }
     catch(e){
-      if(e.authFailure) throw e;
+      if(e.authFailure || e.rateLimited) throw e;
       nativeErr = e;
     }
   }
   try{
     return await attempt('worker', `https://ra-proxy.gin649.workers.dev/${endpoint}?${qs}`, 12000);
   }catch(e){
-    if(e.authFailure || !nativeErr) throw e;
+    if(e.authFailure || e.rateLimited || !nativeErr) throw e;
     throw new Error('Could not reach RetroAchievements (' + nativeErr.message + '; ' + e.message + ')');
   }
 }
@@ -291,7 +335,7 @@ async function getEstimatedHours(gameId, force){
 }
 
 async function loadEstimatedHoursFor(games, onProgress, forceIds){
-  const CONCURRENCY = 8;
+  const CONCURRENCY = 3;
   const targets = games.filter(g =>
     g && g.GameID != null &&
     (estHoursCache[g.GameID] === undefined || (forceIds && forceIds.has(g.GameID)))
