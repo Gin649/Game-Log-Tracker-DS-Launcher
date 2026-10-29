@@ -13,7 +13,7 @@ function fetchWithTimeout(url, ms){
 // them backs off and retries instead of trying every other route. Requests the person is waiting on
 // (opening a game, the dashboard) always go straight out.
 const RA_FG_PARALLEL = 4;
-const RA_BG_PARALLEL = 3;
+const RA_BG_PARALLEL = 5;
 const RA_BG_GAP_MS = 120;
 let raFgActive = 0;
 let raBgActive = 0;
@@ -386,7 +386,7 @@ async function getEstimatedHours(gameId, force, background){
 }
 
 async function loadEstimatedHoursFor(games, onProgress, forceIds){
-  const CONCURRENCY = 3;
+  const CONCURRENCY = 5;
   const targets = games.filter(g =>
     g && g.GameID != null &&
     (estHoursCache[g.GameID] === undefined || (forceIds && forceIds.has(g.GameID)))
