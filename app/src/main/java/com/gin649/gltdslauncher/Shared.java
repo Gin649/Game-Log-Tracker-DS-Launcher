@@ -37,6 +37,7 @@ final class Shared {
     }
 
     static RomIndex index() {
+        INDEX.awaitReady(4000);
         return INDEX;
     }
 
