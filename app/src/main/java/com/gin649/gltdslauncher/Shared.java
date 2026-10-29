@@ -85,9 +85,30 @@ final class Shared {
                 if (rom != null) {
                     // your frontend's art in the order fan art, miximage, built miximage, marquee, box art; else what was downloaded
                     s.localPath = appCtx == null ? null : LibrarySync.artFor(appCtx, rom);
+                    if (appCtx != null) {
+                        com.gin649.gltdslauncher.database.GameEntity ge = LibrarySync.find(appCtx, rom);
+                        s.gameId = ge == null ? 0 : ge.id;
+                        FanArt.decorate(appCtx, ge, s);
+                    }
                     if (appCtx != null) LibraryScraper.requestFor(appCtx, rom); // fetches art in the background if none yet
                 }
                 if (token == VIEW_TOKEN.get()) ArtBus.set(s);
+            }
+        });
+    }
+
+    /** Swipe on the top screen: switches the game on show to its next (1) or previous (-1) fan art. */
+    static void swipeFan(final int delta) {
+        final ArtBus.State cur = ArtBus.get();
+        if (!cur.game || cur.gameId == 0 || cur.fanCount < 2 || appCtx == null) return;
+        IO.execute(new Runnable() {
+            @Override
+            public void run() {
+                com.gin649.gltdslauncher.database.GameEntity g =
+                        com.gin649.gltdslauncher.database.GameRepository.get(appCtx).dao().getById(cur.gameId);
+                if (g == null) return;
+                String path = FanArt.step(appCtx, g, delta);
+                if (path != null && ArtBus.get().gameId == cur.gameId) LibraryScraper.refreshTopScreen(appCtx, g, path);
             }
         });
     }

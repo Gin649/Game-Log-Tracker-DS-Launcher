@@ -176,7 +176,8 @@ onDomReady(() => {
       + (!s.steamgriddb && s.launchbox ? ' Online art comes from the free LaunchBox database.' : ''));
   };
 
-  b.style.display = '';
+  const field = document.getElementById('thor-art-field');
+  if(field) field.style.display = '';
   b.addEventListener('click', () => {
     const games = libraryData.map(g => ({ title: g.Title, console: g.ConsoleName }));
     try{ thorBridge.scrapeAll(JSON.stringify(games)); }catch(e){ return; }

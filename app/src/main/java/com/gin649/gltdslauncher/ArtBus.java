@@ -16,6 +16,10 @@ final class ArtBus {
         String console = "";
         String localPath;
         String remoteUrl;
+        /** Library id of the game, and which of its fan arts is showing (fanPos of fanCount); 0 when not applicable. */
+        int gameId;
+        int fanPos;
+        int fanCount;
 
         static State logo() {
             return new State();

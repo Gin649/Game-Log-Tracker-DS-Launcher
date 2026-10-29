@@ -3,7 +3,7 @@
 
 LaunchBox publishes one big Metadata.zip (games, alternate names, image file names). This keeps only the
 consoles named in app/src/main/assets/launchbox.json and, per game, the file names of four pictures:
-fan art, box front, a screenshot and the clear logo. One JSON file per console is written to
+up to six fan arts (joined with "|"), box front, a screenshot and the clear logo. One JSON file per console is written to
 <out>/launchbox/, plus index.json. The app downloads only the consoles it needs; the pictures themselves
 come from images.launchbox-app.com when a game is scraped.
 
@@ -25,6 +25,7 @@ WANT = {
     'logo': ['Clear Logo'],
 }
 FIELDS = ['fan', 'box', 'shot', 'logo']
+MAX_FAN = 6
 REGION_RANK = {'': 0, 'world': 0, 'north america': 1, 'united states': 1, 'canada': 2, 'europe': 3, 'united kingdom': 3,
                'australia': 4, 'japan': 5}
 
@@ -70,6 +71,7 @@ def build(zf, platforms):
 
     alts = {}   # DatabaseID -> [alternate names]
     best = {}   # (DatabaseID, field) -> (rank, file name)
+    fans = {}   # DatabaseID -> [(rank, file name)] every fan art, for choosing between them
     type_to_field = {t: (f, i) for f, ts in WANT.items() for i, t in enumerate(ts)}
     for el in stream(zf, member, {'GameAlternateName', 'GameImage'}):
         gid = text(el, 'DatabaseID')
@@ -85,6 +87,8 @@ def build(zf, platforms):
         if not hit or not fn:
             continue
         rank = (hit[1], region_rank(text(el, 'Region')))
+        if hit[0] == 'fan':
+            fans.setdefault(gid, []).append((rank, fn))
         k = (gid, hit[0])
         if k not in best or rank < best[k][0]:
             best[k] = (rank, fn)
@@ -92,6 +96,12 @@ def build(zf, platforms):
     out = {key: [] for key in wanted}
     for gid, (name, key) in games.items():
         pics = [best.get((gid, f), (None, ''))[1] for f in FIELDS]
+        # several fan arts are joined with "|" in the fan column, best first; the app lets you swipe between them
+        files = []
+        for _, fn in sorted(fans.get(gid, [])):
+            if fn not in files:
+                files.append(fn)
+        pics[0] = '|'.join(files[:MAX_FAN])
         if not any(pics):
             continue
         names = [name]

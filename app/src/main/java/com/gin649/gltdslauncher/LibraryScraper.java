@@ -55,7 +55,9 @@ final class LibraryScraper {
     static void requestFor(final Context ctx, RomIndex.Rom rom) {
         final GameEntity g = LibrarySync.find(ctx, rom);
         viewingId = g == null ? 0 : g.id;
-        if (g == null || g.screenscraperId < 0 || NO_ART.contains(g.id)) return;
+        if (g == null) return;
+        topUp(ctx, g);
+        if (g.screenscraperId < 0 || NO_ART.contains(g.id)) return;
         boolean hasPicture = g.localMiximagePath != null && new File(g.localMiximagePath).isFile();
         // a miximage built from your frontend's pictures still gets one look for online fan art per session
         boolean builtOnly = hasPicture && g.localMiximagePath.endsWith(LibrarySync.BUILT_SUFFIX);
@@ -70,6 +72,28 @@ final class LibraryScraper {
                     runBatch(ctx, Collections.singletonList(g));
                 } finally {
                     QUEUED.remove(g.id);
+                }
+                topUp(ctx, GameRepository.get(ctx).dao().getById(g.id));
+            }
+        });
+    }
+
+    private static final Set<Integer> TOPPING = Collections.synchronizedSet(new HashSet<Integer>());
+    private static final ExecutorService MORE = Executors.newSingleThreadExecutor();
+
+    /** For a game open on the top screen that has a fan art: looks online for its other fan arts so they can be swiped through. */
+    private static void topUp(final Context ctx, final GameEntity g) {
+        if (g == null || g.localMiximagePath == null || !g.localMiximagePath.contains("/fanart/")) return;
+        if (!TOPPING.add(g.id)) return;
+        MORE.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    boolean sgdb = SteamGridDbClient.enabled(ctx) && System.currentTimeMillis() >= sgdbOffUntil;
+                    FanArt.fillMore(ctx, g, sgdb);
+                    if (g.id == viewingId) refreshTopScreen(ctx, g, g.localMiximagePath);
+                } finally {
+                    TOPPING.remove(g.id);
                 }
             }
         });
@@ -193,19 +217,17 @@ final class LibraryScraper {
         // 2. fan art online: SteamGridDB (with a key), then LaunchBox
         if (SteamGridDbClient.enabled(ctx) && System.currentTimeMillis() >= sgdbOffUntil) {
             try {
-                byte[] hero = SteamGridDbClient.heroFor(ctx, g.title);
+                List<String> heroes = SteamGridDbClient.heroUrls(ctx, g.title, 1);
                 pause(API_PAUSE_MS);
-                Bitmap b = hero == null ? null : MiximageCompositor.decode(hero, 1920);
-                if (b != null) {
-                    try {
-                        File out = MiximageCompositor.saveJpeg(b, target);
-                        if (out != null) {
-                            dao.setMiximagePath(g.id, out.getPath());
-                            if (g.id == viewingId) refreshTopScreen(out.getPath());
-                            return true;
+                if (!heroes.isEmpty()) {
+                    byte[] hero = SteamGridDbClient.download(heroes.get(0));
+                    Bitmap b = hero == null ? null : MiximageCompositor.decode(hero, 1920);
+                    if (b != null) {
+                        try {
+                            if (keepFan(ctx, g, heroes.get(0), b)) return true;
+                        } finally {
+                            b.recycle();
                         }
-                    } finally {
-                        b.recycle();
                     }
                 }
             } catch (SteamGridDbClient.AuthException e) {
@@ -223,12 +245,8 @@ final class LibraryScraper {
                 LaunchBoxArt.Art art = LaunchBoxArt.fetch(ctx, g.systemId, g.title, true);
                 if (art != null) {
                     try {
-                        File out = art.fan == null ? null : MiximageCompositor.saveJpeg(art.fan, target);
-                        if (out != null) {
-                            dao.setMiximagePath(g.id, out.getPath());
-                            if (g.id == viewingId) refreshTopScreen(out.getPath());
-                            return true;
-                        }
+                        List<String> files = LaunchBoxArt.fanFiles(ctx, g.systemId, g.title);
+                        if (art.fan != null && !files.isEmpty() && keepFan(ctx, g, files.get(0), art.fan)) return true;
                     } finally {
                         art.recycle();
                     }
@@ -244,7 +262,7 @@ final class LibraryScraper {
                     && new File(g.localMiximagePath).isFile()) return true; // already built; nothing better was found
             String built = LibrarySync.buildMiximage(ctx, g, f);
             if (built != null) {
-                if (g.id == viewingId) refreshTopScreen(built);
+                if (g.id == viewingId) refreshTopScreen(ctx, g, built);
                 return true;
             }
         }
@@ -258,7 +276,7 @@ final class LibraryScraper {
                         File out = MiximageCompositor.createMiximage(art.screen, art.box, art.logo, target);
                         if (out != null) {
                             dao.setMiximagePath(g.id, out.getPath());
-                            if (g.id == viewingId) refreshTopScreen(out.getPath());
+                            if (g.id == viewingId) refreshTopScreen(ctx, g, out.getPath());
                             return true;
                         }
                     } finally {
@@ -275,15 +293,36 @@ final class LibraryScraper {
         return frontendFallback != null; // the frontend's box art or marquee still shows (LibrarySync.artFor)
     }
 
-    private static void refreshTopScreen(String path) {
+    /**
+     * Saves a fan art picture into the game's set and makes it the one in use, unless the game already has a fan art
+     * chosen (that choice stays). Returns whether the game now has fan art.
+     */
+    private static boolean keepFan(Context ctx, GameEntity g, String source, Bitmap b) {
+        File added = FanArt.has(ctx, g, source) ? null : FanArt.add(ctx, g, source, b);
+        List<File> all = FanArt.files(ctx, g);
+        if (all.isEmpty()) return false;
+        boolean chosen = g.localMiximagePath != null && g.localMiximagePath.contains("/fanart/")
+                && new File(g.localMiximagePath).isFile();
+        if (!chosen) {
+            String path = (added != null ? added : all.get(0)).getPath();
+            GameRepository.get(ctx).dao().setMiximagePath(g.id, path);
+            g.localMiximagePath = path;
+            if (g.id == viewingId) refreshTopScreen(ctx, g, path);
+        }
+        return true;
+    }
+
+    static void refreshTopScreen(Context ctx, GameEntity g, String path) {
         ArtBus.State cur = ArtBus.get();
-        if (!cur.game) return;
+        if (!cur.game || cur.gameId != 0 && cur.gameId != g.id) return;
         ArtBus.State n = new ArtBus.State();
         n.game = true;
         n.title = cur.title;
         n.console = cur.console;
         n.remoteUrl = cur.remoteUrl;
         n.localPath = path;
+        n.gameId = g.id;
+        FanArt.decorate(ctx, g, n);
         ArtBus.set(n);
     }
 }

@@ -234,6 +234,36 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         return super.dispatchKeyEvent(event);
     }
 
+    // Swipe left or right to move between a game's fan arts. The touch still goes on to the panel underneath.
+    private float downX, downY;
+    private boolean tracking;
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        switch (ev.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                downX = ev.getX();
+                downY = ev.getY();
+                tracking = artShown;
+                break;
+            case MotionEvent.ACTION_UP:
+                if (tracking) {
+                    float dx = ev.getX() - downX;
+                    float dy = ev.getY() - downY;
+                    float min = 70 * getResources().getDisplayMetrics().density;
+                    if (Math.abs(dx) > min && Math.abs(dx) > 2 * Math.abs(dy)) Shared.swipeFan(dx < 0 ? 1 : -1);
+                }
+                tracking = false;
+                break;
+            case MotionEvent.ACTION_CANCEL:
+                tracking = false;
+                break;
+            default:
+                break;
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
     @Override
     public boolean dispatchGenericMotionEvent(MotionEvent event) {
         if (PadRouter.motion(event)) return true;
@@ -260,8 +290,10 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         }
 
         titleView.setText(s.title);
-        consoleView.setText(s.console);
-        consoleView.setVisibility(s.console.isEmpty() ? View.GONE : View.VISIBLE);
+        String more = s.fanCount > 1 ? "\u2039  " + s.fanPos + " / " + s.fanCount + "  \u203A" : "";
+        String line = s.console.isEmpty() ? more : (more.isEmpty() ? s.console : s.console + "     " + more);
+        consoleView.setText(line);
+        consoleView.setVisibility(line.isEmpty() ? View.GONE : View.VISIBLE);
         caption.setVisibility(View.VISIBLE);
 
         final int w = getResources().getDisplayMetrics().widthPixels;

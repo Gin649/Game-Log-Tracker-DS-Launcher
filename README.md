@@ -44,7 +44,9 @@ The picture it shows is the best one available, in this order:
 4. **A miximage built from LaunchBox's** box art, screenshot and logo.
 5. **Your marquee, then box art**, if nothing better turns up.
 
-Art you already have is never downloaded again. Opening a game that has no art fetches it in the background, and Fetch game art in the menu does the games in your Library and Backlog (not every ROM in your folders).
+Art you already have is never downloaded again. Opening a game that has no art fetches it in the background, and Fetch game art (in the menu under Data) does the games in your Library and Backlog (not every ROM in your folders).
+
+When a game has several fan arts online (up to six), swipe left or right on the top screen to pick one; the choice is remembered. The extra ones are downloaded the first time you open the game. Art from your frontend (ES-DE or Daijisho) is used as it is and has no alternatives to swipe between.
 
 ### Playing your games
 

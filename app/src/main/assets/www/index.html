@@ -23,7 +23,6 @@
           <button class="dropdown-item dropdown-subitem" id="btn-hardcore-toggle">Switch to Hardcore Mode</button>
         </div>
         <button class="dropdown-item" id="btn-thor-settings" style="display:none;">Launcher settings</button>
-        <button class="dropdown-item" id="btn-thor-art" style="display:none;"><span id="thor-art-label">Fetch game art</span><span class="display-note" id="thor-art-note"></span></button>
         <button class="dropdown-item" id="btn-rawg-settings">RAWG Ratings</button>
         <button class="dropdown-item dropdown-gold" id="btn-social-open">Social</button>
         <button class="dropdown-item" id="btn-data-settings-open">Data</button>
@@ -274,6 +273,12 @@
         <input type="file" id="data-import-file" accept="application/json" style="display:none;">
         <button class="btn-line gold" id="data-import-btn" style="width:100%;">Choose backup file…</button>
         <div class="hint">Loads a backup onto this device. Anything already here with the same key is replaced.</div>
+      </div>
+
+      <div class="field" id="thor-art-field" style="display:none;">
+        <label>Game art</label>
+        <button class="btn-line gold" id="btn-thor-art" style="width:100%;"><span id="thor-art-label">Fetch game art</span></button>
+        <div class="hint" id="thor-art-note">Finds fan art for the games in your Library and Backlog, for the top screen. Games with several fan arts can be swiped left and right on the top screen.</div>
       </div>
 
       <div id="data-status"></div>

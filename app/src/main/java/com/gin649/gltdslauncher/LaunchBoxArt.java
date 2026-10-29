@@ -82,7 +82,7 @@ final class LaunchBoxArt {
 
         Art a = new Art();
         if (fanOnly) {
-            if (!row[1].isEmpty()) a.fan = image(row[1], 1920);
+            if (!row[1].isEmpty()) a.fan = image(row[1].split("\\|")[0], 1920);
         } else {
             if (!row[2].isEmpty()) a.box = image(row[2], 900);
             if (!row[3].isEmpty()) a.screen = image(row[3], 1600);
@@ -90,6 +90,24 @@ final class LaunchBoxArt {
         }
         if (a.fan == null && a.box == null && a.screen == null && a.logo == null) return null;
         return a;
+    }
+
+    /** Every fan art file LaunchBox has for the game, best first (empty when none or the game isn't listed). */
+    static List<String> fanFiles(Context ctx, String folder, String title) throws IOException {
+        List<String> out = new ArrayList<String>();
+        String platform = platformFor(ctx, folder);
+        if (platform == null) return out;
+        Index idx = index(ctx, Matcher.compact(platform));
+        if (idx == null) return out;
+        String[] row = match(idx, title);
+        if (row == null || row[1].isEmpty()) return out;
+        for (String f : row[1].split("\\|")) if (!f.isEmpty()) out.add(f);
+        return out;
+    }
+
+    /** One fan art picture from LaunchBox's image server, or null. */
+    static Bitmap fanImage(String file) {
+        return image(file, 1920);
     }
 
     /** Address of the game's box art (else a screenshot) on LaunchBox's image server, or null. */

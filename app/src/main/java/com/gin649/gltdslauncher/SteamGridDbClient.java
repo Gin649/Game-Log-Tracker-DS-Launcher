@@ -7,6 +7,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.HttpUrl;
@@ -63,6 +65,27 @@ final class SteamGridDbClient {
         if (id <= 0) return null;
         String url = firstImageUrl(key, "heroes", id);
         return url == null ? null : download(url);
+    }
+
+    /** Addresses of up to limit hero images for a game, best first (empty when none). */
+    static List<String> heroUrls(Context c, String title, int limit) throws IOException {
+        List<String> out = new ArrayList<String>();
+        String key = key(c);
+        if (key.isEmpty()) return out;
+        int id = search(key, title);
+        if (id <= 0) return out;
+        HttpUrl url = HttpUrl.parse(BASE + "/heroes/game/" + id).newBuilder()
+                .addQueryParameter("types", "static")
+                .addQueryParameter("nsfw", "false")
+                .addQueryParameter("humor", "false").build();
+        JSONObject r = call(key, url);
+        JSONArray data = r == null ? null : r.optJSONArray("data");
+        if (data == null) return out;
+        for (int i = 0; i < data.length() && out.size() < limit; i++) {
+            JSONObject o = data.optJSONObject(i);
+            if (o != null && !o.optString("url").isEmpty()) out.add(o.optString("url"));
+        }
+        return out;
     }
 
     private static int search(String key, String title) throws IOException {
@@ -137,7 +160,7 @@ final class SteamGridDbClient {
         }
     }
 
-    private static byte[] download(String url) throws IOException {
+    static byte[] download(String url) throws IOException {
         HttpUrl parsed = HttpUrl.parse(url);
         if (parsed == null) return null;
         Request req = new Request.Builder().url(parsed).header("User-Agent", "GLTThor/1").build();
