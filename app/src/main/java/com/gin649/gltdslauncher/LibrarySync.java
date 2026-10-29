@@ -89,7 +89,7 @@ final class LibrarySync {
         Bitmap logo = MiximageCompositor.decodeFile(f.logo, 900);
         try {
             // ".built.jpg" marks a miximage made from the frontend's pictures, so online fan art can still replace it
-            File target = new File(ctx.getFilesDir(), "miximages/" + g.systemId + "/" + g.id + BUILT_SUFFIX);
+            File target = new File(DataStore.root(ctx), "miximages/" + g.systemId + "/" + g.id + BUILT_SUFFIX);
             File out = MiximageCompositor.createMiximage(screen, box, logo, target);
             if (out == null) return null;
             GameRepository.get(ctx).dao().setMiximagePath(g.id, out.getPath());

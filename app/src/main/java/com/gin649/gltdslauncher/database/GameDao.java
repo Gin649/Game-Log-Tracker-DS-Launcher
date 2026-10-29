@@ -87,6 +87,10 @@ public interface GameDao {
     @Query("SELECT * FROM game_library WHERE local_miximage_path LIKE '%.built.jpg' ORDER BY id LIMIT :limit")
     List<GameEntity> getBuiltMiximages(int limit);
 
+    /** Points saved art at a new folder after the app's data folder moved. */
+    @Query("UPDATE game_library SET local_miximage_path = :newRoot || substr(local_miximage_path, length(:oldRoot) + 1) WHERE local_miximage_path LIKE :oldRoot || '/%'")
+    void rebasePaths(String oldRoot, String newRoot);
+
     @Query("UPDATE game_library SET local_miximage_path = :path WHERE id = :id")
     void setMiximagePath(int id, String path);
 }

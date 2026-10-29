@@ -100,6 +100,8 @@ Touch works as normal and hides the highlight. The Android back button and edge 
 
 Everything is stored on your device: your RA login, keys, added games, playtime, custom achievement orders, guides, manuals and saved videos. Nothing syncs between devices.
 
+The app keeps its own files (that saved data, plus fetched game art) in a folder you choose in the setup wizard, under Your folders. The default is a GameLogTracker folder in shared storage, so it survives uninstalling the app and switching between debug and release builds. Changing the folder moves what is already saved. Without file access the app falls back to its private folder.
+
 Menu, then Data, then Export saves a backup file, and Import loads it again. The backup includes your API keys, so treat the file like a password.
 
 ## Privacy

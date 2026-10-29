@@ -132,6 +132,48 @@ final class ThorBridge {
         return LibraryScraper.status(act);
     }
 
+    // The tracker's saved data, kept as files in the app's data folder (see DataStore). window.storage uses these.
+
+    /** The keys that start with prefix, as a JSON array. */
+    @JavascriptInterface
+    public String dataList(String prefix) {
+        return new org.json.JSONArray(DataStore.list(act, prefix == null ? "" : prefix)).toString();
+    }
+
+    /** Number of pieces the value is read in, or -1 when there is none. */
+    @JavascriptInterface
+    public int dataChunks(String key) {
+        return DataStore.chunks(act, key);
+    }
+
+    @JavascriptInterface
+    public String dataChunk(String key, int index) {
+        return DataStore.chunk(act, key, index);
+    }
+
+    @JavascriptInterface
+    public boolean dataPut(String key, int index, String piece, boolean last) {
+        return DataStore.put(act, key, index, piece, last);
+    }
+
+    @JavascriptInterface
+    public boolean dataDelete(String key) {
+        return DataStore.delete(act, key);
+    }
+
+    /** Where the app's files are kept, for the settings screen. */
+    @JavascriptInterface
+    public String dataLocation() {
+        JSONObject o = new JSONObject();
+        try {
+            java.io.File root = DataStore.root(act);
+            o.put("path", root.getPath());
+            o.put("private", root.equals(act.getFilesDir()));
+        } catch (Exception ignored) {
+        }
+        return o.toString();
+    }
+
     // ROM hacks: use the ROM the launcher already found, and save the patched one beside it
     /**
      * Looks for the ROM of a game the same way Play does. Returns {found, name, folder, path, size, token}. The page

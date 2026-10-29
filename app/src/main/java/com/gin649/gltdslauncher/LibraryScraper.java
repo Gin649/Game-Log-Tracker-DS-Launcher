@@ -174,7 +174,7 @@ final class LibraryScraper {
         }
 
         boolean offline = false;
-        File target = new File(ctx.getFilesDir(), "miximages/" + g.systemId + "/" + g.id + ".jpg");
+        File target = new File(DataStore.root(ctx), "miximages/" + g.systemId + "/" + g.id + ".jpg");
 
         // 2. fan art online: SteamGridDB (with a key), then LaunchBox
         if (SteamGridDbClient.enabled(ctx) && System.currentTimeMillis() >= sgdbOffUntil) {

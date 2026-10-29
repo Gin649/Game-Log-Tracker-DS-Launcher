@@ -112,7 +112,7 @@ final class LaunchBoxArt {
         Index cached = INDEXES.get(key);
         if (cached != null) return cached;
 
-        File f = new File(ctx.getFilesDir(), "launchbox/" + key + ".json");
+        File f = new File(DataStore.root(ctx), "launchbox/" + key + ".json");
         boolean fresh = f.isFile() && System.currentTimeMillis() - f.lastModified() < INDEX_MAX_AGE_MS;
         byte[] data = fresh ? readFile(f) : null;
         if (data == null) {

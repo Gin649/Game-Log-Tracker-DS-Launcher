@@ -49,6 +49,7 @@ public class SetupActivity extends Activity {
     private static final int REQ_ROMS = 10;
     private static final int REQ_ES = 11;
     private static final int REQ_DJ = 12;
+    private static final int REQ_DATA = 13;
 
     private static final int BG = Color.rgb(21, 18, 31);
     private static final int GOLD = Color.rgb(228, 169, 63);
@@ -73,6 +74,8 @@ public class SetupActivity extends Activity {
     private String raUser, raKey, rawgKey, romsRoot, romsTree, esRoot, raPackage, siteUrl;
     /** "esde", "daijisho" or "none" (any other frontend, or no frontend at all). */
     private String frontend, djRoot;
+    /** Folder chosen for the app's own files; empty means the default. */
+    private String dataRoot = "";
     private CheckBox cbLaunchBox;
     private boolean launchBoxArt;
     private String origUser, origKey, origRawg;
@@ -110,6 +113,7 @@ public class SetupActivity extends Activity {
         romsTree = get("romsTree", "");
         esRoot = get("esRoot", "");
         djRoot = get("djRoot", "");
+        dataRoot = get("dataRoot", "");
         frontend = get("frontend", "");
         if (!frontend.equals("esde") && !frontend.equals("daijisho") && !frontend.equals("none")) {
             // first run, or an install from before this choice existed: ES-DE if it is there, otherwise none
@@ -573,6 +577,30 @@ public class SetupActivity extends Activity {
         cbLaunchBox.setChecked(launchBoxArt);
         content.addView(cbLaunchBox);
 
+        text("App data folder", 17, TEXT);
+        text("Where the app keeps its own files: your tracker data (login, backlog, notes, guides) and the art it fetches. "
+                + "A folder in shared storage survives uninstalling the app and switching between builds. It needs file access.", 13, MUTED);
+        String shownData = effectiveDataRoot();
+        boolean privateFallback = shownData.isEmpty();
+        text(privateFallback ? "App's private folder (allow file access to use a shared folder)" : shownData, 14,
+                privateFallback ? GOLD : TEAL);
+        action("Choose data folder", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pickFolder(REQ_DATA);
+            }
+        });
+        if (!dataRoot.isEmpty()) {
+            action("Use the default folder (" + DataStore.DEFAULT_FOLDER + ")", new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    collect();
+                    dataRoot = "";
+                    render();
+                }
+            });
+        }
+
         String summary = folderSummary();
         if (!summary.isEmpty()) text(summary, 13, MUTED);
     }
@@ -617,7 +645,7 @@ public class SetupActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
-        if (requestCode != REQ_ROMS && requestCode != REQ_ES && requestCode != REQ_DJ) return;
+        if (requestCode != REQ_ROMS && requestCode != REQ_ES && requestCode != REQ_DJ && requestCode != REQ_DATA) return;
 
         Uri u = data.getData();
         try {
@@ -637,6 +665,8 @@ public class SetupActivity extends Activity {
             if (frontend.equals("daijisho") && djRoot.isEmpty()) djRoot = guessDjRoot();
         } else if (requestCode == REQ_DJ) {
             djRoot = path;
+        } else if (requestCode == REQ_DATA) {
+            dataRoot = path.endsWith("/" + DataStore.DEFAULT_FOLDER) ? path : path + "/" + DataStore.DEFAULT_FOLDER;
         } else {
             esRoot = path;
         }
@@ -644,7 +674,16 @@ public class SetupActivity extends Activity {
     }
 
     /** Applies the folder choices so the next steps can look at your real systems. */
+    /** The chosen data folder, else the default when file access allows it, else empty (the app's private folder). */
+    private String effectiveDataRoot() {
+        if (!dataRoot.isEmpty()) return dataRoot;
+        File def = DataStore.defaultRoot();
+        return def == null ? "" : def.getPath();
+    }
+
     private void applyFolders() {
+        File dataBefore = DataStore.root(this);
+        put("dataRoot", effectiveDataRoot()); // saved as a real path so it can't change if file access changes later
         put("romsRoot", romsRoot);
         put("romsTree", romsTree);
         put("esRoot", esRoot);
@@ -653,6 +692,7 @@ public class SetupActivity extends Activity {
         Prefs.putInt(this, "useEsdeMedia", useEsdeMedia ? 1 : 0);
         Prefs.putInt(this, "launchboxArt", launchBoxArt ? 1 : 0);
         Config.load(this);
+        DataStore.relocate(this, dataBefore, DataStore.root(this)); // moves what is already saved, in the background
         LaunchBoxArt.reset();
         EsdeImport.run(this, Config.ES_ROOT);
         Recipes.reset();
@@ -778,6 +818,7 @@ public class SetupActivity extends Activity {
         sb.append("ROMs: ").append(romsRoot.isEmpty() ? "not chosen" : romsRoot).append("\n");
         sb.append("Frontend: ").append(frontend.equals("esde") ? "ES-DE" : frontend.equals("daijisho") ? "Daijish\u014d" : "none / other").append("\n");
         if (frontend.equals("esde")) sb.append("ES-DE: ").append(esRoot.isEmpty() ? "none" : esRoot).append("\n");
+        sb.append("App data: ").append(effectiveDataRoot().isEmpty() ? "the app's private folder" : effectiveDataRoot()).append("\n");
         if (frontend.equals("daijisho")) sb.append("Daijish\u014d media: ").append(djRoot.isEmpty() ? "none" : djRoot).append("\n");
         sb.append("Existing art: ").append(useEsdeMedia ? "used as it is" : "not used").append("\n");
         sb.append("RetroArch: ").append(raPackage.isEmpty() ? "default" : raPackage).append("\n");
@@ -845,6 +886,7 @@ public class SetupActivity extends Activity {
             put("credsRev", String.valueOf(System.currentTimeMillis()));
         }
 
+        put("dataRoot", effectiveDataRoot());
         put("romsRoot", romsRoot);
         put("romsTree", romsTree);
         put("esRoot", esRoot);

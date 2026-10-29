@@ -29,6 +29,9 @@ final class Config {
     /** Optional hand-edited overrides live here: systems.json and emulators.json. */
     static String USER_DIR = "";
 
+    /** Folder chosen for the app's own files (saved data, fetched art); empty means the default, see DataStore. */
+    static String DATA_ROOT = "";
+
     static String RA_PACKAGE = "com.retroarch.aarch64";
     static String RA_CORES_DIR = "/data/data/com.retroarch.aarch64/cores";
     static String RA_CONFIG = "/storage/emulated/0/Android/data/com.retroarch.aarch64/files/retroarch.cfg";
@@ -73,6 +76,7 @@ final class Config {
         DJ_ROOT = fe.equals("daijisho") ? trim(Prefs.get(c, "djRoot", "")) : "";
         // hand-edited overrides (systems.json, emulators.json, launchbox.json) live in a gltthor folder in either frontend folder
         USER_DIR = !ES_ROOT.isEmpty() ? ES_ROOT + "/gltthor" : (DJ_ROOT.isEmpty() ? "" : DJ_ROOT + "/gltthor");
+        DATA_ROOT = trim(Prefs.get(c, "dataRoot", ""));
         USE_ESDE_MEDIA = Prefs.getInt(c, "useEsdeMedia", 1) == 1;
         LAUNCHBOX_ART = Prefs.getInt(c, "launchboxArt", 1) == 1;
 
