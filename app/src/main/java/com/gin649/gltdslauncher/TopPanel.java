@@ -23,6 +23,8 @@ final class TopPanel {
     private static String html = "";
     private static String body = "";
     private static boolean viewAlive;
+    /** The top screen's panel is in front (not covered by a running game). */
+    private static boolean viewShown;
 
     private TopPanel() {
     }
@@ -47,19 +49,29 @@ final class TopPanel {
         return body;
     }
 
+    /** True while the panel is both up and in front. When a game covers it, the tracker keeps its own header and menu. */
     static synchronized boolean viewAlive() {
-        return viewAlive;
+        return viewAlive && viewShown;
+    }
+
+    /** The panel came to the front or was covered (a game started on the top screen). */
+    static synchronized void setViewShown(boolean shown) {
+        if (viewShown == shown) return;
+        viewShown = shown;
+        MainActivity h = host;
+        if (h != null) h.runMirror("setActive(" + (viewAlive && viewShown) + ")");
     }
 
     /** The top screen's panel is up (or gone). The tracker hides its own header while it is up. */
     static synchronized void setViewAlive(boolean alive) {
         viewAlive = alive;
         if (!alive) {
+            viewShown = false;
             html = "";
             body = "";
         }
         MainActivity h = host;
-        if (h != null) h.runMirror("setActive(" + alive + ")");
+        if (h != null) h.runMirror("setActive(" + (alive && viewShown) + ")");
     }
 
     /** New markup from the tracker page. */

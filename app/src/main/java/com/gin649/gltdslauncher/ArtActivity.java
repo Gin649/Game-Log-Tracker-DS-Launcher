@@ -203,6 +203,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
         resumed = true;
+        TopPanel.setViewShown(true);
         ArtBus.attach(this);
         TopPanel.attachView(this);
         panelHtml = TopPanel.html();
@@ -213,6 +214,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     @Override
     protected void onPause() {
         resumed = false;
+        TopPanel.setViewShown(false);
         ArtBus.attach(null);
         TopPanel.attachView(null);
         super.onPause();
