@@ -740,6 +740,15 @@ function romhackIngUrl(title){
   return `https://romhack.ing/search/hack?page=0&sortField=releaseDate&sortDirection=desc&queryString=&filters=${encodeURIComponent(b64)}`;
 }
 
+// RAPatches numbers can belong to a different game (a Subset file can carry a hack's ID), so a game
+// found by number is only trusted if its title shares a word with the file name or the game viewed.
+function titleLooksRelated(foundTitle, label, gameTitle){
+  const squash = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const hay = squash(label) + squash(gameTitle);
+  const words = String(foundTitle).toLowerCase().replace(/~[^~]*~/g, ' ').split(/[^a-z0-9]+/).filter(w => w.length >= 3);
+  return words.some(w => hay.includes(w));
+}
+
 // The details panel under a patch row. The number in front of a RAPatches file name is the hack's
 // RetroAchievements game, which gives its real title and its forum thread (where the notes are).
 async function fillPatchInfo(panel, label, gameTitle){
@@ -750,14 +759,7 @@ async function fillPatchInfo(panel, label, gameTitle){
     try{ info = await getGameExtended(raId); }catch(e){ info = null; }
     if(info && !info.Title) info = null;
   }
-  // Some RAPatches numbers belong to a different game (a Subset file can carry a hack's ID), so the
-  // game found must share a word with the file name or the game being viewed. If not, ignore it.
-  if(info){
-    const squash = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    const hay = squash(label) + squash(gameTitle);
-    const words = String(info.Title).toLowerCase().replace(/~[^~]*~/g, ' ').split(/[^a-z0-9]+/).filter(w => w.length >= 3);
-    if(!words.some(w => hay.includes(w))){ info = null; raId = 0; }
-  }
+  if(info && !titleLooksRelated(info.Title, label, gameTitle)){ info = null; raId = 0; }
   const title = info ? String(info.Title).replace(/^(?:~[^~]*~\s*)+/, '').trim() : titleFromFileName(label);
   const facts = [];
   if(info){
@@ -910,14 +912,15 @@ function setupRomPatchUI(gameId, title, card, consoleName){
   }
 
   // RAPatches files start with the hack's own RA game ID.
+  let chosenLabel = ''; // the RAPatches file picked (the patch inside a zip may not carry the number)
   function patchGameIdFrom(label, verifyGameId){
     if(verifyGameId) return Number(verifyGameId);
-    const m = /^(\d{1,7})-/.exec(String(label || ''));
+    const m = /^(\d{1,7})-/.exec(String(label || '')) || /^(\d{1,7})-/.exec(chosenLabel);
     return m ? Number(m[1]) : null;
   }
 
   async function addGameToBacklog(raGameId, statusEl, btn){
-    if(!raGameId) return;
+    if(!raGameId) raGameId = gameId;
     if(libraryData.some(x => Number(x.GameID) === Number(raGameId))){
       statusEl.textContent = 'This game is already in your library or backlog.';
       if(btn) btn.disabled = true;
@@ -927,6 +930,11 @@ function setupRomPatchUI(gameId, title, card, consoleName){
     try{
       const g = await raFetch('API_GetGameExtended.php', { i: raGameId });
       if(!g || !(g.ID || g.Title)) throw new Error('not found');
+      if(Number(raGameId) !== Number(gameId) && !titleLooksRelated(g.Title, chosenLabel, title)){
+        // the number points at some other game, so the patched game is the one being viewed
+        statusEl.textContent = '';
+        return addGameToBacklog(gameId, statusEl, btn);
+      }
       await addManualGamesBulk([{ g: { ID: g.ID || raGameId, Title: g.Title, ConsoleName: g.ConsoleName, ImageIcon: g.ImageIcon, NumAchievements: g.NumAchievements }, consoleId: g.ConsoleID, consoleName: g.ConsoleName }]);
       statusEl.textContent = 'Added to your Backlog.';
       if(btn) btn.disabled = true;
@@ -941,7 +949,7 @@ function setupRomPatchUI(gameId, title, card, consoleName){
       ${lines.map(n => `<div class="hash-status ${n.cls || 'ok'}" style="margin-top:8px;">${esc(n.text)}</div>`).join('')}
       <div class="hash-status ok" style="margin-top:8px;">Patched and saved as <strong>${esc(savedName)}</strong> in your ${esc(folder)} folder.</div>
       <button class="guide-btn guide-btn-primary" id="patch-play-btn" style="margin-top:10px;width:100%;">▶ Play patched game</button>
-      ${hackId ? '<button class="guide-btn guide-btn-outline" id="patch-backlog-btn" style="margin-top:8px;width:100%;">＋ Add to my backlog</button>' : ''}
+      <button class="guide-btn guide-btn-outline" id="patch-backlog-btn" style="margin-top:8px;width:100%;">＋ Add to my backlog</button>
       <div id="patch-after-msg" style="font-size:0.7188rem;color:var(--muted);margin-top:6px;min-height:1em;"></div>
       <button class="guide-btn guide-btn-ghost" id="patch-back-btn" style="width:100%;margin-top:8px;">‹ Back to results</button>
     `;
@@ -1254,6 +1262,7 @@ function setupRomPatchUI(gameId, title, card, consoleName){
   }
 
   async function selectAndApply(entry, verifyGameId){
+    chosenLabel = entry.label || '';
     patchWrap.innerHTML = loadingHtml('Downloading patch…');
     try{
       const kind = patchKindFromName(entry.url) || 'archive';
