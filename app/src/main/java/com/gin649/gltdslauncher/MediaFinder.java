@@ -224,8 +224,8 @@ final class MediaFinder {
     }
 
     /**
-     * fanart tag is fan art, image is taken as a finished picture (miximage), marquee is the marquee and
-     * thumbnail is box art.
+     * fanart tag is fan art, miximage is a finished picture, image is used as the screenshot, marquee is the marquee
+     * and thumbnail is box art.
      */
     private static Map<String, Map<Integer, String>> readGamelist(File xml) {
         Map<String, Map<Integer, String>> out = new HashMap<String, Map<Integer, String>>();
@@ -233,8 +233,9 @@ final class MediaFinder {
             org.w3c.dom.Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xml);
             NodeList games = doc.getElementsByTagName("game");
             File base = xml.getParentFile();
-            String[] tags = {"fanart", "image", "marquee", "thumbnail"};
-            int[] kinds = {FANART, MIX, MARQUEE, BOX};
+            // <image> is often box art or a screenshot, so it is only used to build a miximage, never as a finished one
+            String[] tags = {"fanart", "miximage", "image", "marquee", "thumbnail"};
+            int[] kinds = {FANART, MIX, SCREEN, MARQUEE, BOX};
             for (int i = 0; i < games.getLength(); i++) {
                 Node n = games.item(i);
                 if (n.getNodeType() != Node.ELEMENT_NODE) continue;
