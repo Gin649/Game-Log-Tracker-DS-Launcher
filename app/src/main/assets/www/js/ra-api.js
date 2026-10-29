@@ -8,46 +8,63 @@ function fetchWithTimeout(url, ms){
 
 // The app calls RetroAchievements itself (no CORS), at /ra/<endpoint>. If that fails for any reason
 // other than a rejected login, the request goes through the Cloudflare Worker instead.
-// RetroAchievements rate-limits per key (HTTP 429). Requests go through a small gate so a bulk load
-// can't trip the limit, and a 429 backs off and retries instead of failing or switching route.
-const RA_MAX_PARALLEL = 3;
-const RA_MIN_GAP_MS = 120;
-let raActive = 0;
-let raLastStart = 0;
+// RetroAchievements rate-limits per key (HTTP 429). Background bulk loads (playtimes for the whole library)
+// go through a small gate and step aside whenever something the person is waiting on is running; a 429 on
+// them backs off and retries instead of trying every other route. Requests the person is waiting on
+// (opening a game, the dashboard) always go straight out.
+const RA_FG_PARALLEL = 4;
+const RA_BG_PARALLEL = 3;
+const RA_BG_GAP_MS = 120;
+let raFgActive = 0;
+let raBgActive = 0;
+let raLastBgStart = 0;
 let raCooldownUntil = 0;
-const raWaiting = [];
+let raPumpTimer = null;
+const raFgQueue = [];
+const raBgQueue = [];
 
-function raPump(){
-  while(raActive < RA_MAX_PARALLEL && raWaiting.length){
-    const wait = Math.max(raCooldownUntil, raLastStart + RA_MIN_GAP_MS) - Date.now();
-    if(wait > 0){ setTimeout(raPump, wait); return; }
-    const job = raWaiting.shift();
-    raActive++;
-    raLastStart = Date.now();
-    job.run().then(job.resolve, job.reject).finally(() => { raActive--; raPump(); });
-  }
-}
-
-function raGate(run){
-  return new Promise((resolve, reject) => {
-    raWaiting.push({ run, resolve, reject });
+function raStart(job, bg){
+  if(bg){ raBgActive++; raLastBgStart = Date.now(); } else raFgActive++;
+  job.run().then(job.resolve, job.reject).finally(() => {
+    if(bg) raBgActive--; else raFgActive--;
     raPump();
   });
 }
 
-async function raFetch(endpoint, params){
+function raPump(){
+  while(raFgQueue.length && raFgActive < RA_FG_PARALLEL) raStart(raFgQueue.shift(), false);
+  while(!raFgActive && !raFgQueue.length && raBgQueue.length && raBgActive < RA_BG_PARALLEL){
+    const wait = Math.max(raCooldownUntil, raLastBgStart + RA_BG_GAP_MS) - Date.now();
+    if(wait > 0){
+      clearTimeout(raPumpTimer);
+      raPumpTimer = setTimeout(raPump, wait);
+      return;
+    }
+    raStart(raBgQueue.shift(), true);
+  }
+}
+
+function raGate(run, bg){
+  return new Promise((resolve, reject) => {
+    (bg ? raBgQueue : raFgQueue).push({ run, resolve, reject });
+    raPump();
+  });
+}
+
+async function raFetch(endpoint, params, opts){
+  const bg = !!(opts && opts.background);
   for(let tries = 0; ; tries++){
-    try{ return await raGate(() => raFetchOnce(endpoint, params)); }
+    try{ return await raGate(() => raFetchOnce(endpoint, params, bg), bg); }
     catch(e){
-      if(!e.rateLimited || tries >= 3) throw e;
+      if(!e.rateLimited || tries >= (bg ? 3 : 1)) throw e;
       const backoff = 2000 * Math.pow(2, tries);
-      raCooldownUntil = Math.max(raCooldownUntil, Date.now() + backoff);
+      if(bg) raCooldownUntil = Math.max(raCooldownUntil, Date.now() + backoff);
       await new Promise(r => setTimeout(r, backoff));
     }
   }
 }
 
-async function raFetchOnce(endpoint, params){
+async function raFetchOnce(endpoint, params, background){
   const qs = new URLSearchParams({ u: creds.username, ...params, y: creds.apiKey }).toString(); // params.u lets Social ask about another user
 
   async function attempt(label, url, ms){
@@ -81,7 +98,7 @@ async function raFetchOnce(endpoint, params){
   if(thorBridge){
     try{ return await attempt('app', `/ra/${endpoint}?${qs}`, 20000); }
     catch(e){
-      if(e.authFailure) throw e;
+      if(e.authFailure || (background && e.rateLimited)) throw e;
       nativeErr = e;
     }
   }
@@ -89,7 +106,7 @@ async function raFetchOnce(endpoint, params){
   try{
     return await attempt('worker', `https://ra-proxy.gin649.workers.dev/${endpoint}?${qs}`, 12000);
   }catch(e){
-    if(e.authFailure) throw e;
+    if(e.authFailure || background) throw e;
     workerErr = e;
   }
 
@@ -293,7 +310,7 @@ async function saveSnap(gameId, existing, slots, hours){
   catch(e){}
 }
 
-async function getEstimatedHours(gameId, force){
+async function getEstimatedHours(gameId, force, background){
   if(!force && estHoursCache[gameId] !== undefined) return estHoursCache[gameId];
 
   const localGame = libraryIndex[gameId];
@@ -328,7 +345,7 @@ async function getEstimatedHours(gameId, force){
   let hours = null;
   let real = false;
   try{
-    const data = await raFetch('API_GetGameInfoAndUserProgress.php', { g: gameId, a: 1 });
+    const data = await raFetch('API_GetGameInfoAndUserProgress.php', { g: gameId, a: 1 }, { background: !!background });
 
     if(data && data.Achievements){
       achievementsListCache[gameId] = Object.values(data.Achievements)
@@ -380,7 +397,7 @@ async function loadEstimatedHoursFor(games, onProgress, forceIds){
     while(idx < targets.length){
       const g = targets[idx++];
       const force = !!(forceIds && forceIds.has(g.GameID));
-      await getEstimatedHours(g.GameID, force);
+      await getEstimatedHours(g.GameID, force, true);
       doneSinceRender++;
       if(onProgress && doneSinceRender % 4 === 0) onProgress();
     }
