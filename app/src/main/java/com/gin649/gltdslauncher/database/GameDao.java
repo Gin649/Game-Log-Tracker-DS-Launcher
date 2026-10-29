@@ -83,6 +83,10 @@ public interface GameDao {
     @Query("SELECT * FROM game_library WHERE screenscraper_id > 0 AND local_miximage_path IS NULL ORDER BY id LIMIT :limit")
     List<GameEntity> getNeedingMiximage(int limit);
 
+    /** Games showing a miximage built from the frontend's own pictures, which fan art found online would replace. */
+    @Query("SELECT * FROM game_library WHERE local_miximage_path LIKE '%.built.jpg' ORDER BY id LIMIT :limit")
+    List<GameEntity> getBuiltMiximages(int limit);
+
     @Query("UPDATE game_library SET local_miximage_path = :path WHERE id = :id")
     void setMiximagePath(int id, String path);
 }

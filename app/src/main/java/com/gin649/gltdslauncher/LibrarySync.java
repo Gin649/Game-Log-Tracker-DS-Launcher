@@ -80,13 +80,16 @@ final class LibrarySync {
      * Builds a miximage for a game from the screenshot, box art and marquee your frontend has for it, when there is no fan
      * art or finished miximage. Returns the new file's path, or null.
      */
+    static final String BUILT_SUFFIX = ".built.jpg";
+
     static String buildMiximage(Context ctx, GameEntity g, MediaFinder.Found f) {
         if (g == null || f == null || !f.canBuild()) return null;
         Bitmap screen = MiximageCompositor.decodeFile(f.screen, 1600);
         Bitmap box = MiximageCompositor.decodeFile(f.box, 900);
         Bitmap logo = MiximageCompositor.decodeFile(f.logo, 900);
         try {
-            File target = new File(ctx.getFilesDir(), "miximages/" + g.systemId + "/" + g.id + ".jpg");
+            // ".built.jpg" marks a miximage made from the frontend's pictures, so online fan art can still replace it
+            File target = new File(ctx.getFilesDir(), "miximages/" + g.systemId + "/" + g.id + BUILT_SUFFIX);
             File out = MiximageCompositor.createMiximage(screen, box, logo, target);
             if (out == null) return null;
             GameRepository.get(ctx).dao().setMiximagePath(g.id, out.getPath());

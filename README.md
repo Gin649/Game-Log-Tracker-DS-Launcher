@@ -39,9 +39,9 @@ The top screen shows the game you have open, with its title and system underneat
 The picture it shows is the best one available, in this order:
 
 1. **Fan art or a finished miximage** from your frontend.
-2. **A miximage built for you** from your frontend's screenshot, box art and marquee.
-3. **Fan art from SteamGridDB**, if you gave the app a free key.
-4. **Free LaunchBox art**, which needs no account. It uses LaunchBox's fan art when there is some, otherwise builds a miximage from its box art, screenshot and logo.
+2. **Fan art online**: SteamGridDB first (if you gave the app a free key), then LaunchBox, which needs no account.
+3. **A miximage built for you** from your frontend's screenshot, box art and marquee.
+4. **A miximage built from LaunchBox's** box art, screenshot and logo.
 5. **Your marquee, then box art**, if nothing better turns up.
 
 Art you already have is never downloaded again. Opening a game that has no art fetches it in the background, and Fetch game art in the menu does your whole library.

@@ -68,10 +68,11 @@ final class LaunchBoxArt {
     private LaunchBoxArt() {}
 
     /**
-     * Returns null when the console is unknown or the game isn't in the database, and throws IOException when the
+     * With fanOnly, only the fan art is fetched (null when the game has none); otherwise the box art, screenshot and
+     * logo for a miximage. Returns null when the console is unknown or the game isn't in the database, and throws IOException when the
      * network could not be reached (so the caller does not remember it as "no art").
      */
-    static Art fetch(Context ctx, String folder, String title) throws IOException {
+    static Art fetch(Context ctx, String folder, String title, boolean fanOnly) throws IOException {
         String platform = platformFor(ctx, folder);
         if (platform == null) return null;
         Index idx = index(ctx, Matcher.compact(platform));
@@ -80,8 +81,9 @@ final class LaunchBoxArt {
         if (row == null) return null;
 
         Art a = new Art();
-        if (!row[1].isEmpty()) a.fan = image(row[1], 1920);
-        if (a.fan == null) {
+        if (fanOnly) {
+            if (!row[1].isEmpty()) a.fan = image(row[1], 1920);
+        } else {
             if (!row[2].isEmpty()) a.box = image(row[2], 900);
             if (!row[3].isEmpty()) a.screen = image(row[3], 1600);
             if (!row[4].isEmpty()) a.logo = image(row[4], 900);

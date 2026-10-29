@@ -22,11 +22,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Gets the top-screen picture for each game, one game at a time, slowly. In order:
- * 1. your frontend's own art (ES-DE, Daijisho and the like): fan art, miximage, a miximage built here from its screenshot,
- *    box art and marquee
- * 2. SteamGridDB fan art (a hero banner), only when you gave an API key
- * 3. LaunchBox's games database: fan art, or else its box art, screenshot and logo built into a miximage here
- * 4. last of all, your frontend's marquee, then its box art (never stored, so a later run can still find better)
+ * 1. your frontend's own fan art or finished miximage
+ * 2. fan art online: SteamGridDB (only with an API key), then LaunchBox
+ * 3. a miximage built here from your frontend's screenshot, box art and marquee
+ * 4. a miximage built here from LaunchBox's box art, screenshot and logo
+ * 5. last of all, your frontend's marquee, then its box art (never stored, so a later run can still find better)
  */
 final class LibraryScraper {
 
@@ -34,6 +34,8 @@ final class LibraryScraper {
     private static final Set<Integer> QUEUED = Collections.synchronizedSet(new HashSet<Integer>());
     /** Games nothing had pictures for, so opening them again doesn't search again. */
     private static final Set<Integer> NO_ART = Collections.synchronizedSet(new HashSet<Integer>());
+    /** Games with a built miximage that already had their online fan art search this session. */
+    private static final Set<Integer> FAN_TRIED = Collections.synchronizedSet(new HashSet<Integer>());
     private static final AtomicInteger DONE = new AtomicInteger();
     private static final AtomicInteger FAILED = new AtomicInteger();
     private static final long API_PAUSE_MS = 700;
@@ -54,11 +56,12 @@ final class LibraryScraper {
         final GameEntity g = LibrarySync.find(ctx, rom);
         viewingId = g == null ? 0 : g.id;
         if (g == null || g.screenscraperId < 0 || NO_ART.contains(g.id)) return;
-        if (g.localMiximagePath != null && new File(g.localMiximagePath).isFile()) return;
-        if (Config.useEsdeMedia()) {
-            MediaFinder.Found f = MediaFinder.lookup(rom);
-            if (f.direct != null || f.canBuild()) return; // your frontend has something; LibrarySync.artFor handles it
-        }
+        boolean hasPicture = g.localMiximagePath != null && new File(g.localMiximagePath).isFile();
+        // a miximage built from your frontend's pictures still gets one look for online fan art per session
+        boolean builtOnly = hasPicture && g.localMiximagePath.endsWith(LibrarySync.BUILT_SUFFIX);
+        if (hasPicture && !builtOnly) return;
+        if (builtOnly && !FAN_TRIED.add(g.id)) return;
+        if (Config.useEsdeMedia() && MediaFinder.lookup(rom).direct != null) return; // your frontend's own fan art or miximage
         if (!QUEUED.add(g.id)) return;
         EXEC.execute(new Runnable() {
             @Override
@@ -78,6 +81,7 @@ final class LibraryScraper {
         stopRequested = false;
         sgdbOffUntil = 0;
         NO_ART.clear();
+        FAN_TRIED.clear();
         EXEC.execute(new Runnable() {
             @Override
             public void run() {
@@ -91,6 +95,7 @@ final class LibraryScraper {
                     int lim = 40 + tried.size();
                     List<GameEntity> batch = dao.getUnmatched(lim);
                     batch.addAll(dao.getNeedingMiximage(lim));
+                    batch.addAll(dao.getBuiltMiximages(lim)); // frontend-built ones: look for fan art to replace them
                     java.util.Iterator<GameEntity> it = batch.iterator();
                     while (it.hasNext()) {
                         if (!tried.add(it.next().id)) it.remove();
@@ -157,27 +162,21 @@ final class LibraryScraper {
         GameDao dao = GameRepository.get(ctx).dao();
 
         // 1. what your frontend already has: nothing is downloaded for these
+        MediaFinder.Found f = null;
         String frontendFallback = null; // its box art or marquee, used only if nothing better turns up below
         if (Config.useEsdeMedia()) {
-            MediaFinder.Found f = MediaFinder.lookup(g.systemId, g.romPath);
+            f = MediaFinder.lookup(g.systemId, g.romPath);
             frontendFallback = f.fallback;
             if (f.direct != null) {
                 dao.setMiximagePath(g.id, f.direct);
                 return true;
-            }
-            if (f.canBuild()) {
-                String built = LibrarySync.buildMiximage(ctx, g, f);
-                if (built != null) {
-                    if (g.id == viewingId) refreshTopScreen(built);
-                    return true;
-                }
             }
         }
 
         boolean offline = false;
         File target = new File(ctx.getFilesDir(), "miximages/" + g.systemId + "/" + g.id + ".jpg");
 
-        // 2. SteamGridDB fan art, if there is a key
+        // 2. fan art online: SteamGridDB (with a key), then LaunchBox
         if (SteamGridDbClient.enabled(ctx) && System.currentTimeMillis() >= sgdbOffUntil) {
             try {
                 byte[] hero = SteamGridDbClient.heroFor(ctx, g.title);
@@ -205,16 +204,44 @@ final class LibraryScraper {
                 offline = true;
             }
         }
-
-        // 3. LaunchBox: fan art if it has some, else a miximage from its box art, screenshot and logo
         if (Config.LAUNCHBOX_ART) {
             try {
-                LaunchBoxArt.Art art = LaunchBoxArt.fetch(ctx, g.systemId, g.title);
+                LaunchBoxArt.Art art = LaunchBoxArt.fetch(ctx, g.systemId, g.title, true);
                 if (art != null) {
                     try {
-                        File out = art.fan != null
-                                ? MiximageCompositor.saveJpeg(art.fan, target)
-                                : MiximageCompositor.createMiximage(art.screen, art.box, art.logo, target);
+                        File out = art.fan == null ? null : MiximageCompositor.saveJpeg(art.fan, target);
+                        if (out != null) {
+                            dao.setMiximagePath(g.id, out.getPath());
+                            if (g.id == viewingId) refreshTopScreen(out.getPath());
+                            return true;
+                        }
+                    } finally {
+                        art.recycle();
+                    }
+                }
+            } catch (IOException e) {
+                offline = true;
+            }
+        }
+
+        // 3. no fan art anywhere: a miximage from your frontend's screenshot, box art and marquee
+        if (f != null && f.canBuild()) {
+            if (g.localMiximagePath != null && g.localMiximagePath.endsWith(LibrarySync.BUILT_SUFFIX)
+                    && new File(g.localMiximagePath).isFile()) return true; // already built; nothing better was found
+            String built = LibrarySync.buildMiximage(ctx, g, f);
+            if (built != null) {
+                if (g.id == viewingId) refreshTopScreen(built);
+                return true;
+            }
+        }
+
+        // 4. a miximage from LaunchBox's box art, screenshot and logo
+        if (Config.LAUNCHBOX_ART) {
+            try {
+                LaunchBoxArt.Art art = LaunchBoxArt.fetch(ctx, g.systemId, g.title, false);
+                if (art != null) {
+                    try {
+                        File out = MiximageCompositor.createMiximage(art.screen, art.box, art.logo, target);
                         if (out != null) {
                             dao.setMiximagePath(g.id, out.getPath());
                             if (g.id == viewingId) refreshTopScreen(out.getPath());
