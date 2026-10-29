@@ -84,12 +84,26 @@ final class SteamGridDbClient {
         return best >= 75 ? bestId : 0;
     }
 
+    /** Address of the best box-shaped (portrait) picture for a game, or null. */
+    static String gridFor(Context c, String title) throws IOException {
+        String key = key(c);
+        if (key.isEmpty()) return null;
+        int id = search(key, title);
+        if (id <= 0) return null;
+        return firstImageUrl(key, "grids", id, "600x900,342x482,660x930");
+    }
+
     private static String firstImageUrl(String key, String kind, int gameId) throws IOException {
-        HttpUrl url = HttpUrl.parse(BASE + "/" + kind + "/game/" + gameId).newBuilder()
+        return firstImageUrl(key, kind, gameId, null);
+    }
+
+    private static String firstImageUrl(String key, String kind, int gameId, String dimensions) throws IOException {
+        HttpUrl.Builder b = HttpUrl.parse(BASE + "/" + kind + "/game/" + gameId).newBuilder()
                 .addQueryParameter("types", "static")
                 .addQueryParameter("nsfw", "false")
-                .addQueryParameter("humor", "false")
-                .build();
+                .addQueryParameter("humor", "false");
+        if (dimensions != null) b.addQueryParameter("dimensions", dimensions);
+        HttpUrl url = b.build();
         JSONObject r = call(key, url);
         JSONArray data = r == null ? null : r.optJSONArray("data");
         if (data == null) return null;

@@ -230,6 +230,35 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** Streams one picture from your frontend's media to the page (box art for games RetroAchievements doesn't have). */
+    private WebResourceResponse serveArt(String token) {
+        java.io.File f = ThorBridge.artForToken(token);
+        if (f == null) return errorResponse(404, "Not found");
+        String n = f.getName().toLowerCase(java.util.Locale.ROOT);
+        String type = n.endsWith(".png") ? "image/png" : n.endsWith(".webp") ? "image/webp" : n.endsWith(".gif") ? "image/gif" : "image/jpeg";
+        try {
+            java.util.Map<String, String> headers = new java.util.HashMap<String, String>();
+            headers.put("Cache-Control", "no-store");
+            return new WebResourceResponse(type, null, 200, "OK", headers, new java.io.FileInputStream(f));
+        } catch (Exception e) {
+            return errorResponse(500, "Could not read the file");
+        }
+    }
+
+    /** Sends a found picture address to the page. */
+    static void deliverCustomArt(final String id, final String url) {
+        final MainActivity a = current;
+        if (a == null) return;
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (a.webView == null) return;
+                a.webView.evaluateJavascript("window.thorCustomArt&&window.thorCustomArt("
+                        + JSONObject.quote(id) + "," + JSONObject.quote(url) + ")", null);
+            }
+        });
+    }
+
     private WebResourceResponse errorResponse(int code, String reason) {
         return new WebResourceResponse("application/json", "UTF-8", code, reason,
                 new java.util.HashMap<String, String>(), new java.io.ByteArrayInputStream(new byte[0]));
@@ -283,6 +312,10 @@ public class MainActivity extends Activity {
                 if (Config.APP_HOST_BUILTIN.equals(u.getHost()) && u.getPath() != null
                         && u.getPath().startsWith("/rom/")) {
                     return serveRom(u.getPath().substring(5));
+                }
+                if (Config.APP_HOST_BUILTIN.equals(u.getHost()) && u.getPath() != null
+                        && u.getPath().startsWith("/art/")) {
+                    return serveArt(u.getPath().substring(5));
                 }
                 return assetLoader.shouldInterceptRequest(u);
             }

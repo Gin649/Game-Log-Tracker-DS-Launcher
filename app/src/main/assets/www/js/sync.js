@@ -59,6 +59,9 @@ function renderLibraryViews(){
   safe(renderLibrary, '#lib-table-wrap', 'your library');
   safe(() => { if(recentGamesData.length) renderRecentGames(recentGamesData); }); // award labels and hidden subsets
   safe(renderByYear, '#year-wrap', 'beaten by year');
+  // games from systems RA doesn't have get their pictures filled in once they are on screen
+  clearTimeout(renderLibraryViews.artTimer);
+  renderLibraryViews.artTimer = setTimeout(() => { if(typeof fillMissingCustomArt === 'function') fillMissingCustomArt(); }, 3000);
 }
 
 async function loadAll(opts){

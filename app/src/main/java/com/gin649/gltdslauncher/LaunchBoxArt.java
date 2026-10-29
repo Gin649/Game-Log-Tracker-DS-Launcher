@@ -92,6 +92,18 @@ final class LaunchBoxArt {
         return a;
     }
 
+    /** Address of the game's box art (else a screenshot) on LaunchBox's image server, or null. */
+    static String boxUrl(Context ctx, String folder, String title) throws IOException {
+        String platform = platformFor(ctx, folder);
+        if (platform == null) return null;
+        Index idx = index(ctx, Matcher.compact(platform));
+        if (idx == null) return null;
+        String[] row = match(idx, title);
+        if (row == null) return null;
+        String file = !row[2].isEmpty() ? row[2] : row[3];
+        return file.isEmpty() ? null : IMAGE_URL + file;
+    }
+
     private static String[] match(Index idx, String title) {
         String[] hit = idx.exact.get(Matcher.norm(title));
         if (hit != null) return hit;

@@ -134,6 +134,67 @@ final class ThorBridge {
         return LibraryScraper.status(act);
     }
 
+    // Pictures for games that aren't on RetroAchievements
+
+    private static final java.util.concurrent.ExecutorService ART_IO = java.util.concurrent.Executors.newSingleThreadExecutor();
+
+    /** The picture file behind an /art/<token> address, or null. Only files in folders the app already reads are served. */
+    static File artForToken(String token) {
+        try {
+            // the address carries the file's own path, so a saved address still works after a restart
+            File f = new File(new String(Base64.decode(token, Base64.URL_SAFE | Base64.NO_WRAP), "UTF-8"));
+            if (!f.isFile()) return null;
+            String p = f.getCanonicalPath();
+            String[] roots = {Config.ROMS_ROOT, Config.MEDIA_ROOT, Config.DJ_ROOT, "/storage/emulated/0/DaijishoMedia"};
+            for (String r : roots) {
+                if (!r.isEmpty() && p.startsWith(new File(r).getCanonicalPath() + "/")) return f;
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    /**
+     * Looks for a box-art style picture for a game the tracker has no art for: your frontend's media, then
+     * SteamGridDB (with a key), then LaunchBox. The page gets the address in window.thorCustomArt(id, url),
+     * with an empty url when nothing was found (it then tries RAWG itself).
+     */
+    @JavascriptInterface
+    public void customArt(final String id, final String title, final String folder, final String romPath) {
+        ART_IO.execute(new Runnable() {
+            @Override
+            public void run() {
+                String url = "";
+                try {
+                    if (!folder.isEmpty() && Config.useEsdeMedia()) {
+                        MediaFinder.Found f = MediaFinder.lookup(folder, romPath);
+                        String p = f.box != null ? f.box : (f.fallback != null ? f.fallback : f.direct);
+                        if (p != null && new File(p).isFile()) {
+                            String token = Base64.encodeToString(p.getBytes("UTF-8"), Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
+                            url = "https://" + Config.APP_HOST_BUILTIN + "/art/" + token;
+                        }
+                    }
+                    if (url.isEmpty() && SteamGridDbClient.enabled(act)) {
+                        try {
+                            String g = SteamGridDbClient.gridFor(act, title);
+                            if (g != null) url = g;
+                        } catch (java.io.IOException ignored) {
+                        }
+                    }
+                    if (url.isEmpty() && Config.LAUNCHBOX_ART && !folder.isEmpty()) {
+                        try {
+                            String g = LaunchBoxArt.boxUrl(act, folder, title);
+                            if (g != null) url = g;
+                        } catch (java.io.IOException ignored) {
+                        }
+                    }
+                } catch (Exception ignored) {
+                }
+                MainActivity.deliverCustomArt(id, url);
+            }
+        });
+    }
+
     // Adding games to the backlog from your ROM files
 
     /** Opens the system file picker (several files at once). The page gets the result in window.thorRomsPicked. */
@@ -172,16 +233,17 @@ final class ThorBridge {
         JSONArray out = new JSONArray();
         try {
             for (RomIndex.Rom r : Shared.index().all()) {
-                if (r.sys.folder.equals(folder)) out.put(romJson(r.name, r.sys));
+                if (r.sys.folder.equals(folder)) out.put(romJson(r.name, r.sys, r.file.getPath()));
             }
         } catch (Exception ignored) {
         }
         return out.toString();
     }
 
-    private static JSONObject romJson(String title, SystemMap.Sys sys) throws org.json.JSONException {
+    private static JSONObject romJson(String title, SystemMap.Sys sys, String path) throws org.json.JSONException {
         JSONObject o = new JSONObject();
         o.put("title", title);
+        o.put("path", path == null ? "" : path);
         o.put("folder", sys == null ? "" : sys.folder);
         o.put("ra", sys == null ? new JSONArray() : new JSONArray(sys.ra));
         return o;
@@ -218,7 +280,7 @@ final class ThorBridge {
                         }
                     }
                 }
-                out.put(romJson(title, sys));
+                out.put(romJson(title, sys, path));
             } catch (Exception ignored) {
             }
         }

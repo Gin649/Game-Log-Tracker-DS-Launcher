@@ -82,7 +82,7 @@ async function addRomsToBacklog(items){
       if(hit){
         additions.push({ ra: true, g: hit.g, consoleId: grp.console.id, consoleName: grp.console.name });
       }else{
-        additions.push({ ra: false, title: romDisplayTitle(it.title), consoleName: grp.console ? grp.console.name : grp.label, seq: customSeq++ });
+        additions.push({ ra: false, title: romDisplayTitle(it.title), consoleName: grp.console ? grp.console.name : grp.label, seq: customSeq++, folder: it.folder || '', romPath: it.path || '' });
       }
     });
   }
@@ -113,6 +113,7 @@ async function addRomsToBacklog(items){
           HighestAwardKind: null, HighestAwardDate: null, MostRecentAwardedDate: null,
           pct: 0, lastPlayed: null,
           manual: true, customConsole: true,
+          folder: a.folder, romPath: a.romPath, // where its ROM is, to look for its art
           genre: null, released: null,
           manualStarted: false, manualBeaten: false, manualBeatenDate: null,
         });
@@ -125,8 +126,68 @@ async function addRomsToBacklog(items){
     }
     closeAddGameModal();
     showToast(`${entries.length} game${entries.length === 1 ? '' : 's'} added to backlog`);
+    setTimeout(fillMissingCustomArt, 500);
     return entries.length;
   });
+}
+
+// Pictures for games that aren't on RetroAchievements: your frontend's media, SteamGridDB (with a key) and
+// LaunchBox through the app, then RAWG from here. One game at a time, and each is only tried once a week.
+const customArtWaiting = new Map(); // GameID -> resolve
+let customArtRunning = false;
+
+window.thorCustomArt = function(id, url){
+  const done = customArtWaiting.get(String(id));
+  if(done){ customArtWaiting.delete(String(id)); done(url || ''); }
+};
+
+function nativeCustomArt(entry){
+  return new Promise(resolve => {
+    const id = String(entry.GameID);
+    const timer = setTimeout(() => { customArtWaiting.delete(id); resolve(''); }, 30000);
+    customArtWaiting.set(id, (url) => { clearTimeout(timer); resolve(url); });
+    try{ thorBridge.customArt(id, entry.Title, entry.folder || '', entry.romPath || ''); }
+    catch(e){ clearTimeout(timer); customArtWaiting.delete(id); resolve(''); }
+  });
+}
+
+async function rawgArtFor(title){
+  try{
+    const results = await searchRawgForAddGame(title);
+    return (results[0] && results[0].background_image) || '';
+  }catch(e){ return ''; }
+}
+
+async function fillMissingCustomArt(){
+  if(customArtRunning || typeof creds === 'undefined' || !creds) return;
+  const WEEK = 7 * 24 * 60 * 60 * 1000;
+  const todo = libraryData.filter(g => g.manual && g.customConsole && !g.ImageIcon && !(g.artTried && Date.now() - g.artTried < WEEK));
+  if(!todo.length) return;
+  customArtRunning = true;
+  let found = 0;
+  try{
+    for(const g of todo){
+      let url = '';
+      if(thorBridge && typeof thorBridge.customArt === 'function') url = await nativeCustomArt(g);
+      if(!url) url = await rawgArtFor(g.Title);
+      await enqueueTask(async () => {
+        const cur = libraryData.find(x => x.GameID === g.GameID);
+        if(!cur) return;
+        const manual = await loadManualGames();
+        const saved = manual.find(x => x.GameID === g.GameID);
+        [cur, saved].forEach(e => {
+          if(!e) return;
+          e.artTried = Date.now();
+          if(url){ e.ImageIcon = url; e.ImageBoxArt = url; }
+        });
+        await saveManualGames(manual);
+      });
+      if(url && ++found % 8 === 0) renderLibraryViews();
+    }
+  }finally{
+    customArtRunning = false;
+  }
+  if(found) renderLibraryViews();
 }
 
 // The page's side of the app's file picker.
