@@ -2,7 +2,8 @@
 //
 //   D-pad / left stick  move the highlight      A  confirm        B  back
 //   Right stick         scroll quickly          Select  hamburger menu
-//   Y (labelled on the Thor; Android calls it X)   refresh                 L1 / R1  previous / next console
+//   Y (labelled on the Thor; Android calls it X)   refresh    X (Android's Y)  play / search
+//                   L1 / R1  previous / next console
 //                                                       L2 / R2  previous / next tab
 //
 // The Android app turns controller input into calls on window.GLTPad (see PadRouter.java).
@@ -331,6 +332,29 @@
     return true;
   }
 
+  // The button labelled X on the Thor (Android calls it Y): in a game's window it presses Play on this
+  // device; anywhere else it jumps to the search box of the Library or Backlog.
+  function searchOrPlay(){
+    if(menuOpen()) return;
+    const top = topOverlay();
+    if(top){
+      const play = top.el.querySelector('#modal-play-btn');
+      if(play) play.click();
+      return;
+    }
+    const find = () => document.querySelector('#tab-library.active #lib-search, #tab-backlog.active #backlog-search');
+    let input = find();
+    if(!input){
+      const lib = document.querySelector('.tab-btn[data-tab="library"]');
+      if(lib) lib.click();
+      input = find();
+    }
+    if(!input) return;
+    input.scrollIntoView({ block: 'center' });
+    input.focus();
+    showKeyboard(true);
+  }
+
   function press(name){
     const wasShowing = padMode;
     if(!padMode){ padMode = true; document.body.classList.add('pad-mode'); }
@@ -346,6 +370,8 @@
       toggleMenu();
     }else if(name === 'x'){
       if(window.padRefresh) window.padRefresh();
+    }else if(name === 'y'){
+      searchOrPlay();
     }else if(name === 'l1'){
       if(!manualPage(-1)) switchSystem(-1);
     }else if(name === 'r1'){
