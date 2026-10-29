@@ -71,10 +71,11 @@ async function raFetchOnce(endpoint, params, background){
     let res;
     try{ res = await fetchWithTimeout(url, ms); }
     catch(e){ throw new Error(`${label}: blocked (${e.message})`); }
-    if(res.status === 401 || res.status === 403){
+    if(res.status === 401 || res.status === 403 || res.status === 422){
       // Only our own routes speak for RetroAchievements; a public proxy's 401/403 is its own wall.
+      // RetroAchievements answers 422 when the username itself isn't valid, 401 for a wrong key.
       if(!['app', 'worker', 'direct'].includes(label)) throw new Error(`${label}: HTTP ${res.status}`);
-      const err = new Error('RetroAchievements rejected the username or API key (HTTP ' + res.status + ').');
+      const err = new Error('RetroAchievements did not accept your login (HTTP ' + res.status + '). Check your RetroAchievements username and Web API key in Launcher Settings.');
       err.authFailure = true;
       throw err;
     }
