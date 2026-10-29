@@ -2,7 +2,7 @@
 //
 //   D-pad / left stick  move the highlight      A  confirm        B  back
 //   Right stick         scroll quickly          Select  hamburger menu
-//   X                   refresh                 L1 / R1  previous / next console
+//   Y (labelled on the Thor; Android calls it X)   refresh                 L1 / R1  previous / next console
 //                                                       L2 / R2  previous / next tab
 //
 // The Android app turns controller input into calls on window.GLTPad (see PadRouter.java).
