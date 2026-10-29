@@ -99,6 +99,9 @@
      Social, Data and the other settings are always one tap away, including while a game is running. */
   body.thor-app .menu-wrap{position:fixed;top:calc(8px + env(safe-area-inset-top, 0px));right:calc(8px + env(safe-area-inset-right, 0px));z-index:60;}
   body.thor-app .btn-hamburger{background:var(--panel);}
+  /* A long press or a stray drag used to select the whole page and tint it white. Nothing here needs selecting except typed text. */
+  body.thor-app, body.thor-app *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;}
+  body.thor-app input, body.thor-app textarea{-webkit-user-select:text;user-select:text;}
   body.thor-app .dropdown-menu{max-height:calc(100vh - 64px);overflow-y:auto;}
   .dropdown-item{
     display:block;width:100%;text-align:left;background:transparent;border:none;

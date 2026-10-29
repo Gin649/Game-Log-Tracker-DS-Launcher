@@ -199,3 +199,13 @@ onDomReady(() => {
   b.addEventListener('click', () => { try{ thorBridge.exitApp(); }catch(e){} });
   if(typeof colorMenuItems === 'function') colorMenuItems();
 });
+
+// Safety net: if a selection ever does appear outside a text box, drop it so the page never stays tinted.
+document.addEventListener('selectionchange', () => {
+  if(!thorBridge) return;
+  const sel = window.getSelection && window.getSelection();
+  if(!sel || sel.isCollapsed) return;
+  const a = document.activeElement;
+  if(a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return;
+  sel.removeAllRanges();
+});
