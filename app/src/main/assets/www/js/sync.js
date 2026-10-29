@@ -224,7 +224,6 @@ function openRaConnectModal(){
 function closeRaConnectModal(){
   $('#ra-connect-backdrop').classList.remove('open');
 }
-$('#btn-ra-connect-open').addEventListener('click', openRaConnectModal);
 $('#ra-connect-close-btn').addEventListener('click', closeRaConnectModal);
 $('#ra-connect-backdrop').addEventListener('click', (e) => {
   if(e.target.id === 'ra-connect-backdrop') closeRaConnectModal();
@@ -248,11 +247,6 @@ $('#btn-connect').addEventListener('click', async () => {
   }
 });
 
-$('#btn-disconnect').addEventListener('click', async () => {
-  creds = null;
-  await clearCreds();
-  updateRaConnectionView();
-});
 $('#btn-hardcore-toggle').addEventListener('click', () => {
   statsMode = statsMode === 'hardcore' ? 'casual' : 'hardcore';
   applyStatsModeLabel();

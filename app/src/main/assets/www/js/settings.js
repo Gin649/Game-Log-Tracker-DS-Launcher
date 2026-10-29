@@ -68,7 +68,6 @@ function wireModal(openSel, closeSel, backdropId, open, close){
   $(closeSel).addEventListener('click', close);
   $('#' + backdropId).addEventListener('click', (e) => { if(e.target.id === backdropId) close(); });
 }
-wireModal('#btn-rawg-settings', '#rawg-close-btn', 'rawg-backdrop', openRawgModal, closeRawgModal);
 wireModal('#btn-social-open', '#social-close-btn', 'social-backdrop', openSocialModal, closeSocialModal);
 wireModal('#btn-about-open', '#about-close-btn', 'about-backdrop', openAboutModal, closeAboutModal);
 wireModal('#btn-data-settings-open', '#data-close-btn', 'data-backdrop', openDataModal, closeDataModal);
