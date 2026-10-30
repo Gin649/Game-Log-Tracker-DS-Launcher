@@ -73,8 +73,9 @@
     const card = $('#modal-card');
     if(!profileOpen() || card.dataset.gameId !== String(gameId)) return; // closed or another game opened
     const openPanels = openProfilePanelIds();
+    const scrollTop = $('#modal-backdrop').scrollTop; // the profile scrolls itself; keep your place in it
     stopWalkthroughPlayers(); // saves the watch position before the redraw
-    await openGameModal(gameId, { restorePanels: openPanels });
+    await openGameModal(gameId, { restorePanels: openPanels, restoreScroll: scrollTop });
   }
 
   // The profile scrolls itself (#modal-backdrop), so pulls there use its scrollTop.

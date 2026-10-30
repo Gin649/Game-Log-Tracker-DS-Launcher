@@ -544,6 +544,19 @@ async function openGameModal(gameId, opts){
   if(restorePanels.includes('modal-subsets-btn')) await subsetsReady.catch(() => {});
   if(card.dataset.gameId !== String(gameId)) return;
   reopenProfilePanels(card, restorePanels);
+  // Put the profile back where it was. Sections (the achievements list, for one) fill in after a moment,
+  // so the position is set again a few times until the page is tall enough, unless you scroll yourself.
+  if(opts && opts.restoreScroll > 0){
+    const scroller = $('#modal-backdrop');
+    const target = opts.restoreScroll;
+    let touched = false;
+    const stop = () => { touched = true; };
+    scroller.addEventListener('touchstart', stop, { once: true, passive: true });
+    scroller.addEventListener('wheel', stop, { once: true, passive: true });
+    [0, 100, 300, 600, 1000, 1600].forEach(ms => setTimeout(() => {
+      if(!touched && card.dataset.gameId === String(gameId) && scroller.scrollTop !== target) scroller.scrollTop = target;
+    }, ms));
+  }
 }
 
 function closeGameModal(opts){
