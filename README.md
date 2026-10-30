@@ -71,6 +71,17 @@ When a game has several fan arts online (up to six), swipe left or right on the 
 - The app checks for new versions and offers to download and install them.
 - About, at the bottom of the menu, shows the app version and links to GitHub and Discord.
 
+## Screenshots
+
+A game profile on the Thor, with the fan art and title on the top screen and the tracker on the bottom screen.
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/game-profile-1.jpg" alt="Game profile with game details" width="100%"></td>
+    <td><img src="docs/screenshots/game-profile-2.jpg" alt="Game profile with progress and options" width="100%"></td>
+  </tr>
+</table>
+
 ## Getting started
 
 1. Download the latest `.apk` from the Releases page: https://github.com/Gin649/Game-Log-Tracker-DS-Launcher/releases
