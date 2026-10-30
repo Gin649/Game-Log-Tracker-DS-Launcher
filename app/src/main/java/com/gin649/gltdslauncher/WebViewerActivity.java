@@ -27,6 +27,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
 import java.util.regex.Pattern;
 
 /**
@@ -283,9 +284,17 @@ public class WebViewerActivity extends Activity {
                 String name = URLUtil.guessFileName(dl, contentDisposition, mimeType);
                 DownloadManager.Request r = new DownloadManager.Request(Uri.parse(dl));
                 r.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-                r.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name);
+                File hacks = name.toLowerCase().matches(".*\\.(ips|bps|ups|ppf|aps|xdelta3?|vcdiff|vcd|zip|7z|rar)$")
+                        ? DataStore.hackDownloads(WebViewerActivity.this) : null;
+                String where = "Downloads";
+                if (hacks != null) {
+                    r.setDestinationUri(Uri.fromFile(new File(hacks, name)));
+                    where = "downloaded rom hack files";
+                } else {
+                    r.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name);
+                }
                 ((DownloadManager) getSystemService(DOWNLOAD_SERVICE)).enqueue(r);
-                Toast.makeText(WebViewerActivity.this, "Downloading " + name, Toast.LENGTH_SHORT).show();
+                Toast.makeText(WebViewerActivity.this, "Downloading " + name + " to " + where, Toast.LENGTH_LONG).show();
             }
         });
 

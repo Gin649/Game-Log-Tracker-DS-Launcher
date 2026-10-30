@@ -51,6 +51,14 @@ final class DataStore {
         return dir.canWrite();
     }
 
+    /** Where ROM hack patches downloaded in the viewer go, or null when the data folder isn't on shared storage. */
+    static File hackDownloads(Context ctx) {
+        File r = root(ctx);
+        if (r.getPath().startsWith(ctx.getFilesDir().getPath())) return null; // the download manager can't write there
+        File d = new File(r, "downloaded rom hack files");
+        return (d.isDirectory() || d.mkdirs()) ? d : null;
+    }
+
     static File dataDir(Context ctx) {
         File d = new File(root(ctx), "data");
         d.mkdirs();
