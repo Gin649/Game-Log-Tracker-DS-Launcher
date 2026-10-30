@@ -42,7 +42,7 @@ final class SystemMap {
             m.merge(readAll(ctx.getAssets().open("systems.json")));
         } catch (Exception ignored) {
         }
-        try { // before the imports, so a Daijisho platform file or your own systems.json can refine what was found
+        try { // before the imports, so your own systems.json can refine what was found
             m.discover(ctx);
         } catch (Exception ignored) {
         }
@@ -74,7 +74,7 @@ final class SystemMap {
     }
 
     /**
-     * Folders in the ROMs folder that are not known by their exact name (common with Daijisho, where you name them
+     * Folders in the ROMs folder that are not known by their exact name (where you name them
      * yourself: "Game Boy Advance", "SNES", "PS1") are matched to a built-in system by name from folder_aliases.json,
      * so they get its cores, RetroAchievements names and art lookups. Folders with no match are left alone.
      */

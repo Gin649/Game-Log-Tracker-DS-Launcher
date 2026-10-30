@@ -48,7 +48,6 @@ public class SetupActivity extends Activity {
 
     private static final int REQ_ROMS = 10;
     private static final int REQ_ES = 11;
-    private static final int REQ_DJ = 12;
     private static final int REQ_DATA = 13;
 
     private static final int BG = Color.rgb(21, 18, 31);
@@ -72,8 +71,8 @@ public class SetupActivity extends Activity {
     private boolean finished;
 
     private String raUser, raKey, rawgKey, romsRoot, romsTree, esRoot, raPackage, siteUrl;
-    /** "esde", "daijisho" or "none" (any other frontend, or no frontend at all). */
-    private String frontend, djRoot;
+    /** "esde" or "none" (any other frontend, or no frontend at all). */
+    private String frontend;
     /** Folder chosen for the app's own files; empty means the default. */
     private String dataRoot = "";
     private CheckBox cbLaunchBox;
@@ -112,10 +111,9 @@ public class SetupActivity extends Activity {
         romsRoot = get("romsRoot", "");
         romsTree = get("romsTree", "");
         esRoot = get("esRoot", "");
-        djRoot = get("djRoot", "");
         dataRoot = get("dataRoot", "");
         frontend = get("frontend", "");
-        if (!frontend.equals("esde") && !frontend.equals("none")) { // a Daijish\u014d choice from before is treated as none
+        if (!frontend.equals("esde") && !frontend.equals("none")) { // anything else is treated as none
             // first run, or an install from before this choice existed: ES-DE if it is there, otherwise none
             frontend = (!esRoot.isEmpty() || !guessEsRoot().isEmpty()) ? "esde" : "none";
         }
@@ -173,7 +171,6 @@ public class SetupActivity extends Activity {
         setContentView(root);
 
         if (frontend.equals("esde") && esRoot.isEmpty()) esRoot = guessEsRoot();
-        if (frontend.equals("daijisho") && djRoot.isEmpty()) djRoot = guessDjRoot();
         render();
     }
 
@@ -269,23 +266,6 @@ public class SetupActivity extends Activity {
             if (parent != null) tries.add(parent.getPath() + "/ES-DE");
         }
         tries.add("/storage/emulated/0/ES-DE");
-        for (String t : tries) {
-            if (new File(t).isDirectory()) return t;
-        }
-        return "";
-    }
-
-    private String guessDjRoot() {
-        List<String> tries = new ArrayList<String>();
-        if (!romsRoot.isEmpty()) {
-            File parent = new File(romsRoot).getParentFile();
-            if (parent != null) {
-                tries.add(parent.getPath() + "/DaijishoMedia");
-                tries.add(parent.getPath() + "/Daijish\u014d");
-            }
-        }
-        tries.add("/storage/emulated/0/DaijishoMedia");
-        tries.add("/storage/emulated/0/Daijish\u014d");
         for (String t : tries) {
             if (new File(t).isDirectory()) return t;
         }
@@ -432,7 +412,6 @@ public class SetupActivity extends Activity {
                 if (!frontend.equals(id)) {
                     frontend = id;
                     if (id.equals("esde") && esRoot.isEmpty()) esRoot = guessEsRoot();
-                    if (id.equals("daijisho") && djRoot.isEmpty()) djRoot = guessDjRoot();
                 }
                 render();
             }
@@ -442,7 +421,7 @@ public class SetupActivity extends Activity {
 
     private void stepFolders() {
         text("Which frontend do you use?", 17, TEXT);
-        text("This decides which folders to ask for. Pick None / something else for Daijish\u014d or any other frontend, or no frontend at all.", 13, MUTED);
+        text("This decides which folders to ask for. Pick None / something else for any other frontend, or no frontend at all.", 13, MUTED);
         frontendButton("ES-DE", "esde");
         frontendButton("None / something else", "none");
 
@@ -470,20 +449,6 @@ public class SetupActivity extends Activity {
                 }
             });
             mediaFound = !esRoot.isEmpty() && new File(esRoot, "downloaded_media").isDirectory();
-        } else if (frontend.equals("daijisho")) {
-            text("Daijish\u014d media folder", 17, TEXT);
-            text("Daijish\u014d keeps its own scraped pictures private, so point this at a folder it can share: your "
-                    + "DaijishoMedia folder, or where SkraperUI or another scraper saved images and gamelist.xml. "
-                    + "Exported platform .json files in it are read too, to pick up your cores. Art saved next to your "
-                    + "ROMs is found without choosing anything.", 13, MUTED);
-            text(djRoot.isEmpty() ? "Not chosen" : djRoot, 14, djRoot.isEmpty() ? MUTED : TEAL);
-            action("Choose Daijish\u014d media folder", new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    pickFolder(REQ_DJ);
-                }
-            });
-            mediaFound = !djRoot.isEmpty() && new File(djRoot).isDirectory();
         } else {
             text("No frontend", 17, TEXT);
             text("Everything the app needs is set here and in the next steps: your ROMs folder, your RetroArch or "
@@ -495,7 +460,7 @@ public class SetupActivity extends Activity {
             cbEsdeMedia = new CheckBox(this);
             cbEsdeMedia.setText(frontend.equals("none")
                     ? "Use pictures that are already next to my ROMs (images, media, gamelist.xml) before downloading anything."
-                    : "Use my " + (frontend.equals("esde") ? "ES-DE" : "Daijish\u014d") + " media (box art, screenshots, fan art) for the "
+                    : "Use my " + "ES-DE" + " media (box art, screenshots, fan art) for the "
                     + "top screen, so nothing is downloaded again. Art is only fetched for games that have none.");
             cbEsdeMedia.setTextColor(TEXT);
             cbEsdeMedia.setTextSize(14);
@@ -560,9 +525,6 @@ public class SetupActivity extends Activity {
             sb.append("downloaded_media: ").append(new File(esRoot, "downloaded_media").isDirectory() ? "found" : "not found").append("\n");
             sb.append("custom_systems/es_systems.xml: ").append(new File(esRoot, "custom_systems/es_systems.xml").isFile() ? "found" : "not found");
         }
-        if (frontend.equals("daijisho") && !djRoot.isEmpty()) {
-            sb.append("Daijish\u014d folder: ").append(new File(djRoot).isDirectory() ? "found" : "not found");
-        }
         return sb.toString();
     }
 
@@ -582,7 +544,7 @@ public class SetupActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
-        if (requestCode != REQ_ROMS && requestCode != REQ_ES && requestCode != REQ_DJ && requestCode != REQ_DATA) return;
+        if (requestCode != REQ_ROMS && requestCode != REQ_ES && requestCode != REQ_DATA) return;
 
         Uri u = data.getData();
         try {
@@ -599,9 +561,6 @@ public class SetupActivity extends Activity {
             romsRoot = path;
             romsTree = u.toString();
             if (frontend.equals("esde") && esRoot.isEmpty()) esRoot = guessEsRoot();
-            if (frontend.equals("daijisho") && djRoot.isEmpty()) djRoot = guessDjRoot();
-        } else if (requestCode == REQ_DJ) {
-            djRoot = path;
         } else if (requestCode == REQ_DATA) {
             dataRoot = path.endsWith("/" + DataStore.DEFAULT_FOLDER) ? path : path + "/" + DataStore.DEFAULT_FOLDER;
         } else {
@@ -624,7 +583,6 @@ public class SetupActivity extends Activity {
         put("romsRoot", romsRoot);
         put("romsTree", romsTree);
         put("esRoot", esRoot);
-        put("djRoot", djRoot);
         put("frontend", frontend);
         Prefs.putInt(this, "useEsdeMedia", useEsdeMedia ? 1 : 0);
         Prefs.putInt(this, "launchboxArt", launchBoxArt ? 1 : 0);
@@ -753,10 +711,9 @@ public class SetupActivity extends Activity {
         sb.append("SteamGridDB: ").append(sgdbKey.isEmpty() ? "not set" : "key set").append("\n");
         sb.append("Free LaunchBox art: ").append(launchBoxArt ? "on" : "off").append("\n");
         sb.append("ROMs: ").append(romsRoot.isEmpty() ? "not chosen" : romsRoot).append("\n");
-        sb.append("Frontend: ").append(frontend.equals("esde") ? "ES-DE" : frontend.equals("daijisho") ? "Daijish\u014d" : "none / other").append("\n");
+        sb.append("Frontend: ").append(frontend.equals("esde") ? "ES-DE" : "none / other").append("\n");
         if (frontend.equals("esde")) sb.append("ES-DE: ").append(esRoot.isEmpty() ? "none" : esRoot).append("\n");
         sb.append("App data: ").append(effectiveDataRoot().isEmpty() ? "the app's private folder" : effectiveDataRoot()).append("\n");
-        if (frontend.equals("daijisho")) sb.append("Daijish\u014d media: ").append(djRoot.isEmpty() ? "none" : djRoot).append("\n");
         sb.append("Existing art: ").append(useEsdeMedia ? "used as it is" : "not used").append("\n");
         sb.append("RetroArch: ").append(raPackage.isEmpty() ? "default" : raPackage).append("\n");
         sb.append("Top screen: ").append(topDisplay < 0 ? "automatic" : "display " + topDisplay);
@@ -827,7 +784,6 @@ public class SetupActivity extends Activity {
         put("romsRoot", romsRoot);
         put("romsTree", romsTree);
         put("esRoot", esRoot);
-        put("djRoot", djRoot);
         put("frontend", frontend);
         Prefs.putInt(this, "launchboxArt", launchBoxArt ? 1 : 0);
         put("raPackage", raPackage.isEmpty() ? "com.retroarch.aarch64" : raPackage);

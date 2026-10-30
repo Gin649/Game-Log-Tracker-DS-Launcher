@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 /**
- * Reads your ES-DE custom_systems/es_systems.xml, and your Daijisho platform files (see DaijishoImport), so your own
+ * Reads your ES-DE custom_systems/es_systems.xml, so your own
  * system folders and cores are picked up.
  */
 final class EsdeImport {
@@ -76,12 +76,8 @@ final class EsdeImport {
             try {
                 collectEsde(esRoot, arr);
             } catch (Exception ignored) {
-                // an unreadable es_systems.xml must not stop the Daijisho side
+                // an unreadable es_systems.xml just means no custom systems
             }
-        }
-        try {
-            DaijishoImport.collect(arr);
-        } catch (Exception ignored) {
         }
         if (arr.length() == 0) return 0;
         try {

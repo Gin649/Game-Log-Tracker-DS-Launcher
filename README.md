@@ -43,7 +43,7 @@ When a game has several fan arts online (up to six), swipe left or right on the 
 - **RetroArch** starts the game with the right core for the system.
 - **Standalone emulators:** Dolphin (GameCube, Wii), DuckStation (PS1), PPSSPP (PSP), Mupen64Plus (N64), ARMSX2 (PS2), WatermelonDS (DS), Azahar (3DS), Eden (Switch), Cemu (Wii U), Vita3K (Vita) and HakuX (Xbox).
 - You choose which emulator or RetroArch core each system uses, and you can change it any time from Launcher settings.
-- The app reads your ROMs folder, whether you use ES-DE, Daijisho or no frontend at all. Folders named in full, like "Game Boy Advance" or "SNES", are recognised too.
+- The app reads your ROMs folder, whether you use ES-DE or no frontend at all. Folders named in full, like "Game Boy Advance" or "SNES", are recognised too.
 - Some of the newer emulator setups are still being tested. If one opens but doesn't start your game, tell me on Discord.
 
 ### Controller controls
@@ -76,7 +76,7 @@ When a game has several fan arts online (up to six), swipe left or right on the 
    - **File access** so the app can find your games and artwork, and **usage access** so the top screen returns to the tracker when a game closes.
    - Your RetroAchievements username and Web API key. You can find the key on RA under Control Panel, then Keys.
    - Optional: a free RAWG key for ratings and game details, and a free SteamGridDB key for fan art.
-   - Which frontend you use (ES-DE, Daijisho or none), your ROMs folder, and the frontend's folder.
+   - Which frontend you use (ES-DE or none), your ROMs folder, and the frontend's folder.
    - Which emulator to use for each system. Only systems found in your ROMs folder are listed.
    - Which screen is the top screen, and how big the tracker should be on the bottom screen.
 5. Tap Finish. You can change any of it later from the tracker's menu, under Launcher settings.

@@ -22,9 +22,7 @@ final class Config {
     static String ROMS_ROOT = "";
     static String ES_ROOT = "";
     static String MEDIA_ROOT = "";
-    /** Daijisho side: a folder you pick (your DaijishoMedia / SkraperUI output, and optionally exported platform json files). */
-    static String DJ_ROOT = "";
-    /** The wizard's "use my frontend media" choice (ES-DE and/or Daijisho). Use useEsdeMedia() to ask whether it actually applies. */
+    /** The wizard's "use my frontend media" choice (ES-DE). Use useEsdeMedia() to ask whether it actually applies. */
     static boolean USE_ESDE_MEDIA = true;
     /** Optional hand-edited overrides live here: systems.json and emulators.json. */
     static String USER_DIR = "";
@@ -43,7 +41,7 @@ final class Config {
 
     /**
      * True when the choice to use frontend media is on and there is somewhere to look: ES-DE's downloaded_media,
-     * a Daijisho media folder, or just the ROMs folder (art generated beside the ROMs, gamelist.xml).
+     * or just the ROMs folder (art generated beside the ROMs, gamelist.xml).
      */
     static boolean useEsdeMedia() {
         return USE_ESDE_MEDIA && !ROMS_ROOT.isEmpty();
@@ -53,8 +51,6 @@ final class Config {
     static boolean isFrontendMedia(String path) {
         if (path == null) return false;
         if (!MEDIA_ROOT.isEmpty() && path.startsWith(MEDIA_ROOT + "/")) return true;
-        if (!DJ_ROOT.isEmpty() && path.startsWith(DJ_ROOT + "/")) return true;
-        if (path.startsWith("/storage/emulated/0/DaijishoMedia/")) return true;
         return !ROMS_ROOT.isEmpty() && path.startsWith(ROMS_ROOT + "/");
     }
 
@@ -73,9 +69,8 @@ final class Config {
         if (fe.isEmpty()) fe = Prefs.get(c, "esRoot", "").isEmpty() ? "none" : "esde"; // installs from before the choice existed
         ES_ROOT = fe.equals("esde") ? trim(Prefs.get(c, "esRoot", "")) : "";
         MEDIA_ROOT = ES_ROOT.isEmpty() ? "" : ES_ROOT + "/downloaded_media";
-        DJ_ROOT = fe.equals("daijisho") ? trim(Prefs.get(c, "djRoot", "")) : "";
-        // hand-edited overrides (systems.json, emulators.json, launchbox.json) live in a gltthor folder in either frontend folder
-        USER_DIR = !ES_ROOT.isEmpty() ? ES_ROOT + "/gltthor" : (DJ_ROOT.isEmpty() ? "" : DJ_ROOT + "/gltthor");
+        // hand-edited overrides (systems.json, emulators.json, launchbox.json) live in a gltthor folder in the ES-DE folder
+        USER_DIR = ES_ROOT.isEmpty() ? "" : ES_ROOT + "/gltthor";
         DATA_ROOT = trim(Prefs.get(c, "dataRoot", ""));
         USE_ESDE_MEDIA = Prefs.getInt(c, "useEsdeMedia", 1) == 1;
         LAUNCHBOX_ART = Prefs.getInt(c, "launchboxArt", 1) == 1;

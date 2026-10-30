@@ -17,7 +17,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
  * Finds art your frontend already has for a ROM. The top screen uses, best first: fan art, a finished
  * miximage, a miximage built from the screenshot, box art and marquee (LibrarySync.buildMiximage), art fetched
  * online (LibraryScraper), the marquee, then box art.
- * It looks in ES-DE's downloaded_media/[system]/[type]/, gamelist.xml files, Daijisho media folders (a flat
+ * It looks in ES-DE's downloaded_media/[system]/[type]/, gamelist.xml files, media folders (a flat
  * folder of pictures counts as box art) and next to the ROMs. Folder listings are cached briefly.
  */
 final class MediaFinder {
@@ -42,7 +42,7 @@ final class MediaFinder {
     private static final String[][] ES_TYPES = {
             {"fanart"}, {"miximages"}, {"marquees"}, {"covers", "3dboxes"}, {"screenshots", "titlescreens"}
     };
-    /** Sub-folders other tools use under a system folder (Skraper, Daijisho media folders, ES classic). */
+    /** Sub-folders other tools use under a system folder (Skraper, ES classic). */
     private static final String[][] SUBS = {
             {"fanart", "media/fanart"},
             {"miximages", "miximage", "media/miximages"},
@@ -116,13 +116,6 @@ final class MediaFinder {
         }
 
         List<File> roots = new ArrayList<File>();
-        if (!Config.DJ_ROOT.isEmpty()) {
-            roots.add(new File(Config.DJ_ROOT));
-            File nested = child(new File(Config.DJ_ROOT), "DaijishoMedia");
-            if (nested != null) roots.add(nested);
-        }
-        File shared = new File("/storage/emulated/0/DaijishoMedia");
-        if (shared.isDirectory()) roots.add(shared);
         List<File> gamelistDirs = new ArrayList<File>();
         for (File r : roots) {
             File d = child(r, systemFolder);
@@ -155,7 +148,7 @@ final class MediaFinder {
         return f;
     }
 
-    /** The first picture of one kind, looking in ES-DE, then gamelist.xml files, then Daijisho and ROM folders. */
+    /** The first picture of one kind, looking in ES-DE, then gamelist.xml files, then ROM folders. */
     private static String of(Where w, int kind) {
         if (w.esBase != null) {
             for (String type : ES_TYPES[kind]) {

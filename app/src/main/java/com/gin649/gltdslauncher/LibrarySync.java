@@ -48,7 +48,7 @@ final class LibrarySync {
     }
 
     /**
-     * Points games at art your frontend (ES-DE or Daijisho) already has, so none of it is fetched again, and lets
+     * Points games at art your frontend (ES-DE) already has, so none of it is fetched again, and lets
      * go of links whose file is gone or whose use was switched off in the wizard. Art this app built or downloaded
      * itself is only replaced when the frontend has fan art or a finished miximage for the game.
      */

@@ -174,7 +174,7 @@ final class ThorBridge {
             File f = new File(new String(Base64.decode(token, Base64.URL_SAFE | Base64.NO_WRAP), "UTF-8"));
             if (!f.isFile()) return null;
             String p = f.getCanonicalPath();
-            String[] roots = {Config.ROMS_ROOT, Config.MEDIA_ROOT, Config.DJ_ROOT, "/storage/emulated/0/DaijishoMedia"};
+            String[] roots = {Config.ROMS_ROOT, Config.MEDIA_ROOT};
             for (String r : roots) {
                 if (!r.isEmpty() && p.startsWith(new File(r).getCanonicalPath() + "/")) return f;
             }
