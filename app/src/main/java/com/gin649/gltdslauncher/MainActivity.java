@@ -435,6 +435,18 @@ public class MainActivity extends Activity {
         super.onDestroy();
     }
 
+    /** If the tracker is running, puts the top screen's art in front of whatever covers it. */
+    static void bringArtToFront() {
+        final MainActivity a = current;
+        if (a == null) return;
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                a.showArtScreen();
+            }
+        });
+    }
+
     /** Brings the art screen to the front of the top display, starting it if it is gone. */
     void showArtScreen() {
         if (isFinishing() || isDestroyed() || SetupActivity.running) return;

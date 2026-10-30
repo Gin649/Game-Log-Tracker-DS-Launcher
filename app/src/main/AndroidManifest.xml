@@ -25,7 +25,16 @@
             android:exported="true"
             android:resizeableActivity="true"
             android:windowSoftInputMode="adjustResize"
-            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density|keyboardHidden|keyboard|navigation|uiMode">
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density|keyboardHidden|keyboard|navigation|uiMode" />
+
+        <!-- The app icon: brings both screens to the front, then closes -->
+        <activity
+            android:name=".LaunchActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:noHistory="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity="${applicationId}.launch">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
