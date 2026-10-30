@@ -275,7 +275,22 @@ function setupGameGuideUI(gameId, title, card, consoleId){
     wireRaGuideSection(guideWrap, gameId, title, consoleId, refreshList);
 
     const gfLink = guideWrap.querySelector('#guide-gf-link');
-    if(gfLink) gfLink.addEventListener('click', (e) => { e.preventDefault(); openInExternalBrowser(gfLink.href); });
+    // Goes straight to the game's own GameFAQs guides page when its GameFAQs number can be found (the same lookup
+    // "Need Cheats?" uses); otherwise to a search for the title.
+    if(gfLink) gfLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      let target = gfLink.href;
+      const label = gfLink.textContent;
+      gfLink.textContent = 'Finding the guides page…';
+      try{
+        const entry = (typeof libraryData !== 'undefined' ? libraryData : []).find(g => Number(g.GameID) === Number(gameId));
+        const r = await resolveCheatsUrl(gameId, title, entry ? entry.ConsoleName : '');
+        const m = /\/-\/(\d+)-\/cheats$/.exec(r.url || '');
+        if(m) target = `https://gamefaqs.gamespot.com/-/${m[1]}-/faqs`;
+      }catch(err){ /* keep the search link */ }
+      gfLink.textContent = label;
+      openInExternalBrowser(target);
+    });
 
     const pasteBtn = guideWrap.querySelector('#guide-paste-btn');
     const pasteBox = guideWrap.querySelector('#guide-paste-box');
