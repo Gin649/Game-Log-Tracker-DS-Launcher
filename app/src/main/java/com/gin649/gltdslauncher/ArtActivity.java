@@ -110,8 +110,8 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         badge.setTextColor(Color.WHITE);
         badge.setTextSize(16);
         badge.setSingleLine(true);
-        badge.setBackgroundColor(Color.argb(210, 21, 18, 31));
-        badge.setPadding(pad, pad / 2, pad, pad / 2);
+        badge.setTextColor(GOLD);
+        badge.setPadding(pad, pad / 2, pad, pad / 2); // sits inside the title bar, on its bottom line, at the right
         badge.setVisibility(View.GONE);
         FrameLayout.LayoutParams badgeParams = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
@@ -123,11 +123,6 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
             public void onLayoutChange(View v, int l, int t, int r, int b, int ol, int ot, int or, int ob) {
                 FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) panel.getLayoutParams();
                 int h = b - t;
-                FrameLayout.LayoutParams bp = (FrameLayout.LayoutParams) badge.getLayoutParams();
-                if (bp.bottomMargin != h) {
-                    bp.bottomMargin = h;
-                    badge.setLayoutParams(bp);
-                }
                 if (lp.bottomMargin != h) {
                     lp.bottomMargin = h;
                     panel.setLayoutParams(lp);
