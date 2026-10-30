@@ -279,6 +279,9 @@ public class MainActivity extends Activity {
         ws.setUseWideViewPort(true);
         ws.setLoadWithOverviewMode(true);
         // Pinch to zoom, as in the browser version (a guide can be zoomed in to read); no on-screen +/- buttons
+        // Link-outs (Need Cheats?, GameFAQs, ...) open a window from script. A controller press doesn't count as a
+        // touch, so without this Android blocks them; they then go to the in-app viewer through shouldOverrideUrlLoading.
+        ws.setJavaScriptCanOpenWindowsAutomatically(true);
         ws.setSupportZoom(true);
         ws.setBuiltInZoomControls(true);
         ws.setDisplayZoomControls(false);
