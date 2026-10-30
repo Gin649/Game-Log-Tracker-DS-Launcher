@@ -8,6 +8,10 @@
   function snapshot(){
     const wrap = $('#menu-wrap');
     if(!wrap || wrap.style.display === 'none') return null;
+    // About is shown on the top screen in place of the header while it is open.
+    if($('#about-backdrop').classList.contains('open')){
+      return { html: '<div class="about-top">' + $('#about-card').outerHTML + '</div>', body: document.body.classList.contains('pad-mode') ? 'pad-mode' : '' };
+    }
     const hero = $('#profile-hero');
     const heroShown = hero.children.length > 0 && $('#ra-content').style.display !== 'none';
     return {
@@ -32,6 +36,7 @@
   new MutationObserver(schedule).observe($('#profile-hero'), watch);
   new MutationObserver(schedule).observe($('#ra-content'), { attributes: true, attributeFilter: ['style'] });
   new MutationObserver(schedule).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  new MutationObserver(schedule).observe($('#about-backdrop'), { attributes: true, attributeFilter: ['class'] });
 
   function setActive(on){
     active = !!on;

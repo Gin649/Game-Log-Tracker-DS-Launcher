@@ -377,6 +377,12 @@
     z-index:100;padding:20px;padding-top:calc(20px + var(--status-h));overflow-y:auto;
   }
   .modal-backdrop.open{display:block;}
+  /* Social fills the screen so it is easier to read. */
+  #social-backdrop{padding:0;padding-top:var(--status-h);}
+  #social-card{max-width:none;margin:0;min-height:calc(100vh - var(--status-h));border-radius:0;border:none;}
+  /* With the header on the top screen, About is drawn there (mirror.js), so the bottom copy is left invisible. */
+  html.top-panel #about-backdrop.open{background:transparent;}
+  html.top-panel #about-backdrop.open #about-card{opacity:0;}
   .modal-card{
     max-width:480px;margin:20px auto 40px;background:var(--panel);
     border:1px solid var(--border);border-radius:8px;overflow:hidden;position:relative;

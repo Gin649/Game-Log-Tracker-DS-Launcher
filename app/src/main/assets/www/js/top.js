@@ -89,6 +89,12 @@
   // A tap on anything with an id is passed to the real element; a tap elsewhere (outside the
   // menu) is passed as an empty id, which closes the menu just like tapping away would.
   document.addEventListener('click', (e) => {
+    const link = e.target.closest('a[href]');
+    if(link){ // a link on the copy is opened by the real one
+      e.preventDefault();
+      if(link.id) try{ window.TopBridge.tap(link.id); }catch(err){ /* not inside the app */ }
+      return;
+    }
     const withId = e.target.closest('[id]');
     let id = '';
     if(withId && !/^(stage|dropdown-menu|menu-wrap|profile-hero)$/.test(withId.id)) id = withId.id;
