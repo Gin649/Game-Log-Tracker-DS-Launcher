@@ -441,7 +441,8 @@
   "core": "",
   "standalone": "armsx2",
   "standalones": [
-   "armsx2"
+   "armsx2",
+   "nethersx2"
   ]
  },
  {

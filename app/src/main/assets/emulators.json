@@ -76,6 +76,23 @@
   "data": "saf"
  },
  {
+  "id": "nethersx2",
+  "label": "NetherSX2 / AetherSX2",
+  "packages": [
+   "xyz.aethersx2.android"
+  ],
+  "labels": [
+   "nethersx2",
+   "aethersx2"
+  ],
+  "activity": "xyz.aethersx2.android.EmulationActivity",
+  "action": "android.intent.action.MAIN",
+  "data": "none",
+  "extras": {
+   "bootPath": "%ROMSAF%"
+  }
+ },
+ {
   "id": "watermelonds",
   "label": "WatermelonDS",
   "packages": [
