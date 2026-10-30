@@ -521,6 +521,8 @@ function showMatch(i){
   findState.idx = i;
   const r = findState.ranges[i];
   if(hasHighlightAPI){
+    // Painting thousands of highlights at once locks the page up, so only the matches around this one are painted.
+    setHighlight('guide-find', findState.ranges.slice(Math.max(0, i - 60), i + 60), 0);
     setHighlight('guide-find-current', [r], 1);
   }else{
     const sel = window.getSelection();
@@ -538,7 +540,7 @@ function runFind(){
   if(raw.length < 2){ $('#guide-find-count').textContent = 'Type 2+ letters'; return; }
   const needle = raw.toLowerCase();
   const idx = getReaderIndex();
-  const CAP = 5000;
+  const CAP = 400; // a short search matches everywhere; more than this is never useful to step through
   const ranges = [], starts = [];
   outer: for(const e of idx.nodes){
     const t = e.node.data.toLowerCase();
@@ -554,7 +556,6 @@ function runFind(){
   }
   findState.ranges = ranges; findState.starts = starts;
   if(!ranges.length){ $('#guide-find-count').textContent = 'No matches'; updateFindButtons(); return; }
-  setHighlight('guide-find', ranges, 0);
   // Start at the first match at or after where you are reading, not the top of the guide.
   const here = prevStart !== null ? prevStart : offsetAtViewportTop();
   let lo = 0, hi = starts.length;

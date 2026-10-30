@@ -65,6 +65,9 @@ final class LibrarySync {
                 }
             }
             if (!use) continue;
+            // Already linked to fan art or a finished miximage that is still there: nothing to look for, which
+            // keeps start-up fast with a big library (the lookup reads your media folders for every game).
+            if (cur != null && (FanArt.isGallery(ctx, cur) || isSettledFrontendArt(cur))) continue;
             MediaFinder.Found f = MediaFinder.lookup(g.systemId, g.romPath);
             if (f.direct != null) {
                 // a downloaded fan art you picked with a swipe stays; otherwise the frontend's picture is used
@@ -75,6 +78,12 @@ final class LibrarySync {
                 dao.setMiximagePath(g.id, null);
             }
         }
+    }
+
+    /** A frontend picture that is fan art or a finished miximage (not just box art or a marquee). */
+    private static boolean isSettledFrontendArt(String path) {
+        if (!Config.isFrontendMedia(path)) return false;
+        return path.contains("/fanart/") || path.contains("/miximages/") || path.contains("/miximage/");
     }
 
     /**
