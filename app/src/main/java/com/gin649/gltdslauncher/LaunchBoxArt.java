@@ -144,7 +144,7 @@ final class LaunchBoxArt {
         String[] best = null;
         int bestScore = 0;
         for (String[] r : idx.rows) {
-            int score = Matcher.similarity(title, r[0]);
+            int score = Matcher.artSimilarity(title, r[0]);
             if (score > bestScore) {
                 bestScore = score;
                 best = r;

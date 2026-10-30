@@ -206,6 +206,23 @@ final class Matcher {
      * 0 to 100. 100 when the titles are the same apart from punctuation, tags and small words; otherwise the
      * share of words in common, but 0 if the sequel numbers differ so "Game 2" never matches "Game".
      */
+    /**
+     * For finding a game's art online: like similarity(), but a title that is the other plus a subtitle also counts
+     * ("Sonic Adventure DX" for "Sonic Adventure DX: Director's Cut"), as long as the shorter one is at least three
+     * words so a short name never grabs a longer sequel.
+     */
+    static int artSimilarity(String a, String b) {
+        int s = similarity(a, b);
+        if (s >= 76) return s;
+        Set<String> ta = simTokens(a);
+        Set<String> tb = simTokens(b);
+        if (ta.isEmpty() || tb.isEmpty() || !numbers(ta).equals(numbers(tb))) return s;
+        Set<String> small = ta.size() <= tb.size() ? ta : tb;
+        Set<String> big = ta.size() <= tb.size() ? tb : ta;
+        if (small.size() >= 3 && big.containsAll(small)) return 76;
+        return s;
+    }
+
     static int similarity(String a, String b) {
         Set<String> ta = simTokens(a);
         Set<String> tb = simTokens(b);

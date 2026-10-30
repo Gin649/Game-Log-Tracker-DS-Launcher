@@ -98,7 +98,7 @@ final class SteamGridDbClient {
         for (int i = 0; i < data.length(); i++) {
             JSONObject g = data.optJSONObject(i);
             if (g == null) continue;
-            int score = Matcher.similarity(title, g.optString("name"));
+            int score = Matcher.artSimilarity(title, g.optString("name"));
             if (score > best) {
                 best = score;
                 bestId = g.optInt("id", 0);
