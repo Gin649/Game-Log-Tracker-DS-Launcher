@@ -50,16 +50,32 @@
     }
   }
 
+  // Which menu sections are open, so a section that has just opened can be brought to the top of the list.
+  let openSections = '';
+  const sectionsOpen = (menu) => Array.prototype.filter.call(menu.querySelectorAll('.dropdown-heading'), h => h.textContent.indexOf('\u25be') >= 0)
+    .map(h => h.id);
+
   window.GLTTop = {
     set(html, bodyClass){
       const before = openMenu();
-      if(!before) lastFocusKey = '';
+      if(!before){ lastFocusKey = ''; openSections = ''; }
       const kept = before ? before.scrollTop : 0;
       stage.innerHTML = html;
       document.body.className = bodyClass || '';
       fit();
       const menu = openMenu();
       if(menu && before) menu.scrollTop = kept; // a redraw shouldn't send the list back to the top
+      if(menu){
+        const now = sectionsOpen(menu);
+        const was = openSections ? openSections.split(',') : [];
+        const fresh = now.filter(id => was.indexOf(id) < 0)[0];
+        openSections = now.join(',');
+        const head = fresh && menu.querySelector('#' + fresh);
+        if(head){ // a section just opened: put its heading at the top so all of it shows
+          const k = stageZoom * MENU_ZOOM;
+          menu.scrollTop += (head.getBoundingClientRect().top - menu.getBoundingClientRect().top) / k - 2;
+        }
+      }
       keepFocusInMenu();
     },
     // The controller's right stick (or D-pad past the end) scrolls the menu here, not the tracker page.

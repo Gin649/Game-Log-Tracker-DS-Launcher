@@ -15,14 +15,33 @@ document.querySelectorAll('.dropdown-item:not(.dropdown-heading)').forEach(item 
   item.addEventListener('click', closeDropdownMenu);
 });
 
+// Only one menu section is open at a time. Called with the section that is opening (or none) to close the rest.
+const MENU_SECTIONS = ['ra', 'display', 'pad'];
+function collapseMenuSections(except){
+  MENU_SECTIONS.forEach(n => {
+    if(n === except) return;
+    const sub = $('#' + n + '-submenu'), arrow = $('#' + n + '-heading-arrow');
+    if(sub) sub.style.display = 'none';
+    if(arrow) arrow.textContent = '▸';
+  });
+}
+// Brings an opened section's heading to the top of the menu list, so the whole section shows without scrolling.
+function scrollMenuTo(name){
+  requestAnimationFrame(() => {
+    const menu = $('#dropdown-menu'), head = $('#btn-' + name + '-heading');
+    if(menu && head) menu.scrollTop = head.offsetTop - menu.offsetTop;
+  });
+}
 // A menu heading that opens and closes its submenu.
 function wireSubmenu(name){
   $('#btn-' + name + '-heading').addEventListener('click', (e) => {
     e.stopPropagation();
     const submenu = $('#' + name + '-submenu');
     const isOpen = submenu.style.display === 'block';
+    if(!isOpen) collapseMenuSections(name);
     submenu.style.display = isOpen ? 'none' : 'block';
     $('#' + name + '-heading-arrow').textContent = isOpen ? '▸' : '▾';
+    if(!isOpen) scrollMenuTo(name);
   });
 }
 ['ra', 'display'].forEach(wireSubmenu);

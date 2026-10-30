@@ -498,8 +498,10 @@
     e.stopPropagation();
     const sub = $('#pad-submenu');
     const isOpen = sub.style.display === 'block';
+    if(!isOpen) collapseMenuSections('pad');
     sub.style.display = isOpen ? 'none' : 'block';
     $('#pad-heading-arrow').textContent = isOpen ? '▸' : '▾';
+    if(!isOpen) scrollMenuTo('pad');
   });
   $('#pad-swap-switch').addEventListener('click', async (e) => {
     e.stopPropagation();
