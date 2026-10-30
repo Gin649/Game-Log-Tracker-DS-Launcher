@@ -10,12 +10,12 @@ def updateRepo = System.getenv('GITHUB_REPOSITORY') ?: 'Gin649/Game-Log-Tracker-
 
 android {
     namespace 'com.gin649.gltdslauncher'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId 'com.gin649.gltdslauncher'
         minSdk 30
-        targetSdk 33
+        targetSdk 35
         versionCode releaseVersionCode
         versionName releaseVersionName
 

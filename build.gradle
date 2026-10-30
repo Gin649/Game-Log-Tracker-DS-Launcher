@@ -1,5 +1,5 @@
 plugins {
     // Declares the Android Gradle Plugin version once for the whole project.
     // The :app module applies it without a version.
-    id 'com.android.application' version '8.5.2' apply false
+    id 'com.android.application' version '8.7.3' apply false
 }
