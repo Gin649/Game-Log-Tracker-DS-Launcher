@@ -261,7 +261,7 @@ function setupManualUI(body, ctx){
       const at = alts ? alts.indexOf(file.path || meta.path) : -1;
       const copy = alts && at >= 0 ? `, copy ${at + 1} of ${alts.length}` : '';
       set(`${note('PDF, ' + manualSizeLabel(file.size) + ', saved on this device' + copy)}
-        <div class="gd-manual-actions">${btn('Read manual', 'read', true)}${btn('Save PDF', 'save')}${btn('Look for Alternative Manual', 'alt')}${btn('Remove', 'remove')}</div>${extra || ''}`);
+        <div class="gd-manual-actions">${btn('Read manual', 'read', true)}${btn('Look for Alternative Manual', 'alt')}${btn('Remove', 'remove')}</div>${extra || ''}`);
       return;
     }
     if(meta && !meta.found){
@@ -361,27 +361,13 @@ function setupManualUI(body, ctx){
     if(act === 'find') run();
     else if(act === 'alt') runAlternative();
     else if(act === 'read') openManualReader(gameId, title);
-    else if(act === 'save'){
-      const file = await manualFileGet(gameId);
-      if(file) saveManualFile(file);
-    }else if(act === 'remove'){
+    else if(act === 'remove'){
       await manualFileDelete(gameId).catch(() => {});
       showIdle();
     }
   });
 
   showIdle();
-}
-
-function saveManualFile(file){
-  const url = URL.createObjectURL(file.blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = (file.name || 'manual').replace(/[\\/:*?"<>|]/g, '').replace(/\.pdf$/i, '') + '.pdf';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 // Viewer. PDF.js loads from cdnjs on first use; pages are only drawn when they scroll near the screen.
