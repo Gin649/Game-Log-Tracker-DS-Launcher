@@ -688,3 +688,11 @@ $('#modal-backdrop').addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => {
   if(e.key === 'Escape'){ closeGameModal(); closeAddGameModal(); closeRawgModal(); closeRaConnectModal(); closeDataModal(); closeAboutModal(); closeSocialModal(); closeDropdownMenu(); }
 });
+
+// Only one section of a game profile is open at a time: opening one closes the one that was open.
+// (Capture phase, so the open one is closed before the new one starts opening.)
+document.addEventListener('click', (ev) => {
+  const btn = ev.target.closest && ev.target.closest('#modal-card .btn-view-achievements');
+  if(!btn || btn.classList.contains('open') || btn.classList.contains('btn-play-thor') || btn.id === 'modal-cheats-btn') return;
+  $('#modal-card').querySelectorAll('.btn-view-achievements.open').forEach(other => { if(other !== btn) other.click(); });
+}, true);
