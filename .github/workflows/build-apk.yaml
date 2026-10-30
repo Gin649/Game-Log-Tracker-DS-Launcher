@@ -29,6 +29,8 @@ jobs:
 
       - name: Build debug APK
         shell: bash
+        env:
+          VERSION_CODE: ${{ github.run_number }} # a higher number each build, so Android installs it over the last one
         run: |
           set -o pipefail
           gradle assembleDebug --no-daemon 2>&1 | tee build.log
