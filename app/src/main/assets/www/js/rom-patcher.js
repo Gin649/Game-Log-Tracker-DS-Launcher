@@ -961,7 +961,39 @@ function setupRomPatchUI(gameId, title, card, consoleName){
       afterMsg.textContent = res.message || (res.ok ? 'Starting the game…' : 'Could not start the game.');
     });
     const blBtn = patchWrap.querySelector('#patch-backlog-btn');
-    if(blBtn) blBtn.addEventListener('click', async () => { backlogId = await addGameToBacklog(hackId, afterMsg, blBtn) || backlogId; });
+    if(blBtn) blBtn.addEventListener('click', async () => {
+      if(importCustom && !hackId){
+        // not on RetroAchievements: a custom game on the same system as the base game, pointing at the patched ROM
+        const existing = libraryData.find(x => x.customConsole && x.romPath === playPath);
+        if(existing){ afterMsg.textContent = 'This hack is already in your library or backlog.'; blBtn.disabled = true; backlogId = existing.GameID; return; }
+        const entry = {
+          GameID: -Date.now(), // negative, so it never clashes with a real RA GameID
+          Title: String(savedName || 'Patched game').replace(/\.[^./\\]+$/, ''),
+          ConsoleID: null, ConsoleName: consoleName,
+          ImageIcon: null, ImageBoxArt: null,
+          MaxPossible: 0, NumAwarded: 0, NumAwardedHardcore: 0,
+          HighestAwardKind: null, HighestAwardDate: null, MostRecentAwardedDate: null,
+          pct: 0, lastPlayed: null,
+          manual: true, customConsole: true,
+          folder: folder, romPath: playPath,
+          genre: null, released: null,
+          manualStarted: false, manualBeaten: false, manualBeatenDate: null,
+        };
+        try{
+          libraryData = [...libraryData, entry];
+          await saveManualGames([...(await loadManualGames()), entry]);
+          renderLibraryViews();
+          backlogId = entry.GameID;
+          afterMsg.textContent = 'Added to your Backlog as a custom game.';
+          blBtn.disabled = true;
+          if(typeof fillMissingCustomArt === 'function') setTimeout(fillMissingCustomArt, 500);
+        }catch(e){
+          afterMsg.textContent = "Couldn't add it to your backlog. Try again in a moment.";
+        }
+        return;
+      }
+      backlogId = await addGameToBacklog(hackId, afterMsg, blBtn) || backlogId;
+    });
     patchWrap.querySelector('#patch-back-btn').addEventListener('click', renderResults);
   }
 
@@ -1179,6 +1211,7 @@ function setupRomPatchUI(gameId, title, card, consoleName){
   let backToOther = false;
   let importedPatch = null; // { name, bytes }
   let trustedRaId = null;   // an RA game ID typed in by the person
+  let importCustom = false; // an imported hack with no RA game ID: the backlog gets it as a custom game
   function renderOther(){
     backToOther = true;
     const backTarget = discMode ? renderDiscStage : renderRomStage;
@@ -1200,7 +1233,7 @@ function setupRomPatchUI(gameId, title, card, consoleName){
         </div>
       </div>
       <input type="text" id="patch-import-raid" inputmode="numeric" placeholder="RetroAchievements game ID (optional)" value="${trustedRaId || ''}" style="width:100%;box-sizing:border-box;margin-top:10px;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:var(--text);font-size:0.7812rem;">
-      ${smallNote("If the hack has its own RetroAchievements page, enter its game ID so it's checked against RA and added to your backlog as that game. Otherwise it's added as the base game.")}
+      ${smallNote("If the hack has its own RetroAchievements page, enter its game ID so it's checked against RA and added to your backlog as that game. Otherwise it's added as a custom game on the same system.")}
     `;
     patchWrap.querySelector('#patch-back-btn').addEventListener('click', () => { backToOther = false; backTarget(); });
     const input = patchWrap.querySelector('#patch-import-input');
@@ -1220,6 +1253,7 @@ function setupRomPatchUI(gameId, title, card, consoleName){
       trustedRaId = /^\d{1,7}$/.test(idText) ? Number(idText) : null;
       const { name, bytes } = importedPatch;
       chosenLabel = name;
+      importCustom = !trustedRaId;
       const isZip = bytes.length > 4 && bytes[0] === 0x50 && bytes[1] === 0x4B;
       if(isZip){ await applyFromZip({ label: name, url: '' }, bytes, trustedRaId); return; }
       const kind = patchKindFromName(name);
@@ -1328,6 +1362,7 @@ function setupRomPatchUI(gameId, title, card, consoleName){
   }
 
   async function selectAndApply(entry, verifyGameId){
+    importCustom = false;
     chosenLabel = entry.label || '';
     patchWrap.innerHTML = loadingHtml('Downloading patch…');
     try{
