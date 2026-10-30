@@ -2,6 +2,23 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
+## v1.0.6
+
+### Added
+- Choose which fan art to use for a game. Swipe left or right on the top screen to change it. A small counter in the title bar, for example 1 / 5, shows which one you're on, and it appears briefly when you swipe or when more fan art has finished downloading. When you open a game's profile, the app now also downloads fan art from SteamGridDB and LaunchBox, even if ES-DE already has one, so you have more to pick from. Your choice is remembered.
+
+### Changed
+- Start-up is faster. The app no longer searches your ES-DE media folders for every game when it opens. A game's art is looked up when you open its profile and then saved, so it isn't searched for again. Fetch game art is now the only thing that re-checks every game.
+- Only one section is open at a time in a game profile. Opening ROM Hacks closes Game Guide, for example.
+- Only one section is open at a time in the hamburger menu, and the section you open scrolls to the top so you can see all of it.
+- Social now fills the whole bottom screen instead of a small window, so it is easier to read.
+- Guide search no longer runs while you type. Type the full word, then tap the new → button beside the search box.
+- Manuals no longer have a Save PDF button, since the PDF is already saved in your storage folder.
+
+### Fixed
+- Refreshing a game profile now keeps your place on the page, and the controller highlight stays where it was instead of jumping back to Play on this device.
+- Searching for a short word in a long guide no longer freezes the app. It stops at 400 matches and only highlights the ones near the one you're on.
+
 ## v1.0.5
 
 ### Added
