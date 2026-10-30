@@ -104,7 +104,16 @@ final class MediaFinder {
         w.name = name;
         w.fileName = fileName;
 
-        if (!Config.MEDIA_ROOT.isEmpty()) w.esBase = child(new File(Config.MEDIA_ROOT), systemFolder);
+        if (!Config.MEDIA_ROOT.isEmpty()) {
+            w.esBase = child(new File(Config.MEDIA_ROOT), systemFolder);
+            if (w.esBase == null) {
+                // ES-DE names its media folders by its own system names ("gc"), while your ROM folder may be called
+                // "GameCube": look under the built-in name that folder stands for.
+                SystemMap sm = Shared.systems();
+                String base = sm == null ? systemFolder : sm.baseOf(systemFolder);
+                if (!base.equals(systemFolder)) w.esBase = child(new File(Config.MEDIA_ROOT), base);
+            }
+        }
 
         List<File> roots = new ArrayList<File>();
         if (!Config.DJ_ROOT.isEmpty()) {
