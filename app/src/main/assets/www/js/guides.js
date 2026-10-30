@@ -706,9 +706,14 @@ $('#guide-find-next').addEventListener('click', () => stepMatch(1));
 $('#guide-find-back').addEventListener('click', () => {
   if(findState.origin !== null) $('#guide-reader-body').scrollTo({ top: findState.origin, behavior: 'auto' });
 });
+// Nothing is searched while you type: finish the word, then press Enter (or the next arrow). That avoids hunting for
+// thousands of matches on the first couple of letters.
 $('#guide-find-input').addEventListener('input', () => {
   clearTimeout(findState.timer);
-  findState.timer = setTimeout(runFind, 250);
+  clearFind();
+  const has = $('#guide-find-input').value.trim().length > 0;
+  $('#guide-find-count').textContent = has ? 'Press Enter to search' : '';
+  updateFindButtons();
 });
 $('#guide-find-input').addEventListener('keydown', (e) => {
   if(e.key === 'Enter'){

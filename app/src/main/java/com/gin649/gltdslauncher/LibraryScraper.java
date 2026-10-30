@@ -148,6 +148,7 @@ final class LibraryScraper {
                 try {
                     GameDao dao = GameRepository.get(ctx).dao();
                     dao.resetNoMatch(); // a manual run tries everything again, in case a key or a source was added
+                    LibrarySync.linkEsdeMedia(ctx, true); // the one time every game's media folders are checked again
                     List<GameEntity> todo = new java.util.ArrayList<GameEntity>();
                     Set<Integer> seen = new HashSet<Integer>();
                     int had = 0;

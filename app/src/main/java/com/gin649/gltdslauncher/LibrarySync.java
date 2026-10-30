@@ -44,7 +44,7 @@ final class LibrarySync {
             }
             repo.syncSystem(s.folder, found);
         }
-        linkEsdeMedia(ctx);
+        linkEsdeMedia(ctx, false); // only tidies old links; each game is looked at when its profile opens, or by Fetch game art
     }
 
     /**
@@ -52,7 +52,7 @@ final class LibrarySync {
      * go of links whose file is gone or whose use was switched off in the wizard. Art this app built or downloaded
      * itself is only replaced when the frontend has fan art or a finished miximage for the game.
      */
-    static void linkEsdeMedia(Context ctx) {
+    static void linkEsdeMedia(Context ctx, boolean full) {
         GameDao dao = GameRepository.get(ctx).dao();
         boolean use = Config.useEsdeMedia();
         for (GameEntity g : dao.getAllGames()) {
@@ -65,9 +65,8 @@ final class LibrarySync {
                 }
             }
             if (!use) continue;
-            // Already linked to fan art or a finished miximage that is still there: nothing to look for, which
-            // keeps start-up fast with a big library (the lookup reads your media folders for every game).
-            if (cur != null && (FanArt.isGallery(ctx, cur) || isSettledFrontendArt(cur))) continue;
+            // Looking in your media folders costs a read per game, so it only happens for all of them on Fetch game art.
+            if (!full) continue;
             MediaFinder.Found f = MediaFinder.lookup(g.systemId, g.romPath);
             if (f.direct != null) {
                 // a downloaded fan art you picked with a swipe stays; otherwise the frontend's picture is used
@@ -119,9 +118,20 @@ final class LibrarySync {
         GameEntity g = find(ctx, rom);
         String cur = g == null || g.localMiximagePath == null || !new File(g.localMiximagePath).isFile() ? null : g.localMiximagePath;
         String fallback = null;
+        // Already linked to fan art or a finished miximage that is still there: no need to look in the media folders again.
+        if (cur != null && (FanArt.isGallery(ctx, cur) || isSettledFrontendArt(cur))) return cur;
         if (Config.useEsdeMedia()) {
             MediaFinder.Found f = MediaFinder.lookup(rom);
-            if (f.direct != null) return FanArt.isGallery(ctx, cur) ? cur : f.direct; // a fan art you picked beats the frontend's
+            if (f.direct != null) {
+                if (FanArt.isGallery(ctx, cur)) return cur; // a fan art you picked beats the frontend's
+                if (g != null && !f.direct.equals(g.localMiximagePath)) {
+                    try {
+                        GameRepository.get(ctx).dao().setMiximagePath(g.id, f.direct); // remembered, so it isn't looked for again
+                    } catch (Exception ignored) {
+                    }
+                }
+                return f.direct;
+            }
             if (f.canBuild()) {
                 if (cur != null && !Config.isFrontendMedia(cur)) return cur;
                 String built = buildMiximage(ctx, g, f);
