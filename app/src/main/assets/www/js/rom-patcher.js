@@ -771,10 +771,8 @@ async function fillPatchInfo(panel, label, gameTitle){
   }
   const links = [];
   if(info && Number(info.ForumTopicID)) links.push(['RA forum thread: the hack\'s notes', `https://retroachievements.org/viewtopic.php?t=${Number(info.ForumTopicID)}`]);
-  if(raId) links.push(['RetroAchievements page', `https://retroachievements.org/game/${raId}`]);
-  links.push(['ROMhacking.net', `https://duckduckgo.com/?q=${encodeURIComponent('site:romhacking.net ' + title)}`]);
+  links.push(['ROMhacking.net', `https://www.romhacking.net/?page=hacks&title=${encodeURIComponent(title)}&hacksearch=Go`]);
   links.push(['romhack.ing', romhackIngUrl(title)]);
-  links.push(['Search the web', `https://duckduckgo.com/?q=${encodeURIComponent('"' + title + '" rom hack')}`]);
   panel.innerHTML = `
     <div class="patch-info-title">${esc(title)}</div>
     ${facts.length ? `<div class="patch-info-facts">${esc(facts.join(' · '))}</div>` : ''}
