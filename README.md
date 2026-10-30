@@ -34,17 +34,9 @@ The web version has the full details: https://github.com/Gin649/Game-Log-Tracker
 
 The top screen shows the game you have open, with its title and system underneath. It also carries your profile card and the menu, so the bottom screen stays free for the tracker.
 
-The picture it shows is the best one available, in this order:
-
-1. **Fan art or a finished miximage** from your frontend.
-2. **Fan art online**: SteamGridDB first (if you gave the app a free key), then LaunchBox, which needs no account.
-3. **A miximage built for you** from your frontend's screenshot, box art and marquee.
-4. **A miximage built from LaunchBox's** box art, screenshot and logo.
-5. **Your marquee, then box art**, if nothing better turns up.
-
 Art you already have is never downloaded again. Opening a game that has no art fetches it in the background, and Fetch game art (in the menu under Data) does the games in your Library and Backlog.
 
-When a game has several fan arts online (up to six), swipe left or right on the top screen to pick one; the choice is remembered. The extra ones are downloaded the first time you open the game. Art from your frontend (ES-DE or Daijisho) is used as it is and has no alternatives to swipe between.
+When a game has several fan arts online (up to six), swipe left or right on the top screen to pick one; the choice is remembered. 
 
 ### Playing your games
 
@@ -67,11 +59,6 @@ When a game has several fan arts online (up to six), swipe left or right on the 
 | L1 / R1 | Previous / next console |
 | L2 / R2 | Previous / next tab |
 
-When you switch console or tab, the highlight lands on the first game in the list.
-
-In a manual, L1 / R1 turn a page up or down and L2 / R2 zoom out or in.
-
-Touch works as normal and hides the highlight. The Android back button and edge swipe never close the app, so use Home for that.
 
 ### Other things
 
@@ -84,7 +71,7 @@ Touch works as normal and hides the highlight. The Android back button and edge 
 
 1. Download the latest `.apk` from the Releases page: https://github.com/Gin649/Game-Log-Tracker-DS-Launcher/releases
 2. Install it. Android will ask you to allow installing from your browser or file manager the first time.
-3. Open the app on the **bottom screen**. The setup wizard opens on the top screen while the bottom screen shows the logo.
+3. Open the app on the **bottom screen**. The setup wizard will open.
 4. Follow the wizard. It asks for:
    - **File access** so the app can find your games and artwork, and **usage access** so the top screen returns to the tracker when a game closes.
    - Your RetroAchievements username and Web API key. You can find the key on RA under Control Panel, then Keys.
@@ -102,8 +89,6 @@ Everything is stored on your device: your RA login, keys, added games, playtime,
 
 The app keeps its own files (that saved data, plus fetched game art) in a folder you choose in the setup wizard, under Your folders. The default is a GameLogTracker folder in shared storage, so it survives uninstalling the app and switching between debug and release builds. Changing the folder moves what is already saved. Without file access the app falls back to its private folder.
 
-Menu, then Data, then Export saves a backup file, and Import loads it again. The backup includes your API keys, so treat the file like a password.
-
 ## Privacy
 
 None of your data is stored by me, and the app has no analytics or tracking. RetroAchievements requests go straight from the app to RetroAchievements. Your optional RAWG and SteamGridDB keys are only sent to those services.
@@ -120,15 +105,7 @@ Other sites the app contacts, and why:
 - cdnjs.cloudflare.com, to load the manual viewer the first time you open a manual.
 - GitHub, to check for new app versions and to find ROM patches and guides.
 
-## Thanks
-
-Joey (https://www.joeysretrohandhelds.com) helped make this possible, and his JoeyOS app inspired the guide lookup and the ROM patcher. I used his approach with his permission.
-CHD and RVZ patching uses chdman (from MAME) and dolphin-tool (from Dolphin), both GPL-2.0, built with Joey's scripts. Licences are in the licences folder.
-
-Achievement data comes from RetroAchievements and ratings and box art from RAWG. Fan art comes from SteamGridDB and the LaunchBox games database. Text guides come from the GameFAQs archive on archive.org, indexed by the Guide Watch project. I'm not affiliated with any of them.
-
 ## Contact
 
-Questions or bugs: open an issue here, or find me on Discord.
-
+Questions or bugs: find me on Discord or 
 Email: ginsretrogamehub@gmail.com   
