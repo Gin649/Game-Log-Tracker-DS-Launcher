@@ -928,7 +928,7 @@ function setupRomPatchUI(gameId, title, card, consoleName){
     try{
       const g = await raFetch('API_GetGameExtended.php', { i: raGameId });
       if(!g || !(g.ID || g.Title)) throw new Error('not found');
-      if(Number(raGameId) !== Number(gameId) && !titleLooksRelated(g.Title, chosenLabel, title)){
+      if(Number(raGameId) !== Number(gameId) && !(trustedRaId && Number(raGameId) === trustedRaId) && !titleLooksRelated(g.Title, chosenLabel, title)){
         // the number points at some other game, so the patched game is the one being viewed
         statusEl.textContent = '';
         return addGameToBacklog(gameId, statusEl, btn);
@@ -1019,6 +1019,7 @@ function setupRomPatchUI(gameId, title, card, consoleName){
       </label>
       <div id="patch-remember-status" style="font-size:0.675rem;margin-top:4px;min-height:1em;"></div>
       <button class="guide-btn guide-btn-primary" id="patch-search-btn" style="width:100%;margin-top:12px;">Search RA Patches</button>
+      <button class="guide-btn guide-btn-outline" id="patch-other-btn" style="width:100%;margin-top:8px;">Search Other Patches</button>
     `;
     const forget = () => { romBytes = null; romFilename = null; romFromStorage = false; };
     patchWrap.querySelector('#patch-rom-change-btn').addEventListener('click', () => {
@@ -1047,6 +1048,7 @@ function setupRomPatchUI(gameId, title, card, consoleName){
       }
     });
     patchWrap.querySelector('#patch-search-btn').addEventListener('click', runSearch);
+    patchWrap.querySelector('#patch-other-btn').addEventListener('click', renderOther);
   }
 
   function renderDiscStage(){
@@ -1060,11 +1062,14 @@ function setupRomPatchUI(gameId, title, card, consoleName){
       ${smallNote(`Found in your ${esc(discInfo.folder)} folder${isCue ? '' : ' (' + fmtSize(discInfo.size) + ')'}. The patched disc is saved next to it and your original isn't changed.`)}
       ${discInfo.ok
         ? `<div style="font-size:0.675rem;color:var(--muted);margin-top:6px;line-height:1.5;">Discs are patched straight from storage, so a big one can take a few minutes. Works with BIN/CUE, ISO, CSO, CHD and RVZ games, and IPS, PPF, BPS, UPS and xdelta patches. You'll need about as much free space as the game takes.${discInfo.note ? ' ' + esc(discInfo.note) : ''}</div>
-           <button class="guide-btn guide-btn-primary" id="patch-search-btn" style="width:100%;margin-top:12px;">Search RA Patches</button>`
+           <button class="guide-btn guide-btn-primary" id="patch-search-btn" style="width:100%;margin-top:12px;">Search RA Patches</button>
+      <button class="guide-btn guide-btn-outline" id="patch-other-btn" style="width:100%;margin-top:8px;">Search Other Patches</button>`
         : `<div class="hash-status mismatch" style="margin-top:8px;">${esc(discInfo.message || "This kind of disc image can't be patched here.")}</div>`}
     `;
     const sb = patchWrap.querySelector('#patch-search-btn');
     if(sb) sb.addEventListener('click', runSearch);
+    const ob = patchWrap.querySelector('#patch-other-btn');
+    if(ob) ob.addEventListener('click', renderOther);
   }
 
   // RA's own patch links for this game entry (API_GetGameHashes PatchUrl).
@@ -1093,6 +1098,7 @@ function setupRomPatchUI(gameId, title, card, consoleName){
   // - Patches whose BPS/UPS checksum says they were made for this exact ROM (from the index).
   // - Name matches: the title's words in the file name, or the game's folder (hacks are filed by game).
   async function runSearch(){
+    backToOther = false;
     if(rememberRom && !romFromStorage && romBytes){
       try{ await saveRom(gameId, romFilename, romBytes); romFromStorage = true; }catch(e){}
     }
@@ -1169,6 +1175,62 @@ function setupRomPatchUI(gameId, title, card, consoleName){
     }
   }
 
+  // Hacks that RetroAchievements doesn't list: find one on a hack site, then import the downloaded file here.
+  let backToOther = false;
+  let importedPatch = null; // { name, bytes }
+  let trustedRaId = null;   // an RA game ID typed in by the person
+  function renderOther(){
+    backToOther = true;
+    const backTarget = discMode ? renderDiscStage : renderRomStage;
+    patchWrap.innerHTML = `
+      <button class="guide-btn guide-btn-ghost" id="patch-back-btn">‹ Back</button>
+      ${mutedP('Find a hack on one of these sites and download it, then import the file below.', '10px 0 6px')}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a class="guide-btn guide-btn-outline" style="flex:1;text-align:center;" href="https://www.romhacking.net/?page=hacks&title=${encodeURIComponent(title)}" target="_blank" rel="noopener">romhacking.net ↗</a>
+        <a class="guide-btn guide-btn-outline" style="flex:1;text-align:center;" href="${romhackIngUrl(title)}" target="_blank" rel="noopener">romhack.ing ↗</a>
+      </div>
+      <div class="patch-group-title" style="margin-top:14px;">Import a ROM hack file</div>
+      ${smallNote('A .ips, .bps, .ups, .ppf, .aps or xdelta patch, or a .zip that has one inside.')}
+      <input type="file" id="patch-import-input" style="display:none;">
+      <div class="patch-result-list" style="margin-top:8px;">
+        <div class="patch-result-row">
+          <div class="info"><div class="fn" id="patch-import-name">${importedPatch ? esc(importedPatch.name) : 'No file chosen'}</div></div>
+          <button type="button" id="patch-import-pick">Import…</button>
+          <button type="button" id="patch-import-use" ${importedPatch ? '' : 'disabled'}>Use</button>
+        </div>
+      </div>
+      <input type="text" id="patch-import-raid" inputmode="numeric" placeholder="RetroAchievements game ID (optional)" value="${trustedRaId || ''}" style="width:100%;box-sizing:border-box;margin-top:10px;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:var(--text);font-size:0.7812rem;">
+      ${smallNote("If the hack has its own RetroAchievements page, enter its game ID so it's checked against RA and added to your backlog as that game. Otherwise it's added as the base game.")}
+    `;
+    patchWrap.querySelector('#patch-back-btn').addEventListener('click', () => { backToOther = false; backTarget(); });
+    const input = patchWrap.querySelector('#patch-import-input');
+    const nameEl = patchWrap.querySelector('#patch-import-name');
+    const useBtn = patchWrap.querySelector('#patch-import-use');
+    patchWrap.querySelector('#patch-import-pick').addEventListener('click', () => input.click());
+    input.addEventListener('change', async () => {
+      const file = input.files && input.files[0];
+      if(!file) return;
+      importedPatch = { name: file.name, bytes: new Uint8Array(await file.arrayBuffer()) };
+      nameEl.textContent = file.name;
+      useBtn.disabled = false;
+    });
+    useBtn.addEventListener('click', async () => {
+      if(!importedPatch) return;
+      const idText = patchWrap.querySelector('#patch-import-raid').value.trim();
+      trustedRaId = /^\d{1,7}$/.test(idText) ? Number(idText) : null;
+      const { name, bytes } = importedPatch;
+      chosenLabel = name;
+      const isZip = bytes.length > 4 && bytes[0] === 0x50 && bytes[1] === 0x4B;
+      if(isZip){ await applyFromZip({ label: name, url: '' }, bytes, trustedRaId); return; }
+      const kind = patchKindFromName(name);
+      if(!kind || kind === 'archive'){
+        showFailure("That file isn't a patch this app can apply. Use an IPS, BPS, UPS, PPF, APS or xdelta file, or a zip containing one.");
+        return;
+      }
+      await applyPatchBytes(name, kind, bytes, trustedRaId);
+    });
+  }
+
   function resultRow(entry, badge, group){
     return `
       <div class="patch-result-row">
@@ -1191,6 +1253,7 @@ function setupRomPatchUI(gameId, title, card, consoleName){
   }
 
   function renderResults(){
+    if(backToOther || !results){ renderOther(); return; }
     const groups = ['official', 'byId', 'verified', 'unverified', 'translations'];
     const total = groups.reduce((n, g) => n + results[g].length, 0);
     const fallbackNote = (results.usedFallback && !results.byId.length)
@@ -1201,8 +1264,10 @@ function setupRomPatchUI(gameId, title, card, consoleName){
         ${fallbackNote}
         ${mutedP("No patches for this game were found in the RAPatches repo, and RetroAchievements has none linked to it. If you're after a particular hack, open that hack's own RetroAchievements game page rather than the base game's.")}
         <a class="guide-btn guide-btn-outline" href="https://github.com/${RAPATCHES_OWNER}/${RAPATCHES_REPO}" target="_blank" rel="noopener">Browse RAPatches on GitHub ↗</a>
+        <button class="guide-btn guide-btn-outline" id="patch-other-btn" style="width:100%;margin-top:8px;">Search Other Patches</button>
         <button class="guide-btn guide-btn-ghost" id="patch-back-btn" style="width:100%;margin-top:8px;">‹ Back</button>
       `;
+      patchWrap.querySelector('#patch-other-btn').addEventListener('click', renderOther);
       patchWrap.querySelector('#patch-back-btn').addEventListener('click', renderRomStage);
       return;
     }
