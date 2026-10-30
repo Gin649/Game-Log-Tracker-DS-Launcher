@@ -1,6 +1,10 @@
 # Game Log Tracker DS Launcher
 
-Game Log Tracker as an Android app, built for two screen devices like the AYN Thor and the Retroid Pocket Duo. Track your RetroAchievements and completions on the bottom screen, see your game's art on the top screen, and start your games in RetroArch or a standalone emulator with one tap. It also works on single-screen Android devices (Android 11 or newer). Everything you add is saved on your own device.
+Game Log Tracker DS Launcher is the Android app version you've been waiting for, built for two screen devices like the AYN Thor and the Retroid Pocket Duo. 
+
+Track your RetroAchievements and completions on the bottom screen, see your game's art on the top screen, and start your games in RetroArch or a standalone emulator with one tap. It also works on single-screen Android devices or Phones. 
+
+Everything you add is saved on your own device in your choice of local or default system folder.
 
 Join the Gin649sRetroGameHub Discord: https://discord.gg/6dgZA4yD2
 
@@ -71,14 +75,15 @@ When a game has several fan arts online (up to six), swipe left or right on the 
 
 1. Download the latest `.apk` from the Releases page: https://github.com/Gin649/Game-Log-Tracker-DS-Launcher/releases
 2. Install it. Android will ask you to allow installing from your browser or file manager the first time.
-3. Open the app on the **bottom screen**. The setup wizard will open.
+3. Open the app. The setup wizard will open.
 4. Follow the wizard. It asks for:
    - **File access** so the app can find your games and artwork, and **usage access** so the top screen returns to the tracker when a game closes.
-   - Your RetroAchievements username and Web API key. You can find the key on RA under Control Panel, then Keys.
-   - Optional: a free RAWG key for ratings and game details, and a free SteamGridDB key for fan art.
-   - Which frontend you use (ES-DE or none), your ROMs folder, and the frontend's folder.
-   - Which emulator to use for each system. Only systems found in your ROMs folder are listed.
-   - Which screen is the top screen, and how big the tracker should be on the bottom screen.
+   - Mandatory: Your RetroAchievements username and Web API key. You can find the key on RA under Control Panel, then Keys.
+   - Optional but recommended to get full experience: a free RAWG key for ratings and game details, and a free SteamGridDB key for fan art. Launchbox artwork doesn't need a key and will be used by default if you don't give one.
+   - For single screen devices uncheck launchbox and leave the steamgriddb blank. All artwork scraped is for the top screen and not needed for single screen devices.
+   - Which frontend you use (ES-DE or none), your ROMs folder, and the frontend's media folder if you use ESDE. If you you select none, new fan art will be scraped as you navigate game library.
+   - Which emulator to use for each system. Only systems found in your Roms folder and emulators/cores on your device are listed.
+   - Which screen is the top screen, and how big the text on the tracker should be on the bottom screen. This is automatically configured. For single screen just leave it on automatic. 
 5. Tap Finish. You can change any of it later from the tracker's menu, under Launcher settings.
 
 **Coming from the web version?** The app keeps its own data, so move yours over once. In the web version choose Menu, then Data, then Export. In the app choose Menu, then Data, then Import.
