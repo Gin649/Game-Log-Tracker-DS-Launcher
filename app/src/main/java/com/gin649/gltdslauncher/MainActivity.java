@@ -278,6 +278,10 @@ public class MainActivity extends Activity {
         ws.setMediaPlaybackRequiresUserGesture(false);
         ws.setUseWideViewPort(true);
         ws.setLoadWithOverviewMode(true);
+        // Pinch to zoom, as in the browser version (a guide can be zoomed in to read); no on-screen +/- buttons
+        ws.setSupportZoom(true);
+        ws.setBuiltInZoomControls(true);
+        ws.setDisplayZoomControls(false);
         ws.setUserAgentString(ws.getUserAgentString() + " GLTThor/1");
 
         // The tracker is bundled in assets/www and served from https://appassets.androidplatform.net/assets/...

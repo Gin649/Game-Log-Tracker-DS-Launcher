@@ -76,6 +76,32 @@ public class WebViewerActivity extends Activity {
         }
     }
 
+    /**
+     * Sites' "Copy" buttons use navigator.clipboard, which a WebView often refuses ("failed to copy"). This hands the
+     * text to the phone's clipboard instead.
+     */
+    private static final String CLIP_JS = "(function(){if(window.__gltClip)return;window.__gltClip=1;"
+            + "var w=function(t){try{GLTClip.copy(String(t));return Promise.resolve();}catch(e){return Promise.reject(e);}};"
+            + "var c={writeText:w,readText:function(){return Promise.reject(new Error('not allowed'));},"
+            + "write:function(items){try{var it=items&&items[0];if(it&&it.getType&&it.types.indexOf('text/plain')>=0){"
+            + "return it.getType('text/plain').then(function(b){return b.text();}).then(w);}}catch(e){}return Promise.reject(new Error('not supported'));}};"
+            + "try{Object.defineProperty(navigator,'clipboard',{value:c,configurable:true});}catch(e){try{navigator.clipboard.writeText=w;}catch(e2){}}})();";
+
+    private final class ClipBridge {
+        @android.webkit.JavascriptInterface
+        public void copy(final String text) {
+            if (text == null || text.length() > 5_000_000) return;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    android.content.ClipboardManager cm = (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                    if (cm != null) cm.setPrimaryClip(android.content.ClipData.newPlainText("text", text));
+                    Toast.makeText(WebViewerActivity.this, "Copied", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+
     private int dp(int v) {
         return Math.round(v * getResources().getDisplayMetrics().density);
     }
@@ -178,6 +204,10 @@ public class WebViewerActivity extends Activity {
         ws.setMediaPlaybackRequiresUserGesture(false);
         ws.setUseWideViewPort(true);
         ws.setLoadWithOverviewMode(true);
+        ws.setSupportZoom(true);
+        ws.setBuiltInZoomControls(true);
+        ws.setDisplayZoomControls(false);
+        web.addJavascriptInterface(new ClipBridge(), "GLTClip");
         // Sites treat "wv" as an embedded browser and sometimes push their own app; a plain mobile browser name avoids that.
         ws.setUserAgentString(ws.getUserAgentString().replace("; wv", "").replace("Version/4.0 ", ""));
         CookieManager.getInstance().setAcceptCookie(true);
@@ -203,6 +233,7 @@ public class WebViewerActivity extends Activity {
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
                 track(url);
+                view.evaluateJavascript(CLIP_JS, null);
             }
 
             @Override
@@ -215,6 +246,7 @@ public class WebViewerActivity extends Activity {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 track(url);
+                view.evaluateJavascript(CLIP_JS, null);
             }
         });
 
