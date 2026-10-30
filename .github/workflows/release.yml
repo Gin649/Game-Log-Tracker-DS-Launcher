@@ -77,11 +77,23 @@ jobs:
         run: |
           APK="GLT-DS-Launcher-${GITHUB_REF_NAME}.apk"
           cp app/build/outputs/apk/release/app-release.apk "$APK"
+          REPO_URL="https://github.com/${GITHUB_REPOSITORY}"
+          cat > "$RUNNER_TEMP/notes.md" <<NOTES
+          New version of Game Log Tracker DS Launcher.
+
+          Please see [Readme.md](${REPO_URL}/blob/main/README.md) and [Changelog.md](${REPO_URL}/blob/main/CHANGELOG.md) for details.
+
+          **Install notes:** When first installing this sideloaded app, Android will flag the install and prompt you to confirm the install. Scroll down and press install anyways to ignore this. Once installed all future versions will automatically install.
+
+          Happy Gaming!
+          NOTES
+          sed -i 's/^          //' "$RUNNER_TEMP/notes.md"
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             gh release upload "$GITHUB_REF_NAME" "$APK" --clobber
+            gh release edit "$GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md"
           else
             gh release create "$GITHUB_REF_NAME" "$APK" \
-              --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+              --title "$GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md" --verify-tag
           fi
 
       - name: Remove keystore from runner
