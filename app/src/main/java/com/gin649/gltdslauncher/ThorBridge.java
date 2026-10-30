@@ -114,11 +114,17 @@ final class ThorBridge {
     /** Starts an app from the Apps tab, on the top screen when there are two, and keeps the art screen from covering it. */
     @JavascriptInterface
     public String launchApp(String pkg) {
+        return launchAppOn(pkg, "top");
+    }
+
+    /** Same, on the chosen screen: "top" (the default) or "bottom". With one screen it just starts the app. */
+    @JavascriptInterface
+    public String launchAppOn(String pkg, String screen) {
         try {
             Intent i = act.getPackageManager().getLaunchIntentForPackage(pkg);
             if (i == null) return "{\"ok\":false,\"message\":\"That app can't be opened.\"}";
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            int display = DisplayPicker.topDisplayId(act);
+            int display = "bottom".equals(screen) ? DisplayPicker.bottomDisplayId(act) : DisplayPicker.topDisplayId(act);
             if (display >= 0) {
                 android.app.ActivityOptions options = android.app.ActivityOptions.makeBasic();
                 options.setLaunchDisplayId(display);

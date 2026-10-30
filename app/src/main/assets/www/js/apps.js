@@ -4,6 +4,8 @@ const APPS_FAV_KEY = 'apps-favs';
 let appsAll = [];       // [{ pkg, label }]
 let appsFavs = [];      // package names
 let appsShowAll = false;
+let appsScreen = {};   // package name -> 'top' or 'bottom'; apps not listed open on the top screen
+let appsLongPressed = false;
 
 async function loadAppsFavs(){
   try{
@@ -12,6 +14,50 @@ async function loadAppsFavs(){
     appsFavs = Array.isArray(v) ? v : [];
   }catch(e){ appsFavs = []; }
 }
+async function loadAppsScreens(){
+  try{
+    const r = await window.storage.get('apps-screen', false);
+    appsScreen = r && r.value ? JSON.parse(r.value) : {};
+  }catch(e){ appsScreen = {}; }
+}
+async function saveAppsScreens(){
+  try{ await window.storage.set('apps-screen', JSON.stringify(appsScreen), false); }catch(e){}
+}
+function launchAppNow(pkg){
+  let res;
+  const screen = appsScreen[pkg] === 'bottom' ? 'bottom' : 'top';
+  try{
+    res = JSON.parse(typeof thorBridge.launchAppOn === 'function' ? thorBridge.launchAppOn(pkg, screen) : thorBridge.launchApp(pkg));
+  }catch(e){ res = { ok: false, message: 'Could not reach the launcher.' }; }
+  if(!res.ok) showToast(res.message || 'Could not open that app.');
+}
+// Holding an app asks which screen it opens on; the choice is remembered for that app.
+function showAppScreenChoice(pkg, label){
+  const old = $('#app-pop'); if(old) old.remove();
+  const cur = appsScreen[pkg] === 'bottom' ? 'bottom' : 'top';
+  const pop = document.createElement('div');
+  pop.id = 'app-pop';
+  pop.className = 'app-pop';
+  pop.innerHTML = `<div class="app-pop-card">
+    <div class="app-pop-title">${esc(label)}</div>
+    <div class="app-pop-sub">Open on which screen?</div>
+    <button class="btn-primary" id="app-pop-top">${cur === 'top' ? '\u25cf ' : ''}Top screen</button>
+    <button class="btn-primary" id="app-pop-bottom">${cur === 'bottom' ? '\u25cf ' : ''}Bottom screen</button>
+    <button class="btn-ghost" id="app-pop-cancel">Cancel</button>
+  </div>`;
+  document.body.appendChild(pop);
+  const choose = async (screen) => {
+    pop.remove();
+    if(screen === 'top') delete appsScreen[pkg]; else appsScreen[pkg] = screen;
+    await saveAppsScreens();
+    launchAppNow(pkg);
+  };
+  pop.querySelector('#app-pop-top').addEventListener('click', () => choose('top'));
+  pop.querySelector('#app-pop-bottom').addEventListener('click', () => choose('bottom'));
+  pop.querySelector('#app-pop-cancel').addEventListener('click', () => pop.remove());
+  pop.addEventListener('click', (e) => { if(e.target === pop) pop.remove(); });
+}
+
 async function saveAppsFavs(){
   try{ await window.storage.set(APPS_FAV_KEY, JSON.stringify(appsFavs), false); }catch(e){}
 }
@@ -44,6 +90,7 @@ async function renderApps(){
   if(!thorBridge || typeof thorBridge.appsList !== 'function') return;
   try{ appsAll = JSON.parse(thorBridge.appsList()); }catch(e){ appsAll = []; }
   await loadAppsFavs();
+  await loadAppsScreens();
   renderAppsList();
 }
 
@@ -63,8 +110,23 @@ async function renderApps(){
     }
     const launch = ev.target.closest('[data-pkg]');
     if(!launch) return;
-    let res;
-    try{ res = JSON.parse(thorBridge.launchApp(launch.getAttribute('data-pkg'))); }catch(e){ res = { ok: false, message: 'Could not reach the launcher.' }; }
-    if(!res.ok) showToast(res.message || 'Could not open that app.');
+    if(appsLongPressed){ appsLongPressed = false; return; } // the hold already opened the screen choice
+    launchAppNow(launch.getAttribute('data-pkg'));
   });
+  // Hold an app for half a second to pick its screen.
+  let holdTimer = 0;
+  const wrap = $('#apps-wrap');
+  const cancelHold = () => { clearTimeout(holdTimer); holdTimer = 0; };
+  wrap.addEventListener('pointerdown', (ev) => {
+    const b = ev.target.closest('.app-launch');
+    if(!b) return;
+    cancelHold();
+    holdTimer = setTimeout(() => {
+      holdTimer = 0;
+      appsLongPressed = true;
+      showAppScreenChoice(b.getAttribute('data-pkg'), b.textContent.trim());
+    }, 500);
+  });
+  ['pointerup', 'pointercancel', 'pointerleave', 'scroll'].forEach(t => wrap.addEventListener(t, cancelHold, true));
+  wrap.addEventListener('contextmenu', (ev) => { if(ev.target.closest('.app-launch')) ev.preventDefault(); });
 })();
