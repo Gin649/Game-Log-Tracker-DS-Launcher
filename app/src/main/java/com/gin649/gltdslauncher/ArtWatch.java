@@ -65,6 +65,11 @@ final class ArtWatch {
         MAIN.postDelayed(TICK, POLL_MS);
     }
 
+    /** A game was started from here and has not closed yet (needs Usage access to be known). */
+    static synchronized boolean gameRunning() {
+        return active;
+    }
+
     static synchronized void stop() {
         active = false;
         MAIN.removeCallbacks(TICK);

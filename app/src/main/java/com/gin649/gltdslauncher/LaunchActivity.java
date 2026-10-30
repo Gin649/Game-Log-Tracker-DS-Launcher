@@ -31,7 +31,7 @@ public class LaunchActivity extends Activity {
             startActivity(i);
         }
 
-        // Already running: put the top screen's art back in front as well. (A first start does this itself.)
+        // Already running: put the top screen's art back in front as well, unless a game is running there. (A first start does this itself.)
         MainActivity.bringArtToFront();
         finish();
     }

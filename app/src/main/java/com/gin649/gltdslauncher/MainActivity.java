@@ -249,6 +249,7 @@ public class MainActivity extends Activity {
     static void deliverCustomArt(final String id, final String url) {
         final MainActivity a = current;
         if (a == null) return;
+        if (ArtWatch.gameRunning()) return; // never cover a running game; the art comes back when the game closes
         a.runOnUiThread(new Runnable() {
             @Override
             public void run() {
