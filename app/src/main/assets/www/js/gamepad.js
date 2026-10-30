@@ -1,6 +1,7 @@
 // Controller support for retro handhelds.
 //
-//   D-pad / left stick  move the highlight      A  confirm        B  back
+//   D-pad / left stick  move the highlight      confirm / back: the Thor's bottom button (labelled B) confirms,
+//                                               the right one (labelled A) goes back; Android names them the other way round
 //   Right stick         scroll quickly          Select  hamburger menu
 //   In a guide: L2 / R2 text size, X search, Y full screen
 //   Y (labelled on the Thor; Android calls it X)   refresh    X (Android's Y)  play / search
@@ -470,7 +471,7 @@
     const sw = $('#pad-swap-switch');
     sw.classList.toggle('on', swapAB);
     sw.setAttribute('aria-checked', swapAB ? 'true' : 'false');
-    $('#pad-swap-note').textContent = swapAB ? 'B confirms, A goes back' : 'A confirms, B goes back';
+    $('#pad-swap-note').textContent = swapAB ? 'A (right) confirms, B (bottom) goes back' : 'B (bottom) confirms, A (right) goes back';
   }
   $('#btn-pad-heading').addEventListener('click', (e) => {
     e.stopPropagation();
