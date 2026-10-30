@@ -2,6 +2,7 @@
 //
 //   D-pad / left stick  move the highlight      A  confirm        B  back
 //   Right stick         scroll quickly          Select  hamburger menu
+//   In a guide: L2 / R2 text size, X search, Y full screen
 //   Y (labelled on the Thor; Android calls it X)   refresh    X (Android's Y)  play / search
 //                   L1 / R1  previous / next console
 //                                                       L2 / R2  previous / next tab
@@ -355,10 +356,31 @@
     showKeyboard(true);
   }
 
+  // Inside a game guide: L2 / R2 shrink and enlarge the text, the button labelled X opens the search box and the
+  // one labelled Y hides or shows the menu for a full-screen read. (Android calls the labelled X "y" and the Y "x".)
+  function guideKey(name){
+    const top = topOverlay();
+    if(!top || top.type !== 'guide') return false;
+    const el = top.el;
+    const click = sel => { const b = el.querySelector(sel); if(b) b.click(); };
+    if(name === 'l2'){ click('#guide-font-dec'); return true; }
+    if(name === 'r2'){ click('#guide-font-inc'); return true; }
+    if(name === 'x'){ setReaderMenuHidden(!el.classList.contains('menu-hidden')); return true; }
+    if(name === 'y'){
+      if(el.classList.contains('menu-hidden')) setReaderMenuHidden(false);
+      if(!$('#guide-find-bar').classList.contains('open')) click('#guide-find-btn');
+      const input = $('#guide-find-input');
+      if(input){ input.focus(); showKeyboard(true); }
+      return true;
+    }
+    return false;
+  }
+
   function press(name){
     const wasShowing = padMode;
     if(!padMode){ padMode = true; document.body.classList.add('pad-mode'); }
     const confirmKey = swapAB ? 'b' : 'a';
+    if(!menuOpen() && guideKey(name)) return;
     if(DIRS.includes(name)){
       if(!wasShowing) ensureFocus(); // first press just shows where the highlight is
       else move(name);
