@@ -109,7 +109,7 @@ public class MainActivity extends Activity {
         splash.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!SetupActivity.running) openSetup();
+                if (!SetupActivity.running && !Prefs.setupDone(MainActivity.this)) openSetup();
             }
         });
 
@@ -138,6 +138,11 @@ public class MainActivity extends Activity {
             splashHint.setText("Setting up...");
             openSetup();
         }
+    }
+
+    /** The tracker has drawn its first screen: take the loading cover away. */
+    void trackerReady() {
+        if (webView != null && Prefs.setupDone(this) && !SetupActivity.running) splash.setVisibility(View.GONE);
     }
 
     private void onSetupClosed(boolean completed) {
@@ -390,7 +395,15 @@ public class MainActivity extends Activity {
 
         root.addView(webView, 0, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        splash.setVisibility(View.GONE);
+        // the cover stays up while the tracker starts, so the pause doesn't look like a crash
+        splash.setVisibility(View.VISIBLE);
+        splashHint.setText("Quick Loading...");
+        splash.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                trackerReady();
+            }
+        }, 15000); // never stays up longer than this
         webView.loadUrl(Config.START_URL);
     }
 

@@ -30,4 +30,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     loadAll();
   }
   updateRaConnectionView();
+  // tell the app the first screen is drawn, so its "Quick Loading..." cover can go
+  requestAnimationFrame(() => requestAnimationFrame(() => { try{ if(window.ThorBridge && ThorBridge.appReady) ThorBridge.appReady(); }catch(e){} }));
 })();

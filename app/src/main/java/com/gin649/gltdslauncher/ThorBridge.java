@@ -95,6 +95,17 @@ final class ThorBridge {
         return o.toString();
     }
 
+    /** Called by the tracker once its first screen is up. */
+    @JavascriptInterface
+    public void appReady() {
+        act.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                act.trackerReady();
+            }
+        });
+    }
+
     /** Closes the whole app: the tracker, the top screen and the setup window. */
     @JavascriptInterface
     public void exitApp() {
