@@ -105,6 +105,10 @@ Other sites the app contacts, and why:
 - cdnjs.cloudflare.com, to load the manual viewer the first time you open a manual.
 - GitHub, to check for new app versions and to find ROM patches and guides.
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for what changed in each version.
+
 ## Contact
 
 Questions or bugs: find me on Discord or 
