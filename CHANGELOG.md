@@ -9,6 +9,7 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - An Apps tab next to Backlog lists the apps installed on your device, so you can open them from the launcher. Tap the star on an app to add it to your favourites, which is what the tab shows by default. All apps shows everything, and the search box finds an app by name. On two screens, apps open on the top screen by default. Hold an app to choose the top or bottom screen for it, and your choice is remembered.
 
 ### Changed
+- The Overview tab is now called Last Played, since that is what it shows.
 - Start-up is faster. The app no longer searches your ES-DE media folders for every game when it opens. A game's art is looked up when you open its profile and then saved, so it isn't searched for again. Fetch game art is now the only thing that re-checks every game.
 - Only one section is open at a time in a game profile. Opening ROM Hacks closes Game Guide, for example.
 - Only one section is open at a time in the hamburger menu, and the section you open scrolls to the top so you can see all of it.

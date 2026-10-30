@@ -16,7 +16,7 @@ For all app related discussions and my Game of the Month Competition. Play some 
 
 **The tracker** is the full Game Log Tracker web app, bundled along with many improvements. 
 
-- **Overview** with your RetroAchievements profile, recently played games and your latest unlocks.
+- **Last Played** with your RetroAchievements profile, recently played games and your latest unlocks.
 - **Game Library** with every game you've played on RA. Search it, filter by system, and see progress, awards and playtime. The three games you played most recently sit at the top, then everything else is listed by name. Tap a column heading to sort by anything else. Pick a console and the top three are the last ones you played on that console.
 - **Beaten by Year** groups everything you've beaten or mastered by the year you did it.
 - **Backlog** is for games you plan to play, including games from systems RA doesn't track. It's sorted by name. Besides searching by title, Add game can pick games straight from your ROM files (several at once), or add every game in a system folder. Each is matched to its RetroAchievements entry by name, and one RA doesn't list is added as a plain entry, and its picture is filled in from your frontend's media, then SteamGridDB (with a key), LaunchBox, then RAWG.
