@@ -67,7 +67,8 @@ final class LibrarySync {
             if (!use) continue;
             MediaFinder.Found f = MediaFinder.lookup(g.systemId, g.romPath);
             if (f.direct != null) {
-                if (!f.direct.equals(cur)) dao.setMiximagePath(g.id, f.direct);
+                // a downloaded fan art you picked with a swipe stays; otherwise the frontend's picture is used
+                if (!f.direct.equals(cur) && !FanArt.isGallery(ctx, cur)) dao.setMiximagePath(g.id, f.direct);
             } else if (cur != null && Config.isFrontendMedia(cur)) {
                 // Only box art or a marquee is left of the frontend's. Let go of it so a miximage can be built or
                 // fan art fetched; artFor() still shows it while there is nothing better.
@@ -111,7 +112,7 @@ final class LibrarySync {
         String fallback = null;
         if (Config.useEsdeMedia()) {
             MediaFinder.Found f = MediaFinder.lookup(rom);
-            if (f.direct != null) return f.direct;
+            if (f.direct != null) return FanArt.isGallery(ctx, cur) ? cur : f.direct; // a fan art you picked beats the frontend's
             if (f.canBuild()) {
                 if (cur != null && !Config.isFrontendMedia(cur)) return cur;
                 String built = buildMiximage(ctx, g, f);

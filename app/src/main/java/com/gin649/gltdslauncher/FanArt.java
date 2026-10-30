@@ -81,6 +81,30 @@ final class FanArt {
         return new File(DataStore.root(ctx), "fanart/" + g.systemId + "/" + g.id);
     }
 
+    /** Whether the game has any fan art to swipe between: the frontend's or one fetched here. */
+    static boolean hasFanArt(Context ctx, GameEntity g) {
+        return !candidates(ctx, g).isEmpty();
+    }
+
+    /** True for a picture this app downloaded into its own fan art set (not the frontend's media). */
+    static boolean isGallery(Context ctx, String path) {
+        return path != null && path.startsWith(new File(DataStore.root(ctx), "fanart").getPath() + "/");
+    }
+
+    /**
+     * Every picture the top screen can swipe between: the frontend's own fan art or miximage first (when the game has
+     * one), then the fan arts downloaded here.
+     */
+    static List<String> candidates(Context ctx, GameEntity g) {
+        List<String> out = new ArrayList<String>();
+        if (g.id > 0 && Config.useEsdeMedia()) {
+            String d = MediaFinder.lookup(g.systemId, g.romPath).direct;
+            if (d != null && new File(d).isFile()) out.add(d);
+        }
+        for (File f : files(ctx, g)) out.add(f.getPath());
+        return out;
+    }
+
     /** The pictures kept for a game, in order. */
     static List<File> files(Context ctx, GameEntity g) {
         File[] all = dir(ctx, g).listFiles();
@@ -156,9 +180,9 @@ final class FanArt {
         s.fanCount = 0;
         s.fanPos = 0;
         if (g == null || s.localPath == null) return;
-        List<File> list = files(ctx, g);
+        List<String> list = candidates(ctx, g);
         for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).getPath().equals(s.localPath)) {
+            if (list.get(i).equals(s.localPath)) {
                 s.fanCount = list.size();
                 s.fanPos = i + 1;
                 return;
@@ -168,14 +192,14 @@ final class FanArt {
 
     /** Makes the next (delta 1) or previous (delta -1) picture the one in use. Returns its path, or null if there is only one. */
     static String step(Context ctx, GameEntity g, int delta) {
-        List<File> list = files(ctx, g);
+        List<String> list = candidates(ctx, g);
         if (list.size() < 2) return null;
         int at = 0;
         for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).getPath().equals(g.localMiximagePath)) at = i;
+            if (list.get(i).equals(g.localMiximagePath)) at = i;
         }
         int to = ((at + delta) % list.size() + list.size()) % list.size();
-        String path = list.get(to).getPath();
+        String path = list.get(to);
         setPick(ctx, g, path);
         return path;
     }
@@ -186,7 +210,7 @@ final class FanArt {
      */
     static void fillMore(Context ctx, GameEntity g, boolean useSgdb) {
         File d = dir(ctx, g);
-        if (new File(d, ".done").exists() || files(ctx, g).isEmpty()) return;
+        if (new File(d, ".done").exists()) return;
         boolean complete = true;
         try {
             if (useSgdb) {

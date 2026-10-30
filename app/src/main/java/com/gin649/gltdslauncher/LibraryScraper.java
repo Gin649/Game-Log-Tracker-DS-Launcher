@@ -105,7 +105,7 @@ final class LibraryScraper {
 
     /** For a game open on the top screen that has a fan art: looks online for its other fan arts so they can be swiped through. */
     private static void topUp(final Context ctx, final GameEntity g) {
-        if (g == null || g.localMiximagePath == null || !g.localMiximagePath.contains("/fanart/")) return;
+        if (g == null || !FanArt.hasFanArt(ctx, g)) return;
         if (!TOPPING.add(g.id)) return;
         MORE.execute(new Runnable() {
             @Override
@@ -113,7 +113,7 @@ final class LibraryScraper {
                 try {
                     boolean sgdb = SteamGridDbClient.enabled(ctx) && System.currentTimeMillis() >= sgdbOffUntil;
                     FanArt.fillMore(ctx, g, sgdb);
-                    if (g.id == viewingId) refreshTopScreen(ctx, g, g.localMiximagePath);
+                    if (g.id == viewingId && g.localMiximagePath != null) refreshTopScreen(ctx, g, g.localMiximagePath);
                 } finally {
                     TOPPING.remove(g.id);
                 }
@@ -338,7 +338,7 @@ final class LibraryScraper {
         File added = FanArt.has(ctx, g, source) ? null : FanArt.add(ctx, g, source, b);
         List<File> all = FanArt.files(ctx, g);
         if (all.isEmpty()) return false;
-        boolean chosen = g.localMiximagePath != null && g.localMiximagePath.contains("/fanart/")
+        boolean chosen = FanArt.isGallery(ctx, g.localMiximagePath)
                 && new File(g.localMiximagePath).isFile();
         if (!chosen) {
             String path = (added != null ? added : all.get(0)).getPath();
