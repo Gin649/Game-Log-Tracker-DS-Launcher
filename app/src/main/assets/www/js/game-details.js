@@ -68,6 +68,18 @@ async function getRawgDescription(title){
   return text;
 }
 
+// LaunchBox's write-up, used to fill the gaps when RAWG has none. Only inside the launcher app.
+function getLaunchBoxDescription(title, consoleName){
+  if(typeof thorBridge === 'undefined' || !thorBridge || !thorBridge.launchboxDescription || !consoleName) return Promise.resolve(null);
+  const clean = String(title).replace(/^(?:~[^~]*~\s*)+/, '').trim();
+  return new Promise(resolve => setTimeout(() => {
+    try{
+      const t = tidyDescription(thorBridge.launchboxDescription(clean, consoleName));
+      resolve(t.length >= 40 ? t : null);
+    }catch(e){ resolve(null); }
+  }, 0));
+}
+
 function cleanDescription(raw){
   let text = String(raw || '').replace(/\r/g, '').trim();
   // RAWG often adds a Spanish copy after a line that just says "Español".
@@ -225,7 +237,7 @@ function setupGameDetailsUI(gameId, title, card, opts){
   let pending = null;
   const load = () => pending || (pending = Promise.allSettled([
     aboutOnly ? Promise.resolve(null) : getPlaytimeStats(gameId),
-    getRawgDescription(title),
+    getRawgDescription(title).then(d => d || getLaunchBoxDescription(title, opts && opts.consoleName)),
     aboutOnly ? Promise.resolve(null) : getMyTimes(gameId),
   ]));
   setTimeout(load, 400);

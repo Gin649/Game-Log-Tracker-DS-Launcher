@@ -32,6 +32,7 @@ final class Launcher {
         Recipes.Recipe recipe;
         String pkg;
         String core;
+        String raPkg;
         String error;
     }
 
@@ -40,12 +41,17 @@ final class Launcher {
      * "retroarch:core"; older installs saved plain "standalone" or "retroarch", which mean the system's first
      * emulator of that kind. With no choice, a standalone emulator is used when one is installed, else RetroArch.
      */
-    private static Plan plan(Activity act, SystemMap.Sys sys) {
+    private static Plan plan(Activity act, SystemMap.Sys sys, String choice) {
         Plan p = new Plan();
-        String choice = Prefs.get(act, "emu." + sys.folder, "");
+        p.raPkg = Config.RA_PACKAGE;
         boolean wantRa = choice.startsWith("retroarch");
         boolean wantSa = choice.startsWith("standalone");
         String raCore = choice.startsWith("retroarch:") ? choice.substring("retroarch:".length()) : "";
+        int at = raCore.indexOf('@'); // "core@package": a game that runs in another RetroArch install, such as the 32-bit one
+        if (at >= 0) {
+            p.raPkg = raCore.substring(at + 1);
+            raCore = raCore.substring(0, at);
+        }
         String saId = choice.startsWith("standalone:") ? choice.substring("standalone:".length()) : "";
 
         if (!wantRa) {
@@ -88,6 +94,53 @@ final class Launcher {
         }
         p.core = core;
         return p;
+    }
+
+    /** Writes the playlist for a multi-disc game next to its discs and returns it, or null. */
+    static File makeM3u(RomIndex.Rom rom) {
+        if (rom.discs == null || rom.discs.size() < 2) return null;
+        File dir = rom.file.getParentFile();
+        String name = RomIndex.discGame(rom.name);
+        File m3u = new File(dir, name + ".m3u");
+        try {
+            StringBuilder sb = new StringBuilder();
+            for (File d : rom.discs) sb.append(d.getName()).append("\n");
+            java.io.FileOutputStream out = new java.io.FileOutputStream(m3u);
+            try {
+                out.write(sb.toString().getBytes("UTF-8"));
+            } finally {
+                out.close();
+            }
+            return m3u;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** mode: "" = ask first when a multi-disc game has no playlist, "create" = make one and play it, "first" = disc 1 only. */
+    static JSONObject launch(Activity act, String title, String console, String mode) {
+        RomIndex.Rom r = Shared.findRom(title, console);
+        if (r != null && r.discs != null && r.discs.size() > 1) {
+            String skipKey = "m3uskip." + r.sys.folder + "/" + RomIndex.discGame(r.rel);
+            if (mode.equals("create")) {
+                File m3u = makeM3u(r);
+                if (m3u == null) return result(false, "Could not write the playlist in that folder.");
+                Shared.rescan();
+                return launchFile(act, m3u);
+            }
+            if (mode.equals("first")) {
+                Prefs.put(act, skipKey, "1");
+            } else if (Prefs.get(act, skipKey, "").isEmpty()) {
+                JSONObject o = result(false, "This game has " + r.discs.size() + " discs.");
+                try {
+                    o.put("needM3u", true);
+                    o.put("discs", r.discs.size());
+                } catch (Exception ignored) {
+                }
+                return o;
+            }
+        }
+        return launch(act, title, console);
     }
 
     static JSONObject launch(Activity act, String title, String console) {
@@ -138,9 +191,55 @@ final class Launcher {
         return launchRom(act, new RomIndex.Rom(sys, file, base, rel));
     }
 
+    /** Prefs key holding the emulator picked for this one game (empty = the system's choice). */
+    static String gameKey(RomIndex.Rom rom) {
+        return "gemu." + rom.sys.folder + "/" + rom.rel;
+    }
+
+    private static final String[] RA_PACKAGES = {"com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"};
+
+    /** The emulators a game can use: [{value,label}], plus the current pick. */
+    static JSONObject emulatorOptions(Activity act, RomIndex.Rom rom) {
+        JSONObject out = new JSONObject();
+        try {
+            org.json.JSONArray opts = new org.json.JSONArray();
+            SystemMap.Sys sys = rom.sys;
+            for (String id : sys.standalones) {
+                Recipes.Recipe r = Recipes.byId(act, id);
+                if (r == null || Recipes.installedPackage(act, r) == null) continue;
+                opts.put(new JSONObject().put("value", "standalone:" + id).put("label", r.label));
+            }
+            List<String> cores = new ArrayList<String>();
+            if (!sys.core.isEmpty()) cores.add(sys.core);
+            for (String c : sys.cores) if (!c.isEmpty() && !cores.contains(c)) cores.add(c);
+            List<String> pkgs = new ArrayList<String>();
+            for (String pkg : RA_PACKAGES) {
+                try {
+                    act.getPackageManager().getPackageInfo(pkg, 0);
+                    pkgs.add(pkg);
+                } catch (Exception ignored) {
+                }
+            }
+            for (String pkg : pkgs) {
+                String tag = pkgs.size() > 1 ? (pkg.equals("com.retroarch.aarch64") ? " (64-bit)" : pkg.equals("com.retroarch") ? " (32-bit)" : " (" + pkg + ")") : "";
+                for (String c : cores) {
+                    opts.put(new JSONObject().put("value", "retroarch:" + c + "@" + pkg).put("label", "RetroArch" + tag + ": " + c));
+                }
+            }
+            out.put("ok", true);
+            out.put("options", opts);
+            out.put("current", Prefs.get(act, gameKey(rom), ""));
+            out.put("system", sys.folder);
+        } catch (Exception e) {
+            return result(false, "Could not list emulators.");
+        }
+        return out;
+    }
+
     static JSONObject launchRom(Activity act, RomIndex.Rom rom) {
         SystemMap.Sys sys = rom.sys;
-        Plan plan = plan(act, sys);
+        String gameChoice = Prefs.get(act, gameKey(rom), "");
+        Plan plan = plan(act, sys, gameChoice.isEmpty() ? Prefs.get(act, "emu." + sys.folder, "") : gameChoice);
         if (plan.error != null) return result(false, plan.error);
 
         boolean standalone = plan.recipe != null;
@@ -151,10 +250,10 @@ final class Launcher {
             started = plan.recipe.label;
         } else {
             Intent intent = new Intent();
-            intent.setComponent(new ComponentName(Config.RA_PACKAGE, Config.RA_ACTIVITY));
+            intent.setComponent(new ComponentName(plan.raPkg, Config.RA_ACTIVITY));
             intent.putExtra("ROM", rom.file.getPath());
-            intent.putExtra("LIBRETRO", Config.RA_CORES_DIR + "/" + plan.core + "_libretro_android.so");
-            intent.putExtra("CONFIGFILE", Config.RA_CONFIG);
+            intent.putExtra("LIBRETRO", "/data/data/" + plan.raPkg + "/cores/" + plan.core + "_libretro_android.so");
+            intent.putExtra("CONFIGFILE", "/storage/emulated/0/Android/data/" + plan.raPkg + "/files/retroarch.cfg");
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             intents.add(intent);
             started = "RetroArch (" + plan.core + ")";
@@ -182,7 +281,7 @@ final class Launcher {
         }
         if (last != null) return result(false, "Could not start " + started + ": " + last.getMessage());
 
-        ArtWatch.start(act, standalone ? plan.pkg : Config.RA_PACKAGE);
+        ArtWatch.start(act, standalone ? plan.pkg : plan.raPkg);
         LibrarySync.markPlayed(act, rom);
         return result(true, "Starting " + rom.name + " in " + started + "...");
     }

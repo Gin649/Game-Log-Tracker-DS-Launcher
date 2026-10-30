@@ -138,6 +138,77 @@ final class LaunchBoxArt {
         return file.isEmpty() ? null : IMAGE_URL + file;
     }
 
+    /** LaunchBox's write-up for a game, or null when the console or game isn't listed or has none. */
+    static String description(Context ctx, String folder, String title) throws IOException {
+        String platform = platformFor(ctx, folder);
+        if (platform == null) return null;
+        String key = Matcher.compact(platform);
+        Map<String, String> d = descs(ctx, key);
+        if (d == null || d.isEmpty()) return null;
+        String hit = d.get(Matcher.norm(title));
+        if (hit != null) return hit;
+        String best = null;
+        int bestScore = 0;
+        for (Map.Entry<String, String> e : d.entrySet()) {
+            int score = Matcher.artSimilarity(title, e.getKey());
+            if (score > bestScore) {
+                bestScore = score;
+                best = e.getValue();
+            }
+        }
+        return bestScore >= 85 ? best : null;
+    }
+
+    private static final Map<String, Map<String, String>> DESCS = new HashMap<String, Map<String, String>>();
+
+    // normalized title to write-up for one console, cached on disk like the art index
+    private static synchronized Map<String, String> descs(Context ctx, String key) throws IOException {
+        Map<String, String> cached = DESCS.get(key);
+        if (cached != null) return cached;
+        File f = new File(DataStore.root(ctx), "launchbox/" + key + ".desc.json");
+        boolean fresh = f.isFile() && System.currentTimeMillis() - f.lastModified() < INDEX_MAX_AGE_MS;
+        byte[] data = fresh ? readFile(f) : null;
+        if (data == null) {
+            try {
+                data = download(INDEX_URL + key + ".desc.json", 40L * 1024 * 1024);
+                if (data != null) {
+                    File parent = f.getParentFile();
+                    if (parent != null) parent.mkdirs();
+                    FileOutputStream fos = new FileOutputStream(f);
+                    try {
+                        fos.write(data);
+                    } finally {
+                        fos.close();
+                    }
+                }
+            } catch (IOException e) {
+                if (!f.isFile()) throw e;
+                data = readFile(f);
+            }
+            if (data == null) {
+                Map<String, String> none = new HashMap<String, String>();
+                DESCS.put(key, none);
+                return none;
+            }
+        }
+        Map<String, String> out = new HashMap<String, String>();
+        try {
+            JSONArray arr = new JSONObject(new String(data, "UTF-8")).getJSONArray("d");
+            for (int i = 0; i < arr.length(); i++) {
+                JSONArray r = arr.getJSONArray(i);
+                String k = Matcher.norm(r.getString(0));
+                String v = r.getString(1);
+                String cur = out.get(k);
+                if (cur == null || v.length() > cur.length()) out.put(k, v);
+            }
+        } catch (Exception e) {
+            f.delete();
+            return null;
+        }
+        DESCS.put(key, out);
+        return out;
+    }
+
     private static String[] match(Index idx, String title) {
         String[] hit = idx.exact.get(Matcher.norm(title));
         if (hit != null) return hit;

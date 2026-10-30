@@ -57,7 +57,8 @@ document.addEventListener('visibilitychange', () => { if(!document.hidden) windo
 
 function thorPlayButtonHtml(){
   if(!thorBridge) return '';
-  return `<button class="btn-view-achievements btn-play-thor" id="modal-play-btn"><span class="arrow">▶</span> Play on this device</button>
+  return `<div class="play-row"><button class="btn-view-achievements btn-play-thor" id="modal-play-btn"><span class="arrow">▶</span> Play on this device</button>
+    <button class="btn-emu" id="modal-emu-btn" aria-label="Emulator for this game" title="Emulator for this game"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M7.5 6h9A5.5 5.5 0 0 1 22 11.5v2a4.5 4.5 0 0 1-8 2.8 1.6 1.6 0 0 0-1.2-.5h-1.6a1.6 1.6 0 0 0-1.2.5A4.5 4.5 0 0 1 2 13.5v-2A5.5 5.5 0 0 1 7.5 6zM7 9v1.5H5.5V12H7v1.5h1.5V12H10v-1.5H8.5V9H7zm9.5.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm2 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg></button></div>
       <div class="thor-play-msg" id="modal-play-msg" style="display:none;"></div>`;
 }
 
@@ -70,14 +71,64 @@ function thorWirePlay(card, gameId, title, consoleName, artUrl){
   const btn = card.querySelector('#modal-play-btn');
   const msg = card.querySelector('#modal-play-msg');
   if(!btn || !msg) return;
-  btn.addEventListener('click', () => {
+  const play = (disc) => {
     let res;
-    try{ res = JSON.parse(thorBridge.launch(JSON.stringify(info))); }
+    try{ res = JSON.parse(thorBridge.launch(JSON.stringify(Object.assign({}, info, { disc: disc || '' })))); }
     catch(e){ res = { ok: false, message: 'Could not reach the launcher.' }; }
+    if(res.needM3u){
+      thorChoice('Multi-disc game', 'This game has ' + res.discs + ' discs. A playlist (.m3u) lets the emulator switch discs in-game.', [
+        ['Create playlist and play', () => play('create')],
+        ['Play disc 1 only', () => play('first')],
+      ]);
+      return;
+    }
     if(res.ok) thorMarkLaunched(gameId);
     msg.style.display = 'block';
     msg.classList.toggle('error', !res.ok);
     msg.textContent = res.message || (res.ok ? 'Starting the game…' : 'Could not start the game.');
+  };
+  btn.addEventListener('click', () => play(''));
+
+  const emuBtn = card.querySelector('#modal-emu-btn');
+  if(emuBtn) emuBtn.addEventListener('click', () => {
+    let r;
+    try{ r = JSON.parse(thorBridge.emuOptions(JSON.stringify(info))); }catch(e){ r = { ok: false, message: 'Could not reach the launcher.' }; }
+    if(!r.ok){
+      msg.style.display = 'block'; msg.classList.add('error');
+      msg.textContent = r.message || 'Could not list emulators.';
+      return;
+    }
+    const mark = v => (v === r.current ? '\u25cf ' : '');
+    const rows = [[mark('') + 'Default for ' + r.system, () => thorSetEmu(info, '', msg)]];
+    (r.options || []).forEach(o => rows.push([mark(o.value) + o.label, () => thorSetEmu(info, o.value, msg)]));
+    thorChoice('Emulator for this game', 'Only this game uses it. Other games keep the system setting.', rows);
+  });
+}
+
+function thorSetEmu(info, value, msg){
+  let ok = false;
+  try{ ok = thorBridge.setEmu(JSON.stringify(Object.assign({}, info, { value: value }))); }catch(e){}
+  msg.style.display = 'block';
+  msg.classList.toggle('error', !ok);
+  msg.textContent = ok ? (value ? 'This game will now use the chosen emulator.' : 'This game uses the system default again.') : 'Could not save the choice.';
+}
+
+// A small list popup: rows of [label, action], plus Cancel.
+function thorChoice(title, sub, rows){
+  const old = document.getElementById('thor-choice'); if(old) old.remove();
+  const e = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const pop = document.createElement('div');
+  pop.id = 'thor-choice';
+  pop.className = 'app-pop';
+  pop.innerHTML = '<div class="app-pop-card"><div class="app-pop-title">' + e(title) + '</div><div class="app-pop-sub">' + e(sub) + '</div>' +
+    rows.map((r, i) => '<button class="btn-primary" data-i="' + i + '">' + e(r[0]) + '</button>').join('') +
+    '<button class="btn-ghost" data-i="x">Cancel</button></div>';
+  document.body.appendChild(pop);
+  pop.addEventListener('click', (ev) => {
+    if(ev.target === pop){ pop.remove(); return; }
+    const b = ev.target.closest('button'); if(!b) return;
+    pop.remove();
+    if(b.dataset.i !== 'x') rows[+b.dataset.i][1]();
   });
 }
 

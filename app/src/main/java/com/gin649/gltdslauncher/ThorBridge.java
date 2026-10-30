@@ -77,9 +77,53 @@ final class ThorBridge {
     public String launch(String json) {
         try {
             JSONObject o = new JSONObject(json);
-            return Launcher.launch(act, o.optString("title"), o.optString("console")).toString();
+            return Launcher.launch(act, o.optString("title"), o.optString("console"), o.optString("disc")).toString();
         } catch (Exception e) {
             return "{\"ok\":false,\"message\":\"Bad launch request.\"}";
+        }
+    }
+
+    /** LaunchBox's description for a game (used when RetroAchievements and RAWG have none), or "". Blocks on the network. */
+    @JavascriptInterface
+    public String launchboxDescription(String title, String console) {
+        try {
+            SystemMap map = Shared.systems();
+            if (map == null) return "";
+            for (SystemMap.Sys sys : map.forConsole(console)) {
+                String d = LaunchBoxArt.description(act, sys.folder, title);
+                if (d != null && !d.isEmpty()) return d;
+            }
+        } catch (Exception ignored) {
+        }
+        return "";
+    }
+
+    /** The emulators this game can use, and the one picked for it alone: {ok, options:[{value,label}], current}. */
+    @JavascriptInterface
+    public String emuOptions(String json) {
+        try {
+            JSONObject o = new JSONObject(json);
+            RomIndex.Rom rom = Shared.findRom(o.optString("title"), o.optString("console"));
+            if (rom == null) return "{\"ok\":false,\"message\":\"No ROM found for this game on the device.\"}";
+            return Launcher.emulatorOptions(act, rom).toString();
+        } catch (Exception e) {
+            return "{\"ok\":false,\"message\":\"Could not list emulators.\"}";
+        }
+    }
+
+    /** Sets (or with an empty value clears) the emulator for one game. */
+    @JavascriptInterface
+    public boolean setEmu(String json) {
+        try {
+            JSONObject o = new JSONObject(json);
+            RomIndex.Rom rom = Shared.findRom(o.optString("title"), o.optString("console"));
+            if (rom == null) return false;
+            String v = o.optString("value");
+            if (v.isEmpty()) Prefs.remove(act, Launcher.gameKey(rom));
+            else Prefs.put(act, Launcher.gameKey(rom), v);
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 

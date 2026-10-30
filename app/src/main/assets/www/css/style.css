@@ -1094,3 +1094,9 @@ html.top-panel #profile-hero{display:none;}
 .btn-line{background:transparent;border:1px solid currentColor;border-radius:var(--radius);font-family:'Space Mono',monospace;font-weight:700;font-size:0.8125rem;cursor:pointer;padding:11px 20px;}
 .btn-line.danger{color:var(--danger);}
 .btn-line.gold{color:var(--gold);}
+
+.play-row{ display:flex; gap:8px; align-items:stretch; }
+.play-row .btn-play-thor{ flex:1; }
+.btn-emu{ flex:0 0 54px; background:var(--panel); border:1px solid var(--border); border-radius:8px; color:var(--gold); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.btn-emu:active{ border-color:var(--gold); }
+#thor-choice .app-pop-card{ max-height:80vh; overflow-y:auto; }

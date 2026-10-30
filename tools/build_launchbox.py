@@ -43,6 +43,19 @@ def text(el, tag):
     return (c.text or '').strip() if c is not None and c.text else ''
 
 
+def clip(t, limit=1000):
+    """A description cut at a sentence end near the limit, with line breaks tidied."""
+    t = re.sub(r'[ \t]+', ' ', (t or '').replace('\r', '')).strip()
+    t = re.sub(r'\n{3,}', '\n\n', t)
+    if len(t) < 40:
+        return ''
+    if len(t) > limit:
+        cut = t[:limit]
+        i = max(cut.rfind('. '), cut.rfind('.\n'))
+        t = cut[:i + 1] if i > limit // 2 else cut.rstrip() + '...'
+    return t
+
+
 def stream(zf, member, tags):
     """Yields each top-level element named in tags, then frees it."""
     with zf.open(member) as f:
@@ -59,6 +72,7 @@ def build(zf, platforms):
 
     wanted = {compact(p): p for p in platforms}
     games = {}  # DatabaseID -> (name, platform key)
+    overview = {}  # DatabaseID -> description
     seen = {}
     for g in stream(zf, member, {'Game'}):
         key = compact(text(g, 'Platform'))
@@ -67,6 +81,9 @@ def build(zf, platforms):
         gid, name = text(g, 'DatabaseID'), text(g, 'Name')
         if gid and name:
             games[gid] = (name, key)
+            ov = clip(text(g, 'Overview'))
+            if ov:
+                overview[gid] = ov
             seen[key] = seen.get(key, 0) + 1
 
     alts = {}   # DatabaseID -> [alternate names]
@@ -113,7 +130,11 @@ def build(zf, platforms):
     for key, p in wanted.items():
         if key not in seen:
             print('warning: no games found for platform "%s"' % p, file=sys.stderr)
-    return out
+    descs = {key: [] for key in wanted}
+    for gid, (name, key) in games.items():
+        if gid in overview:
+            descs[key].append([name, overview[gid]])
+    return out, descs
 
 
 def main():
@@ -131,7 +152,7 @@ def main():
     import os
     os.makedirs(os.path.join(a.out, 'launchbox'), exist_ok=True)
     with zipfile.ZipFile(a.zip) as zf:
-        rows = build(zf, platforms)
+        rows, descs = build(zf, platforms)
 
     index = {'v': 1, 'generated': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), 'source': a.stamp, 'platforms': {}}
     for key, games in rows.items():
@@ -143,6 +164,12 @@ def main():
             f.write(data)
         index['platforms'][key] = {'games': len(games), 'bytes': len(data.encode('utf-8'))}
         print('%-40s %6d rows %8.1f KB' % (key, len(games), len(data.encode('utf-8')) / 1024))
+    for key, items in descs.items():
+        if not items:
+            continue
+        items.sort(key=lambda r: r[0].lower())
+        with open(os.path.join(a.out, 'launchbox', key + '.desc.json'), 'w', encoding='utf-8') as f:
+            json.dump({'v': 1, 'd': items}, f, ensure_ascii=False, separators=(',', ':'))
     with open(os.path.join(a.out, 'launchbox', 'index.json'), 'w', encoding='utf-8') as f:
         json.dump(index, f, separators=(',', ':'))
 

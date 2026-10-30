@@ -7,6 +7,9 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 ### Added
 - Choose which fan art to use for a game. Swipe left or right on the top screen to change it. A small counter in the title bar, for example 1 / 5, shows which one you're on, and it appears briefly when you swipe or when more fan art has finished downloading. When you open a game's profile, the app now also downloads fan art from SteamGridDB and LaunchBox, even if ES-DE already has one, so you have more to pick from. Your choice is remembered.
 - An Apps tab next to Backlog lists the apps installed on your device, so you can open them from the launcher. Tap the star on an app to add it to your favourites, which is what the tab shows by default. All apps shows everything, and the search box finds an app by name. On two screens, apps open on the top screen by default. Hold an app to choose the top or bottom screen for it, and your choice is remembered.
+- A controller button next to Play on this device lets you choose the emulator for that one game only. For example, run one game in the 32-bit RetroArch while the rest use the 64-bit one. Pick Default to go back to the system's emulator.
+- Multi-disc games now show as one entry. If the game has an .m3u playlist, it is used. If not, the first time you play it the app offers to create the .m3u for you, or to play disc 1 only.
+- Game descriptions fall back to LaunchBox when no other source has one.
 
 ### Changed
 - The Overview tab is now called Last Played, since that is what it shows.
