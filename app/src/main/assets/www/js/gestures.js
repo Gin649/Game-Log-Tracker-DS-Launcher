@@ -74,8 +74,17 @@
     if(!profileOpen() || card.dataset.gameId !== String(gameId)) return; // closed or another game opened
     const openPanels = openProfilePanelIds();
     const scrollTop = $('#modal-backdrop').scrollTop; // the profile scrolls itself; keep your place in it
+    const padSpot = window.padHoldFocus ? window.padHoldFocus() : null; // and the controller's highlight
     stopWalkthroughPlayers(); // saves the watch position before the redraw
-    await openGameModal(gameId, { restorePanels: openPanels, restoreScroll: scrollTop });
+    try{
+      await openGameModal(gameId, { restorePanels: openPanels, restoreScroll: scrollTop });
+    }finally{
+      if(window.padRestoreFocus){
+        window.padRestoreFocus(padSpot);
+        // a spot with no id of its own (a row in a list) is found by position once the lists have filled in
+        if(padSpot && padSpot.sig && !padSpot.sig.id && !padSpot.sig.gid) setTimeout(() => window.padRestoreFocus(padSpot, true), 1800);
+      }
+    }
   }
 
   // The profile scrolls itself (#modal-backdrop), so pulls there use its scrollTop.

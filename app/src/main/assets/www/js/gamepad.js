@@ -448,6 +448,26 @@
 
   window.GLTPad = { b, rs: setRightStick, reset, back: goBack };
 
+  // A refresh redraws the game profile. These let it note where the highlight is, keep it from jumping to the
+  // first button while the page is rebuilt, and put it back afterwards.
+  window.padHoldFocus = () => {
+    if(!padMode || !focusEl) return null;
+    holdFocusUntil = Date.now() + 8000;
+    const list = candidates(getRoot());
+    return { sig: focusSig, idx: Math.max(0, list.findIndex(i => i.el === focusEl)) };
+  };
+  let restoredEl = null;
+  window.padRestoreFocus = (state, onlyIfUnmoved) => {
+    holdFocusUntil = 0;
+    if(!state || !state.sig || !padMode) return;
+    if(onlyIfUnmoved && focusEl !== restoredEl) return; // you have moved on since
+    const list = candidates(getRoot());
+    if(!list.length) return;
+    const el = refind(list, state.sig) || list[Math.min(state.idx, list.length - 1)].el;
+    setFocus(el);
+    restoredEl = el;
+  };
+
   // Touching the screen hides the highlight; the controller brings it back.
   ['touchstart', 'mousedown'].forEach(type => document.addEventListener(type, () => {
     padMode = false;
@@ -457,8 +477,9 @@
   // The page redraws often (refreshes, tab changes, pop-ups). Whenever that leaves the highlight
   // without an element, put it back on the nearest equivalent so it never just disappears.
   let restoreTimer = 0;
+  let holdFocusUntil = 0;
   new MutationObserver(() => {
-    if(!padMode || restoreTimer) return;
+    if(!padMode || restoreTimer || Date.now() < holdFocusUntil) return;
     restoreTimer = setTimeout(() => {
       restoreTimer = 0;
       const ok = focusEl && focusEl.isConnected && getRoot().contains(focusEl) && isVisible(focusEl);
