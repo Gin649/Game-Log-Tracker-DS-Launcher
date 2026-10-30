@@ -49,6 +49,15 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     private TextView titleView;
     private TextView consoleView;
     private int token;
+    private TextView badge;
+    private final Runnable hideBadge = new Runnable() {
+        @Override
+        public void run() {
+            if (badge != null) badge.setVisibility(View.GONE);
+        }
+    };
+    private boolean swiped;
+    private int lastGameId, lastFanCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,11 +106,28 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         capParams.gravity = Gravity.BOTTOM;
         root.addView(caption, capParams);
 
+        badge = new TextView(this);
+        badge.setTextColor(Color.WHITE);
+        badge.setTextSize(16);
+        badge.setSingleLine(true);
+        badge.setBackgroundColor(Color.argb(210, 21, 18, 31));
+        badge.setPadding(pad, pad / 2, pad, pad / 2);
+        badge.setVisibility(View.GONE);
+        FrameLayout.LayoutParams badgeParams = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        badgeParams.gravity = Gravity.BOTTOM | Gravity.END;
+        root.addView(badge, badgeParams);
+
         caption.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
             @Override
             public void onLayoutChange(View v, int l, int t, int r, int b, int ol, int ot, int or, int ob) {
                 FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) panel.getLayoutParams();
                 int h = b - t;
+                FrameLayout.LayoutParams bp = (FrameLayout.LayoutParams) badge.getLayoutParams();
+                if (bp.bottomMargin != h) {
+                    bp.bottomMargin = h;
+                    badge.setLayoutParams(bp);
+                }
                 if (lp.bottomMargin != h) {
                     lp.bottomMargin = h;
                     panel.setLayoutParams(lp);
@@ -253,7 +279,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
                     float dx = ev.getX() - downX;
                     float dy = ev.getY() - downY;
                     float min = 70 * getResources().getDisplayMetrics().density;
-                    if (Math.abs(dx) > min && Math.abs(dx) > 2 * Math.abs(dy)) Shared.swipeFan(dx < 0 ? 1 : -1);
+                    if (Math.abs(dx) > min && Math.abs(dx) > 2 * Math.abs(dy)) { swiped = true; Shared.swipeFan(dx < 0 ? 1 : -1); }
                 }
                 tracking = false;
                 break;
@@ -288,12 +314,29 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
             consoleView.setText("");
             consoleView.setVisibility(View.GONE);
             caption.setVisibility(View.VISIBLE);
+            badge.setVisibility(View.GONE);
+            lastGameId = 0;
+            lastFanCount = 0;
             return;
         }
 
         titleView.setText(s.title);
-        String more = s.fanCount > 1 ? "\u2039  " + s.fanPos + " / " + s.fanCount + "  \u203A" : "";
-        String line = s.console.isEmpty() ? more : (more.isEmpty() ? s.console : s.console + "     " + more);
+        String line = s.console;
+        // the position badge: 1 second after a swipe, 2 seconds when more fan art has just finished downloading
+        boolean sameGame = s.gameId == lastGameId;
+        boolean grew = sameGame && s.fanCount > lastFanCount && s.fanCount > 1;
+        if (s.fanCount > 1 && (swiped || grew)) {
+            badge.setText((swiped ? "" : "Fan art downloaded   ") + "\u2039  " + s.fanPos + " / " + s.fanCount + "  \u203A");
+            badge.setVisibility(View.VISIBLE);
+            badge.removeCallbacks(hideBadge);
+            badge.postDelayed(hideBadge, swiped ? 1000 : 2000);
+        } else if (!sameGame) {
+            badge.removeCallbacks(hideBadge);
+            badge.setVisibility(View.GONE);
+        }
+        swiped = false;
+        lastGameId = s.gameId;
+        lastFanCount = s.fanCount;
         consoleView.setText(line);
         consoleView.setVisibility(line.isEmpty() ? View.GONE : View.VISIBLE);
         caption.setVisibility(View.VISIBLE);
