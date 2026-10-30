@@ -231,6 +231,27 @@ public class MainActivity extends Activity {
     }
 
     /** Streams one picture from your frontend's media to the page (box art for games RetroAchievements doesn't have). */
+    /** An installed app's icon as a small PNG, for the Apps tab. */
+    private WebResourceResponse serveAppIcon(String pkg) {
+        if (!pkg.matches("[A-Za-z0-9._]+")) return errorResponse(404, "Not found");
+        try {
+            android.graphics.drawable.Drawable d = getPackageManager().getApplicationIcon(pkg);
+            int size = 96;
+            android.graphics.Bitmap bmp = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888);
+            android.graphics.Canvas c = new android.graphics.Canvas(bmp);
+            d.setBounds(0, 0, size, size);
+            d.draw(c);
+            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+            bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out);
+            bmp.recycle();
+            java.util.Map<String, String> headers = new java.util.HashMap<String, String>();
+            headers.put("Cache-Control", "max-age=3600");
+            return new WebResourceResponse("image/png", null, 200, "OK", headers, new java.io.ByteArrayInputStream(out.toByteArray()));
+        } catch (Exception e) {
+            return errorResponse(404, "Not found");
+        }
+    }
+
     private WebResourceResponse serveArt(String token) {
         java.io.File f = ThorBridge.artForToken(token);
         if (f == null) return errorResponse(404, "Not found");
@@ -320,6 +341,10 @@ public class MainActivity extends Activity {
                 if (Config.APP_HOST_BUILTIN.equals(u.getHost()) && u.getPath() != null
                         && u.getPath().startsWith("/rom/")) {
                     return serveRom(u.getPath().substring(5));
+                }
+                if (Config.APP_HOST_BUILTIN.equals(u.getHost()) && u.getPath() != null
+                        && u.getPath().startsWith("/appicon/")) {
+                    return serveAppIcon(u.getPath().substring(9));
                 }
                 if (Config.APP_HOST_BUILTIN.equals(u.getHost()) && u.getPath() != null
                         && u.getPath().startsWith("/art/")) {

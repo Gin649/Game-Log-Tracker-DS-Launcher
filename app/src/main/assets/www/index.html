@@ -87,6 +87,7 @@
       <button class="tab-btn" data-tab="library">Game Library</button>
       <button class="tab-btn" data-tab="year">Beaten by Year</button>
       <button class="tab-btn" data-tab="backlog">Backlog</button>
+      <button class="tab-btn" data-tab="apps" id="tab-apps-btn" style="display:none;">Apps</button>
     </div>
 
     <div id="tab-overview" class="tab-panel active">
@@ -110,6 +111,15 @@
 
     <div id="tab-year" class="tab-panel">
       <div id="year-wrap"><div class="loading">Loading</div></div>
+    </div>
+
+    <div id="tab-apps" class="tab-panel">
+      <div class="section-title">Apps <span class="count" id="apps-count"></span></div>
+      <div class="lib-search-row">
+        <input class="lib-search" id="apps-search" type="text" placeholder="Search your apps...">
+        <button class="btn-ghost" id="btn-apps-mode" aria-pressed="false">All apps</button>
+      </div>
+      <div id="apps-wrap"></div>
     </div>
 
     <div id="tab-backlog" class="tab-panel">
@@ -340,6 +350,7 @@
 <script src="js/menu.js"></script>
 <script src="js/gamepad.js"></script>
 <script src="js/mirror.js"></script>
+<script src="js/apps.js"></script>
 <script src="js/startup.js"></script>
 <script src="js/rom-patcher.js"></script>
 <script src="js/guides.js"></script>

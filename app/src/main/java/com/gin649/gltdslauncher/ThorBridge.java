@@ -2,6 +2,8 @@ package com.gin649.gltdslauncher;
 
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.BatteryManager;
 import android.os.Environment;
 import android.util.Base64;
@@ -78,6 +80,56 @@ final class ThorBridge {
             return Launcher.launch(act, o.optString("title"), o.optString("console")).toString();
         } catch (Exception e) {
             return "{\"ok\":false,\"message\":\"Bad launch request.\"}";
+        }
+    }
+
+    /** The apps on this device that have a launcher icon (not this app), sorted by name: [{pkg, label}]. */
+    @JavascriptInterface
+    public String appsList() {
+        JSONArray arr = new JSONArray();
+        try {
+            PackageManager pm = act.getPackageManager();
+            Intent main = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
+            Map<String, String> found = new java.util.TreeMap<String, String>();
+            for (ResolveInfo ri : pm.queryIntentActivities(main, 0)) {
+                String pkg = ri.activityInfo.packageName;
+                if (pkg.equals(act.getPackageName()) || found.containsValue(pkg)) continue;
+                CharSequence label = ri.loadLabel(pm);
+                found.put((label == null ? pkg : label.toString()).toLowerCase(java.util.Locale.ROOT) + "\u0000" + pkg, pkg);
+            }
+            for (Map.Entry<String, String> e : found.entrySet()) {
+                String pkg = e.getValue();
+                String label = e.getKey().substring(0, e.getKey().indexOf('\u0000'));
+                try {
+                    label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString();
+                } catch (Exception ignored) {
+                }
+                arr.put(new JSONObject().put("pkg", pkg).put("label", label));
+            }
+        } catch (Exception ignored) {
+        }
+        return arr.toString();
+    }
+
+    /** Starts an app from the Apps tab, on the top screen when there are two, and keeps the art screen from covering it. */
+    @JavascriptInterface
+    public String launchApp(String pkg) {
+        try {
+            Intent i = act.getPackageManager().getLaunchIntentForPackage(pkg);
+            if (i == null) return "{\"ok\":false,\"message\":\"That app can't be opened.\"}";
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            int display = DisplayPicker.topDisplayId(act);
+            if (display >= 0) {
+                android.app.ActivityOptions options = android.app.ActivityOptions.makeBasic();
+                options.setLaunchDisplayId(display);
+                act.startActivity(i, options.toBundle());
+            } else {
+                act.startActivity(i);
+            }
+            ArtWatch.start(act, pkg);
+            return "{\"ok\":true}";
+        } catch (Exception e) {
+            return "{\"ok\":false,\"message\":\"Could not open that app.\"}";
         }
     }
 

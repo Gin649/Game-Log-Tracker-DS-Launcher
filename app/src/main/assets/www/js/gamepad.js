@@ -344,7 +344,7 @@
       if(play) play.click();
       return;
     }
-    const find = () => document.querySelector('#tab-library.active #lib-search, #tab-backlog.active #backlog-search');
+    const find = () => document.querySelector('#tab-library.active #lib-search, #tab-backlog.active #backlog-search, #tab-apps.active #apps-search');
     let input = find();
     if(!input){
       const lib = document.querySelector('.tab-btn[data-tab="library"]');

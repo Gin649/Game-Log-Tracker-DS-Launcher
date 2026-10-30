@@ -12,6 +12,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     panel.classList.add('active');
     activeTab = tabName;
     $('#system-chips').classList.toggle('visible', tabName === 'library' || tabName === 'year' || tabName === 'backlog');
+    if(tabName === 'apps' && typeof renderApps === 'function') renderApps();
 
     try{ renderSystemChips(); }catch(e){}
   });
