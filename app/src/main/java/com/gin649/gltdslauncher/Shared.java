@@ -87,6 +87,15 @@ final class Shared {
                         FanArt.decorate(appCtx, ge, s);
                     }
                     if (appCtx != null) LibraryScraper.requestFor(appCtx, rom); // fetches art in the background if none yet
+                } else if (appCtx != null) {
+                    // no ROM on this device: still look up fan art online from the title and console
+                    com.gin649.gltdslauncher.database.GameEntity v = FanArt.virtualFor(appCtx, title, console);
+                    if (v != null) {
+                        s.localPath = v.localMiximagePath;
+                        s.gameId = v.id;
+                        FanArt.decorate(appCtx, v, s);
+                        LibraryScraper.requestVirtual(appCtx, v);
+                    }
                 }
                 if (token == VIEW_TOKEN.get()) ArtBus.set(s);
             }
@@ -100,8 +109,8 @@ final class Shared {
         IO.execute(new Runnable() {
             @Override
             public void run() {
-                com.gin649.gltdslauncher.database.GameEntity g =
-                        com.gin649.gltdslauncher.database.GameRepository.get(appCtx).dao().getById(cur.gameId);
+                com.gin649.gltdslauncher.database.GameEntity g = cur.gameId < 0 ? FanArt.virtualById(cur.gameId)
+                        : com.gin649.gltdslauncher.database.GameRepository.get(appCtx).dao().getById(cur.gameId);
                 if (g == null) return;
                 String path = FanArt.step(appCtx, g, delta);
                 if (path != null && ArtBus.get().gameId == cur.gameId) LibraryScraper.refreshTopScreen(appCtx, g, path);

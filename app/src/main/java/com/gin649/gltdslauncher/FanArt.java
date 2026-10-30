@@ -33,6 +33,50 @@ final class FanArt {
 
     private FanArt() {}
 
+    /**
+     * Games in the tracker with no ROM on this device have no database row. They get a stand-in entity (negative id,
+     * from the console and title) so art can still be fetched for the top screen. Their chosen picture is kept in
+     * Prefs instead of the database.
+     */
+    private static final java.util.Map<Integer, GameEntity> VIRTUAL = new java.util.concurrent.ConcurrentHashMap<Integer, GameEntity>();
+
+    /** The stand-in for a tracker game without a ROM, or null when its console isn't one of your systems. */
+    static GameEntity virtualFor(Context ctx, String title, String console) {
+        SystemMap map = Shared.systems();
+        if (map == null || title == null || console == null) return null;
+        java.util.List<SystemMap.Sys> sys = map.forConsole(console);
+        if (sys.isEmpty()) return null;
+        int id = -(Math.abs((Matcher.compact(console) + "|" + Matcher.norm(title)).hashCode() % 1000000000) + 1);
+        GameEntity g = VIRTUAL.get(id);
+        if (g == null) {
+            g = new GameEntity();
+            g.id = id;
+            g.title = title;
+            g.systemId = sys.get(0).folder;
+            g.romPath = "virtual";
+            VIRTUAL.put(id, g);
+        }
+        String pick = Prefs.get(ctx, "fanpick" + id, "");
+        if (!pick.isEmpty() && new File(pick).isFile()) {
+            g.localMiximagePath = pick;
+        } else {
+            List<File> have = files(ctx, g);
+            g.localMiximagePath = have.isEmpty() ? null : have.get(0).getPath();
+        }
+        return g;
+    }
+
+    static GameEntity virtualById(int id) {
+        return VIRTUAL.get(id);
+    }
+
+    /** Makes a picture the one in use for a game (database row, or Prefs for a game without a ROM). */
+    static void setPick(Context ctx, GameEntity g, String path) {
+        g.localMiximagePath = path;
+        if (g.id > 0) GameRepository.get(ctx).dao().setMiximagePath(g.id, path);
+        else Prefs.put(ctx, "fanpick" + g.id, path == null ? "" : path);
+    }
+
     private static File dir(Context ctx, GameEntity g) {
         return new File(DataStore.root(ctx), "fanart/" + g.systemId + "/" + g.id);
     }
@@ -132,8 +176,7 @@ final class FanArt {
         }
         int to = ((at + delta) % list.size() + list.size()) % list.size();
         String path = list.get(to).getPath();
-        GameRepository.get(ctx).dao().setMiximagePath(g.id, path);
-        g.localMiximagePath = path;
+        setPick(ctx, g, path);
         return path;
     }
 

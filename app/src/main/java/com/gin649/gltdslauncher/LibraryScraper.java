@@ -80,6 +80,26 @@ final class LibraryScraper {
         });
     }
 
+    /** A tracker game with no ROM here is opened: fetches its fan art in the background if it has none yet. */
+    static void requestVirtual(final Context ctx, final GameEntity g) {
+        viewingId = g.id;
+        topUp(ctx, g);
+        if (NO_ART.contains(g.id)) return;
+        if (g.localMiximagePath != null && new File(g.localMiximagePath).isFile()) return;
+        if (!QUEUED.add(g.id)) return;
+        EXEC.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    runBatch(ctx, Collections.singletonList(g));
+                } finally {
+                    QUEUED.remove(g.id);
+                }
+                topUp(ctx, g);
+            }
+        });
+    }
+
     private static final Set<Integer> TOPPING = Collections.synchronizedSet(new HashSet<Integer>());
     private static final ExecutorService MORE = Executors.newSingleThreadExecutor();
 
@@ -134,7 +154,8 @@ final class LibraryScraper {
                     for (String[] tg : games) {
                         if (stopRequested) return;
                         RomIndex.Rom rom = Shared.findRom(tg[0], tg[1]);
-                        GameEntity g = rom == null ? null : LibrarySync.find(ctx, rom);
+                        // a game with no ROM on this device still gets art, from its title and console
+                        GameEntity g = rom == null ? FanArt.virtualFor(ctx, tg[0], tg[1]) : LibrarySync.find(ctx, rom);
                         if (g == null || !seen.add(g.id)) continue;
                         boolean hasArt = g.localMiximagePath != null && new File(g.localMiximagePath).isFile();
                         if (hasArt && !g.localMiximagePath.endsWith(LibrarySync.BUILT_SUFFIX)) {
@@ -216,7 +237,7 @@ final class LibraryScraper {
             f = MediaFinder.lookup(g.systemId, g.romPath);
             frontendFallback = f.fallback;
             if (f.direct != null) {
-                dao.setMiximagePath(g.id, f.direct);
+                FanArt.setPick(ctx, g, f.direct);
                 return true;
             }
         }
@@ -285,7 +306,7 @@ final class LibraryScraper {
                     try {
                         File out = MiximageCompositor.createMiximage(art.screen, art.box, art.logo, target);
                         if (out != null) {
-                            dao.setMiximagePath(g.id, out.getPath());
+                            FanArt.setPick(ctx, g, out.getPath());
                             if (g.id == viewingId) refreshTopScreen(ctx, g, out.getPath());
                             return true;
                         }
@@ -305,7 +326,7 @@ final class LibraryScraper {
             NOTES.addFirst(g.title + ": " + (why == null || why.isEmpty() ? "nothing found" : why));
             while (NOTES.size() > 4) NOTES.removeLast();
         }
-        if (!offline) dao.markNoMatch(g.id); // looked everywhere and found nothing; a manual "Fetch game art" tries again
+        if (!offline && g.id > 0) dao.markNoMatch(g.id); // looked everywhere and found nothing; a manual "Fetch game art" tries again
         return frontendFallback != null; // the frontend's box art or marquee still shows (LibrarySync.artFor)
     }
 
@@ -321,8 +342,7 @@ final class LibraryScraper {
                 && new File(g.localMiximagePath).isFile();
         if (!chosen) {
             String path = (added != null ? added : all.get(0)).getPath();
-            GameRepository.get(ctx).dao().setMiximagePath(g.id, path);
-            g.localMiximagePath = path;
+            FanArt.setPick(ctx, g, path);
             if (g.id == viewingId) refreshTopScreen(ctx, g, path);
         }
         return true;
