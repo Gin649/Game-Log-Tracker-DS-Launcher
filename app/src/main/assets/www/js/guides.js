@@ -703,16 +703,17 @@ $('#guide-marks-btn').addEventListener('click', toggleMarksPanel);
 $('#guide-find-close').addEventListener('click', closeToolPanels);
 $('#guide-find-prev').addEventListener('click', () => stepMatch(-1));
 $('#guide-find-next').addEventListener('click', () => stepMatch(1));
+$('#guide-find-go').addEventListener('click', () => { clearTimeout(findState.timer); runFind(); });
 $('#guide-find-back').addEventListener('click', () => {
   if(findState.origin !== null) $('#guide-reader-body').scrollTo({ top: findState.origin, behavior: 'auto' });
 });
-// Nothing is searched while you type: finish the word, then press Enter (or the next arrow). That avoids hunting for
-// thousands of matches on the first couple of letters.
+// Nothing is searched while you type: finish the word, then tap the → button. That avoids hunting for
+// thousands of matches on the first couple of letters. The → button beside the box searches (handhelds have no Enter key).
 $('#guide-find-input').addEventListener('input', () => {
   clearTimeout(findState.timer);
   clearFind();
   const has = $('#guide-find-input').value.trim().length > 0;
-  $('#guide-find-count').textContent = has ? 'Press Enter to search' : '';
+  $('#guide-find-count').textContent = has ? 'Tap → to search' : '';
   updateFindButtons();
 });
 $('#guide-find-input').addEventListener('keydown', (e) => {
