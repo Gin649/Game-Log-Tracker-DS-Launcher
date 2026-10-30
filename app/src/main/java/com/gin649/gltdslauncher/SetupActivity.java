@@ -171,10 +171,6 @@ public class SetupActivity extends Activity {
         });
 
         setContentView(root);
-        // A window over the tracker rather than a full-screen page
-        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
-        getWindow().setLayout((int) (dm.widthPixels * 0.94f), (int) (dm.heightPixels * 0.92f));
-        setFinishOnTouchOutside(false);
 
         if (frontend.equals("esde") && esRoot.isEmpty()) esRoot = guessEsRoot();
         if (frontend.equals("daijisho") && djRoot.isEmpty()) djRoot = guessDjRoot();

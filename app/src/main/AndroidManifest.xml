@@ -34,7 +34,6 @@
 
         <activity
             android:name=".SetupActivity"
-            android:theme="@android:style/Theme.DeviceDefault.Dialog.NoActionBar"
             android:exported="false"
             android:excludeFromRecents="true"
             android:launchMode="singleTask"
