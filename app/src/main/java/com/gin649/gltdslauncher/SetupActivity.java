@@ -115,7 +115,7 @@ public class SetupActivity extends Activity {
         djRoot = get("djRoot", "");
         dataRoot = get("dataRoot", "");
         frontend = get("frontend", "");
-        if (!frontend.equals("esde") && !frontend.equals("daijisho") && !frontend.equals("none")) {
+        if (!frontend.equals("esde") && !frontend.equals("none")) { // a Daijish\u014d choice from before is treated as none
             // first run, or an install from before this choice existed: ES-DE if it is there, otherwise none
             frontend = (!esRoot.isEmpty() || !guessEsRoot().isEmpty()) ? "esde" : "none";
         }
@@ -442,9 +442,8 @@ public class SetupActivity extends Activity {
 
     private void stepFolders() {
         text("Which frontend do you use?", 17, TEXT);
-        text("This decides which folders to ask for. The app works with any of them, or with none.", 13, MUTED);
+        text("This decides which folders to ask for. Pick None / something else for Daijish\u014d or any other frontend, or no frontend at all.", 13, MUTED);
         frontendButton("ES-DE", "esde");
-        frontendButton("Daijish\u014d", "daijisho");
         frontendButton("None / something else", "none");
 
         text("ROMs folder", 17, TEXT);
