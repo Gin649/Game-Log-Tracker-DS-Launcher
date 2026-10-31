@@ -307,7 +307,7 @@ function renderSystemChips(){
     chipRow.classList.add('editing');
     chipRow.innerHTML = `<button class="chip chip-ok" id="chip-ok">OK</button>
       <span class="chip chip-all-off">All</span>` + systems.map(sys => `
-      <button class="chip edit" data-sys="${attr(sys)}">${consoleLabel(sys)} (${counts[sys]})</button>`).join('');
+      <button class="chip edit" data-sys="${attr(sys)}">${consoleLabel(sys)}</button>`).join('');
     chipRow.querySelector('#chip-ok').addEventListener('click', () => { chipEdit = false; renderSystemChips(); });
     wireChipDrag(chipRow, systems.slice());
     return;
@@ -317,7 +317,7 @@ function renderSystemChips(){
   const chips = ['All', ...systems];
   chipRow.innerHTML = chips.map(sys => `
       <button class="chip ${sys === systemFilter ? 'active' : ''}" data-sys="${attr(sys)}">
-        ${sys === 'All' ? 'All' : label(sys)}${sys === 'All' ? '' : ` (${counts[sys]})`}
+        ${sys === 'All' ? 'All' : label(sys)}${sys === 'All' || !yearTab ? '' : ` (${counts[sys]})`}
       </button>
     `).join('');
 
@@ -407,7 +407,7 @@ function renderLibrary(){
     }
   }
 
-  $('#lib-count').textContent = rows.length ? `(${rows.length})` : '';
+  $('#lib-count').textContent = rows.length ? `(${rows.length} ${rows.length === 1 ? 'game' : 'games'})` : '';
 
   if(rows.length === 0){
     wrap.innerHTML = `<div class="empty">${libraryHideDone && !searchVal && systemFilter === 'All' ? 'No games in progress.' : 'No games match.'}</div>`;
@@ -497,7 +497,7 @@ function renderBacklog(){
   rows = rows.slice().sort((a, b) => sortableTitle(a.Title).localeCompare(sortableTitle(b.Title)));
 
   const countEl = $('#backlog-count');
-  if(countEl) countEl.textContent = rows.length ? `(${rows.length})` : '';
+  if(countEl) countEl.textContent = rows.length ? `(${rows.length} ${rows.length === 1 ? 'game' : 'games'})` : '';
 
   if(rows.length === 0){
     wrap.innerHTML = '<div class="empty">Nothing in your backlog. Add a game to start tracking it.</div>';
