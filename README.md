@@ -20,6 +20,7 @@ For all app related discussions and my Game of the Month Competition. Play some 
 - **Game Library** with every game you've played on RA. Search it, filter by system, and see progress, awards and playtime. The three games you played most recently sit at the top, then everything else is listed by name. Tap a column heading to sort by anything else. Pick a console and the top three are the last ones you played on that console.
 - **Beaten by Year** groups everything you've beaten or mastered by the year you did it.
 - **Backlog** is for games you plan to play, including games from systems RA doesn't track. It's sorted by name. Besides searching by title, Add game can pick games straight from your ROM files (several at once), or add every game in a system folder. Each is matched to its RetroAchievements entry by name, and one RA doesn't list is added as a plain entry, and its picture is filled in from your frontend's media, then SteamGridDB (with a key), LaunchBox, then RAWG.
+- **Apps** lists the apps installed on your device, so you can open them without leaving the launcher. Tap the star on an app to add it to your favourites, which is what the tab shows by default. All apps shows everything, and the search box finds an app by name. On two screens, apps open on the top screen by default. Hold an app to choose the top or bottom screen for it, and your choice is remembered.
 - **Social** shows the people you follow on RetroAchievements and what they've unlocked lately.
 - **Casual / Hardcore** is one switch in the menu that flips every stat, list and progress bar.
 
@@ -28,7 +29,7 @@ The web version has the full details: https://github.com/Gin649/Game-Log-Tracker
 ### Inside a game
 
 - **Retro Achievements** list with points and unlock dates, missable achievements marked with a "!", and a Missable Only filter. Put achievements in your own order, and export or import an order as a file. Also included are Subsets, if the game has any, each with its own achievement list.
-- **Game Details** More information about a game, including its RA time to beat and master.
+- **Game Details** More information about a game, including its RA time to beat and master, and a description. The description comes from RAWG, with LaunchBox filling in when RAWG has none.
 - **Game manuals.** Find and download a manual for the game, then read it in the built-in viewer. It's saved on your device and works with the controller too.
 - **Guides and Walkthroughs.** Find a walkthrough opens a browser inside the app. Back, or a swipe from the edge, returns to the tracker, and Save video keeps the link in the game's profile.
 - **ROM Hacks.** The app finds your base ROM for you. The patched ROM is saved next to it, with a "Play patched ROM" button and an "Add to my backlog" option. Translations are listed in their own section. Hacks that were made for your exact ROM are found from a ready-made list that updates itself, so the search is quick. I don't host or supply any ROMs.
@@ -47,6 +48,9 @@ When a game has several fan arts online (up to six), swipe left or right on the 
 - **RetroArch** starts the game with the right core for the system.
 - **Standalone emulators:** Dolphin (GameCube, Wii), DuckStation (PS1), PPSSPP (PSP), Mupen64Plus (N64), ARMSX2 (PS2), WatermelonDS (DS), Azahar (3DS), Eden (Switch), Cemu (Wii U), Vita3K (Vita) and HakuX (Xbox).
 - You choose which emulator or RetroArch core each system uses, and you can change it any time from Launcher settings.
+- **A different emulator for one game.** The controller button next to Play on this device opens a list of the emulators and RetroArch cores that can play that game. Pick one and only that game uses it, for example the 32-bit RetroArch for a game that won't run in the 64-bit one. Choose Default to go back to the system's emulator.
+- **Multi-disc games** show as one entry in your backlog and library, whichever disc you pick. In RetroArch the game's .m3u playlist is used, and if there isn't one, the first time you play the app offers to create it for you. Standalone emulators can't read playlists, so they ask which disc to start.
+- A game with no ROM on the device shows "Not located on this device" instead of Play.
 - The app reads your ROMs folder, whether you use ES-DE or no frontend at all. Folders named in full, like "Game Boy Advance" or "SNES", are recognised too.
 - Some of the newer emulator setups are still being tested. If one opens but doesn't start your game, tell me on Discord.
 
@@ -57,7 +61,7 @@ When a game has several fan arts online (up to six), swipe left or right on the 
 | D-pad / left stick | Move the highlight |
 | Right stick | Scroll up and down (faster the further you push) |
 | A | Confirm (can be swapped with B in the menu under Controller) |
-| B | Back: closes the game profile, pop-ups, the manual, the menu or the on-screen keyboard |
+| B | Back: closes the open section of a game profile, then the profile, pop-ups, the manual, the menu or the on-screen keyboard |
 | Select | Open or close the menu |
 | X | Refresh the game profile or the main screen |
 | L1 / R1 | Previous / next console |
