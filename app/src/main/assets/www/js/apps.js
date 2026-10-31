@@ -69,7 +69,7 @@ function renderAppsList(){
   // with no favourites yet, everything is listed so there is something to pick from
   const all = appsShowAll || !appsFavs.length || !!q;
   const list = appsAll.filter(a => (all || favSet.has(a.pkg)) && (!q || a.label.toLowerCase().includes(q)));
-  $('#apps-count').textContent = list.length ? '(' + list.length + ')' : '';
+  $('#apps-count').textContent = list.length ? '(' + list.length + (list.length === 1 ? ' App)' : ' Apps)') : '';
   const btn = $('#btn-apps-mode');
   btn.textContent = appsShowAll ? 'Favourites' : 'All apps';
   btn.setAttribute('aria-pressed', appsShowAll ? 'true' : 'false');
