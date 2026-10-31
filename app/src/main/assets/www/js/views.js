@@ -193,6 +193,7 @@ function applyConsoleOrder(arrangement){
 
 // Drag a tab to a new place: hold it for a moment to pick it up (moving sooner scrolls the row), slide it, let go.
 // A quick tap renames it instead.
+let chipClickBlockedUntil = 0;
 function wireChipDrag(chipRow, systems){
   const chips = Array.from(chipRow.querySelectorAll('.chip.edit'));
   let drag = null;
@@ -231,10 +232,8 @@ function wireChipDrag(chipRow, systems){
       if(!drag || drag.chip !== chip) return;
       clearTimeout(drag.timer); clearInterval(drag.scroller);
       const d = drag; drag = null;
-      if(!d.lifted){
-        if(e.type === 'pointerup') renameConsoleTab(systems[d.idx]);
-        return;
-      }
+      if(!d.lifted) return; // a tap: the click that follows renames it
+      chipClickBlockedUntil = Date.now() + 500; // letting go after a drag isn't a tap
       // where the picked-up tab ended up, compared with the middle of each of the others
       const shift = (d.x - d.x0) + (chipRow.scrollLeft - d.s0);
       const mid = c => c.offsetLeft + c.offsetWidth / 2;
@@ -250,7 +249,7 @@ function wireChipDrag(chipRow, systems){
     chip.addEventListener('pointerup', end);
     chip.addEventListener('pointercancel', end);
     chip.addEventListener('contextmenu', (e) => e.preventDefault());
-    chip.addEventListener('click', (e) => { if(e.detail === 0) renameConsoleTab(systems[idx]); }); // the controller's confirm button
+    chip.addEventListener('click', () => { if(Date.now() >= chipClickBlockedUntil) renameConsoleTab(systems[idx]); }); // a tap, or the controller's confirm button
   });
 }
 
