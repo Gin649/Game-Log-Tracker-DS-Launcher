@@ -385,6 +385,7 @@ final class ThorBridge {
         JSONArray out = new JSONArray();
         List<RomIndex.Rom> all = Shared.index().all();
         SystemMap map = Shared.systems();
+        java.util.Set<String> seenGames = new java.util.HashSet<String>();
         for (android.net.Uri u : uris) {
             try {
                 String path = PathUtil.fromDocument(u);
@@ -409,6 +410,54 @@ final class ThorBridge {
                                 break;
                             }
                         }
+                    }
+                }
+                if (sys == null && path != null && map != null) { // a disc the list doesn't hold: find the system by folder
+                    int best = -1;
+                    for (SystemMap.Sys s : map.all) {
+                        String dir = s.dir().getPath() + "/";
+                        if (path.startsWith(dir) && dir.length() > best) {
+                            sys = s;
+                            best = dir.length();
+                        }
+                    }
+                }
+                // Any disc of a multi-disc game stands for the whole game: one entry, pointing at the playlist when
+                // there is one, else at disc 1. Picking several discs, or the playlist too, still adds it once.
+                if (path != null) {
+                    File picked = new File(path);
+                    boolean isM3u = name.toLowerCase(java.util.Locale.ROOT).endsWith(".m3u");
+                    if (isM3u || RomIndex.discNo(name) > 0) {
+                        String game = RomIndex.discGame(title);
+                        File dir = picked.getParentFile();
+                        File target = picked;
+                        if (dir != null) {
+                            File m3u = new File(dir, game + ".m3u");
+                            if (m3u.isFile()) target = m3u;
+                            else if (!isM3u) {
+                                File[] sibs = dir.listFiles();
+                                File first = picked;
+                                int firstNo = RomIndex.discNo(name);
+                                String ext = name.substring(name.lastIndexOf('.') + 1).toLowerCase(java.util.Locale.ROOT);
+                                if (sibs != null) {
+                                    for (File f : sibs) {
+                                        String fn = f.getName();
+                                        if (!fn.toLowerCase(java.util.Locale.ROOT).endsWith("." + ext)) continue;
+                                        int d = fn.lastIndexOf('.');
+                                        String fb = d > 0 ? fn.substring(0, d) : fn;
+                                        if (RomIndex.discNo(fn) > 0 && RomIndex.discGame(fb).equalsIgnoreCase(game) && RomIndex.discNo(fn) < firstNo) {
+                                            first = f;
+                                            firstNo = RomIndex.discNo(fn);
+                                        }
+                                    }
+                                }
+                                target = first;
+                            }
+                        }
+                        String key = (dir == null ? "" : dir.getPath()) + "/" + game.toLowerCase(java.util.Locale.ROOT);
+                        if (!seenGames.add(key)) continue;
+                        path = target.getPath();
+                        title = game;
                     }
                 }
                 out.put(romJson(title, sys, path));
