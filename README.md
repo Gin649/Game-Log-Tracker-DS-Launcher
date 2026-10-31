@@ -111,7 +111,7 @@ The app keeps its own files (that saved data, plus fetched game art) in a folder
 
 ## Privacy
 
-None of your data is stored by me, and the app has no analytics or tracking. RetroAchievements requests go straight from the app to RetroAchievements. Your optional RAWG and SteamGridDB keys are only sent to those services.
+None of your data is stored by me. RetroAchievements requests go straight from the app to RetroAchievements. Your optional RAWG and SteamGridDB keys are only sent to those services.
 
 Other sites the app contacts, and why:
 
