@@ -21,6 +21,7 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - Manuals no longer have a Save PDF button, since the PDF is already saved in your storage folder.
 
 ### Fixed
+- In a game profile, Back now closes the open section first (achievements, guides, ROM hacks and so on). Pressing it again closes the profile.
 - Picking any disc of a multi-disc game for the backlog adds the whole game once, using its .m3u playlist if there is one, instead of one entry per disc.
 - Picking a ROM file for the backlog now opens the file chooser in your ROMs folder instead of the last place you browsed.
 - Refreshing a game profile now keeps your place on the page, and the controller highlight stays where it was instead of jumping back to Play on this device.

@@ -268,6 +268,14 @@
         $('#guide-reader-close').click();
         return true;
       }
+      if(top.el.id === 'modal-backdrop'){
+        // in a game profile, Back first closes the open section (achievements, guides, ROM hacks...), then the profile
+        const open = top.el.querySelector('#modal-card .btn-view-achievements.open');
+        if(open){
+          open.click();
+          return true;
+        }
+      }
       const back = top.el.querySelector('.soc-back, #patch-back-btn');
       if(back && isVisible(back)){ back.click(); return true; }
       const close = top.el.querySelector('.modal-close');
