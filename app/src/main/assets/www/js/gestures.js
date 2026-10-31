@@ -87,6 +87,31 @@
     }
   }
 
+  // While a game started from here is running, the open profile checks RetroAchievements about once a minute
+  // and redraws only when an achievement has been unlocked. Called from thor.js.
+  const liveSeen = {};
+  window.liveCheckProfile = async function(){
+    const card = $('#modal-card');
+    if(!card || !profileOpen()) return;
+    const idText = card.dataset.gameId;
+    if(!idText) return;
+    const gameId = resolveGameId(idText);
+    let fresh;
+    try{ fresh = await raFetch('API_GetGameInfoAndUserProgress.php', { g: gameId, a: 1 }); }catch(e){ return; }
+    if(!fresh || fresh.NumAwardedToUser === undefined) return;
+    const now = Number(fresh.NumAwardedToUser) + ':' + Number(fresh.NumAwardedToUserHardcore || 0);
+    if(liveSeen[idText] === undefined){
+      const lib = libraryData.find(g => g.GameID === gameId);
+      const rec = recentGamesData.find(g => g.GameID === gameId);
+      const src = lib ? lib.NumAwarded + ':' + (lib.NumAwardedHardcore || 0)
+        : rec ? Number(rec.NumAchieved || 0) + ':' + Number(rec.NumAchievedHardcore || 0) : null;
+      liveSeen[idText] = src || now;
+    }
+    if(liveSeen[idText] === now) return;
+    liveSeen[idText] = now;
+    if(card.dataset.gameId === idText) await refreshOpenGameProfile(idText);
+  };
+
   // The profile scrolls itself (#modal-backdrop), so pulls there use its scrollTop.
   let profileMode = false;
   const profileEl = () => $('#modal-backdrop');

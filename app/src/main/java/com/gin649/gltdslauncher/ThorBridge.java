@@ -98,6 +98,12 @@ final class ThorBridge {
         return "";
     }
 
+    /** True while a game started from here is still running (needs Usage access). */
+    @JavascriptInterface
+    public boolean gameRunning() {
+        return ArtWatch.gameRunning();
+    }
+
     /** True when a ROM for this game is on the device. */
     @JavascriptInterface
     public boolean hasRom(String json) {

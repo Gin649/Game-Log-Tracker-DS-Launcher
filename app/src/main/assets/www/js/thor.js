@@ -55,6 +55,17 @@ window.thorResumed = function(){
 };
 document.addEventListener('visibilitychange', () => { if(!document.hidden) window.thorResumed(); });
 
+// While a game runs, the open profile looks for new unlocks once a minute (see liveCheckProfile in gestures.js).
+// Only while the tracker is on screen, so a single-screen device stops when you are in the game.
+if(thorBridge){
+  setInterval(() => {
+    if(document.hidden || typeof window.liveCheckProfile !== 'function') return;
+    let running = false;
+    try{ running = thorBridge.gameRunning(); }catch(e){}
+    if(running) window.liveCheckProfile();
+  }, 60000);
+}
+
 function thorPlayButtonHtml(){
   if(!thorBridge) return '';
   return `<div class="play-row"><button class="btn-view-achievements btn-play-thor" id="modal-play-btn"><span class="arrow">▶</span> Play on this device</button>
