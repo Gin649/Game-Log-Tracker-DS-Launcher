@@ -48,6 +48,23 @@ async function thorPromoteLaunched(){
   }
 }
 
+// A game has just started from here: move it out of the Backlog now, without waiting for it to close.
+// An RA game is looked up and moved to the Library; a game RA doesn't list gets "Now Playing" ticked.
+function thorStarted(card, gameId){
+  thorMarkLaunched(gameId);
+  thorPromoteLaunched();
+  const entry = libraryData.find(g => Number(g.GameID) === Number(gameId) || g.GameID === gameId);
+  if(entry && entry.manual && entry.customConsole && !entry.manualStarted && !entry.manualBeaten){
+    const cb = card && card.querySelector('#manual-started-checkbox');
+    if(cb && !cb.checked){
+      cb.checked = true;
+      cb.dispatchEvent(new Event('change')); // saves it and refreshes the status line
+    }else if(!cb){
+      updateManualStartedStatus(entry.GameID, true);
+    }
+  }
+}
+
 // Coming back to the app (after quitting a game) clears the "Starting…" line under the Play button.
 window.thorResumed = function(){
   document.querySelectorAll('.thor-play-msg').forEach(m => { m.style.display = 'none'; m.textContent = ''; });
@@ -98,7 +115,7 @@ function thorWirePlay(card, gameId, title, consoleName, artUrl){
       ]);
       return;
     }
-    if(res.ok) thorMarkLaunched(gameId);
+    if(res.ok) thorStarted(card, gameId);
     msg.style.display = 'block';
     msg.classList.toggle('error', !res.ok);
     msg.textContent = res.message || (res.ok ? 'Starting the game…' : 'Could not start the game.');
