@@ -2,6 +2,11 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
+## v1.0.8
+
+### Changed
+- Game Library now labels its two groups. The three games you played most recently sit under a gold RECENTLY PLAYED heading, and the rest are under ALL GAMES A–Z, so they are no longer mixed together.
+
 ## v1.0.7
 
 ### Added
