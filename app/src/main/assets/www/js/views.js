@@ -395,6 +395,7 @@ function renderLibrary(){
   });
 
   // Default order: the three most recently played (on the picked console, if any), then by name.
+  let recentSet = null; // the games shown first, with a label over them
   if(key === 'Title' && dir === 'asc' && !searchVal){
     const recent = rows
       .filter(g => parseRADate(g.lastPlayed))
@@ -403,6 +404,7 @@ function renderLibrary(){
     if(recent.length){
       const picked = new Set(recent);
       rows = [...recent, ...rows.filter(g => !picked.has(g))];
+      recentSet = picked;
     }
   }
 
@@ -423,7 +425,11 @@ function renderLibrary(){
           <th data-key="lastPlayed">Last played</th>
         </tr></thead>
         <tbody>
-          ${rows.map(g => {
+          ${rows.map((g, i) => {
+          const label = recentSet
+            ? (i === 0 ? '<tr class="lib-sec"><td colspan="5">RECENTLY PLAYED</td></tr>'
+              : (i === recentSet.size ? '<tr class="lib-sec alt"><td colspan="5">ALL GAMES A\u2013Z</td></tr>' : ''))
+            : '';
           const isCustom = g.customConsole === true;
           const est = estHoursCache[g.GameID];
           const hoursLabel = isCustom ? '—' : (est ? formatDuration(est, true) : '<span class="pt-pending" title="Loading playtime…"></span>');
@@ -444,7 +450,7 @@ function renderLibrary(){
           const lastPlayedLabel = isCustom
             ? (g.manualBeatenDate ? new Date(g.manualBeatenDate).toLocaleDateString() : 'Never')
             : (g.lastPlayed ? timeAgo(g.lastPlayed) : 'Never');
-          return `
+          return label + `
             <tr data-game-id="${g.GameID}">
               <td><div class="g-title"><img src="${imgUrl(g.ImageIcon)}" alt=""><span>${g.Title}</span>${g.manual ? `<button class="manual-remove" data-remove-id="${g.GameID}" title="Remove">✕</button>` : ''}</div></td>
               <td>${awardCell}</td>
@@ -471,7 +477,7 @@ function renderLibrary(){
 
 // Opens a game from a table row; ✕ removes a manually added game.
 function wireGameRows(wrap){
-  wrap.querySelectorAll('tbody tr').forEach(row => {
+  wrap.querySelectorAll('tbody tr:not(.lib-sec)').forEach(row => {
     row.addEventListener('click', () => openGameModal(Number(row.getAttribute('data-game-id'))));
   });
   wrap.querySelectorAll('.manual-remove').forEach(btn => {

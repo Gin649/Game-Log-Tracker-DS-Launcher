@@ -1108,3 +1108,8 @@ html.top-panel #profile-hero{display:none;}
 .chip-row.editing .chip-all-off{ opacity:0.4; }
 .chip.edit{ display:inline-flex; align-items:center; padding:6px 12px; cursor:grab; user-select:none; -webkit-user-select:none; white-space:nowrap; border-color:var(--teal); color:var(--teal); background:rgba(89,201,165,0.15); }
 .chip.edit.lifted{ position:relative; z-index:5; box-shadow:0 4px 14px rgba(0,0,0,0.5); background:rgba(89,201,165,0.35); }
+
+.lib-table tbody tr.lib-sec{cursor:default;}
+.lib-table tbody tr.lib-sec:hover{background:transparent;}
+.lib-table tr.lib-sec td{padding:12px 10px 6px;border-bottom:1px solid var(--border);font-family:'Space Mono',monospace;font-size:0.6875rem;font-weight:700;letter-spacing:1px;color:var(--gold);}
+.lib-table tr.lib-sec.alt td{color:var(--muted);}

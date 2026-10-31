@@ -26,7 +26,7 @@
     'a[href]', 'button', 'input', 'select', 'textarea', 'summary',
     '[tabindex]', '[role="button"]', '[role="switch"]',
     '.cart', '.unlock', '.year-item', '.subset-head', '.ag-result', '.soc-row',
-    '.lib-table th', '.lib-table tbody tr', '.modal-art',
+    '.lib-table th', '.lib-table tbody tr:not(.lib-sec)', '.modal-art',
   ].join(',');
 
   let swapAB = false;
@@ -225,7 +225,7 @@
     if(menuOpen() || topOverlay()) return;
     const panel = document.querySelector('.tab-panel.active');
     if(!panel) return;
-    const first = candidates(panel).find(i => i.el.matches('.cart, .lib-table tbody tr, .year-item'));
+    const first = candidates(panel).find(i => i.el.matches('.cart, .lib-table tbody tr:not(.lib-sec), .year-item'));
     if(first) setFocus(first.el);
   }
 
