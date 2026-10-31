@@ -185,7 +185,7 @@ final class ThorBridge {
             Intent i = act.getPackageManager().getLaunchIntentForPackage(pkg);
             if (i == null) return "{\"ok\":false,\"message\":\"That app can't be opened.\"}";
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            int display = "bottom".equals(screen) ? DisplayPicker.bottomDisplayId(act) : DisplayPicker.topDisplayId(act);
+            int display = DisplayPicker.appDisplayId(act, !"bottom".equals(screen));
             if (display >= 0) {
                 android.app.ActivityOptions options = android.app.ActivityOptions.makeBasic();
                 options.setLaunchDisplayId(display);

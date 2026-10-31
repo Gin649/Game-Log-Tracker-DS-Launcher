@@ -318,7 +318,7 @@ final class Launcher {
 
         // A handheld emulator that draws both screens itself starts on the bottom screen and puts its top
         // screen on the other display; everything else runs on the top screen.
-        int display = standalone && plan.recipe.dual ? DisplayPicker.bottomDisplayId(act) : DisplayPicker.topDisplayId(act);
+        int display = DisplayPicker.gameDisplayId(act, standalone && plan.recipe.dual);
 
         Exception last = null;
         for (Intent intent : intents) {

@@ -103,6 +103,30 @@ final class DisplayPicker {
         return "top".equals(singleWhich(a)) ? p[0] : p[1];
     }
 
+    /**
+     * Where a game or app should open. Normally the top screen (or the bottom one for a handheld emulator that draws
+     * both). With "use one screen only", the app's own screen is taken, so games go to the other screen
+     * (or stay on this one for an emulator that draws both).
+     */
+    static int gameDisplayId(Activity a, boolean bothScreens) {
+        if (singleScreen(a)) {
+            int[] p = pair(a);
+            if (p == null) return -1;
+            int mine = singleDisplayId(a);
+            return bothScreens ? mine : (mine == p[0] ? p[1] : p[0]);
+        }
+        return bothScreens ? bottomDisplayId(a) : topDisplayId(a);
+    }
+
+    /** The physical top (wantTop) or bottom screen for an app, even when the app itself runs on one screen. */
+    static int appDisplayId(Activity a, boolean wantTop) {
+        if (singleScreen(a)) {
+            int[] p = pair(a);
+            return p == null ? -1 : (wantTop ? p[0] : p[1]);
+        }
+        return wantTop ? topDisplayId(a) : bottomDisplayId(a);
+    }
+
     /** Where the tracker should open: the bottom screen, or the screen chosen for single-screen use. */
     static int trackerDisplayId(Activity a) {
         int bottom = bottomDisplayId(a);
