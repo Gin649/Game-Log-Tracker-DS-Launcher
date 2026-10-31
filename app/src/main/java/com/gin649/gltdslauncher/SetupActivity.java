@@ -90,7 +90,10 @@ public class SetupActivity extends Activity {
 
     // views of the step on screen
     private EditText etUser, etKey, etRawg;
-    private Spinner spRa, spDisplay, spZoom;
+    private Spinner spRa, spDisplay, spZoom, spSingle;
+    private CheckBox cbSingle;
+    private boolean singleScreen;
+    private String singleWhich = "bottom";
     private final Map<String, Spinner> emuSpinners = new LinkedHashMap<String, Spinner>();
     private final List<Integer> displayIds = new ArrayList<Integer>();
 
@@ -125,6 +128,8 @@ public class SetupActivity extends Activity {
         useEsdeMedia = Prefs.getInt(this, "useEsdeMedia", 1) == 1;
         cssWidth = Prefs.getInt(this, "cssWidth", 720);
         topDisplay = DisplayPicker.prefs(this).getInt("topDisplay", -1);
+        singleScreen = DisplayPicker.singleScreen(this);
+        singleWhich = DisplayPicker.singleWhich(this);
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -283,6 +288,8 @@ public class SetupActivity extends Activity {
         cbLaunchBox = null;
         spRa = null;
         spDisplay = null;
+        spSingle = null;
+        cbSingle = null;
         spZoom = null;
         emuSpinners.clear();
 
@@ -677,6 +684,21 @@ public class SetupActivity extends Activity {
     }
 
     private void stepScreens() {
+        if (DisplayPicker.hasTwoScreens(this)) {
+            text("One screen only", 17, TEXT);
+            text("This device has two screens. Tick this to use the app on just one of them, with the tracker and the game art "
+                    + "together, like on a single-screen device.", 13, MUTED);
+            cbSingle = new CheckBox(this);
+            cbSingle.setText("Use one screen only");
+            cbSingle.setTextColor(TEXT);
+            cbSingle.setTextSize(14);
+            cbSingle.setChecked(singleScreen);
+            content.addView(cbSingle);
+            List<String> which = new ArrayList<String>();
+            which.add("Top screen");
+            which.add("Bottom screen");
+            spSingle = spinner(which, "top".equals(singleWhich) ? 0 : 1);
+        }
         text("Top screen", 17, TEXT);
         text("The screen that shows game art and runs your games. Automatic picks the screen this app is not on.", 13, MUTED);
         List<String> items = new ArrayList<String>();
@@ -716,7 +738,7 @@ public class SetupActivity extends Activity {
         sb.append("App data: ").append(effectiveDataRoot().isEmpty() ? "the app's private folder" : effectiveDataRoot()).append("\n");
         sb.append("Existing art: ").append(useEsdeMedia ? "used as it is" : "not used").append("\n");
         sb.append("RetroArch: ").append(raPackage.isEmpty() ? "default" : raPackage).append("\n");
-        sb.append("Top screen: ").append(topDisplay < 0 ? "automatic" : "display " + topDisplay);
+        sb.append("Screens: ").append(singleScreen ? "one screen only (" + singleWhich + ")" : (topDisplay < 0 ? "two screens, automatic" : "two screens, top is display " + topDisplay));
         text(sb.toString(), 13, MUTED);
         text("Tap Finish to start the tracker.", 14, MUTED);
     }
@@ -735,6 +757,8 @@ public class SetupActivity extends Activity {
             int p = e.getValue().getSelectedItemPosition();
             if (values != null && p >= 0 && p < values.size()) emuChoice.put(e.getKey(), values.get(p));
         }
+        if (cbSingle != null) singleScreen = cbSingle.isChecked();
+        if (spSingle != null) singleWhich = spSingle.getSelectedItemPosition() == 0 ? "top" : "bottom";
         if (spDisplay != null) {
             int p = spDisplay.getSelectedItemPosition();
             topDisplay = (p <= 0 || p - 1 >= displayIds.size()) ? -1 : displayIds.get(p - 1);
@@ -792,6 +816,7 @@ public class SetupActivity extends Activity {
         Prefs.putInt(this, "useEsdeMedia", useEsdeMedia ? 1 : 0);
         Prefs.putInt(this, "cssWidth", cssWidth);
         DisplayPicker.save(this, topDisplay);
+        DisplayPicker.saveSingle(this, singleScreen, singleWhich);
 
         for (Map.Entry<String, String> e : emuChoice.entrySet()) {
             put("emu." + e.getKey(), e.getValue());

@@ -60,7 +60,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         // The tracker always lives on the bottom screen, whichever screen it was opened from.
-        int bottom = DisplayPicker.bottomDisplayId(this);
+        int bottom = DisplayPicker.trackerDisplayId(this);
         if (bottom >= 0 && DisplayPicker.displayOf(this) != bottom
                 && !getIntent().getBooleanExtra("movedToBottom", false)) {
             Intent again = new Intent(this, MainActivity.class);
@@ -159,7 +159,7 @@ public class MainActivity extends Activity {
 
         Intent i = new Intent(this, SetupActivity.class);
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        int id = DisplayPicker.bottomDisplayId(this);
+        int id = DisplayPicker.trackerDisplayId(this);
         try {
             if (id >= 0) {
                 ActivityOptions options = ActivityOptions.makeBasic();
