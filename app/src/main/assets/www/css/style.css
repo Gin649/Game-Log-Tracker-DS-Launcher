@@ -228,7 +228,7 @@
   .stat .lbl{font-size:0.6875rem;color:var(--muted);margin-top:4px;}
 
   .section-title{
-    font-family:'Space Mono',monospace;font-size:0.875rem;color:var(--muted);
+    font-family:'Space Mono',monospace;font-size:0.875rem;color:var(--text);font-weight:700;
     letter-spacing:0.5px;margin:32px 0 12px;
     display:flex;justify-content:space-between;align-items:center;
   }
@@ -1108,4 +1108,3 @@ html.top-panel #profile-hero{display:none;}
 .chip-row.editing .chip-all-off{ opacity:0.4; }
 .chip.edit{ display:inline-flex; align-items:center; padding:6px 12px; cursor:grab; user-select:none; -webkit-user-select:none; white-space:nowrap; border-color:var(--teal); color:var(--teal); background:rgba(89,201,165,0.15); }
 .chip.edit.lifted{ position:relative; z-index:5; box-shadow:0 4px 14px rgba(0,0,0,0.5); background:rgba(89,201,165,0.35); }
-#tab-library > .section-title{ color:var(--text); font-weight:700; }
