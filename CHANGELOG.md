@@ -2,6 +2,21 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
+## v1.0.7
+
+### Added
+- Live achievement updates. While a game you started from the app is running, the open game profile checks RetroAchievements about once a minute. When you unlock something, the progress numbers and the Achievements and Beaten Achievements lists update, without reloading the rest of the profile. It only checks while the tracker is on screen, and needs Usage access.
+- Reorder and rename the console tabs. Hold a tab in Game Library or Backlog to start, then drag a tab to move it, tap it to rename it, and press the teal OK button to finish. Game Library and Backlog share one order, and Beaten uses your names. Your order and names are remembered.
+- Use one screen only. On a two-screen device, the Your screens step of the setup wizard has a checkbox to run the app on just the top or the bottom screen, with the tracker and the game art together. Games and apps still open on the other screen.
+
+### Changed
+- Games now move out of the Backlog when you press Play, instead of after the game closes. Games on RetroAchievements move to the Library, and games RetroAchievements doesn't list get Now Playing ticked, so they move too.
+- The tabs are now in the order Last Played, Game Library, Backlog, Beaten, Apps. Beaten by Year is now called Beaten.
+- On the controller, the tab buttons and the console buttons wrap around. Going past the last one returns to the first, and going back from the first goes to the last.
+- The console tabs in Game Library and Backlog no longer show a game count. The count beside the heading now reads, for example, (35 games), in bold gold. Apps shows (88 Apps).
+- Headings are bold, as are the years in Beaten. Hide beaten is now Hide Beaten, and Exit app is now Close App.
+- The update prompt is shorter. It shows the new version and points you to GitHub or Discord for details, instead of repeating the release notes.
+
 ## v1.0.6
 
 ### Added
