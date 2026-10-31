@@ -109,7 +109,54 @@
     }
     if(liveSeen[idText] === now) return;
     liveSeen[idText] = now;
-    if(card.dataset.gameId === idText) await refreshOpenGameProfile(idText);
+    if(card.dataset.gameId !== idText) return;
+
+    // The award changed (the game was just beaten or mastered): the status line needs the full redraw.
+    const lib0 = libraryData.find(g => g.GameID === gameId);
+    if(lib0 && (fresh.HighestAwardKind ?? null) !== (lib0.HighestAwardKind ?? null)){
+      await refreshOpenGameProfile(idText);
+      return;
+    }
+
+    // Otherwise only the numbers and the two achievement lists change; the rest of the profile stays as it is.
+    const maxPossible = Number(fresh.NumAchievements ?? 0);
+    const numAwarded = Number(fresh.NumAwardedToUser ?? 0);
+    const numAwardedHC = Number(fresh.NumAwardedToUserHardcore ?? 0);
+    if(lib0){
+      const i = libraryData.indexOf(lib0);
+      libraryData[i] = { ...lib0, NumAwarded: numAwarded, NumAwardedHardcore: numAwardedHC,
+        pct: (maxPossible || lib0.MaxPossible) ? Math.round((numAwarded / (maxPossible || lib0.MaxPossible)) * 100) : 0 };
+    }
+    const rIdx = recentGamesData.findIndex(g => g.GameID === gameId);
+    if(rIdx !== -1) recentGamesData[rIdx] = { ...recentGamesData[rIdx], NumAchieved: numAwarded, NumAchievedHardcore: numAwardedHC };
+
+    if(fresh.Achievements){
+      const list = Object.values(fresh.Achievements).sort((a, b) => (a.DisplayOrder ?? 0) - (b.DisplayOrder ?? 0));
+      try{ attachAchievementTypes(list, await getGameExtended(gameId)); }catch(e){}
+      achievementsListCache[gameId] = list;
+      try{ await storeAchList(gameId, list); }catch(e){}
+    }
+    delete gameExtendedCache[gameId];
+    try{ await window.storage.delete(`ra-gameinfo:${gameId}`, false); }catch(e){}
+
+    if(!profileOpen() || card.dataset.gameId !== idText) return;
+    const hc = statsMode === 'hardcore';
+    const earnedNow = hc ? numAwardedHC : numAwarded;
+    const total = maxPossible || (lib0 && lib0.MaxPossible) || 0;
+    const progress = card.querySelector('.modal-progress .row span:last-child');
+    if(progress && total) progress.textContent = `${earnedNow}/${total} · ${Math.round((earnedNow / total) * 100)}%`;
+
+    const list = achievementsListCache[gameId];
+    const achWrap = card.querySelector('#modal-achievements');
+    if(achWrap && list && achWrap.style.display !== 'none' && openAchievementsGameId != null && !achState(gameId).reorderMode){
+      renderAchWrapContent(achWrap, gameId);
+    }
+    const beatenWrap = card.querySelector('#modal-beaten-achievements');
+    if(beatenWrap && list && beatenWrap.style.display !== 'none' && openBeatenAchievementsGameId != null){
+      beatenWrap.innerHTML = renderBeatenAchievementsList(list, hc);
+    }
+    try{ renderRecentGames(recentGamesData); }catch(e){}
+    renderLibraryViews();
   };
 
   // The profile scrolls itself (#modal-backdrop), so pulls there use its scrollTop.
