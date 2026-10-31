@@ -39,6 +39,7 @@ public final class UpdateChecker {
     private static final Pattern TAG = Pattern.compile("^[vV]?(\\d+)\\.(\\d+)\\.(\\d+)");
 
     private static boolean checked;
+    private static boolean pinged;
     private static long downloadId = -1;
     private static File pendingApk;
 
@@ -54,9 +55,12 @@ public final class UpdateChecker {
 
     /** Looks for a newer release once per app process. Does nothing on debug builds. */
     public static void check(final Activity activity) {
-        if (BuildConfig.DEBUG || checked) return;
         final Context app = activity.getApplicationContext();
-        UsageCount.ping(app);
+        if (!pinged) {
+            pinged = true;
+            UsageCount.ping(app);
+        }
+        if (BuildConfig.DEBUG || checked) return;
 
         new Thread(new Runnable() {
             @Override
