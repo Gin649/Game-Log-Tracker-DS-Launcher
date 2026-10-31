@@ -179,13 +179,79 @@ function orderedSystems(counts){
   });
 }
 
-function moveConsoleTab(sys, dir, systems){
-  const i = systems.indexOf(sys), k = i + dir;
-  if(i === -1 || k < 0 || k >= systems.length) return;
-  systems.splice(k, 0, systems.splice(i, 1)[0]);
-  consoleOrder = [...systems, ...consoleOrder.filter(n => !systems.includes(n))];
+// Puts the visible consoles in the order given. They take the places those consoles already had in the saved
+// order, so consoles that aren't on this tab keep theirs and Library and Backlog stay in step.
+function applyConsoleOrder(arrangement){
+  const full = consoleOrder.slice();
+  arrangement.forEach(n => { if(!full.includes(n)) full.push(n); });
+  const slots = [];
+  full.forEach((n, i) => { if(arrangement.includes(n)) slots.push(i); });
+  slots.forEach((slot, k) => { full[slot] = arrangement[k]; });
+  consoleOrder = full;
   saveConsolePrefs();
-  renderSystemChips();
+}
+
+// Drag a tab to a new place: hold it for a moment to pick it up (moving sooner scrolls the row), slide it, let go.
+// A quick tap renames it instead.
+function wireChipDrag(chipRow, systems){
+  const chips = Array.from(chipRow.querySelectorAll('.chip.edit'));
+  let drag = null;
+  chipRow.addEventListener('touchmove', (e) => { if(drag && drag.lifted) e.preventDefault(); }, { passive: false });
+  chips.forEach((chip, idx) => {
+    chip.addEventListener('pointerdown', (e) => {
+      if(drag) return;
+      drag = { chip, idx, x0: e.clientX, y0: e.clientY, s0: chipRow.scrollLeft, lifted: false, id: e.pointerId, x: e.clientX, timer: null, scroller: null };
+      drag.timer = setTimeout(() => {
+        if(!drag) return;
+        drag.lifted = true;
+        chip.classList.add('lifted');
+        try{ chip.setPointerCapture(drag.id); }catch(err){}
+        drag.scroller = setInterval(() => { // slide the row when the finger is near either edge
+          const r = chipRow.getBoundingClientRect();
+          if(drag.x < r.left + 48) chipRow.scrollLeft -= 8;
+          else if(drag.x > r.right - 48) chipRow.scrollLeft += 8;
+          place();
+        }, 16);
+      }, 250);
+    });
+    const place = () => {
+      if(!drag || !drag.lifted) return;
+      drag.chip.style.transform = `translateX(${(drag.x - drag.x0) + (chipRow.scrollLeft - drag.s0)}px)`;
+    };
+    chip.addEventListener('pointermove', (e) => {
+      if(!drag || drag.chip !== chip) return;
+      drag.x = e.clientX;
+      if(!drag.lifted){
+        if(Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 10){ clearTimeout(drag.timer); drag = null; }
+        return;
+      }
+      place();
+    });
+    const end = (e) => {
+      if(!drag || drag.chip !== chip) return;
+      clearTimeout(drag.timer); clearInterval(drag.scroller);
+      const d = drag; drag = null;
+      if(!d.lifted){
+        if(e.type === 'pointerup') renameConsoleTab(systems[d.idx]);
+        return;
+      }
+      // where the picked-up tab ended up, compared with the middle of each of the others
+      const shift = (d.x - d.x0) + (chipRow.scrollLeft - d.s0);
+      const mid = c => c.offsetLeft + c.offsetWidth / 2;
+      const target = mid(d.chip) + shift;
+      const rest = chips.filter(c => c !== d.chip);
+      let at = rest.filter(c => mid(c) < target).length;
+      const next = systems.slice();
+      const moved = next.splice(d.idx, 1)[0];
+      next.splice(at, 0, moved);
+      if(e.type === 'pointerup') applyConsoleOrder(next);
+      renderSystemChips();
+    };
+    chip.addEventListener('pointerup', end);
+    chip.addEventListener('pointercancel', end);
+    chip.addEventListener('contextmenu', (e) => e.preventDefault());
+    chip.addEventListener('click', (e) => { if(e.detail === 0) renameConsoleTab(systems[idx]); }); // the controller's confirm button
+  });
 }
 
 function renameConsoleTab(sys){
@@ -229,24 +295,21 @@ function renderSystemChips(){
     ? libraryData.filter(isBacklogGame)
     : libraryData.filter(g => !isBacklogGame(g) && !(activeTab === 'library' && libraryHideDone && isGameAwarded(g)));
   source.forEach(g => { counts[g.ConsoleName] = (counts[g.ConsoleName] || 0) + 1; });
-  const systems = orderedSystems(counts);
+  const yearTab = activeTab === 'year'; // Beaten stays in order of games beaten, with the original names
+  const systems = yearTab ? Object.keys(counts).sort((a, b) => counts[b] - counts[a]) : orderedSystems(counts);
+  const label = sys => yearTab ? sys : consoleLabel(sys);
 
   if(systems.length === 0){ chipRow.innerHTML = ''; chipRow.classList.remove('editing'); return; }
   const attr = t => String(t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
   if(chipEdit){
-    // Reorder / rename mode: arrows move a tab, tapping its name renames it, OK finishes.
+    // Reorder / rename mode: drag a tab to move it, tap its name to rename it, OK finishes.
     chipRow.classList.add('editing');
     chipRow.innerHTML = `<button class="chip chip-ok" id="chip-ok">OK</button>
       <span class="chip chip-all-off">All</span>` + systems.map(sys => `
-      <span class="chip edit">
-        <button class="chip-mv" data-sys="${attr(sys)}" data-dir="-1" aria-label="Move left">‹</button>
-        <button class="chip-name" data-sys="${attr(sys)}">${consoleLabel(sys)} (${counts[sys]})</button>
-        <button class="chip-mv" data-sys="${attr(sys)}" data-dir="1" aria-label="Move right">›</button>
-      </span>`).join('');
+      <button class="chip edit" data-sys="${attr(sys)}">${consoleLabel(sys)} (${counts[sys]})</button>`).join('');
     chipRow.querySelector('#chip-ok').addEventListener('click', () => { chipEdit = false; renderSystemChips(); });
-    chipRow.querySelectorAll('.chip-mv').forEach(b => b.addEventListener('click', () => moveConsoleTab(b.dataset.sys, Number(b.dataset.dir), systems.slice())));
-    chipRow.querySelectorAll('.chip-name').forEach(b => b.addEventListener('click', () => renameConsoleTab(b.dataset.sys)));
+    wireChipDrag(chipRow, systems.slice());
     return;
   }
   chipRow.classList.remove('editing');
@@ -254,7 +317,7 @@ function renderSystemChips(){
   const chips = ['All', ...systems];
   chipRow.innerHTML = chips.map(sys => `
       <button class="chip ${sys === systemFilter ? 'active' : ''}" data-sys="${attr(sys)}">
-        ${sys === 'All' ? 'All' : consoleLabel(sys)}${sys === 'All' ? '' : ` (${counts[sys]})`}
+        ${sys === 'All' ? 'All' : label(sys)}${sys === 'All' ? '' : ` (${counts[sys]})`}
       </button>
     `).join('');
 
@@ -263,7 +326,7 @@ function renderSystemChips(){
     const cancel = () => { clearTimeout(timer); timer = null; };
     chip.addEventListener('pointerdown', (e) => {
       held = false;
-      if(chip.getAttribute('data-sys') === 'All') return;
+      if(chip.getAttribute('data-sys') === 'All' || yearTab) return;
       startX = e.clientX; startY = e.clientY;
       timer = setTimeout(() => { held = true; chipEdit = true; chipEditTab = activeTab; renderSystemChips(); }, 600);
     });

@@ -18,7 +18,7 @@ For all app related discussions and my Game of the Month Competition. Play some 
 
 - **Last Played** with your RetroAchievements profile, recently played games and your latest unlocks.
 - **Game Library** with every game you've played on RA. Search it, filter by system, and see progress, awards and playtime. The three games you played most recently sit at the top, then everything else is listed by name. Tap a column heading to sort by anything else. Pick a console and the top three are the last ones you played on that console.
-- **Beaten by Year** groups everything you've beaten or mastered by the year you did it.
+- **Beaten** groups everything you've beaten or mastered by the year you did it.
 - **Backlog** is for games you plan to play, including games from systems RA doesn't track. It's sorted by name. Besides searching by title, Add game can pick games straight from your ROM files (several at once), or add every game in a system folder. Each is matched to its RetroAchievements entry by name, and one RA doesn't list is added as a plain entry, and its picture is filled in from your frontend's media, then SteamGridDB (with a key), LaunchBox, then RAWG.
 - **Apps** lists the apps installed on your device, so you can open them without leaving the launcher. Tap the star on an app to add it to your favourites, which is what the tab shows by default. All apps shows everything, and the search box finds an app by name. On two screens, apps open on the top screen by default. Hold an app to choose the top or bottom screen for it, and your choice is remembered.
 - **Social** shows the people you follow on RetroAchievements and what they've unlocked lately.
