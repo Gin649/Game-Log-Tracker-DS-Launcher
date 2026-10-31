@@ -294,9 +294,9 @@ function renderSystemChips(){
     ? libraryData.filter(isBacklogGame)
     : libraryData.filter(g => !isBacklogGame(g) && !(activeTab === 'library' && libraryHideDone && isGameAwarded(g)));
   source.forEach(g => { counts[g.ConsoleName] = (counts[g.ConsoleName] || 0) + 1; });
-  const yearTab = activeTab === 'year'; // Beaten stays in order of games beaten, with the original names
+  const yearTab = activeTab === 'year'; // Beaten stays in order of games beaten, with your tab names
   const systems = yearTab ? Object.keys(counts).sort((a, b) => counts[b] - counts[a]) : orderedSystems(counts);
-  const label = sys => yearTab ? sys : consoleLabel(sys);
+  const label = consoleLabel; // your tab names are used here too
 
   if(systems.length === 0){ chipRow.innerHTML = ''; chipRow.classList.remove('editing'); return; }
   const attr = t => String(t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
