@@ -143,10 +143,8 @@ public final class UpdateChecker {
     }
 
     private static void showDialog(final Activity activity, final Release r) {
-        String notes = r.notes.trim();
-        if (notes.length() > 600) notes = notes.substring(0, 600) + "...";
-        String message = "Version " + r.tag + " is available (you have " + BuildConfig.VERSION_NAME + ")."
-                + (notes.isEmpty() ? "" : "\n\n" + notes);
+        String message = "New update available: " + r.tag + "\n(you have " + BuildConfig.VERSION_NAME + ")"
+                + "\n\nSee the GitHub or Discord for details.\n\nCheers!";
 
         new AlertDialog.Builder(activity)
                 .setTitle("Update available")

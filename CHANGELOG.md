@@ -19,6 +19,7 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - Only one section is open at a time in the hamburger menu, and the section you open scrolls to the top so you can see all of it.
 - Social now fills the whole bottom screen instead of a small window, so it is easier to read.
 - Guide search no longer runs while you type. Type the full word, then tap the new → button beside the search box.
+- The update prompt is shorter. It shows the new version and points you to GitHub or Discord for details, instead of repeating the release notes.
 - Manuals no longer have a Save PDF button, since the PDF is already saved in your storage folder.
 
 ### Fixed
