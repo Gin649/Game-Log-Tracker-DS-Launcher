@@ -98,6 +98,17 @@ final class ThorBridge {
         return "";
     }
 
+    /** True when a ROM for this game is on the device. */
+    @JavascriptInterface
+    public boolean hasRom(String json) {
+        try {
+            JSONObject o = new JSONObject(json);
+            return Shared.findRom(o.optString("title"), o.optString("console")) != null;
+        } catch (Exception e) {
+            return true; // when unsure, leave Play usable
+        }
+    }
+
     /** The emulators this game can use, and the one picked for it alone: {ok, options:[{value,label}], current}. */
     @JavascriptInterface
     public String emuOptions(String json) {

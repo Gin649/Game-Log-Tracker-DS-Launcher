@@ -1100,3 +1100,5 @@ html.top-panel #profile-hero{display:none;}
 .btn-emu{ flex:0 0 54px; background:var(--panel); border:1px solid var(--border); border-radius:8px; color:var(--gold); display:flex; align-items:center; justify-content:center; cursor:pointer; }
 .btn-emu:active{ border-color:var(--gold); }
 #thor-choice .app-pop-card{ max-height:80vh; overflow-y:auto; }
+
+.btn-play-thor.no-rom{ border-color:var(--border); color:var(--muted); opacity:0.8; cursor:default; }

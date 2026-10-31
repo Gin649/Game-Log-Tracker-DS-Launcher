@@ -89,6 +89,18 @@ function thorWirePlay(card, gameId, title, consoleName, artUrl){
   };
   btn.addEventListener('click', () => play(''));
 
+  // No ROM for this game on the device: say so instead of offering Play.
+  const emuBtn0 = card.querySelector('#modal-emu-btn');
+  setTimeout(() => {
+    let has = true;
+    try{ has = typeof thorBridge.hasRom !== 'function' || thorBridge.hasRom(JSON.stringify(info)); }catch(e){}
+    if(has || !card.isConnected) return;
+    btn.disabled = true;
+    btn.classList.add('no-rom');
+    btn.innerHTML = 'Not located on this device';
+    if(emuBtn0) emuBtn0.style.display = 'none';
+  }, 0);
+
   const emuBtn = card.querySelector('#modal-emu-btn');
   if(emuBtn) emuBtn.addEventListener('click', () => {
     let r;
