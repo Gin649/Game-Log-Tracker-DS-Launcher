@@ -56,6 +56,7 @@ public final class UpdateChecker {
     public static void check(final Activity activity) {
         if (BuildConfig.DEBUG || checked) return;
         final Context app = activity.getApplicationContext();
+        UsageCount.ping(app);
 
         new Thread(new Runnable() {
             @Override

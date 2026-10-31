@@ -10,6 +10,7 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - A controller button next to Play on this device lets you choose the emulator for that one game only. For example, run one game in the 32-bit RetroArch while the rest use the 64-bit one. Pick Default to go back to the system's emulator.
 - Multi-disc games now show as one entry in the backlog and library. In RetroArch the game's .m3u playlist is used. If there isn't one, the first time you play it the app offers to create the .m3u for you, or to play disc 1 only.
 - Standalone emulators, such as Dolphin and DuckStation, can't read .m3u playlists, so for a multi-disc game they ask which disc to start.
+- A simple anonymous user count. Once a day the app registers one launch with GoatCounter, so the number of users can be seen. It sends nothing about you or your games.
 - Game descriptions fall back to LaunchBox when no other source has one.
 
 ### Changed
