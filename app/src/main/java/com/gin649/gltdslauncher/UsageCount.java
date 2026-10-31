@@ -17,7 +17,7 @@ import java.util.Locale;
  */
 final class UsageCount {
 
-    static final String CODE = "";
+    static final String CODE = "gin649";
 
     private UsageCount() {}
 
