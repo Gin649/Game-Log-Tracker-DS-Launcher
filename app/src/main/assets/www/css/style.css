@@ -232,7 +232,7 @@
     letter-spacing:0.5px;margin:32px 0 12px;
     display:flex;justify-content:space-between;align-items:center;
   }
-  .section-title span.count{color:var(--gold-dim);font-weight:700;}
+  .section-title span.count{color:var(--text);font-weight:700;}
 
   .cart-grid{
     display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));
