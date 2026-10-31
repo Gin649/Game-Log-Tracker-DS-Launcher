@@ -283,6 +283,8 @@
       if(top.el.id === 'modal-backdrop'){ closeGameModal(); return true; }
       return false;
     }
+    const chipOk = document.getElementById('chip-ok'); // reorder mode for the console tabs: Back finishes it
+    if(chipOk){ chipOk.click(); return true; }
     if(menuOpen()){ closeDropdownMenu(); return true; }
     return false;
   }
@@ -314,6 +316,7 @@
     if(menuOpen() || topOverlay()) return;
     const row = $('#system-chips');
     if(!row || !row.classList.contains('visible')) return;
+    if(row.classList.contains('editing')) return;
     const chips = Array.from(row.querySelectorAll('.chip'));
     if(!chips.length) return;
     const cur = Math.max(0, chips.findIndex(c => c.classList.contains('active')));

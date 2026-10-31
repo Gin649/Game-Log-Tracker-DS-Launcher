@@ -143,8 +143,81 @@ function renderUnlocks(list){
   });
 }
 
+// Console tabs can be put in your own order and renamed. Both are saved and shared by Library, Beaten by Year and Backlog.
+let consoleOrder = [];       // ConsoleNames in the order you chose
+let consoleNames = {};       // ConsoleName -> the name shown on its tab
+let consolePrefsState = 0;   // 0 not loaded, 1 loading, 2 loaded
+let chipEdit = false;        // reorder/rename mode
+let chipEditTab = '';
+
+async function loadConsolePrefs(){
+  if(consolePrefsState) return;
+  consolePrefsState = 1;
+  try{
+    const o = await window.storage.get('console-order', false);
+    if(o && o.value) consoleOrder = JSON.parse(o.value) || [];
+    const n = await window.storage.get('console-names', false);
+    if(n && n.value) consoleNames = JSON.parse(n.value) || {};
+  }catch(e){}
+  consolePrefsState = 2;
+  try{ renderSystemChips(); }catch(e){}
+}
+function saveConsolePrefs(){
+  try{ window.storage.set('console-order', JSON.stringify(consoleOrder), false); }catch(e){}
+  try{ window.storage.set('console-names', JSON.stringify(consoleNames), false); }catch(e){}
+}
+const consoleLabel = sys => (consoleNames[sys] || sys);
+
+// Your order first, then any console you haven't placed yet by number of games.
+function orderedSystems(counts){
+  const names = Object.keys(counts);
+  const rank = n => { const i = consoleOrder.indexOf(n); return i === -1 ? Infinity : i; };
+  return names.sort((a, b) => {
+    const ra = rank(a), rb = rank(b);
+    if(ra !== rb) return ra === Infinity ? 1 : rb === Infinity ? -1 : ra - rb;
+    return counts[b] - counts[a];
+  });
+}
+
+function moveConsoleTab(sys, dir, systems){
+  const i = systems.indexOf(sys), k = i + dir;
+  if(i === -1 || k < 0 || k >= systems.length) return;
+  systems.splice(k, 0, systems.splice(i, 1)[0]);
+  consoleOrder = [...systems, ...consoleOrder.filter(n => !systems.includes(n))];
+  saveConsolePrefs();
+  renderSystemChips();
+}
+
+function renameConsoleTab(sys){
+  const old = document.getElementById('chip-rename'); if(old) old.remove();
+  const esc2 = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const pop = document.createElement('div');
+  pop.id = 'chip-rename';
+  pop.className = 'app-pop';
+  pop.innerHTML = `<div class="app-pop-card">
+    <div class="app-pop-title">Rename tab</div>
+    <div class="app-pop-sub">${esc2(sys)}</div>
+    <input type="text" id="chip-rename-input" value="${esc2(consoleLabel(sys))}" maxlength="40" style="width:100%;">
+    <button class="btn-primary" id="chip-rename-save">Save</button>
+    <button class="btn-ghost" id="chip-rename-reset">Use original name</button>
+    <button class="btn-ghost" id="chip-rename-cancel">Cancel</button>
+  </div>`;
+  document.body.appendChild(pop);
+  const done = () => { pop.remove(); renderSystemChips(); };
+  pop.querySelector('#chip-rename-save').addEventListener('click', () => {
+    const v = pop.querySelector('#chip-rename-input').value.trim();
+    if(v && v !== sys) consoleNames[sys] = v; else delete consoleNames[sys];
+    saveConsolePrefs(); done();
+  });
+  pop.querySelector('#chip-rename-reset').addEventListener('click', () => { delete consoleNames[sys]; saveConsolePrefs(); done(); });
+  pop.querySelector('#chip-rename-cancel').addEventListener('click', () => pop.remove());
+  pop.addEventListener('click', (e) => { if(e.target === pop) pop.remove(); });
+}
+
 function renderSystemChips(){
   const chipRow = $('#system-chips');
+  if(!consolePrefsState) loadConsolePrefs();
+  if(chipEdit && chipEditTab !== activeTab) chipEdit = false;
   const counts = {};
   const source = activeTab === 'year'
     ? libraryData.filter(g => {
@@ -156,19 +229,49 @@ function renderSystemChips(){
     ? libraryData.filter(isBacklogGame)
     : libraryData.filter(g => !isBacklogGame(g) && !(activeTab === 'library' && libraryHideDone && isGameAwarded(g)));
   source.forEach(g => { counts[g.ConsoleName] = (counts[g.ConsoleName] || 0) + 1; });
-  const systems = Object.keys(counts).sort((a,b) => counts[b] - counts[a]);
+  const systems = orderedSystems(counts);
 
-  if(systems.length === 0){ chipRow.innerHTML = ''; return; }
+  if(systems.length === 0){ chipRow.innerHTML = ''; chipRow.classList.remove('editing'); return; }
+  const attr = t => String(t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+  if(chipEdit){
+    // Reorder / rename mode: arrows move a tab, tapping its name renames it, OK finishes.
+    chipRow.classList.add('editing');
+    chipRow.innerHTML = `<button class="chip chip-ok" id="chip-ok">OK</button>
+      <span class="chip chip-all-off">All</span>` + systems.map(sys => `
+      <span class="chip edit">
+        <button class="chip-mv" data-sys="${attr(sys)}" data-dir="-1" aria-label="Move left">‹</button>
+        <button class="chip-name" data-sys="${attr(sys)}">${consoleLabel(sys)} (${counts[sys]})</button>
+        <button class="chip-mv" data-sys="${attr(sys)}" data-dir="1" aria-label="Move right">›</button>
+      </span>`).join('');
+    chipRow.querySelector('#chip-ok').addEventListener('click', () => { chipEdit = false; renderSystemChips(); });
+    chipRow.querySelectorAll('.chip-mv').forEach(b => b.addEventListener('click', () => moveConsoleTab(b.dataset.sys, Number(b.dataset.dir), systems.slice())));
+    chipRow.querySelectorAll('.chip-name').forEach(b => b.addEventListener('click', () => renameConsoleTab(b.dataset.sys)));
+    return;
+  }
+  chipRow.classList.remove('editing');
 
   const chips = ['All', ...systems];
   chipRow.innerHTML = chips.map(sys => `
-      <button class="chip ${sys === systemFilter ? 'active' : ''}" data-sys="${sys}">
-        ${sys}${sys === 'All' ? '' : ` (${counts[sys]})`}
+      <button class="chip ${sys === systemFilter ? 'active' : ''}" data-sys="${attr(sys)}">
+        ${sys === 'All' ? 'All' : consoleLabel(sys)}${sys === 'All' ? '' : ` (${counts[sys]})`}
       </button>
     `).join('');
 
   chipRow.querySelectorAll('.chip').forEach(chip => {
+    let timer = null, startX = 0, startY = 0, held = false;
+    const cancel = () => { clearTimeout(timer); timer = null; };
+    chip.addEventListener('pointerdown', (e) => {
+      held = false;
+      if(chip.getAttribute('data-sys') === 'All') return;
+      startX = e.clientX; startY = e.clientY;
+      timer = setTimeout(() => { held = true; chipEdit = true; chipEditTab = activeTab; renderSystemChips(); }, 600);
+    });
+    chip.addEventListener('pointermove', (e) => { if(timer && Math.hypot(e.clientX - startX, e.clientY - startY) > 10) cancel(); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => chip.addEventListener(ev, cancel));
+    chip.addEventListener('contextmenu', (e) => e.preventDefault());
     chip.addEventListener('click', () => {
+      if(held){ held = false; return; } // the press that opened reorder mode isn't a tap
       systemFilter = chip.getAttribute('data-sys');
       renderLibraryViews();
     });

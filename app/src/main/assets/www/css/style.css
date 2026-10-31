@@ -1102,3 +1102,10 @@ html.top-panel #profile-hero{display:none;}
 #thor-choice .app-pop-card{ max-height:80vh; overflow-y:auto; }
 
 .btn-play-thor.no-rom{ border-color:var(--border); color:var(--muted); opacity:0.8; cursor:default; }
+
+/* console tabs: reorder / rename mode */
+.chip-row.editing .chip-ok{ background:var(--teal); border-color:var(--teal); color:#10201f; font-weight:700; }
+.chip-row.editing .chip-all-off{ opacity:0.4; }
+.chip.edit{ display:inline-flex; align-items:center; gap:2px; padding:0 4px; border-color:var(--teal); color:var(--teal); background:rgba(89,201,165,0.15); }
+.chip.edit button{ background:none; border:0; color:inherit; font:inherit; cursor:pointer; padding:6px 6px; }
+.chip.edit .chip-mv{ font-size:1.1rem; font-weight:700; }
