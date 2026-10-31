@@ -14,12 +14,15 @@ For all app related discussions and my Game of the Month Competition. Play some 
 
 **Two screens, one app.** The bottom screen is the Game Log Tracker. The top screen shows art for the game you have open, or the logo on the main menu. Open a game, press Play, and it starts on the top screen. The tracker remains on the bottom screen to keep track of your game. When the game closes, the top screen returns to showing fan art and menus etc.
 
+**One screen only.** On a two-screen device, the setup wizard can run the app on just the top or the bottom screen, with the tracker and the game art together. Games and apps then open on the other screen.
+
 **The tracker** is the full Game Log Tracker web app, bundled along with many improvements. 
 
 - **Last Played** with your RetroAchievements profile, recently played games and your latest unlocks.
 - **Game Library** with every game you've played on RA. Search it, filter by system, and see progress, awards and playtime. The three games you played most recently sit at the top, then everything else is listed by name. Tap a column heading to sort by anything else. Pick a console and the top three are the last ones you played on that console.
+- **Console tabs** can be put in your own order and renamed. Hold a tab in Game Library or Backlog, drag a tab to move it, tap it to rename it, and press the teal OK button to finish. Game Library and Backlog share one order, Beaten uses your names, and the app remembers them.
+- **Backlog** is for games you plan to play, including games from systems RA doesn't track. It's sorted by name. Besides searching by title, Add game can pick games straight from your ROM files (several at once), or add every game in a system folder. Each is matched to its RetroAchievements entry by name, and one RA doesn't list is added as a plain entry, and its picture is filled in from your frontend's media, then SteamGridDB (with a key), LaunchBox, then RAWG. A game leaves the Backlog and goes to the Library as soon as you press Play. A game RA doesn't list gets Now Playing ticked for you at that moment.
 - **Beaten** groups everything you've beaten or mastered by the year you did it.
-- **Backlog** is for games you plan to play, including games from systems RA doesn't track. It's sorted by name. Besides searching by title, Add game can pick games straight from your ROM files (several at once), or add every game in a system folder. Each is matched to its RetroAchievements entry by name, and one RA doesn't list is added as a plain entry, and its picture is filled in from your frontend's media, then SteamGridDB (with a key), LaunchBox, then RAWG.
 - **Apps** lists the apps installed on your device, so you can open them without leaving the launcher. Tap the star on an app to add it to your favourites, which is what the tab shows by default. All apps shows everything, and the search box finds an app by name. On two screens, apps open on the top screen by default. Hold an app to choose the top or bottom screen for it, and your choice is remembered.
 - **Social** shows the people you follow on RetroAchievements and what they've unlocked lately.
 - **Casual / Hardcore** is one switch in the menu that flips every stat, list and progress bar.
@@ -29,6 +32,7 @@ The web version has the full details: https://github.com/Gin649/Game-Log-Tracker
 ### Inside a game
 
 - **Retro Achievements** list with points and unlock dates, missable achievements marked with a "!", and a Missable Only filter. Put achievements in your own order, and export or import an order as a file. Also included are Subsets, if the game has any, each with its own achievement list.
+- **Live achievements.** While a game you started from the app is running, the open profile checks RetroAchievements about once a minute. When you unlock something, the progress and the achievement lists update without reloading the page. It needs Usage access and only checks while the tracker is on screen.
 - **Game Details** More information about a game, including its RA time to beat and master, and a description. The description comes from RAWG, with LaunchBox filling in when RAWG has none.
 - **Game manuals.** Find and download a manual for the game, then read it in the built-in viewer. It's saved on your device and works with the controller too.
 - **Guides and Walkthroughs.** Find a walkthrough opens a browser inside the app. Back, or a swipe from the edge, returns to the tracker, and Save video keeps the link in the game's profile.
@@ -64,15 +68,15 @@ When a game has several fan arts online (up to six), swipe left or right on the 
 | B | Back: closes the open section of a game profile, then the profile, pop-ups, the manual, the menu or the on-screen keyboard |
 | Select | Open or close the menu |
 | X | Refresh the game profile or the main screen |
-| L1 / R1 | Previous / next console |
-| L2 / R2 | Previous / next tab |
+| L1 / R1 | Previous / next console (wraps around at either end) |
+| L2 / R2 | Previous / next tab (wraps around at either end) |
 
 
 ### Other things
 
 - Text size controls in the menu, and a tracker size setting for the bottom screen in Launcher settings.
 - An optional clock and battery readout, with the battery shown as pixel hearts. Turn it on under Display in the menu.
-- The app checks for new versions and offers to download and install them.
+- The app checks for new versions and offers to download and install them. The prompt shows the new version and points to GitHub or Discord for details.
 - About, at the bottom of the menu, shows the app version and links to GitHub and Discord.
 
 ## Screenshots
@@ -98,7 +102,7 @@ A game profile on the Thor, with the fan art and title on the top screen and the
    - For single screen devices uncheck launchbox and leave the steamgriddb blank. All artwork scraped is for the top screen and not needed for single screen devices.
    - Which frontend you use (ES-DE or none), your ROMs folder, and the frontend's media folder if you use ESDE. If you you select none, new fan art will be scraped as you navigate game library.
    - Which emulator to use for each system. Only systems found in your Roms folder and emulators/cores on your device are listed.
-   - Which screen is the top screen, and how big the text on the tracker should be on the bottom screen. This is automatically configured. For single screen just leave it on automatic. 
+   - On a two-screen device, whether to use one screen only (top or bottom), which screen is the top screen, and how big the text on the tracker should be on the bottom screen. This is automatically configured. For single screen just leave it on automatic. 
 5. Tap Finish. You can change any of it later from the tracker's menu, under Launcher settings.
 
 **Coming from the web version?** The app keeps its own data, so move yours over once. In the web version choose Menu, then Data, then Export. In the app choose Menu, then Data, then Import.
