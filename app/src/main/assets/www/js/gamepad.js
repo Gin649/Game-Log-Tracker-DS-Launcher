@@ -304,7 +304,7 @@
     const tabs = Array.from(document.querySelectorAll('.tab-btn')).filter(isVisible);
     if(!tabs.length) return;
     const cur = Math.max(0, tabs.findIndex(t => t.classList.contains('active')));
-    const next = Math.min(tabs.length - 1, Math.max(0, cur + delta));
+    const next = (cur + delta + tabs.length) % tabs.length; // past the last tab wraps to the first, and back
     if(next !== cur){
       tabs[next].click();
       focusFirstGame();
@@ -320,7 +320,7 @@
     const chips = Array.from(row.querySelectorAll('.chip'));
     if(!chips.length) return;
     const cur = Math.max(0, chips.findIndex(c => c.classList.contains('active')));
-    const next = Math.min(chips.length - 1, Math.max(0, cur + delta));
+    const next = (cur + delta + chips.length) % chips.length; // wraps around at either end
     if(next === cur) return;
     chips[next].click(); // redraws the row, so look the active chip up again afterwards
     const active = row.querySelector('.chip.active');
