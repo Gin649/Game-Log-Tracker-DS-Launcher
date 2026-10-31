@@ -75,6 +75,11 @@ function thorWirePlay(card, gameId, title, consoleName, artUrl){
     let res;
     try{ res = JSON.parse(thorBridge.launch(JSON.stringify(Object.assign({}, info, { disc: disc || '' })))); }
     catch(e){ res = { ok: false, message: 'Could not reach the launcher.' }; }
+    if(res.needDisc){
+      thorChoice('Which disc?', 'This emulator plays one disc at a time. Swap discs from its own menu.',
+        res.discs.map((n, i) => [n.replace(/\.[^.]+$/, ''), () => play('pick:' + i)]));
+      return;
+    }
     if(res.needM3u){
       thorChoice('Multi-disc game', 'This game has ' + res.discs + ' discs. A playlist (.m3u) lets the emulator switch discs in-game.', [
         ['Create playlist and play', () => play('create')],

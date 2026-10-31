@@ -117,9 +117,66 @@ final class Launcher {
         }
     }
 
+    /** The discs of a multi-disc game, in order: from the .m3u when the entry is a playlist, else the grouped discs. */
+    static List<File> discFiles(RomIndex.Rom rom) {
+        List<File> out = new ArrayList<File>();
+        if (rom.discs != null) {
+            out.addAll(rom.discs);
+        } else if (rom.file.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".m3u")) {
+            try {
+                java.io.BufferedReader in = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(rom.file), "UTF-8"));
+                try {
+                    String line;
+                    while ((line = in.readLine()) != null) {
+                        line = line.trim();
+                        if (line.isEmpty() || line.startsWith("#")) continue;
+                        File f = new File(line);
+                        if (!f.isAbsolute()) f = new File(rom.file.getParentFile(), line);
+                        if (f.isFile()) out.add(f);
+                    }
+                } finally {
+                    in.close();
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return out;
+    }
+
+    /** True when this game would start in RetroArch (which understands .m3u), false for a standalone emulator. */
+    private static boolean usesRetroArch(Activity act, RomIndex.Rom rom) {
+        String gameChoice = Prefs.get(act, gameKey(rom), "");
+        Plan p = plan(act, rom.sys, gameChoice.isEmpty() ? Prefs.get(act, "emu." + rom.sys.folder, "") : gameChoice);
+        return p.error == null && p.recipe == null;
+    }
+
     /** mode: "" = ask first when a multi-disc game has no playlist, "create" = make one and play it, "first" = disc 1 only. */
     static JSONObject launch(Activity act, String title, String console, String mode) {
         RomIndex.Rom r = Shared.findRom(title, console);
+        // Standalone emulators such as Dolphin don't read .m3u playlists: ask which disc to start instead
+        if (r != null && !usesRetroArch(act, r)) {
+            List<File> discs = discFiles(r);
+            if (discs.size() > 1) {
+                if (mode.startsWith("pick:")) {
+                    int n = -1;
+                    try {
+                        n = Integer.parseInt(mode.substring(5));
+                    } catch (Exception ignored) {
+                    }
+                    if (n < 0 || n >= discs.size()) return result(false, "That disc is not there.");
+                    return launchRom(act, new RomIndex.Rom(r.sys, discs.get(n), r.name, r.rel));
+                }
+                JSONObject o = result(false, "Which disc?");
+                try {
+                    org.json.JSONArray names = new org.json.JSONArray();
+                    for (File d : discs) names.put(d.getName());
+                    o.put("needDisc", true);
+                    o.put("discs", names);
+                } catch (Exception ignored) {
+                }
+                return o;
+            }
+        }
         if (r != null && r.discs != null && r.discs.size() > 1) {
             String skipKey = "m3uskip." + r.sys.folder + "/" + RomIndex.discGame(r.rel);
             if (mode.equals("create")) {
