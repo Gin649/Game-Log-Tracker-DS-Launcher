@@ -2,11 +2,6 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
-## v1.0.7
-
-### Changed
-- The update prompt is shorter. It shows the new version and points you to GitHub or Discord for details, instead of repeating the release notes.
-
 ## v1.0.6
 
 ### Added
