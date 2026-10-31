@@ -21,6 +21,7 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - Manuals no longer have a Save PDF button, since the PDF is already saved in your storage folder.
 
 ### Fixed
+- Picking a ROM file for the backlog now opens the file chooser in your ROMs folder instead of the last place you browsed.
 - Refreshing a game profile now keeps your place on the page, and the controller highlight stays where it was instead of jumping back to Play on this device.
 - Searching for a short word in a long guide no longer freezes the app. It stops at 400 matches and only highlights the ones near the one you're on.
 

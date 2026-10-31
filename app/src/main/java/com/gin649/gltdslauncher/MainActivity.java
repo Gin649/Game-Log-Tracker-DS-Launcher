@@ -556,13 +556,20 @@ public class MainActivity extends Activity {
                 i.addCategory(Intent.CATEGORY_OPENABLE);
                 i.setType("*/*");
                 i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                String tree = Prefs.get(MainActivity.this, "romsTree", "");
-                if (!tree.isEmpty()) {
-                    try {
-                        i.putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, Uri.parse(tree));
-                    } catch (Exception ignored) {
+                Uri start = null;
+                try {
+                    String tree = Prefs.get(MainActivity.this, "romsTree", "");
+                    if (!tree.isEmpty()) {
+                        // the picker wants a document address, not the tree address saved by the setup wizard
+                        Uri t = Uri.parse(tree);
+                        start = android.provider.DocumentsContract.buildDocumentUriUsingTree(t, android.provider.DocumentsContract.getTreeDocumentId(t));
+                    } else if (Config.ROMS_ROOT.startsWith("/storage/emulated/0/")) {
+                        start = Uri.parse("content://com.android.externalstorage.documents/document/primary%3A"
+                                + Uri.encode(Config.ROMS_ROOT.substring("/storage/emulated/0/".length())));
                     }
+                } catch (Exception ignored) {
                 }
+                if (start != null) i.putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, start);
                 try {
                     startActivityForResult(i, REQ_PICK_ROMS);
                 } catch (Exception e) {
