@@ -388,12 +388,69 @@ final class ThorBridge {
         return out.toString();
     }
 
+    private static final java.util.Set<String> HASH_EXT = new java.util.HashSet<String>(java.util.Arrays.asList(
+            "gb", "gbc", "gba", "nes", "sfc", "smc", "fig", "swc", "md", "gen", "smd", "bin", "sms", "gg", "pce", "sg", "sc",
+            "z64", "v64", "n64", "lnx", "a78", "a26", "ngp", "ngc", "ws", "wsc", "vb", "col", "int", "32x", "nds", "mx1", "mx2"));
+
+    /**
+     * The MD5 RetroAchievements uses to identify a cartridge ROM, or "" when it can't be worked out here (discs,
+     * zip files, big files). Copier headers that RetroAchievements leaves out are skipped: iNES (NES), the 512 byte
+     * SNES header, Lynx and 7800 headers; N64 files are put in big-endian order first.
+     */
+    static String romMd5(File f) {
+        try {
+            String n = f.getName().toLowerCase(java.util.Locale.ROOT);
+            int dot = n.lastIndexOf('.');
+            String ext = dot >= 0 ? n.substring(dot + 1) : "";
+            if (!HASH_EXT.contains(ext) || f.length() > 64L * 1024 * 1024 || f.length() == 0) return "";
+            byte[] data = new byte[(int) f.length()];
+            java.io.FileInputStream in = new java.io.FileInputStream(f);
+            try {
+                int off = 0;
+                while (off < data.length) {
+                    int r = in.read(data, off, data.length - off);
+                    if (r < 0) break;
+                    off += r;
+                }
+            } finally {
+                in.close();
+            }
+            int start = 0;
+            if (ext.equals("nes") && data.length > 16 && data[0] == 'N' && data[1] == 'E' && data[2] == 'S' && data[3] == 0x1A) start = 16;
+            else if ((ext.equals("sfc") || ext.equals("smc") || ext.equals("fig") || ext.equals("swc")) && data.length % 1024 == 512) start = 512;
+            else if (ext.equals("lnx") && data.length > 64 && data[0] == 'L' && data[1] == 'Y' && data[2] == 'N' && data[3] == 'X') start = 64;
+            else if (ext.equals("a78") && data.length > 128 && data[1] == 'A' && data[2] == 'T' && data[3] == 'A' && data[4] == 'R' && data[5] == 'I') start = 128;
+            if (ext.equals("z64") || ext.equals("v64") || ext.equals("n64")) {
+                int b0 = data.length > 3 ? (data[0] & 0xff) : 0;
+                if (b0 == 0x37) { // v64: every two bytes swapped
+                    for (int i = 0; i + 1 < data.length; i += 2) { byte t = data[i]; data[i] = data[i + 1]; data[i + 1] = t; }
+                } else if (b0 == 0x40) { // n64: every four bytes reversed
+                    for (int i = 0; i + 3 < data.length; i += 4) {
+                        byte t = data[i]; data[i] = data[i + 3]; data[i + 3] = t;
+                        t = data[i + 1]; data[i + 1] = data[i + 2]; data[i + 2] = t;
+                    }
+                }
+            }
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+            md.update(data, start, data.length - start);
+            StringBuilder sb = new StringBuilder();
+            for (byte b : md.digest()) sb.append(String.format("%02x", b));
+            return sb.toString();
+        } catch (Throwable e) {
+            return "";
+        }
+    }
+
+    /** True only while describing files the person picked: hashing every ROM in a folder would be slow. */
+    private static boolean pickedHash;
+
     private static JSONObject romJson(String title, SystemMap.Sys sys, String path) throws org.json.JSONException {
         JSONObject o = new JSONObject();
         o.put("title", title);
         o.put("path", path == null ? "" : path);
         o.put("folder", sys == null ? "" : sys.folder);
         o.put("ra", sys == null ? new JSONArray() : new JSONArray(sys.ra));
+        if (pickedHash && path != null) o.put("md5", romMd5(new File(path)));
         return o;
     }
 
@@ -403,6 +460,7 @@ final class ThorBridge {
         List<RomIndex.Rom> all = Shared.index().all();
         SystemMap map = Shared.systems();
         java.util.Set<String> seenGames = new java.util.HashSet<String>();
+        pickedHash = true;
         for (android.net.Uri u : uris) {
             try {
                 String path = PathUtil.fromDocument(u);
@@ -481,6 +539,7 @@ final class ThorBridge {
             } catch (Exception ignored) {
             }
         }
+        pickedHash = false;
         return out.toString();
     }
 

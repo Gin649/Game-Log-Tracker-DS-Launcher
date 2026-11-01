@@ -77,10 +77,20 @@ async function addRomsToBacklog(items){
         });
       }catch(e){ byKey = null; }
     }
+    // a picked cartridge ROM is matched by its hash first: the same file RetroAchievements knows, whatever it is named
+    let byHash = null;
+    if(grp.console && grp.items.some(it => it.md5)){
+      try{
+        const hl = await getGameHashListForConsole(grp.console.id);
+        byHash = new Map();
+        (hl || []).forEach(g => (g.Hashes || []).forEach(h => byHash.set(String(h).toLowerCase(), g)));
+      }catch(e){ byHash = null; }
+    }
     grp.items.forEach(it => {
-      const hit = byKey && byKey.get(romMatchKey(it.title));
+      const hashed = byHash && it.md5 && byHash.get(String(it.md5).toLowerCase());
+      const hit = hashed ? { g: hashed } : (byKey && byKey.get(romMatchKey(it.title)));
       if(hit){
-        additions.push({ ra: true, g: hit.g, consoleId: grp.console.id, consoleName: grp.console.name });
+        additions.push({ ra: true, g: hit.g, consoleId: grp.console.id, consoleName: grp.console.name, romPath: it.path || '' });
       }else{
         additions.push({ ra: false, title: romDisplayTitle(it.title), consoleName: grp.console ? grp.console.name : grp.label, seq: customSeq++, folder: it.folder || '', romPath: it.path || '' });
       }
@@ -98,7 +108,9 @@ async function addRomsToBacklog(items){
         const id = Number(a.g.ID ?? a.g.id);
         if(existingIds.has(id)) return;
         existingIds.add(id);
-        entries.push(buildManualRaEntry(a.g, a.consoleId, a.consoleName));
+        const raEntry = buildManualRaEntry(a.g, a.consoleId, a.consoleName);
+        if(a.romPath) raEntry.romPath = a.romPath; // so Play starts this very file
+        entries.push(raEntry);
       }else{
         const ck = romMatchKey(a.title) + '|' + a.consoleName;
         if(customKeys.has(ck)) return;

@@ -514,7 +514,7 @@ async function openGameModal(gameId, opts){
   });
 
   const beatenAchBtn = card.querySelector('#modal-view-beaten-ach-btn');
-  thorWirePlay(card, gameId, title, console_, boxArt);
+  thorWirePlay(card, gameId, title, console_, boxArt, local && local.romPath);
   const beatenAchWrap = card.querySelector('#modal-beaten-achievements');
   let beatenAchLoaded = false;
   beatenAchBtn.addEventListener('click', async () => {

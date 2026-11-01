@@ -90,6 +90,7 @@ async function promoteManualGameToReal(gameId, data){
     HighestAwardDate: data.HighestAwardDate ?? null,
     MostRecentAwardedDate: old.MostRecentAwardedDate ?? null,
     lastPlayed: old.lastPlayed || old.MostRecentAwardedDate || null,
+    romPath: old.romPath || undefined,
     pct: maxPossible ? Math.round((numAwarded / maxPossible) * 100) : 0,
   };
   libraryData[idx] = entry;
@@ -188,6 +189,22 @@ async function getConsoleList(){
   const data = onlySupportedConsoles(await raFetch('API_GetConsoleIDs.php', { a: 1, g: 1 }));
   try{ await window.storage.set(cacheKey, JSON.stringify({ data, ts: Date.now() }), false); }catch(e){}
   return data;
+}
+
+// Every game with achievements on a system, with the file hashes RetroAchievements accepts for each.
+async function getGameHashListForConsole(consoleId){
+  const cacheKey = `ra-gamelist-h:${consoleId}`;
+  try{
+    const r = await window.storage.get(cacheKey, false);
+    if(r && r.value){
+      const parsed = JSON.parse(r.value);
+      if(Date.now() - parsed.ts < 7 * 24 * 60 * 60 * 1000) return parsed.data;
+    }
+  }catch(e){}
+  const data = await raFetch('API_GetGameList.php', { i: consoleId, f: 1, h: 1 });
+  const slim = (data || []).map(g => ({ ID: g.ID ?? g.id, Title: g.Title ?? g.title, ImageIcon: g.ImageIcon, NumAchievements: g.NumAchievements, Hashes: g.Hashes || [] }));
+  try{ await window.storage.set(cacheKey, JSON.stringify({ data: slim, ts: Date.now() }), false); }catch(e){}
+  return slim;
 }
 
 async function getGameListForConsole(consoleId){
