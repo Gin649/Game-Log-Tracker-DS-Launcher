@@ -121,12 +121,14 @@ public class SetupActivity extends Activity {
             // first run, or an install from before this choice existed: ES-DE if it is there, otherwise none
             frontend = (!esRoot.isEmpty() || !guessEsRoot().isEmpty()) ? "esde" : "none";
         }
-        launchBoxArt = Prefs.getInt(this, "launchboxArt", 1) == 1;
+        // art is only for the top screen: on by default with two screens, off with one
+        int artDefault = DisplayPicker.hasTwoScreens(this) ? 1 : 0;
+        launchBoxArt = Prefs.getInt(this, "launchboxArt", artDefault) == 1;
         raPackage = get("raPackage", "");
         siteUrl = get("siteUrl", Config.DEFAULT_URL);
         if (siteUrl.startsWith("https://gin649.github.io/")) siteUrl = Config.DEFAULT_URL; // old default = built-in
         sgdbKey = get("sgdbKey", "");
-        useEsdeMedia = Prefs.getInt(this, "useEsdeMedia", 1) == 1;
+        useEsdeMedia = Prefs.getInt(this, "useEsdeMedia", artDefault) == 1;
         cssWidth = Prefs.getInt(this, "cssWidth", 720);
         topDisplay = DisplayPicker.prefs(this).getInt("topDisplay", -1);
         singleScreen = DisplayPicker.singleScreen(this);
@@ -535,35 +537,7 @@ public class SetupActivity extends Activity {
                 }
             });
             mediaFound = !esRoot.isEmpty() && new File(esRoot, "downloaded_media").isDirectory();
-        } else {
-            text("No frontend", 17, TEXT);
-            text("Everything the app needs is set here and in the next steps: your ROMs folder, your RetroArch or "
-                    + "standalone emulators, and the screens. Game art for the top screen comes from pictures next to your "
-                    + "ROMs when there are any, otherwise it is downloaded (see below).", 13, MUTED);
         }
-
-        if (mediaFound || frontend.equals("none")) {
-            cbEsdeMedia = new CheckBox(this);
-            cbEsdeMedia.setText(frontend.equals("none")
-                    ? "Use pictures that are already next to my ROMs (images, media, gamelist.xml) before downloading anything."
-                    : "Use my " + "ES-DE" + " media (box art, screenshots, fan art) for the "
-                    + "top screen, so nothing is downloaded again. Art is only fetched for games that have none.");
-            cbEsdeMedia.setTextColor(TEXT);
-            cbEsdeMedia.setTextSize(14);
-            cbEsdeMedia.setChecked(useEsdeMedia);
-            content.addView(cbEsdeMedia);
-        }
-
-        text("Art for games that have none", 17, TEXT);
-        text("The top screen shows fan art first, then a miximage, then the marquee, then box art. If your frontend has a "
-                + "screenshot but no miximage, one is built for you. For games with nothing, SteamGridDB (if you gave a key) "
-                + "supplies fan art, then the free LaunchBox database (fan art, or box art, screenshot and logo; no account) fills in the rest.", 13, MUTED);
-        cbLaunchBox = new CheckBox(this);
-        cbLaunchBox.setText("Use the free LaunchBox art for games that have none yet.");
-        cbLaunchBox.setTextColor(TEXT);
-        cbLaunchBox.setTextSize(14);
-        cbLaunchBox.setChecked(launchBoxArt);
-        content.addView(cbLaunchBox);
 
         text("App data folder", 17, TEXT);
         text("Where the app keeps its own files: your tracker data (login, backlog, notes, guides) and the art it fetches. "
