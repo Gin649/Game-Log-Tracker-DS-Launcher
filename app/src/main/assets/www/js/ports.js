@@ -29,17 +29,17 @@ async function portsForGame(title){
   return list.filter(p => (p.games || []).some(g => portTitleKey(g) === key));
 }
 
-function thorWirePorts(card, title){
+function thorWirePorts(card, title, consoleName){
   const host = card.querySelector('#modal-port');
   if(!host || !window.ThorBridge || typeof window.ThorBridge.portState !== 'function') return;
   portsForGame(title).then(ports => {
     if(!ports.length || !card.isConnected) return;
     host.innerHTML = '';
-    ports.forEach(p => wirePort(card, host, p));
+    ports.forEach(p => wirePort(card, host, p, title, consoleName));
   });
 }
 
-function wirePort(card, host, p){
+function wirePort(card, host, p, title, consoleName){
   const b = window.ThorBridge;
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const box = document.createElement('div');
@@ -47,6 +47,7 @@ function wirePort(card, host, p){
   box.innerHTML = `<div class="gd-label">ANDROID PORT</div>
     <div class="gd-port-name">${esc(p.name)}</div>
     <button class="btn-view-achievements btn-play-thor gd-port-btn"></button>
+    <div class="gd-port-rom" style="display:none;"></div>
     <div class="thor-play-msg gd-port-msg" style="display:none;"></div>
     <div class="gd-port-note">A native Android version of this game. It needs your own copy of the game.</div>`;
   host.appendChild(box);
@@ -113,6 +114,23 @@ function wirePort(card, host, p){
     render();
     start();
   });
+
+  // Some ports only accept one version of the game. When the catalog knows which, say whether your ROM is it.
+  if(Array.isArray(p.roms) && p.roms.length && typeof b.portRom === 'function'){
+    const romEl = box.querySelector('.gd-port-rom');
+    setTimeout(() => {
+      if(!card.isConnected) return;
+      let r;
+      try{ r = JSON.parse(b.portRom(JSON.stringify({ title: title, console: consoleName }))); }catch(e){ return; }
+      if(!r || !r.found || !r.md5) return; // no ROM here, or it can't be checked: say nothing
+      const ok = p.roms.some(h => String(h).toLowerCase() === r.md5.toLowerCase());
+      romEl.style.display = 'block';
+      romEl.classList.toggle('bad', !ok);
+      romEl.textContent = ok
+        ? 'Your ROM (' + r.name + ') is the version this port needs.'
+        : 'Port available, but your ROM (' + r.name + ') may not be the version it needs. Try a different ROM.';
+    }, 50);
+  }
 
   render();
   const s0 = read();

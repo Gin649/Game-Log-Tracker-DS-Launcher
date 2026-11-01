@@ -943,6 +943,27 @@ final class ThorBridge {
         if (j != null) j.cancel = true;
     }
 
+    /** The game's ROM on this device and its RetroAchievements-style MD5: {found, name, md5}. md5 is "" when it can't be worked out. */
+    @JavascriptInterface
+    public String portRom(String json) {
+        JSONObject o = new JSONObject();
+        try {
+            JSONObject in = new JSONObject(json);
+            RomIndex.Rom rom = Shared.findRom(in.optString("title"), in.optString("console"));
+            o.put("found", rom != null);
+            if (rom != null) {
+                o.put("name", rom.file.getName());
+                o.put("md5", romMd5(rom.file));
+            }
+        } catch (Exception e) {
+            try {
+                o.put("found", false);
+            } catch (Exception ignored) {
+            }
+        }
+        return o.toString();
+    }
+
     // Native Android ports of games (see Ports.java)
     @JavascriptInterface
     public String portState(String slug, String name) {

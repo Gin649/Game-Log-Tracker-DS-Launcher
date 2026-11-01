@@ -100,7 +100,7 @@ function thorWirePlay(card, gameId, title, consoleName, artUrl, romPath){
   const btn = card.querySelector('#modal-play-btn');
   const msg = card.querySelector('#modal-play-msg');
   if(!btn || !msg) return;
-  if(typeof thorWirePorts === 'function') thorWirePorts(card, title);
+  if(typeof thorWirePorts === 'function') thorWirePorts(card, title, consoleName);
   const play = (disc) => {
     let res;
     try{ res = JSON.parse(thorBridge.launch(JSON.stringify(Object.assign({}, info, { disc: disc || '' })))); }
