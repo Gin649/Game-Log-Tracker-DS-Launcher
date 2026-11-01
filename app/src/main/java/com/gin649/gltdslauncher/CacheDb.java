@@ -21,7 +21,7 @@ final class CacheDb extends SQLiteOpenHelper {
     private static final String[] PREFIXES = {
             "ra-hours:", "ra-gameinfo:", "ra-ach:", "ra-snap:", "ra-playtime-stats:", "ra-dash:", "ra-gamelist:",
             "ra-gamelist-h:", "ra-consoles-supported", "rawg-desc:", "rating-avg:", "guide-archive-index:",
-            "rapatches-tree-cache-v4", "social-cache:",
+            "rapatches-tree-cache-v4", "social-cache:", "cheatsauto:",
     };
 
     private static CacheDb instance;
@@ -130,8 +130,13 @@ final class CacheDb extends SQLiteOpenHelper {
     }
 
     /** Puts many entries in at once (used to move the old cache files in). */
-    void writeAll(List<String[]> rows) {
-        SQLiteDatabase db = getWritableDatabase();
+    boolean writeAll(List<String[]> rows) {
+        SQLiteDatabase db;
+        try {
+            db = getWritableDatabase();
+        } catch (Exception e) {
+            return false;
+        }
         db.beginTransaction();
         try {
             long now = System.currentTimeMillis();
@@ -143,7 +148,9 @@ final class CacheDb extends SQLiteOpenHelper {
                 db.insertWithOnConflict("kv", null, v, SQLiteDatabase.CONFLICT_IGNORE);
             }
             db.setTransactionSuccessful();
+            return true;
         } catch (Exception ignored) {
+            return false;
         } finally {
             db.endTransaction();
         }

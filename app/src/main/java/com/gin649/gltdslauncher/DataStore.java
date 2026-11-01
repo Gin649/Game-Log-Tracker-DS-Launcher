@@ -148,8 +148,11 @@ final class DataStore {
      * Moves the old one-file-per-entry caches into the database, once. Reading and deleting hundreds of small files
      * from shared storage takes a moment, so this only runs the first time.
      */
+    private static boolean swept;
+
     private static synchronized void migrateCaches(Context ctx) {
-        if (Prefs.getInt(ctx, "cacheDbMigrated", 0) == 1) return;
+        if (swept) return; // once per launch: also picks up leftovers from earlier versions or a changed data folder
+        swept = true;
         List<String[]> rows = new ArrayList<String[]>();
         List<File> done = new ArrayList<File>();
         File[] files = dataDir(ctx).listFiles();
@@ -166,9 +169,12 @@ final class DataStore {
                 }
             }
         }
-        CacheDb.get(ctx).writeAll(rows);
+        if (rows.isEmpty()) return;
+        if (!CacheDb.get(ctx).writeAll(rows)) {
+            swept = false; // keep the files and try again next time
+            return;
+        }
         for (File f : done) f.delete();
-        Prefs.putInt(ctx, "cacheDbMigrated", 1);
     }
 
     /**
