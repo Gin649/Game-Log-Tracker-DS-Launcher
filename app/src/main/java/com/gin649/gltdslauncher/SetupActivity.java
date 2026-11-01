@@ -737,8 +737,9 @@ public class SetupActivity extends Activity {
                 text("Which emulator for each system?", 17, TEXT);
                 text("Only the systems found in your ROMs folder are listed, with the emulators you have installed.", 13, MUTED);
                 if (haveRa && RaCores.installed(this, raPackage.isEmpty() ? found.get(0) : raPackage) == null) {
-                    text("RetroArch's cores folder can't be read from here, so every core the app knows for a system is listed, "
-                            + "installed or not.", 13, MUTED);
+                    text("Couldn't find RetroArch's cores, so every core the app knows for a system is listed, installed or not. "
+                            + "To list only the installed ones, set RetroArch's Cores folder to /storage/emulated/0/RetroArch/cores "
+                            + "and give this app file access.", 13, MUTED);
                 }
                 any = true;
             }

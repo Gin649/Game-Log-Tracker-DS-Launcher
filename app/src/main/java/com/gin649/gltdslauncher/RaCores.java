@@ -54,7 +54,11 @@ final class RaCores {
         dirs.add(new File("/data/data/" + pkg + "/cores"));
         dirs.add(new File("/data/user/0/" + pkg + "/cores"));
         dirs.add(new File("/storage/emulated/0/Android/data/" + pkg + "/files/cores"));
-        dirs.add(new File("/storage/emulated/0/RetroArch/cores"));
+        // the shared location most setups use for cores; reading it needs the app's file access
+        File shared = android.os.Environment.getExternalStorageDirectory();
+        dirs.add(new File(shared, "RetroArch/cores"));
+        dirs.add(new File(shared, "RetroArch/Cores"));
+        dirs.add(new File(shared, "retroarch/cores"));
         Set<String> found = new HashSet<String>();
         for (File d : dirs) {
             try {
