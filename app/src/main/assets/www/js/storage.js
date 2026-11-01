@@ -50,6 +50,10 @@ if(fileStore && typeof fileStore.dataPreload === 'function'){
 
 function fileGet(name){
   if(preloaded && Object.prototype.hasOwnProperty.call(preloaded, name)) return preloaded[name];
+  if(typeof fileStore.dataGet === 'function'){
+    const v = fileStore.dataGet(name); // one call; null when there is none
+    if(v !== '\u0000big') return v === undefined ? null : v; // a very large value falls through to the piecewise read
+  }
   const n = fileStore.dataChunks(name);
   if(n < 0) return null;
   let out = '';

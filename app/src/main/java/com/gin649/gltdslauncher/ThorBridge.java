@@ -589,6 +589,16 @@ final class ThorBridge {
         return s;
     }
 
+    /** One saved value in a single call, or null when there is none. */
+    @JavascriptInterface
+    public String dataGet(String key) {
+        long t0 = System.currentTimeMillis();
+        String s = DataStore.get(act, key);
+        Perf.add("bridge.dataGet", System.currentTimeMillis() - t0);
+        if (s != null && s.length() > 1000000) return "\u0000big"; // too large for one call: the page reads it in pieces
+        return s;
+    }
+
     /** Number of pieces the value is read in, or -1 when there is none. */
     @JavascriptInterface
     public int dataChunks(String key) {

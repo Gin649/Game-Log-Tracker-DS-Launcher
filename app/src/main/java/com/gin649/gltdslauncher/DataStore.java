@@ -118,6 +118,9 @@ final class DataStore {
     /** Keys that start with prefix. */
     static List<String> list(Context ctx, String prefix) {
         List<String> out = new ArrayList<String>();
+        for (String n : CacheDb.get(ctx).names(prefix)) {
+            if (!out.contains(n)) out.add(n);
+        }
         File[] files = dataDir(ctx).listFiles();
         if (files == null) return out;
         for (File f : files) {
@@ -125,11 +128,49 @@ final class DataStore {
             if (!n.endsWith(".txt")) continue;
             try {
                 String key = decode(n.substring(0, n.length() - 4));
-                if (key.startsWith(prefix)) out.add(key);
+                if (key.startsWith(prefix) && !out.contains(key)) out.add(key);
             } catch (Exception ignored) {
             }
         }
         return out;
+    }
+
+    /** The value for a name in one call, or null when there is none. Large values are returned whole. */
+    static String get(Context ctx, String key) {
+        try {
+            return read(ctx, key);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Moves the old one-file-per-entry caches into the database, once. Reading and deleting hundreds of small files
+     * from shared storage takes a moment, so this only runs the first time.
+     */
+    private static synchronized void migrateCaches(Context ctx) {
+        if (Prefs.getInt(ctx, "cacheDbMigrated", 0) == 1) return;
+        long t0 = System.currentTimeMillis();
+        List<String[]> rows = new ArrayList<String[]>();
+        List<File> done = new ArrayList<File>();
+        File[] files = dataDir(ctx).listFiles();
+        if (files != null) {
+            for (File f : files) {
+                String n = f.getName();
+                if (!n.endsWith(".txt")) continue;
+                try {
+                    String key = decode(n.substring(0, n.length() - 4));
+                    if (!CacheDb.isCache(key)) continue;
+                    rows.add(new String[]{key, new String(readAll(f), "UTF-8")});
+                    done.add(f);
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        CacheDb.get(ctx).writeAll(rows);
+        for (File f : done) f.delete();
+        Prefs.putInt(ctx, "cacheDbMigrated", 1);
+        Perf.add("cache migration", System.currentTimeMillis() - t0);
     }
 
     /**
@@ -137,23 +178,26 @@ final class DataStore {
      * these one at a time from the page costs two calls into the app each, which added up to seconds at start-up.
      */
     static String preload(Context ctx, int maxEach, int maxTotal) {
+        migrateCaches(ctx);
         org.json.JSONObject out = new org.json.JSONObject();
         int total = 0;
         File[] files = dataDir(ctx).listFiles();
-        if (files == null) return out.toString();
-        for (File f : files) {
-            String n = f.getName();
-            if (!n.endsWith(".txt") || f.length() > maxEach * 3L) continue;
-            try {
-                String key = decode(n.substring(0, n.length() - 4));
-                String text = new String(readAll(f), "UTF-8");
-                if (text.length() > maxEach) continue;
-                total += text.length();
-                if (total > maxTotal) break;
-                out.put(key, text);
-            } catch (Exception ignored) {
+        if (files != null) {
+            for (File f : files) {
+                String n = f.getName();
+                if (!n.endsWith(".txt") || f.length() > maxEach * 3L) continue;
+                try {
+                    String key = decode(n.substring(0, n.length() - 4));
+                    String text = new String(readAll(f), "UTF-8");
+                    if (text.length() > maxEach) continue;
+                    total += text.length();
+                    out.put(key, text);
+                } catch (Exception ignored) {
+                }
             }
         }
+        // then the newest cache entries, up to the size limit
+        CacheDb.get(ctx).preloadInto(out, maxEach, Math.max(0, maxTotal - total));
         return out.toString();
     }
 
@@ -163,6 +207,12 @@ final class DataStore {
 
     private static synchronized String read(Context ctx, String key) throws IOException {
         long t0 = System.currentTimeMillis();
+        if (CacheDb.isCache(key)) {
+            migrateCaches(ctx);
+            String v = CacheDb.get(ctx).read(key);
+            Perf.add("cache.read", System.currentTimeMillis() - t0);
+            return v;
+        }
         File f = fileFor(ctx, key);
         if (!f.isFile()) {
             Perf.add("data.read (missing)", System.currentTimeMillis() - t0);
@@ -201,7 +251,21 @@ final class DataStore {
     }
 
     /** Writes one piece of a value. Piece 0 starts it; the last piece puts it in place. Returns false if anything failed. */
+    private static final java.util.Map<String, StringBuilder> PENDING = new java.util.HashMap<String, StringBuilder>();
+
     static synchronized boolean put(Context ctx, String key, int index, String piece, boolean last) {
+        if (CacheDb.isCache(key)) {
+            migrateCaches(ctx);
+            StringBuilder sb = index == 0 ? new StringBuilder() : PENDING.get(key);
+            if (sb == null) return false;
+            sb.append(piece);
+            if (!last) {
+                PENDING.put(key, sb);
+                return true;
+            }
+            PENDING.remove(key);
+            return CacheDb.get(ctx).write(key, sb.toString());
+        }
         try {
             File f = fileFor(ctx, key);
             File tmp = new File(f.getPath() + ".tmp");
@@ -224,6 +288,11 @@ final class DataStore {
     }
 
     static synchronized boolean delete(Context ctx, String key) {
+        if (CacheDb.isCache(key)) {
+            migrateCaches(ctx);
+            PENDING.remove(key);
+            return CacheDb.get(ctx).remove(key);
+        }
         try {
             File f = fileFor(ctx, key);
             if (key.equals(cachedKey)) cachedKey = null;
