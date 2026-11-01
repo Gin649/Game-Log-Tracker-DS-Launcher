@@ -71,23 +71,24 @@ async function portsForGame(title){
   return list.filter(p => (p.games || []).some(g => portTitleKey(g) === key));
 }
 
-function thorWirePorts(card, title){
+function thorWirePorts(card, title, consoleName){
   const host = card.querySelector('#modal-port');
   if(!host || !window.ThorBridge || typeof window.ThorBridge.portState !== 'function') return;
   portsForGame(title).then(ports => {
     if(!ports.length || !card.isConnected) return;
     host.innerHTML = '';
-    ports.forEach(p => wirePort(card, host, p, ports.length > 1));
+    ports.forEach((p, i) => wirePort(card, host, p, ports.length > 1, i === 0, title, consoleName));
   });
 }
 
-function wirePort(card, host, p, several){
+function wirePort(card, host, p, several, first, title, consoleName){
   const b = window.ThorBridge;
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const tag = several ? ' (' + esc(p.name) + ')' : ''; // only when a game has more than one port, to tell them apart
   const box = document.createElement('div');
   box.className = 'gd-port';
-  box.innerHTML = `<button class="btn-view-achievements btn-play-thor gd-port-btn"></button>
+  const romBtnHtml = first ? `<button class="btn-emu gd-port-rom-btn" aria-label="Get this game's ROM ready for the port" title="Get this game's ROM ready for the port (unzips it and saves it to Downloads/Roms for Ports)"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-1 3h2v4h2.5L13 19.5 8.5 16H11v-4z"/></svg></button>` : '';
+  box.innerHTML = `<div class="play-row"><button class="btn-view-achievements btn-play-thor gd-port-btn"></button>${romBtnHtml}</div>
     <div class="thor-play-msg gd-port-msg" style="display:none;"></div>
     <div class="gd-port-note">A native Android version of this game. It needs your own copy of the game.</div>`;
   host.appendChild(box);
@@ -154,6 +155,38 @@ function wirePort(card, host, p, several){
     render();
     start();
   });
+
+  // Ports can't open .zip, .chd or .rvz files, so this unpacks the game's ROM into Downloads/Roms for Ports.
+  const romBtn = box.querySelector('.gd-port-rom-btn');
+  if(romBtn){
+    let busy = false;
+    romBtn.addEventListener('click', () => {
+      if(busy) return;
+      let r;
+      try{ r = JSON.parse(b.portRomStart(JSON.stringify({ title: title, console: consoleName }))); }
+      catch(e){ r = { ok: false, message: 'Could not start.' }; }
+      if(!r.ok){ say(r.message || 'Could not start.', true); return; }
+      busy = true;
+      romBtn.disabled = true;
+      const poll = () => {
+        if(!card.isConnected){ busy = false; return; }
+        let s;
+        try{ s = JSON.parse(b.discPatchStatus(r.job)); }catch(e){ s = { state: 'error', message: 'Lost contact with the app.' }; }
+        if(s.state === 'running'){
+          const pct = s.total > 0 ? Math.min(100, Math.round(s.done * 100 / s.total)) : -1;
+          say((s.phase || 'Working') + (pct >= 0 ? ' ' + pct + '%' : '…'), false);
+          setTimeout(poll, 700);
+          return;
+        }
+        busy = false;
+        romBtn.disabled = false;
+        if(s.state === 'done') say('Saved to Downloads/Roms for Ports: ' + (s.name || '') + '. Pick it inside the port.', false);
+        else say(s.message || 'Could not prepare the ROM.', true);
+      };
+      say('Starting…', false);
+      setTimeout(poll, 500);
+    });
+  }
 
   render();
   const s0 = read();

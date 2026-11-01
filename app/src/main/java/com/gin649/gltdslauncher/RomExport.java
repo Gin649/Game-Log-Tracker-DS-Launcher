@@ -100,7 +100,6 @@ final class RomExport {
                 for (File f : files) if (main == null || f.length() > main.length()) main = f;
             }
             String mainExt = DiscPatcher.ext(main.getName());
-            String mainStem = files.size() == 1 ? stem : stem;
             if (files.size() > 1 && !mainExt.equals("chd") && !DiscPatcher.isDolphinFormat(mainExt)) {
                 // several files (a disc sheet and its tracks): keep them together in a folder, names unchanged
                 File dest = new File(out, stem);
@@ -112,7 +111,7 @@ final class RomExport {
                 }
                 return new File(dest, main.getName());
             }
-            return convert(main, out, mainStem, p);
+            return convert(main, out, stem, p);
         } finally {
             DiscPatcher.deleteTree(work);
         }
