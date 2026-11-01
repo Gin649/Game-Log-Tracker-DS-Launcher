@@ -41,14 +41,9 @@ async function exportLocalData(){
     app: 'Game Log Tracker',
     exportedAt: new Date().toISOString(),
     version: 1,
-    entries: all.filter(e => !isRebuildableCache(String(e.key))),
+    // the saved login (RetroAchievements and RAWG keys) is never written into a backup file
+    entries: all.filter(e => !isRebuildableCache(String(e.key)) && !/^(priv|shared):(ra|rawg)-credentials$/.test(String(e.key))),
   };
-  // The app keeps the keys in its private settings, not in storage, so they are added here to travel with the backup.
-  if(keyBridge()){
-    const c = bridgeConfig();
-    if(c && c.raUser && c.raKey) payload.entries.push({ key: 'priv:ra-credentials', value: JSON.stringify({ username: c.raUser, apiKey: c.raKey }) });
-    if(c && c.rawgKey) payload.entries.push({ key: 'priv:rawg-credentials', value: JSON.stringify({ apiKey: c.rawgKey }) });
-  }
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
