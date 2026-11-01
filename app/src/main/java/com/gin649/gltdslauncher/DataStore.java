@@ -132,6 +132,31 @@ final class DataStore {
         return out;
     }
 
+    /**
+     * Every saved value up to maxEach characters, as one JSON object of name -> text, stopping at maxTotal. Reading
+     * these one at a time from the page costs two calls into the app each, which added up to seconds at start-up.
+     */
+    static String preload(Context ctx, int maxEach, int maxTotal) {
+        org.json.JSONObject out = new org.json.JSONObject();
+        int total = 0;
+        File[] files = dataDir(ctx).listFiles();
+        if (files == null) return out.toString();
+        for (File f : files) {
+            String n = f.getName();
+            if (!n.endsWith(".txt") || f.length() > maxEach * 3L) continue;
+            try {
+                String key = decode(n.substring(0, n.length() - 4));
+                String text = new String(readAll(f), "UTF-8");
+                if (text.length() > maxEach) continue;
+                total += text.length();
+                if (total > maxTotal) break;
+                out.put(key, text);
+            } catch (Exception ignored) {
+            }
+        }
+        return out.toString();
+    }
+
     private static String cachedKey;
     private static long cachedStamp;
     private static String cachedText;

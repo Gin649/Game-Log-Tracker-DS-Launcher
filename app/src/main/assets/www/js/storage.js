@@ -41,7 +41,15 @@ function idbRead(req, resolve, reject, map){
 const fileStore = (window.ThorBridge && typeof window.ThorBridge.dataChunks === 'function') ? window.ThorBridge : null;
 const FILE_PIECE = 512 * 1024;
 
+// Everything saved as a small text file, fetched in one call at start-up. The page reads hundreds of values as it
+// starts; asking for each one separately cost two calls into the app apiece.
+let preloaded = null;
+if(fileStore && typeof fileStore.dataPreload === 'function'){
+  try{ preloaded = JSON.parse(fileStore.dataPreload()); }catch(e){ preloaded = null; }
+}
+
 function fileGet(name){
+  if(preloaded && Object.prototype.hasOwnProperty.call(preloaded, name)) return preloaded[name];
   const n = fileStore.dataChunks(name);
   if(n < 0) return null;
   let out = '';
@@ -64,10 +72,15 @@ function filePut(name, value){
     const last = end >= value.length;
     if(!fileStore.dataPut(name, i++, value.slice(at, end), last)){
       fileStore.dataDelete(name);
+      if(preloaded) delete preloaded[name];
       return false;
     }
     at = end;
   }while(at < value.length);
+  if(preloaded){
+    if(value.length <= 256 * 1024) preloaded[name] = value;
+    else delete preloaded[name];
+  }
   return true;
 }
 
@@ -93,7 +106,7 @@ window.storage = {
       try{ ok = filePut(name, value); }catch(e){}
       if(ok) return { key, value, shared: !!shared };
     }
-    if(fileStore){ try{ fileStore.dataDelete(name); }catch(e){} } // so an older file can't hide this value
+    if(fileStore){ try{ fileStore.dataDelete(name); }catch(e){} if(preloaded) delete preloaded[name]; } // so an older file can't hide this value
     return idbRun('readwrite', (st) => {
       st.put({ key: name, value });
       return { key, value, shared: !!shared };
@@ -101,7 +114,7 @@ window.storage = {
   },
   delete: async (key, shared) => {
     const name = nsKey(key, shared);
-    if(fileStore){ try{ fileStore.dataDelete(name); }catch(e){} }
+    if(fileStore){ try{ fileStore.dataDelete(name); }catch(e){} if(preloaded) delete preloaded[name]; }
     await idbDelete(name);
     return { key, deleted: true, shared: !!shared };
   },

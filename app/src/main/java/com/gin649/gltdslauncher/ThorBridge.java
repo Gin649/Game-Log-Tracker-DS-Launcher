@@ -580,6 +580,15 @@ final class ThorBridge {
         return s;
     }
 
+    /** Every saved value up to 256K characters in one go, as a JSON object (name -> text), so the page can start without hundreds of calls. */
+    @JavascriptInterface
+    public String dataPreload() {
+        long t0 = System.currentTimeMillis();
+        String s = DataStore.preload(act, 256 * 1024, 12 * 1024 * 1024);
+        Perf.add("bridge.dataPreload", System.currentTimeMillis() - t0);
+        return s;
+    }
+
     /** Number of pieces the value is read in, or -1 when there is none. */
     @JavascriptInterface
     public int dataChunks(String key) {
