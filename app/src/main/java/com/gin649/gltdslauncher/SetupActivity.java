@@ -925,6 +925,7 @@ public class SetupActivity extends Activity {
     /** Closes the wizard and removes it from the recent-apps list too, so it does not stay open in the taskbar. */
     private void closeWizard() {
         closing = true;
+        running = false; // so the main screen, resuming as this closes, does not bring the wizard back
         put("wizardDraft", "");
         finishAndRemoveTask();
     }

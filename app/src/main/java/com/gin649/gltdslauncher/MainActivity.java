@@ -109,7 +109,8 @@ public class MainActivity extends Activity {
         splash.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!SetupActivity.running) openSetup();
+                if (SetupActivity.running) bringSetupToFront();
+                else openSetup();
             }
         });
 
@@ -148,6 +149,16 @@ public class MainActivity extends Activity {
             splash.setVisibility(View.GONE);
         } else {
             splashHint.setText("Tap to continue setup");
+        }
+    }
+
+    /** The wizard is already open in its own task (you left the app and came back): show it again. */
+    private void bringSetupToFront() {
+        Intent i = new Intent(this, SetupActivity.class);
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        try {
+            startActivity(i);
+        } catch (Exception ignored) {
         }
     }
 
@@ -433,6 +444,10 @@ public class MainActivity extends Activity {
         hadStorage = granted;
 
         UpdateChecker.resumePendingInstall(this);
+        if (SetupActivity.running && splash != null && splash.getVisibility() == View.VISIBLE) {
+            bringSetupToFront();
+            return;
+        }
         if (Prefs.setupDone(this)) ensureArtScreen();
     }
 
