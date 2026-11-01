@@ -79,7 +79,6 @@ public class MainActivity extends Activity {
         }
 
         current = this;
-        Perf.dumpLater(this);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         // art is only for the top screen: once, set it on for a two-screen device and off for a single-screen one
         if (Prefs.getInt(this, "artDefaultsV1", 0) == 0) {

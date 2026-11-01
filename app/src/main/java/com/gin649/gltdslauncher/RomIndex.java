@@ -52,8 +52,6 @@ final class RomIndex {
                 return;
             }
         }
-        long waited = System.currentTimeMillis() - begin;
-        if (waited >= 100) Perf.add("index.wait (a bridge call waited for the ROM scan)", waited);
     }
 
     synchronized void rebuild(SystemMap map) {

@@ -150,7 +150,6 @@ final class DataStore {
      */
     private static synchronized void migrateCaches(Context ctx) {
         if (Prefs.getInt(ctx, "cacheDbMigrated", 0) == 1) return;
-        long t0 = System.currentTimeMillis();
         List<String[]> rows = new ArrayList<String[]>();
         List<File> done = new ArrayList<File>();
         File[] files = dataDir(ctx).listFiles();
@@ -170,7 +169,6 @@ final class DataStore {
         CacheDb.get(ctx).writeAll(rows);
         for (File f : done) f.delete();
         Prefs.putInt(ctx, "cacheDbMigrated", 1);
-        Perf.add("cache migration", System.currentTimeMillis() - t0);
     }
 
     /**
@@ -179,15 +177,10 @@ final class DataStore {
      */
     /** Entries as name, a 0x01 character, the text and a 0x02 character, one after another (cheaper than JSON for a lot of text). */
     static String preload(Context ctx, int maxEach, int maxTotal) {
-        long p0 = System.currentTimeMillis();
         migrateCaches(ctx);
-        Perf.add("preload.step migrate", System.currentTimeMillis() - p0);
         StringBuilder out = new StringBuilder();
         int total = 0;
-        long p1 = System.currentTimeMillis();
         File[] files = dataDir(ctx).listFiles();
-        Perf.add("preload.step list files", System.currentTimeMillis() - p1);
-        long p2 = System.currentTimeMillis();
         if (files != null) {
             for (File f : files) {
                 String n = f.getName();
@@ -202,12 +195,8 @@ final class DataStore {
                 }
             }
         }
-        Perf.add("preload.step read files", System.currentTimeMillis() - p2);
         // then the newest cache entries, up to the size limit
-        long p3 = System.currentTimeMillis();
         CacheDb.get(ctx).preloadInto(out, maxEach, Math.max(0, maxTotal - total));
-        Perf.add("preload.step cache rows", System.currentTimeMillis() - p3);
-        Perf.add("preload.size (chars, in ms column)", out.length());
         return out.toString();
     }
 
@@ -216,21 +205,17 @@ final class DataStore {
     private static String cachedText;
 
     private static synchronized String read(Context ctx, String key) throws IOException {
-        long t0 = System.currentTimeMillis();
         if (CacheDb.isCache(key)) {
             migrateCaches(ctx);
             String v = CacheDb.get(ctx).read(key);
-            Perf.add("cache.read", System.currentTimeMillis() - t0);
             return v;
         }
         File f = fileFor(ctx, key);
         if (!f.isFile()) {
-            Perf.add("data.read (missing)", System.currentTimeMillis() - t0);
             return null;
         }
         if (key.equals(cachedKey) && f.lastModified() == cachedStamp && f.length() > 0) return cachedText;
         String text = new String(readAll(f), "UTF-8");
-        Perf.add("data.read (" + (text.length() > 100000 ? "big" : "small") + ")", System.currentTimeMillis() - t0);
         cachedKey = key;
         cachedStamp = f.lastModified();
         cachedText = text;

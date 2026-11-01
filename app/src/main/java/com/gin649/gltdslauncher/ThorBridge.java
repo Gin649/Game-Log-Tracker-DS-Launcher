@@ -574,27 +574,21 @@ final class ThorBridge {
     /** The keys that start with prefix, as a JSON array. */
     @JavascriptInterface
     public String dataList(String prefix) {
-        long t0 = System.currentTimeMillis();
         String s = new org.json.JSONArray(DataStore.list(act, prefix == null ? "" : prefix)).toString();
-        Perf.add("bridge.dataList", System.currentTimeMillis() - t0);
         return s;
     }
 
     /** Every saved value up to 256K characters in one go, as a JSON object (name -> text), so the page can start without hundreds of calls. */
     @JavascriptInterface
     public String dataPreload() {
-        long t0 = System.currentTimeMillis();
         String s = DataStore.preload(act, 256 * 1024, 12 * 1024 * 1024);
-        Perf.add("bridge.dataPreload", System.currentTimeMillis() - t0);
         return s;
     }
 
     /** One saved value in a single call, or null when there is none. */
     @JavascriptInterface
     public String dataGet(String key) {
-        long t0 = System.currentTimeMillis();
         String s = DataStore.get(act, key);
-        Perf.add("bridge.dataGet", System.currentTimeMillis() - t0);
         if (s != null && s.length() > 1000000) return "\u0000big"; // too large for one call: the page reads it in pieces
         return s;
     }
@@ -602,17 +596,13 @@ final class ThorBridge {
     /** Number of pieces the value is read in, or -1 when there is none. */
     @JavascriptInterface
     public int dataChunks(String key) {
-        long t0 = System.currentTimeMillis();
         int n = DataStore.chunks(act, key);
-        Perf.add("bridge.dataChunks", System.currentTimeMillis() - t0);
         return n;
     }
 
     @JavascriptInterface
     public String dataChunk(String key, int index) {
-        long t0 = System.currentTimeMillis();
         String s = DataStore.chunk(act, key, index);
-        Perf.add("bridge.dataChunk", System.currentTimeMillis() - t0);
         return s;
     }
 
