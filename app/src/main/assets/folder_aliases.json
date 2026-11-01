@@ -302,5 +302,15 @@
  "vc4000": [
   "vc4000",
   "intertonvc4000"
+ ],
+ "xbox360": [
+  "xbox360",
+  "microsoftxbox360",
+  "x360"
+ ],
+ "ps3": [
+  "ps3",
+  "playstation3",
+  "sonyplaystation3"
  ]
 }

@@ -219,5 +219,35 @@
   ],
   "action": "android.intent.action.VIEW",
   "data": "saf"
+ },
+ {
+  "id": "armsx3",
+  "label": "ARMSX3",
+  "packages": [
+   "com.armsx3",
+   "com.armsx3.play"
+  ],
+  "labels": [
+   "armsx3"
+  ],
+  "action": "android.intent.action.VIEW",
+  "data": "saf"
+ },
+ {
+  "id": "xendroid",
+  "label": "XenDroid",
+  "packages": [
+   "xendroid.compose",
+   "xendroid.compose.debug"
+  ],
+  "labels": [
+   "xendroid"
+  ],
+  "activity": "xendroid.compose.EmulatorHostActivity",
+  "action": "android.intent.action.VIEW",
+  "data": "none",
+  "extras": {
+   "game_uri": "%ROMSAF%"
+  }
  }
 ]

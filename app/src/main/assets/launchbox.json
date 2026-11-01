@@ -69,5 +69,7 @@
   "neogeo": "SNK Neo Geo AES",
   "megaduck": "Mega Duck",
   "arduboy": "Arduboy"
- }
+ },
+ "xbox360": "Microsoft Xbox 360",
+ "ps3": "Sony Playstation 3"
 }

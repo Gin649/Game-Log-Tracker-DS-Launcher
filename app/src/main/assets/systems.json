@@ -497,6 +497,26 @@
   ]
  },
  {
+  "folder": "xbox360",
+  "ra": [
+   "Xbox 360"
+  ],
+  "core": "",
+  "standalones": [
+   "xendroid"
+  ]
+ },
+ {
+  "folder": "ps3",
+  "ra": [
+   "PlayStation 3"
+  ],
+  "core": "",
+  "standalones": [
+   "armsx3"
+  ]
+ },
+ {
   "folder": "fds",
   "ra": [
    "Famicom Disk System"
