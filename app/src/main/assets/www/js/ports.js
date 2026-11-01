@@ -71,10 +71,26 @@ async function portsForGame(title){
   return list.filter(p => (p.games || []).some(g => portTitleKey(g) === key));
 }
 
+// A port that needs more than this device has (CPU type, Android version, Vulkan) is not offered at all.
+let portDeviceInfo = null;
+function portRunsHere(p){
+  const r = p.requirements;
+  if(!r) return true;
+  if(!portDeviceInfo){
+    try{ portDeviceInfo = JSON.parse(window.ThorBridge.portDevice()); }catch(e){ return true; }
+  }
+  const d = portDeviceInfo;
+  if(r.abi && r.abi.length && d.abis && d.abis.length && !r.abi.some(a => d.abis.indexOf(a) >= 0)) return false;
+  if(r.min_sdk && d.sdk && d.sdk < r.min_sdk) return false;
+  if(r.vulkan && d.vulkan === false) return false;
+  return true;
+}
+
 function thorWirePorts(card, title, consoleName){
   const host = card.querySelector('#modal-port');
   if(!host || !window.ThorBridge || typeof window.ThorBridge.portState !== 'function') return;
   portsForGame(title).then(ports => {
+    ports = ports.filter(portRunsHere);
     if(!ports.length || !card.isConnected) return;
     host.innerHTML = '';
     ports.forEach((p, i) => wirePort(card, host, p, ports.length > 1, i === 0, title, consoleName));
@@ -90,7 +106,8 @@ function wirePort(card, host, p, several, first, title, consoleName){
   const romBtnHtml = first ? `<button class="btn-emu gd-port-rom-btn" aria-label="Get this game's ROM ready for the port" title="Get this game's ROM ready for the port (unzips it and saves it to Downloads/Roms for Ports)"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-1 3h2v4h2.5L13 19.5 8.5 16H11v-4z"/></svg></button>` : '';
   box.innerHTML = `<div class="play-row"><button class="btn-view-achievements btn-play-thor gd-port-btn"></button>${romBtnHtml}</div>
     <div class="thor-play-msg gd-port-msg" style="display:none;"></div>
-    <div class="gd-port-note">A native Android version of this game. It needs your own copy of the game.</div>`;
+    <div class="gd-port-note">A native Android version of this game. It needs your own copy of the game.</div>
+    <div class="gd-port-check" style="display:none;"></div>`;
   host.appendChild(box);
   const btn = box.querySelector('.gd-port-btn');
   const msg = box.querySelector('.gd-port-msg');
@@ -104,7 +121,7 @@ function wirePort(card, host, p, several, first, title, consoleName){
   };
 
   const read = () => {
-    try{ return JSON.parse(b.portState(p.id, p.name)); }catch(e){ return { installed: false, state: 'idle' }; }
+    try{ return JSON.parse(b.portState(p.id, p.name, p.package || '')); }catch(e){ return { installed: false, state: 'idle' }; }
   };
 
   const render = () => {
@@ -147,7 +164,7 @@ function wirePort(card, host, p, several, first, title, consoleName){
   btn.addEventListener('click', () => {
     if(btn.dataset.mode === 'play'){
       let res;
-      try{ res = JSON.parse(b.portPlay(p.id, p.name)); }catch(e){ res = { ok: false, message: 'Could not open the port.' }; }
+      try{ res = JSON.parse(b.portPlay(p.id, p.name, p.package || '')); }catch(e){ res = { ok: false, message: 'Could not open the port.' }; }
       say(res.message || '', !res.ok);
       return;
     }
@@ -163,7 +180,7 @@ function wirePort(card, host, p, several, first, title, consoleName){
     romBtn.addEventListener('click', () => {
       if(busy) return;
       let r;
-      try{ r = JSON.parse(b.portRomStart(JSON.stringify({ title: title, console: consoleName }))); }
+      try{ r = JSON.parse(b.portRomStart(JSON.stringify(Object.assign({ title: title, console: consoleName }, p.delivery || {})))); }
       catch(e){ r = { ok: false, message: 'Could not start.' }; }
       if(!r.ok){ say(r.message || 'Could not start.', true); return; }
       busy = true;
@@ -180,12 +197,29 @@ function wirePort(card, host, p, several, first, title, consoleName){
         }
         busy = false;
         romBtn.disabled = false;
-        if(s.state === 'done') say('Saved to Downloads/Roms for Ports: ' + (s.name || '') + '. Pick it inside the port.', false);
+        if(s.state === 'done') say('Saved to ' + (p.delivery && p.delivery.mode === 'shared_folder' && p.delivery.path ? p.delivery.path : 'Downloads/Roms for Ports') + ': ' + (s.name || '') + (p.delivery && p.delivery.mode === 'shared_folder' ? '.' : '. Pick it inside the port.'), false);
         else say(s.message || 'Could not prepare the ROM.', true);
       };
       say('Starting…', false);
       setTimeout(poll, 500);
     });
+  }
+
+  // Says whether the ROM on this device is the exact version the port needs (only when the catalog lists one).
+  const chk = box.querySelector('.gd-port-check');
+  if(first && p.roms && p.roms.length && typeof b.portRom === 'function'){
+    setTimeout(() => {
+      if(!card.isConnected) return;
+      let r;
+      try{ r = JSON.parse(b.portRom(JSON.stringify({ title: title, console: consoleName }))); }catch(e){ return; }
+      if(!r || !r.found || !r.sha1) return;
+      const hit = p.roms.find(x => String(x.sha1).toLowerCase() === r.sha1);
+      chk.style.display = 'block';
+      chk.classList.toggle('error', !hit);
+      chk.textContent = hit
+        ? 'Your ROM (' + r.name + ') is the version this port needs.'
+        : 'Port available, but your ROM (' + r.name + ') may not be the version it needs. Try a different ROM.';
+    }, 400);
   }
 
   render();

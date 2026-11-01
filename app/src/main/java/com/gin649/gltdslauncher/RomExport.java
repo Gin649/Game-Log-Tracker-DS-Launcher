@@ -33,17 +33,32 @@ final class RomExport {
     private static final Set<String> JUNK = new HashSet<String>(Arrays.asList(
             "txt", "nfo", "jpg", "jpeg", "png", "gif", "xml", "url", "diz", "sfv", "md5", "sha1", "pdf", "db", "ini", "dat"));
 
-    /** Prepares the ROM and returns the file to pick inside the port. */
-    static File run(File rom, DiscPatcher.Progress p) throws IOException {
+    /**
+     * Prepares the ROM and returns the file to pick inside the port. A port that reads its ROM from a fixed folder
+     * (mode "shared_folder", with a path inside the phone's storage) gets it there, and a port that wants one file
+     * name (filename) gets that name. Otherwise it goes to Downloads/Roms for Ports.
+     */
+    static File run(File rom, String mode, String path, String filename, DiscPatcher.Progress p) throws IOException {
         File out = outDir();
-        if (!out.isDirectory() && !out.mkdirs()) throw new DiscPatcher.PatchException("Could not create the Roms for Ports folder in Downloads.");
+        if ("shared_folder".equals(mode) && path != null && !path.isEmpty() && !path.contains("..")) {
+            out = new File(Environment.getExternalStorageDirectory(), path);
+        }
+        if (!out.isDirectory() && !out.mkdirs()) throw new DiscPatcher.PatchException("Could not create the folder " + out.getPath() + ".");
         String name = rom.getName();
         String ext = DiscPatcher.ext(name);
         String stem = DiscPatcher.safeName(name.contains(".") ? name.substring(0, name.lastIndexOf('.')) : name);
         if (stem.isEmpty()) stem = "game";
 
-        if (ext.equals("zip")) return fromZip(rom, out, stem, p);
-        return convert(rom, out, stem, p);
+        File result = ext.equals("zip") ? fromZip(rom, out, stem, p) : convert(rom, out, stem, p);
+        if (filename != null && !filename.isEmpty() && filename.equals(new File(filename).getName()) && result.isFile()
+                && out.equals(result.getParentFile())) {
+            File named = new File(out, filename);
+            if (!named.equals(result)) {
+                if (named.exists()) named.delete();
+                if (result.renameTo(named)) result = named;
+            }
+        }
+        return result;
     }
 
     /** Unpacks a zip into a temporary folder, then treats the main file in it like any other ROM. */

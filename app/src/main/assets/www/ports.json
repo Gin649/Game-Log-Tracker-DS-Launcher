@@ -9,7 +9,14 @@
    ],
    "consoles": [
     "n64"
-   ]
+   ],
+   "package": "com.twoshipfork.mm",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "aerogauge-aerogaugerecompiled",
@@ -20,7 +27,14 @@
    ],
    "consoles": [
     "n64"
-   ]
+   ],
+   "package": "io.github.alondero.aerogaugerecomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "ambermoon-ambermoon-net",
@@ -31,7 +45,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "com.pyrdacor.AmbermoonAndroid",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "animal-crossing-new-horizons-recomp",
@@ -42,7 +63,14 @@
    ],
    "consoles": [
     "switch"
-   ]
+   ],
+   "package": "io.github.acnhrecomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "automobililamborghini-automobililamborghinirecompiled",
@@ -53,7 +81,14 @@
    ],
    "consoles": [
     "n64"
-   ]
+   ],
+   "package": "io.github.alondero.lamborghinirecomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "banjo-kazooie-banjo-recompiled",
@@ -65,7 +100,14 @@
    "consoles": [
     "n64",
     "mobile"
-   ]
+   ],
+   "package": "com.aure.banjorecomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "banjo-kazooie-lighthouse-android",
@@ -76,7 +118,14 @@
    ],
    "consoles": [
     "n64"
-   ]
+   ],
+   "package": "com.lighthouse.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "buffy-the-vampire-slayer-chaos-bleeds-buffy-chaos-bleeds-pc",
@@ -87,7 +136,14 @@
    ],
    "consoles": [
     "og xbox"
-   ]
+   ],
+   "package": "io.github.kaikoclanworth1.buffy",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "burnout-3-takedown-takedawn",
@@ -98,7 +154,14 @@
    ],
    "consoles": [
     "og xbox"
-   ]
+   ],
+   "package": "io.github.xenophobentx.takedawn",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "burnout-revenge-xerenge",
@@ -109,7 +172,15 @@
    ],
    "consoles": [
     "x360"
-   ]
+   ],
+   "package": "com.xerenge.burnout",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   }
   },
   {
    "id": "caesariii-augustus",
@@ -153,7 +224,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "io.github.pablocpas.opencmr2",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "crashbandicoot-crashbandicootlauncher",
@@ -164,7 +242,14 @@
    ],
    "consoles": [
     "ps1"
-   ]
+   ],
+   "package": "io.github.matteo842.crashlauncher.runtime",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "crashteamracing-ctrnativeandroid",
@@ -175,7 +260,14 @@
    ],
    "consoles": [
     "ps1"
-   ]
+   ],
+   "package": "com.ctrnative",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "daytona-usa-daytona-usa-static-recomp",
@@ -197,7 +289,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "org.diasurgical.devilutionx",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 21
+   }
   },
   {
    "id": "diddykongracing-dkrr",
@@ -208,7 +307,14 @@
    ],
    "consoles": [
     "n64"
-   ]
+   ],
+   "package": "io.github.thatguymcd.dkrr.preview",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "doom-rpg-com-mobilerpgpack-phone",
@@ -230,7 +336,13 @@
    ],
    "consoles": [
     "n64"
-   ]
+   ],
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "doraemon-nobita-to-mittsu-no-seireiseki-dora64",
@@ -241,7 +353,14 @@
    ],
    "consoles": [
     "n64"
-   ]
+   ],
+   "package": "com.n64recomp.dora64",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "eternalsonata-eternalsonatareprise",
@@ -252,7 +371,14 @@
    ],
    "consoles": [
     "x360"
-   ]
+   ],
+   "package": "com.birabittoh.eternalsonata",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "final-fantasy-tactics-advance-ffta-recomp",
@@ -263,7 +389,14 @@
    ],
    "consoles": [
     "gba"
-   ]
+   ],
+   "package": "org.gbarecomp.fftarecomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "final-fantasy-tactics-advance-fftarecomp",
@@ -274,7 +407,14 @@
    ],
    "consoles": [
     "gba"
-   ]
+   ],
+   "package": "com.fftarecomp.port",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "gears-of-war-2-gears-of-war-2-pc-port",
@@ -285,7 +425,14 @@
    ],
    "consoles": [
     "x360"
-   ]
+   ],
+   "package": "com.santiquiroz.gow2recomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "glider-pro-aerofoil",
@@ -337,7 +484,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "org.fheroes2",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "heroesofmightandmagiciii-vcmi",
@@ -348,7 +502,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "is.xyz.vcmi",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "hollow-knight-hk-dual-souls",
@@ -359,7 +520,14 @@
    ],
    "consoles": [
     "mobile"
-   ]
+   ],
+   "package": "igawa6.dualsouls",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "hollow-knight-silksong-silksong-android",
@@ -370,7 +538,14 @@
    ],
    "consoles": [
     "mobile"
-   ]
+   ],
+   "package": "com.jakobkhansen.silksong",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "hot-shots-tennis-opentennis",
@@ -392,7 +567,14 @@
    ],
    "consoles": [
     "n64"
-   ]
+   ],
+   "package": "com.hybridheaven.recomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "ico-ico-pc",
@@ -403,7 +585,14 @@
    ],
    "consoles": [
     "ps2"
-   ]
+   ],
+   "package": "com.defnf.icopc",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "jade-cocoon-story-of-the-tamamayu-jade-cocoon-on-bevy",
@@ -448,7 +637,14 @@
    ],
    "consoles": [
     "og xbox"
-   ]
+   ],
+   "package": "com.jumatt.jsrfunleashed",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "jill-of-the-jungle-jillandroid",
@@ -459,7 +655,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "wootbeer.jillandroid",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "katawa-shoujo-katawa-shoujo-re-engineered",
@@ -492,7 +695,14 @@
    ],
    "consoles": [
     "gba"
-   ]
+   ],
+   "package": "com.rekhcom.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "knuckles-chaotix-chaotix-recompiled",
@@ -503,7 +713,14 @@
    ],
    "consoles": [
     "32x"
-   ]
+   ],
+   "package": "org.chaotixrecompiled",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "knytt-stories-yknytt",
@@ -514,7 +731,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "org.godotengine.yknytt",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "legend-of-sword-and-fairy-sdlpal",
@@ -558,7 +782,14 @@
    ],
    "consoles": [
     "x360"
-   ]
+   ],
+   "package": "io.github.freefrank.lostodyssey",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "mario-kart-64-spaghettikart-android",
@@ -569,7 +800,14 @@
    ],
    "consoles": [
     "n64"
-   ]
+   ],
+   "package": "com.izzy.kart",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "mariokartwii-kartpad",
@@ -580,7 +818,14 @@
    ],
    "consoles": [
     "wii"
-   ]
+   ],
+   "package": "dev.kartpad.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "mario-party-4-party-board",
@@ -591,7 +836,14 @@
    ],
    "consoles": [
     "gcn"
-   ]
+   ],
+   "package": "com.mariopartyrd.partyboard",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "mario-party-4-party-board-zeranemesis",
@@ -602,7 +854,14 @@
    ],
    "consoles": [
     "gcn"
-   ]
+   ],
+   "package": "com.mariopartyrd.partyboard",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "mario-party-6-mario-party-6-native-port",
@@ -613,7 +872,14 @@
    ],
    "consoles": [
     "gcn"
-   ]
+   ],
+   "package": "com.mp6.game",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "mdk-mdk-sdl",
@@ -624,7 +890,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "io.github.nemo22.mdk",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "mega-man-64-mega-man-64-recompiled-mobile",
@@ -636,7 +909,14 @@
    "consoles": [
     "n64",
     "mobile"
-   ]
+   ],
+   "package": "com.devz.megaman64",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "metal-gear-solid-mobile-metal-gear-solid-mobile-native-port",
@@ -658,7 +938,14 @@
    ],
    "consoles": [
     "gcn"
-   ]
+   ],
+   "package": "org.metroidprime.port",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "metroid-prime-2-echoes-unbound",
@@ -670,7 +957,14 @@
    "consoles": [
     "gcn",
     "wii"
-   ]
+   ],
+   "package": "org.metroidprime2.port",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "metroid-prime-hunters-second-hunt",
@@ -703,7 +997,14 @@
    ],
    "consoles": [
     "psp"
-   ]
+   ],
+   "package": "io.github.teamgdb.yakumo",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "monster-hunter-tri-oceantrirecomp-android",
@@ -715,7 +1016,14 @@
    "consoles": [
     "wii",
     "mobile"
-   ]
+   ],
+   "package": "com.oceantri.mh3",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "mother-3-mother-3-native-port-recompilation",
@@ -726,7 +1034,14 @@
    ],
    "consoles": [
     "gba"
-   ]
+   ],
+   "package": "com.ylports.mother3recomp.en.dev",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "mystical-ninja-starring-goemon-goemon64recomp-android",
@@ -737,7 +1052,15 @@
    ],
    "consoles": [
     "n64"
-   ]
+   ],
+   "package": "com.goemon64.recomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   }
   },
   {
    "id": "need-for-speed-ii-special-edition-nfsiise",
@@ -759,7 +1082,14 @@
    ],
    "consoles": [
     "wii"
-   ]
+   ],
+   "package": "com.wither.nsmbw",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "perfect-dark-perfect-dark-android",
@@ -771,7 +1101,14 @@
    "consoles": [
     "n64",
     "mobile"
-   ]
+   ],
+   "package": "com.perfectdark.port",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "pikmin-opennectar",
@@ -783,7 +1120,14 @@
    ],
    "consoles": [
     "gcn"
-   ]
+   ],
+   "package": "org.opennectar",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "pilotwings-64-birdman64",
@@ -794,7 +1138,14 @@
    ],
    "consoles": [
     "n64"
-   ]
+   ],
+   "package": "app.birdman64",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "pokemonemerald-emeraldrecomp",
@@ -805,7 +1156,14 @@
    ],
    "consoles": [
     "gba"
-   ]
+   ],
+   "package": "com.mstan.emeraldrecomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "pokemonredblueyellowgoldsilvercrystal-gen1recompproject",
@@ -828,7 +1186,14 @@
     "gb",
     "gbc",
     "gba"
-   ]
+   ],
+   "package": "com.theboisclub.pokemonred",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "pokemonsnap-snap64recomp",
@@ -839,7 +1204,14 @@
    ],
    "consoles": [
     "n64"
-   ]
+   ],
+   "package": "io.github.jackandbeans.snap64recomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "prince-of-persia-sdlpop-android",
@@ -850,7 +1222,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "com.mgrz18.sdlpop",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "prince-of-persia-the-sands-of-time-resot",
@@ -861,7 +1240,14 @@
    ],
    "consoles": [
     "og xbox"
-   ]
+   ],
+   "package": "com.fulger.resot",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "raptor-call-of-the-shadows-raptor",
@@ -872,7 +1258,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "com.raptor.skynettx",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "ratchet-clank-openrac",
@@ -894,7 +1287,14 @@
    ],
    "consoles": [
     "gbc"
-   ]
+   ],
+   "package": "com.capcom.regaiden",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "rocket-robot-on-wheels-rocket-r",
@@ -905,7 +1305,14 @@
    ],
    "consoles": [
     "n64"
-   ]
+   ],
+   "package": "com.rocketret.rocketr",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "rollercoaster-tycoon-2-openrct2",
@@ -916,7 +1323,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "io.openrct2",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "saru-get-you-saru-saru-daisakusen-ape-escape-mind-over-monkey",
@@ -949,7 +1363,14 @@
    ],
    "consoles": [
     "ps1"
-   ]
+   ],
+   "package": "com.silenthill.port",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "simcity-urbanrecomp-enhanced",
@@ -971,7 +1392,14 @@
    ],
    "consoles": [
     "n64"
-   ]
+   ],
+   "package": "io.github.wootbeer.snprecomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "skies-of-arcadia-legends-skies-of-arcadia-legends-recompiled",
@@ -982,7 +1410,14 @@
    ],
    "consoles": [
     "gcn"
-   ]
+   ],
+   "package": "com.skiesofarcadia.recomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "sonic3knuckles-sonic3air",
@@ -1004,7 +1439,14 @@
    ],
    "consoles": [
     "mobile"
-   ]
+   ],
+   "package": "com.decomp.rsdkv3",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "sonic-free-riders-free-riders-recompiled",
@@ -1015,7 +1457,14 @@
    ],
    "consoles": [
     "x360"
-   ]
+   ],
+   "package": "com.freeriders.recompiled",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "sonic-r-sonic-r-android",
@@ -1026,7 +1475,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "org.sonicr.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "sonicthehedgehog2013-sonic1forever",
@@ -1049,6 +1505,23 @@
    ],
    "consoles": [
     "n64"
+   ],
+   "package": "com.starship.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   },
+   "roms": [
+    {
+     "sha1": "d8b1088520f7c5f81433292a9258c1184afa1457",
+     "label": "USA 1.0"
+    },
+    {
+     "sha1": "09f0d105f476b00efa5303a3ebc42e60a7753b7a",
+     "label": "USA 1.1 (Rev A)"
+    }
    ]
   },
   {
@@ -1060,7 +1533,14 @@
    ],
    "consoles": [
     "snes"
-   ]
+   ],
+   "package": "com.starfox.enhanced",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "star-wars-jedi-knight-dark-forces-ii-openjkdf2",
@@ -1071,7 +1551,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "org.openjkdf2.app",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "supermario64-ghostship",
@@ -1082,7 +1569,14 @@
    ],
    "consoles": [
     "n64"
-   ]
+   ],
+   "package": "dev.net64.ghostship",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "super-mario-64-sm64coopdx",
@@ -1104,7 +1598,14 @@
    ],
    "consoles": [
     "wii"
-   ]
+   ],
+   "package": "com.openport.galaxyandroid",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "super-mario-strikers-strikers-android",
@@ -1116,7 +1617,14 @@
    "consoles": [
     "gcn",
     "mobile"
-   ]
+   ],
+   "package": "io.github.newcoke.strikers",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "super-mario-sunshine-mareshine",
@@ -1127,7 +1635,14 @@
    ],
    "consoles": [
     "gcn"
-   ]
+   ],
+   "package": "io.github.them3dium.mareshine",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "super-mario-sunshine-sms-launcher-for-android",
@@ -1160,7 +1675,14 @@
    ],
    "consoles": [
     "n64"
-   ]
+   ],
+   "package": "org.srw64.game",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "supersmashbros-battleship",
@@ -1182,7 +1704,14 @@
    ],
    "consoles": [
     "gcn"
-   ]
+   ],
+   "package": "dev.melee.game",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "tails-adventure-tails-adventure-remake",
@@ -1206,7 +1735,14 @@
     "pc",
     "mobile",
     "switch"
-   ]
+   ],
+   "package": "io.github.isaacrecomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "the-legend-of-zelda-a-link-to-the-past-relic-of-the-past",
@@ -1240,6 +1776,20 @@
    "consoles": [
     "n64",
     "mobile"
+   ],
+   "package": "io.github.zelda64recomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   },
+   "roms": [
+    {
+     "sha1": "d6133ace5afaa0882cf214cf88daba39e266c078",
+     "label": "USA 1.0"
+    }
    ]
   },
   {
@@ -1274,7 +1824,14 @@
    ],
    "consoles": [
     "3ds"
-   ]
+   ],
+   "package": "io.github.otpr26.ocarinaretuned",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "the-legend-of-zelda-oracle-of-ages-oracle-of-seasons-oracles-decomp",
@@ -1286,7 +1843,14 @@
    ],
    "consoles": [
     "gbc"
-   ]
+   ],
+   "package": "org.oracles",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "the-legend-of-zelda-oracle-of-seasons-oracle-of-ages-the-oracles-project",
@@ -1298,7 +1862,14 @@
    ],
    "consoles": [
     "gbc"
-   ]
+   ],
+   "package": "org.theoraclesproject",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "thelegendofzeldatheminishcap-projectpicori",
@@ -1309,7 +1880,14 @@
    ],
    "consoles": [
     "gba"
-   ]
+   ],
+   "package": "dev.picori.tmc",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "the-legend-of-zelda-the-wind-waker-hd-tloz-tww-hd-recompiled-android",
@@ -1320,7 +1898,14 @@
    ],
    "consoles": [
     "wiiu"
-   ]
+   ],
+   "package": "org.wwhdrecomp.app",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "the-legend-of-zelda-the-wind-waker-hd-windwakerhd-android-plus",
@@ -1331,7 +1916,14 @@
    ],
    "consoles": [
     "wiiu"
-   ]
+   ],
+   "package": "org.wwhdrecomp.app",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "the-legend-of-zelda-the-wind-waker-hd-wind-waker-hd-recompiled-android-enhanced",
@@ -1342,7 +1934,14 @@
    ],
    "consoles": [
     "wiiu"
-   ]
+   ],
+   "package": "org.wwhdrecomp.app",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "the-legend-of-zelda-the-wind-waker-hd-zeldawwhdrecomp",
@@ -1364,7 +1963,14 @@
    ],
    "consoles": [
     "gcn"
-   ]
+   ],
+   "package": "dev.twilitrealm.dusk",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "the-settlers-freeserf-net",
@@ -1375,7 +1981,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "net.freeserf.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "the-settlers-3-jsettlers",
@@ -1398,7 +2011,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "com.c4rlox.simpsons",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "tiny-toon-adventures-buster-busts-loose-buster-busts-loose-pc-port",
@@ -1409,7 +2029,14 @@
    ],
    "consoles": [
     "snes"
-   ]
+   ],
+   "package": "com.darhkfox.busterbustsloose",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "tyrian-2000-opentyrian2000",
@@ -1442,7 +2069,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "com.synthwavepixel.ultima5",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "ultima-vii-the-black-gate-exult",
@@ -1453,7 +2087,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "info.exult",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "uncharted-the-nathan-drake-collection-uncharted-android",
@@ -1465,7 +2106,15 @@
    "consoles": [
     "ps4",
     "mobile"
-   ]
+   ],
+   "package": "dev.unchartedandroid",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   }
   },
   {
    "id": "wario-land-super-mario-land-3-bigodao",
@@ -1477,7 +2126,14 @@
    "consoles": [
     "gb",
     "gbc"
-   ]
+   ],
+   "package": "com.bigodao.warioland",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "warioware-twisted-warioware-twisted-recomp",
@@ -1488,7 +2144,14 @@
    ],
    "consoles": [
     "gba"
-   ]
+   ],
+   "package": "com.mstan.wariowaretwisted",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "whiplash-roller",
@@ -1499,7 +2162,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "racing.fatal.roller",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "woody-woodpecker-escape-from-buzz-buzzard-park-woodyre",
@@ -1510,7 +2180,14 @@
    ],
    "consoles": [
     "pc"
-   ]
+   ],
+   "package": "io.github.jjmhalew.woodyre",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "wwe-smackdown-vs-raw-2011-wwe-svr2011-pc",
@@ -1521,7 +2198,14 @@
    ],
    "consoles": [
     "x360"
-   ]
+   ],
+   "package": "io.github.kaikoclanworth1.svr2011",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "xenogears-xenogears-ex-machina",
@@ -1543,7 +2227,14 @@
    ],
    "consoles": [
     "ps1"
-   ]
+   ],
+   "package": "org.yfmredecomp.game",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "z2rs",
@@ -1554,7 +2245,14 @@
    ],
    "consoles": [
     "nes"
-   ]
+   ],
+   "package": "com.z2rs.game",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   },
   {
    "id": "zombies-ate-my-neighbors-undead-neighbor-eaters-droid",
@@ -1565,7 +2263,14 @@
    ],
    "consoles": [
     "snes"
-   ]
+   ],
+   "package": "com.zamn.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
   }
  ]
 }

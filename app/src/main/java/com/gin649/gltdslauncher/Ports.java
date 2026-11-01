@@ -50,8 +50,15 @@ final class Ports {
     }
 
     /** Package name of the installed port, or "" when it is not installed. */
-    static String installedPackage(Context ctx, String slug, String name) {
+    static String installedPackage(Context ctx, String slug, String name, String known) {
         PackageManager pm = ctx.getPackageManager();
+        if (known != null && !known.isEmpty()) {
+            try {
+                pm.getPackageInfo(known, 0);
+                return known;
+            } catch (PackageManager.NameNotFoundException ignored) {
+            }
+        }
         String saved = Prefs.get(ctx, "port.pkg." + slug, "");
         if (!saved.isEmpty()) {
             try {
@@ -73,11 +80,11 @@ final class Ports {
         return "";
     }
 
-    static String state(Context ctx, String slug, String name) {
+    static String state(Context ctx, String slug, String name, String known) {
         JSONObject o = new JSONObject();
         try {
             Job j = job(slug);
-            String pkg = installedPackage(ctx, slug, name);
+            String pkg = installedPackage(ctx, slug, name, known);
             o.put("installed", !pkg.isEmpty());
             o.put("state", j.state);
             o.put("message", j.message);
@@ -88,8 +95,8 @@ final class Ports {
         return o.toString();
     }
 
-    static String play(Activity act, String slug, String name) {
-        String pkg = installedPackage(act, slug, name);
+    static String play(Activity act, String slug, String name, String known) {
+        String pkg = installedPackage(act, slug, name, known);
         if (pkg.isEmpty()) return "{\"ok\":false,\"message\":\"This port is not installed yet.\"}";
         Intent i = act.getPackageManager().getLaunchIntentForPackage(pkg);
         if (i == null) return "{\"ok\":false,\"message\":\"Could not open the port.\"}";
@@ -109,6 +116,20 @@ final class Ports {
         } catch (Exception e) {
             return "{\"ok\":false,\"message\":\"Could not open the port.\"}";
         }
+    }
+
+    /** What this device can run: {abis, sdk, vulkan}. Ports that need more than this are not offered. */
+    static String device(Context ctx) {
+        JSONObject o = new JSONObject();
+        try {
+            JSONArray abis = new JSONArray();
+            for (String a : android.os.Build.SUPPORTED_ABIS) abis.put(a);
+            o.put("abis", abis);
+            o.put("sdk", android.os.Build.VERSION.SDK_INT);
+            o.put("vulkan", ctx.getPackageManager().hasSystemFeature(PackageManager.FEATURE_VULKAN_HARDWARE_VERSION));
+        } catch (Exception ignored) {
+        }
+        return o.toString();
     }
 
     /** Looks up, downloads, checks and installs the newest build. Progress is read with state(). */
