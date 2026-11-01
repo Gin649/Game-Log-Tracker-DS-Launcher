@@ -82,6 +82,11 @@ public class MainActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         Config.load(this);
         Shared.init(this);
+        // Shared.init has just started a scan; without this, the first resume would start a second one right behind it
+        try {
+            hadStorage = Environment.isExternalStorageManager();
+        } catch (Exception ignored) {
+        }
 
         root = new FrameLayout(this);
         root.setBackgroundColor(BG);

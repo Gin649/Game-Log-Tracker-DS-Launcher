@@ -41,13 +41,18 @@ final class Shared {
         return INDEX;
     }
 
+    private static final java.util.concurrent.atomic.AtomicBoolean RESCAN_QUEUED = new java.util.concurrent.atomic.AtomicBoolean();
+
     static void rescan() {
         final SystemMap map = systems();
         if (map == null) return;
+        // a scan already waiting for its turn will read the folders when it starts, so asking again adds nothing
+        if (RESCAN_QUEUED.getAndSet(true)) return;
         IO.execute(new Runnable() {
             @Override
             public void run() {
-                INDEX.rebuild(map);
+                RESCAN_QUEUED.set(false);
+                INDEX.rebuild(systems() != null ? systems() : map);
                 try {
                     LibrarySync.syncAll(appCtx, INDEX, map);
                 } catch (Exception ignored) {
