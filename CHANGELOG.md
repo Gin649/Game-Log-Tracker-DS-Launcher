@@ -2,6 +2,14 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
+## v1.1.1
+
+### Added
+- New emulators: DuckStation (new) for PlayStation, Vita3K+ for PS Vita, aPS3e for PS3 and Flycast for Dreamcast.
+
+### Changed
+- Faster start-up: the Last Played tab loads its playtime first and is usable straight away. The rest of the library loads in the background, and the library list is redrawn only when you open it.
+
 ## v1.1.0
 
 ### Fixed
