@@ -790,7 +790,20 @@ public class SetupActivity extends Activity {
         notInstalled.setOrientation(LinearLayout.VERTICAL);
         notInstalled.setVisibility(View.GONE);
         int have = 0, missing = 0;
-        List<TextView> haveRows = new ArrayList<TextView>();
+        // RetroArch is an emulator too (it runs every system that has a core)
+        if (found.isEmpty()) {
+            missing++;
+            TextView t = text("RetroArch", 14, MUTED);
+            content.removeView(t);
+            notInstalled.addView(t);
+        } else {
+            for (String pkg : found) {
+                have++;
+                TextView t = text("Found: RetroArch (" + pkg + ")", 14, TEAL);
+                content.removeView(t);
+                installedBox.addView(t);
+            }
+        }
         for (Recipes.Recipe r : d.recipes) {
             String pkg = d.pkgs.get(r.id);
             if (pkg != null && !pkg.isEmpty()) {
