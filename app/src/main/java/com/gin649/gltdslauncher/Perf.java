@@ -31,34 +31,42 @@ final class Perf {
         add("at " + name, System.currentTimeMillis() - START);
     }
 
-    /** Writes the report once, 20 seconds after the first call. */
+    /** Writes the report 8 and 30 seconds after the first call (the second one replaces the first). */
     static synchronized void dumpLater(final Context ctx) {
         if (scheduled) return;
         scheduled = true;
-        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+        android.os.Handler h = new android.os.Handler(android.os.Looper.getMainLooper());
+        Runnable dump = new Runnable() {
             @Override
             public void run() {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        try {
-                            StringBuilder sb = new StringBuilder();
-                            synchronized (Perf.class) {
-                                for (Map.Entry<String, long[]> e : M.entrySet()) {
-                                    long[] a = e.getValue();
-                                    sb.append(e.getKey()).append(": ").append(a[0]).append(" calls, ")
-                                            .append(a[1]).append(" ms total, ").append(a[2]).append(" ms longest\n");
-                                }
-                            }
-                            File f = new File(DataStore.root(ctx), "perf.txt");
-                            FileOutputStream out = new FileOutputStream(f);
-                            out.write(sb.toString().getBytes("UTF-8"));
-                            out.close();
-                        } catch (Exception ignored) {
-                        }
+                        write(ctx);
                     }
                 }).start();
             }
-        }, 20000);
+        };
+        h.postDelayed(dump, 8000);
+        h.postDelayed(dump, 30000);
+    }
+
+    private static void write(Context ctx) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            sb.append("seconds since start: ").append((System.currentTimeMillis() - START) / 1000).append("\n");
+            synchronized (Perf.class) {
+                for (Map.Entry<String, long[]> e : M.entrySet()) {
+                    long[] a = e.getValue();
+                    sb.append(e.getKey()).append(": ").append(a[0]).append(" calls, ")
+                            .append(a[1]).append(" ms total, ").append(a[2]).append(" ms longest\n");
+                }
+            }
+            File f = new File(DataStore.root(ctx), "perf.txt");
+            FileOutputStream out = new FileOutputStream(f);
+            out.write(sb.toString().getBytes("UTF-8"));
+            out.close();
+        } catch (Exception ignored) {
+        }
     }
 }
