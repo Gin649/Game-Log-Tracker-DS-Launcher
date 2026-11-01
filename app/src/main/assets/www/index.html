@@ -33,6 +33,17 @@
             <button class="textsize-btn" id="textsize-inc" aria-label="Larger text">A+</button>
             <button class="textsize-reset" id="textsize-reset">Reset</button>
           </div>
+          <div class="textsize-row">
+            <span class="display-note" style="margin:0 4px 0 0;">Game view</span>
+            <button class="textsize-btn view-btn" id="view-list" data-view="list">List View</button>
+            <button class="textsize-btn view-btn" id="view-tile" data-view="tile">Tile View</button>
+          </div>
+          <div class="textsize-row" id="tile-cols-row" style="display:none;">
+            <span class="display-note" style="margin:0 4px 0 0;">Tiles per row</span>
+            <button class="textsize-btn cols-btn" data-cols="3">3</button>
+            <button class="textsize-btn cols-btn" data-cols="4">4</button>
+            <button class="textsize-btn cols-btn" data-cols="5">5</button>
+          </div>
           <div class="display-row">
             <span>Clock and battery<span class="display-note" id="display-status-note">Shows the time and a battery of hearts</span></span>
             <button class="display-switch" id="display-status-switch" role="switch" aria-checked="false" aria-label="Clock and battery"></button>

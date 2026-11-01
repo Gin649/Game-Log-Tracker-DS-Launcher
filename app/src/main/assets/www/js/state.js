@@ -12,6 +12,8 @@ let librarySort = { key: 'Title', dir: 'asc' };
 const estHoursCache = {}; // GameID -> { hours, beaten }, this session only
 const achievementsListCache = {}; // GameID -> achievement list with earn dates, filled by getEstimatedHours()
 let systemFilter = 'All';
+let gameView = 'list'; // Game Library and Backlog: 'list' or 'tile' (Display Options)
+let tileCols = 4;       // tiles per row in tile view, 3 to 5
 let libraryHideDone = false; // Game Library: hide beaten and mastered games
 
 // Games ticked in the Add Game search but not added yet, keyed by GameID, so the ticks survive a

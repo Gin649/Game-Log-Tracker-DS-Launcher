@@ -415,6 +415,8 @@ function renderLibrary(){
     return;
   }
 
+  if(gameView === 'tile'){ renderTiles(wrap, rows, recentSet, false); return; }
+
   wrap.innerHTML = `
       <table class="lib-table">
         <thead><tr>
@@ -475,6 +477,57 @@ function renderLibrary(){
   wireGameRows(wrap);
 }
 
+// Tile view (Display Options): the Last Played cards, in a grid with 3 to 5 tiles per row.
+function tileHtml(g, backlog){
+  const isCustom = g.customConsole === true;
+  const remove = g.manual ? `<button class="manual-remove tile-remove" data-remove-id="${g.GameID}" title="Remove">✕</button>` : '';
+  let badge = '', foot = '';
+  if(backlog){
+    const n = isCustom ? 'Not on RA' : (Number(g.MaxPossible) || 0) + ' achievements';
+    foot = `<div class="cart-progress-group"><div class="prog-lbl"><span>${n}</span></div></div>`;
+  }else if(isCustom){
+    foot = `<div class="cart-progress-group"><div class="prog-lbl"><span>${g.manualBeaten ? 'Beaten' : 'In progress'}</span></div></div>`;
+  }else{
+    const hard = statsMode === 'hardcore';
+    const total = Number(g.MaxPossible) || 0;
+    const earned = hard ? Number(g.NumAwardedHardcore || 0) : Number(g.NumAwarded || 0);
+    const pct = total ? Math.round((earned / total) * 100) : 0;
+    const est = estHoursCache[g.GameID];
+    const hoursHtml = est
+      ? `<span class="val" style="color:var(--gold)">${est.real ? '' : '≈ '}${formatDuration(est)}</span>`
+      : '<span class="pt-pending" title="Loading playtime…"></span>';
+    const award = isGameAwarded(g) ? awardInfo(g.HighestAwardKind) : null;
+    if(award) badge = `<span class="pill pill-corner ${award.cls}">${award.label}</span>`;
+    foot = `<div class="cart-progress-group">
+              <div class="progress-track"><div class="progress-fill ${pct >= 100 ? 'complete' : ''} ${hard ? 'hardcore' : ''}" style="width:${pct}%"></div></div>
+              <div class="prog-lbl"><span>${earned}/${total}</span><span>${pct}%</span></div>
+              <div class="hours">${hoursHtml}</div>
+            </div>`;
+  }
+  return `<div class="cart" data-game-id="${g.GameID}">
+      <div class="art-wrap"><img class="art" src="${imgUrl(g.ImageIcon)}" alt="${g.Title}">${badge}${remove}</div>
+      <div class="body"><p class="title">${g.Title}</p><p class="console">${g.ConsoleName || ''}</p>${foot}</div>
+    </div>`;
+}
+
+// rows: games in order. recentSet: the games to show first under a "Recently played" label, or null.
+function renderTiles(wrap, rows, recentSet, backlog){
+  const cols = Math.min(5, Math.max(3, tileCols));
+  const first = recentSet ? rows.filter(g => recentSet.has(g)) : [];
+  const rest = recentSet ? rows.filter(g => !recentSet.has(g)) : rows;
+  let html = '';
+  if(first.length){
+    html += `<div class="tile-sec">RECENTLY PLAYED</div><div class="tile-grid cols-${cols}" style="--tile-cols:${cols}">${first.map(g => tileHtml(g, backlog)).join('')}</div>`;
+    html += '<div class="tile-sec alt">ALL GAMES A\u2013Z</div>';
+  }
+  html += `<div class="tile-grid cols-${cols}" style="--tile-cols:${cols}">${rest.map(g => tileHtml(g, backlog)).join('')}</div>`;
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('.cart').forEach(card => {
+    card.addEventListener('click', () => openGameModal(Number(card.getAttribute('data-game-id'))));
+  });
+  wireGameRows(wrap);
+}
+
 // Opens a game from a table row; ✕ removes a manually added game.
 function wireGameRows(wrap){
   wrap.querySelectorAll('tbody tr:not(.lib-sec)').forEach(row => {
@@ -508,6 +561,8 @@ function renderBacklog(){
     wrap.innerHTML = '<div class="empty">Nothing in your backlog. Add a game to start tracking it.</div>';
     return;
   }
+
+  if(gameView === 'tile'){ renderTiles(wrap, rows, null, true); return; }
 
   wrap.innerHTML = `
       <table class="lib-table">

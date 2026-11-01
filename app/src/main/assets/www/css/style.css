@@ -1118,3 +1118,14 @@ html.top-panel #profile-hero{display:none;}
 .gd-port{margin-top:14px;padding-top:10px;border-top:1px solid var(--border, rgba(255,255,255,.12));}
 .gd-port-name{font-size:.95rem;margin:4px 0 8px;}
 .gd-port-note{font-size:.7rem;color:var(--muted);margin-top:6px;}
+
+.textsize-btn.on{border-color:var(--gold-dim);color:var(--gold);}
+/* Tile view for Game Library and Backlog: the same cards as the Last Played tab. */
+.tile-grid{display:grid;grid-template-columns:repeat(var(--tile-cols,4),minmax(0,1fr));gap:10px;}
+.tile-sec{font-family:'Space Mono',monospace;font-size:0.6875rem;letter-spacing:0.5px;color:var(--gold);margin:14px 0 8px;}
+.tile-sec.alt{color:var(--text);margin-top:20px;}
+.tile-grid .cart{position:relative;}
+.tile-grid.cols-5 .cart .title,.tile-grid.cols-5 .cart .console,.tile-grid.cols-5 .cart .prog-lbl,.tile-grid.cols-5 .cart .hours{font-size:0.5rem;}
+.tile-grid.cols-5 .cart .body{padding:5px;}
+.tile-grid.cols-5 .pill-corner{font-size:0.4375rem;padding:1px 3px;}
+.tile-remove{position:absolute;top:4px;right:4px;z-index:2;}

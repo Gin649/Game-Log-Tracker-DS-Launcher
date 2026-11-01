@@ -101,3 +101,40 @@ function colorMenuItems(){
 }
 $('#btn-menu').addEventListener('click', colorMenuItems);
 setTimeout(colorMenuItems, 300);
+
+
+// Game view: Game Library and Backlog as a list (default) or as tiles, with 3 to 5 tiles per row.
+const GAMEVIEW_KEY = 'app-game-view', TILECOLS_KEY = 'app-tile-cols';
+function applyGameViewButtons(){
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('on', b.dataset.view === gameView));
+  document.querySelectorAll('.cols-btn').forEach(b => b.classList.toggle('on', Number(b.dataset.cols) === tileCols));
+  const row = $('#tile-cols-row');
+  if(row) row.style.display = gameView === 'tile' ? 'flex' : 'none';
+}
+function redrawGameViews(){
+  try{ if(libraryData && libraryData.length){ renderLibrary(); renderBacklog(); } }catch(e){}
+}
+async function initGameView(){
+  try{
+    const v = await window.storage.get(GAMEVIEW_KEY, false);
+    if(v && (v.value === 'tile' || v.value === 'list')) gameView = v.value;
+    const c = await window.storage.get(TILECOLS_KEY, false);
+    const n = c ? parseInt(c.value, 10) : NaN;
+    if(n >= 3 && n <= 5) tileCols = n;
+  }catch(e){}
+  applyGameViewButtons();
+  redrawGameViews();
+}
+initGameView();
+document.querySelectorAll('.view-btn').forEach(b => b.addEventListener('click', (e) => {
+  e.stopPropagation();
+  gameView = b.dataset.view === 'tile' ? 'tile' : 'list';
+  applyGameViewButtons(); redrawGameViews();
+  try{ window.storage.set(GAMEVIEW_KEY, gameView, false); }catch(err){}
+}));
+document.querySelectorAll('.cols-btn').forEach(b => b.addEventListener('click', (e) => {
+  e.stopPropagation();
+  tileCols = Math.min(5, Math.max(3, Number(b.dataset.cols)));
+  applyGameViewButtons(); redrawGameViews();
+  try{ window.storage.set(TILECOLS_KEY, String(tileCols), false); }catch(err){}
+}));
