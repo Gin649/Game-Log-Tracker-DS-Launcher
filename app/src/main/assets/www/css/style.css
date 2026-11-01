@@ -1118,8 +1118,6 @@ html.top-panel #profile-hero{display:none;}
 .gd-port{margin-top:14px;padding-top:10px;border-top:1px solid var(--border, rgba(255,255,255,.12));}
 .gd-port-name{font-size:.95rem;margin:4px 0 8px;}
 .gd-port-note{font-size:.7rem;color:var(--muted);margin-top:6px;}
-.gd-port-check{font-size:.7rem;color:var(--muted);margin-top:4px;}
-.gd-port-check.error{color:#e0a030;}
 
 .textsize-btn.on{border-color:var(--gold-dim);color:var(--gold);}
 /* Tile view for Game Library and Backlog: the same cards as the Last Played tab. */

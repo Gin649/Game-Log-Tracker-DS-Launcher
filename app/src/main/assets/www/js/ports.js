@@ -106,8 +106,7 @@ function wirePort(card, host, p, several, first, title, consoleName){
   const romBtnHtml = first ? `<button class="btn-emu gd-port-rom-btn" aria-label="Get this game's ROM ready for the port" title="Get this game's ROM ready for the port (unzips it and saves it to Downloads/Roms for Ports)"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-1 3h2v4h2.5L13 19.5 8.5 16H11v-4z"/></svg></button>` : '';
   box.innerHTML = `<div class="play-row"><button class="btn-view-achievements btn-play-thor gd-port-btn"></button>${romBtnHtml}</div>
     <div class="thor-play-msg gd-port-msg" style="display:none;"></div>
-    <div class="gd-port-note">A native Android version of this game. It needs your own copy of the game.</div>
-    <div class="gd-port-check" style="display:none;"></div>`;
+    <div class="gd-port-note">A native Android version of this game. It needs your own copy of the game.</div>`;
   host.appendChild(box);
   const btn = box.querySelector('.gd-port-btn');
   const msg = box.querySelector('.gd-port-msg');
@@ -203,23 +202,6 @@ function wirePort(card, host, p, several, first, title, consoleName){
       say('Starting…', false);
       setTimeout(poll, 500);
     });
-  }
-
-  // Says whether the ROM on this device is the exact version the port needs (only when the catalog lists one).
-  const chk = box.querySelector('.gd-port-check');
-  if(first && p.roms && p.roms.length && typeof b.portRom === 'function'){
-    setTimeout(() => {
-      if(!card.isConnected) return;
-      let r;
-      try{ r = JSON.parse(b.portRom(JSON.stringify({ title: title, console: consoleName }))); }catch(e){ return; }
-      if(!r || !r.found || !r.sha1) return;
-      const hit = p.roms.find(x => String(x.sha1).toLowerCase() === r.sha1);
-      chk.style.display = 'block';
-      chk.classList.toggle('error', !hit);
-      chk.textContent = hit
-        ? 'Your ROM (' + r.name + ') is the version this port needs.'
-        : 'Port available, but your ROM (' + r.name + ') may not be the version it needs. Try a different ROM.';
-    }, 400);
   }
 
   render();
