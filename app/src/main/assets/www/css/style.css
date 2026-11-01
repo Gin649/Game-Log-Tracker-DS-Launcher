@@ -1118,5 +1118,3 @@ html.top-panel #profile-hero{display:none;}
 .gd-port{margin-top:14px;padding-top:10px;border-top:1px solid var(--border, rgba(255,255,255,.12));}
 .gd-port-name{font-size:.95rem;margin:4px 0 8px;}
 .gd-port-note{font-size:.7rem;color:var(--muted);margin-top:6px;}
-.gd-port-rom{font-size:.75rem;color:var(--teal, #4fd1c5);margin:6px 0;}
-.gd-port-rom.bad{color:var(--gold-dim, #b8963e);}
