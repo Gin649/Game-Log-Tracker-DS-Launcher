@@ -723,11 +723,9 @@ public class SetupActivity extends Activity {
                 values.add("standalone:" + id);
             }
             if (haveRa) {
-                List<String> cores = new ArrayList<String>();
-                if (!sys.core.isEmpty()) cores.add(sys.core);
-                for (String c : sys.cores) {
-                    if (!c.isEmpty() && !cores.contains(c)) cores.add(c);
-                }
+                String curVal = emuChoice.containsKey(sys.folder) ? emuChoice.get(sys.folder) : get("emu." + sys.folder, "");
+                String curCore = curVal.startsWith("retroarch:") ? curVal.substring(10).split("@")[0] : "";
+                List<String> cores = RaCores.forSystem(this, sys, raPackage.isEmpty() ? found.get(0) : raPackage, curCore);
                 for (String c : cores) {
                     items.add("RetroArch: " + c);
                     values.add("retroarch:" + c);
@@ -738,6 +736,10 @@ public class SetupActivity extends Activity {
             if (!any) {
                 text("Which emulator for each system?", 17, TEXT);
                 text("Only the systems found in your ROMs folder are listed, with the emulators you have installed.", 13, MUTED);
+                if (haveRa && RaCores.installed(this, raPackage.isEmpty() ? found.get(0) : raPackage) == null) {
+                    text("RetroArch's cores folder can't be read from here, so every core the app knows for a system is listed, "
+                            + "installed or not.", 13, MUTED);
+                }
                 any = true;
             }
             text(sys.folder, 14, GOLD);

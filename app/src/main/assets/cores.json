@@ -1,0 +1,399 @@
+{
+ "mesen": [
+  "nes",
+  "famicom",
+  "nesh",
+  "fds"
+ ],
+ "fceumm": [
+  "nes",
+  "famicom",
+  "nesh",
+  "fds"
+ ],
+ "nestopia": [
+  "nes",
+  "famicom",
+  "nesh",
+  "fds"
+ ],
+ "quicknes": [
+  "nes",
+  "famicom",
+  "nesh",
+  "fds"
+ ],
+ "mesen-s": [
+  "snes",
+  "sfc",
+  "snesh",
+  "snes-msu1",
+  "gb",
+  "gbh",
+  "gbc",
+  "gbch"
+ ],
+ "bnes": [
+  "nes",
+  "famicom",
+  "nesh",
+  "fds"
+ ],
+ "nestopia_libretro": [
+  "nes",
+  "famicom",
+  "nesh",
+  "fds"
+ ],
+ "snes9x": [
+  "snes",
+  "sfc",
+  "snesh",
+  "snes-msu1"
+ ],
+ "snes9x2010": [
+  "snes",
+  "sfc",
+  "snesh",
+  "snes-msu1"
+ ],
+ "snes9x2005": [
+  "snes",
+  "sfc",
+  "snesh",
+  "snes-msu1"
+ ],
+ "snes9x2002": [
+  "snes",
+  "sfc",
+  "snesh",
+  "snes-msu1"
+ ],
+ "bsnes": [
+  "snes",
+  "sfc",
+  "snesh",
+  "snes-msu1",
+  "gb",
+  "gbh",
+  "gbc",
+  "gbch"
+ ],
+ "bsnes_hd_beta": [
+  "snes",
+  "sfc",
+  "snesh",
+  "snes-msu1"
+ ],
+ "bsnes_mercury_accuracy": [
+  "snes",
+  "sfc",
+  "snesh",
+  "snes-msu1"
+ ],
+ "bsnes_mercury_balanced": [
+  "snes",
+  "sfc",
+  "snesh",
+  "snes-msu1"
+ ],
+ "bsnes_mercury_performance": [
+  "snes",
+  "sfc",
+  "snesh",
+  "snes-msu1"
+ ],
+ "gambatte": [
+  "gb",
+  "gbh",
+  "gbc",
+  "gbch"
+ ],
+ "sameboy": [
+  "gb",
+  "gbh",
+  "gbc",
+  "gbch"
+ ],
+ "gearboy": [
+  "gb",
+  "gbh",
+  "gbc",
+  "gbch"
+ ],
+ "tgbdual": [
+  "gb",
+  "gbh",
+  "gbc",
+  "gbch"
+ ],
+ "mgba": [
+  "gba",
+  "gbah",
+  "gb",
+  "gbh",
+  "gbc",
+  "gbch"
+ ],
+ "vba_next": [
+  "gba",
+  "gbah"
+ ],
+ "vbam": [
+  "gba",
+  "gbah",
+  "gb",
+  "gbh",
+  "gbc",
+  "gbch"
+ ],
+ "gpsp": [
+  "gba",
+  "gbah"
+ ],
+ "genesis_plus_gx": [
+  "genesis",
+  "megadrive",
+  "genh",
+  "msu-md",
+  "segacd",
+  "sega32x",
+  "mastersystem",
+  "gamegear",
+  "sg-1000"
+ ],
+ "genesis_plus_gx_wide": [
+  "genesis",
+  "megadrive",
+  "genh",
+  "msu-md",
+  "segacd",
+  "sega32x",
+  "mastersystem",
+  "gamegear",
+  "sg-1000"
+ ],
+ "picodrive": [
+  "genesis",
+  "megadrive",
+  "genh",
+  "msu-md",
+  "segacd",
+  "sega32x",
+  "mastersystem",
+  "gamegear",
+  "sg-1000"
+ ],
+ "smsplus": [
+  "mastersystem",
+  "gamegear"
+ ],
+ "gearsystem": [
+  "mastersystem",
+  "gamegear",
+  "sg-1000"
+ ],
+ "blastem": [
+  "genesis",
+  "megadrive",
+  "genh"
+ ],
+ "mupen64plus_next": [
+  "n64"
+ ],
+ "mupen64plus_next_gles3": [
+  "n64"
+ ],
+ "parallel_n64": [
+  "n64"
+ ],
+ "pcsx_rearmed": [
+  "psx"
+ ],
+ "swanstation": [
+  "psx"
+ ],
+ "mednafen_psx": [
+  "psx"
+ ],
+ "mednafen_psx_hw": [
+  "psx"
+ ],
+ "duckstation": [
+  "psx"
+ ],
+ "melondsds": [
+  "nds"
+ ],
+ "melonds": [
+  "nds"
+ ],
+ "desmume": [
+  "nds"
+ ],
+ "desmume2015": [
+  "nds"
+ ],
+ "drastic": [
+  "nds"
+ ],
+ "mednafen_pce_fast": [
+  "pcengine",
+  "pcenginecd"
+ ],
+ "mednafen_pce": [
+  "pcengine",
+  "pcenginecd"
+ ],
+ "mednafen_supergrafx": [
+  "pcengine"
+ ],
+ "stella": [
+  "atari2600"
+ ],
+ "stella2014": [
+  "atari2600"
+ ],
+ "atari800": [
+  "atari5200"
+ ],
+ "prosystem": [
+  "atari7800"
+ ],
+ "handy": [
+  "atarilynx"
+ ],
+ "mednafen_lynx": [
+  "atarilynx"
+ ],
+ "virtualjaguar": [
+  "atarijaguar"
+ ],
+ "mednafen_ngp": [
+  "ngp",
+  "ngpc"
+ ],
+ "race": [
+  "ngp",
+  "ngpc"
+ ],
+ "mednafen_wswan": [
+  "wonderswan",
+  "wonderswancolor"
+ ],
+ "mednafen_vb": [
+  "virtualboy"
+ ],
+ "pokemini": [
+  "pokemini"
+ ],
+ "gearcoleco": [
+  "colecovision"
+ ],
+ "bluemsx": [
+  "msx",
+  "colecovision"
+ ],
+ "freeintv": [
+  "intellivision"
+ ],
+ "vecx": [
+  "vectrex"
+ ],
+ "fbneo": [
+  "arcade",
+  "neogeocd"
+ ],
+ "fbalpha2012": [
+  "arcade"
+ ],
+ "mame": [
+  "arcade"
+ ],
+ "mame2003_plus": [
+  "arcade"
+ ],
+ "mame2003": [
+  "arcade"
+ ],
+ "mame2010": [
+  "arcade"
+ ],
+ "mame2015": [
+  "arcade"
+ ],
+ "mame2016": [
+  "arcade"
+ ],
+ "freechaf": [
+  "channelf"
+ ],
+ "o2em": [
+  "odyssey2"
+ ],
+ "flycast": [
+  "dreamcast",
+  "arcade"
+ ],
+ "ppsspp": [
+  "psp"
+ ],
+ "yabasanshiro": [
+  "saturn"
+ ],
+ "kronos": [
+  "saturn"
+ ],
+ "yabause": [
+  "saturn"
+ ],
+ "mednafen_saturn": [
+  "saturn"
+ ],
+ "opera": [
+  "3do"
+ ],
+ "dolphin": [
+  "gc",
+  "wii"
+ ],
+ "azahar": [
+  "n3ds"
+ ],
+ "citra": [
+  "n3ds"
+ ],
+ "cap32": [
+  "amstradcpc"
+ ],
+ "arduous": [
+  "arduboy"
+ ],
+ "sameduck": [
+  "megaduck"
+ ],
+ "uzem": [
+  "uzebox"
+ ],
+ "wasm4": [
+  "wasm4"
+ ],
+ "potator": [
+  "supervision"
+ ],
+ "neocd": [
+  "neogeocd"
+ ],
+ "mednafen_pcfx": [
+  "pcfx"
+ ],
+ "puae": [
+  "amiga"
+ ],
+ "puae2021": [
+  "amiga"
+ ],
+ "fsuae": [
+  "amiga"
+ ]
+}

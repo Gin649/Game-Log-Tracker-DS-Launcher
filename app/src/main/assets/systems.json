@@ -15,7 +15,10 @@
    "Game Boy"
   ],
   "core": "gambatte",
-  "hack": true
+  "hack": true,
+  "cores": [
+   "mgba"
+  ]
  },
  {
   "folder": "gbc",
@@ -33,7 +36,10 @@
    "Game Boy Color"
   ],
   "core": "gambatte",
-  "hack": true
+  "hack": true,
+  "cores": [
+   "mgba"
+  ]
  },
  {
   "folder": "gba",
@@ -51,7 +57,10 @@
    "Game Boy Advance"
   ],
   "core": "mgba",
-  "hack": true
+  "hack": true,
+  "cores": [
+   "vba_next"
+  ]
  },
  {
   "folder": "nes",
@@ -81,7 +90,11 @@
    "NES/Famicom"
   ],
   "core": "mesen",
-  "hack": true
+  "hack": true,
+  "cores": [
+   "fceumm",
+   "nestopia"
+  ]
  },
  {
   "folder": "snes",
@@ -111,7 +124,11 @@
    "SNES/Super Famicom"
   ],
   "core": "snes9x",
-  "hack": true
+  "hack": true,
+  "cores": [
+   "bsnes",
+   "snes9x2010"
+  ]
  },
  {
   "folder": "genesis",
@@ -139,7 +156,10 @@
    "Genesis/Mega Drive"
   ],
   "core": "genesis_plus_gx",
-  "hack": true
+  "hack": true,
+  "cores": [
+   "picodrive"
+  ]
  },
  {
   "folder": "mastersystem",
@@ -433,13 +453,20 @@
   "folder": "msu-md",
   "ra": [],
   "core": "genesis_plus_gx",
-  "hack": true
+  "hack": true,
+  "cores": [
+   "picodrive"
+  ]
  },
  {
   "folder": "snes-msu1",
   "ra": [],
   "core": "snes9x",
-  "hack": true
+  "hack": true,
+  "cores": [
+   "bsnes",
+   "snes9x2010"
+  ]
  },
  {
   "folder": "ps2",

@@ -274,9 +274,6 @@ final class Launcher {
                 if (r == null || Recipes.installedPackage(act, r) == null) continue;
                 opts.put(new JSONObject().put("value", "standalone:" + id).put("label", r.label));
             }
-            List<String> cores = new ArrayList<String>();
-            if (!sys.core.isEmpty()) cores.add(sys.core);
-            for (String c : sys.cores) if (!c.isEmpty() && !cores.contains(c)) cores.add(c);
             List<String> pkgs = new ArrayList<String>();
             for (String pkg : RA_PACKAGES) {
                 try {
@@ -286,6 +283,7 @@ final class Launcher {
                 }
             }
             for (String pkg : pkgs) {
+                List<String> cores = RaCores.forSystem(act, sys, pkg, "");
                 String tag = pkgs.size() > 1 ? (pkg.equals("com.retroarch.aarch64") ? " (64-bit)" : pkg.equals("com.retroarch") ? " (32-bit)" : " (" + pkg + ")") : "";
                 for (String c : cores) {
                     opts.put(new JSONObject().put("value", "retroarch:" + c + "@" + pkg).put("label", "RetroArch" + tag + ": " + c));
