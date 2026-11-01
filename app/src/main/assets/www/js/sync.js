@@ -185,10 +185,24 @@ async function loadAll(opts){
       return tb - ta;
     });
 
-  loadEstimatedHoursFor([...recentGamesData, ...remainingByRecency], () => {
+  // The games on the Last Played tab load first and on their own, so it is usable straight away. The rest of the
+  // library follows a few seconds later in the background, and the library list is redrawn at most every few seconds.
+  loadEstimatedHoursFor(recentGamesData, () => {
     renderRecentGames(recentGamesData);
-    try{ renderLibrary(); }catch(e){ console.error('renderLibrary failed:', e); }
-  }, forceIds);
+  }, forceIds).then(() => {
+    renderRecentGames(recentGamesData);
+    setTimeout(() => {
+      let lastDraw = 0;
+      loadEstimatedHoursFor(remainingByRecency, () => {
+        const now = Date.now();
+        if(now - lastDraw < 4000) return;
+        lastDraw = now;
+        try{ renderLibrary(); }catch(e){ console.error('renderLibrary failed:', e); }
+      }).then(() => {
+        try{ renderLibrary(); }catch(e){ console.error('renderLibrary failed:', e); }
+      });
+    }, 3000);
+  });
 }
 
 function updateRaConnectionView(){
