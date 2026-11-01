@@ -110,7 +110,26 @@ final class RaCores {
         if (!sys.core.isEmpty()) base.add(sys.core);
         for (String c : sys.cores) if (!c.isEmpty() && !base.contains(c)) base.add(c);
         Set<String> have = installed(ctx, pkg);
-        if (have == null) return base;
+        JSONObject all = map(ctx);
+        if (have == null) {
+            // the installed cores can't be read: offer every core RetroArch has for this system
+            List<String> extra = new ArrayList<String>();
+            Iterator<String> it = all.keys();
+            while (it.hasNext()) {
+                String c = it.next();
+                JSONArray folders = all.optJSONArray(c);
+                if (folders == null || base.contains(c)) continue;
+                for (int i = 0; i < folders.length(); i++) {
+                    if (folders.optString(i).equals(sys.folder)) {
+                        extra.add(c);
+                        break;
+                    }
+                }
+            }
+            java.util.Collections.sort(extra);
+            base.addAll(extra);
+            return base;
+        }
         List<String> out = new ArrayList<String>();
         for (String c : base) if (have.contains(c) || c.equals(current)) out.add(c);
         JSONObject m = map(ctx);

@@ -762,13 +762,34 @@ public class SetupActivity extends Activity {
         }
 
         text("Standalone emulators", 17, TEXT);
+        final LinearLayout notInstalled = new LinearLayout(this);
+        notInstalled.setOrientation(LinearLayout.VERTICAL);
+        notInstalled.setVisibility(View.GONE);
+        int missing = 0;
         for (Recipes.Recipe r : d.recipes) {
             String pkg = d.pkgs.get(r.id);
             if (pkg != null && !pkg.isEmpty()) {
                 text("Found: " + r.label + " (" + pkg + ")", 14, TEAL);
             } else {
-                text("Not installed: " + r.label, 14, MUTED);
+                missing++;
+                TextView t = text(r.label, 14, MUTED);
+                content.removeView(t);
+                notInstalled.addView(t);
             }
+        }
+        if (missing > 0) {
+            final String closed = "Not installed (" + missing + ")  \u25be";
+            final String open = "Not installed (" + missing + ")  \u25b4";
+            final Button toggle = action(closed, null);
+            toggle.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    boolean show = notInstalled.getVisibility() != View.VISIBLE;
+                    notInstalled.setVisibility(show ? View.VISIBLE : View.GONE);
+                    toggle.setText(show ? open : closed);
+                }
+            });
+            content.addView(notInstalled);
         }
 
         // One choice per system folder you have: every standalone emulator that is installed and can play it,
@@ -794,11 +815,6 @@ public class SetupActivity extends Activity {
             if (!any) {
                 text("Which emulator for each system?", 17, TEXT);
                 text("Only the systems found in your ROMs folder are listed, with the emulators you have installed.", 13, MUTED);
-                if (haveRa && !d.coresRead) {
-                    text("Couldn't find RetroArch's cores, so every core the app knows for a system is listed, installed or not. "
-                            + "To list only the installed ones, set RetroArch's Cores folder to /storage/emulated/0/RetroArch/cores "
-                            + "and give this app file access.", 13, MUTED);
-                }
                 any = true;
             }
             text(sys.folder, 14, GOLD);
