@@ -177,29 +177,27 @@ final class DataStore {
      * Every saved value up to maxEach characters, as one JSON object of name -> text, stopping at maxTotal. Reading
      * these one at a time from the page costs two calls into the app each, which added up to seconds at start-up.
      */
+    /** Entries as name, a 0x01 character, the text and a 0x02 character, one after another (cheaper than JSON for a lot of text). */
     static String preload(Context ctx, int maxEach, int maxTotal) {
         long p0 = System.currentTimeMillis();
         migrateCaches(ctx);
         Perf.add("preload.step migrate", System.currentTimeMillis() - p0);
-        org.json.JSONObject out = new org.json.JSONObject();
+        StringBuilder out = new StringBuilder();
         int total = 0;
         long p1 = System.currentTimeMillis();
         File[] files = dataDir(ctx).listFiles();
         Perf.add("preload.step list files", System.currentTimeMillis() - p1);
         long p2 = System.currentTimeMillis();
         if (files != null) {
-            Perf.add("preload.files in folder", files.length);
             for (File f : files) {
                 String n = f.getName();
                 if (!n.endsWith(".txt") || f.length() > maxEach * 3L) continue;
                 try {
                     String key = decode(n.substring(0, n.length() - 4));
                     String text = new String(readAll(f), "UTF-8");
-                    if (text.length() > maxEach) continue;
+                    if (text.length() > maxEach || CacheDb.hasSeparator(key) || CacheDb.hasSeparator(text)) continue;
                     total += text.length();
-                    out.put(key, text);
-                    int colon = key.indexOf(':', key.indexOf(':') + 1);
-                    Perf.add("preload.file kind " + (colon > 0 ? key.substring(0, colon) : key), 0);
+                    out.append(key).append('\u0001').append(text).append('\u0002');
                 } catch (Exception ignored) {
                 }
             }
@@ -209,7 +207,7 @@ final class DataStore {
         long p3 = System.currentTimeMillis();
         CacheDb.get(ctx).preloadInto(out, maxEach, Math.max(0, maxTotal - total));
         Perf.add("preload.step cache rows", System.currentTimeMillis() - p3);
-        Perf.add("preload.text size (chars)", total);
+        Perf.add("preload.size (chars, in ms column)", out.length());
         return out.toString();
     }
 

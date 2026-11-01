@@ -105,7 +105,7 @@ final class CacheDb extends SQLiteOpenHelper {
     }
 
     /** The most recently written entries, newest first, until about maxTotal characters. */
-    void preloadInto(org.json.JSONObject out, int maxEach, int maxTotal) {
+    void preloadInto(StringBuilder out, int maxEach, int maxTotal) {
         Cursor c = null;
         try {
             c = getReadableDatabase().rawQuery("SELECT name, value FROM kv ORDER BY ts DESC", null);
@@ -113,14 +113,20 @@ final class CacheDb extends SQLiteOpenHelper {
             while (c.moveToNext()) {
                 String v = c.getString(1);
                 if (v.length() > maxEach) continue;
+                String n = c.getString(0);
+                if (hasSeparator(n) || hasSeparator(v)) continue;
                 total += v.length();
                 if (total > maxTotal) break;
-                out.put(c.getString(0), v);
+                out.append(n).append('\u0001').append(v).append('\u0002');
             }
         } catch (Exception ignored) {
         } finally {
             if (c != null) c.close();
         }
+    }
+
+    static boolean hasSeparator(String s) {
+        return s.indexOf('\u0001') >= 0 || s.indexOf('\u0002') >= 0;
     }
 
     /** Puts many entries in at once (used to move the old cache files in). */

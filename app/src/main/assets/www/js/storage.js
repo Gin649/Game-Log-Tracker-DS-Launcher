@@ -45,7 +45,20 @@ const FILE_PIECE = 512 * 1024;
 // starts; asking for each one separately cost two calls into the app apiece.
 let preloaded = null;
 if(fileStore && typeof fileStore.dataPreload === 'function'){
-  try{ preloaded = JSON.parse(fileStore.dataPreload()); }catch(e){ preloaded = null; }
+  try{
+    // entries are "name\u0001text\u0002" one after another
+    preloaded = {};
+    const raw = fileStore.dataPreload();
+    let at = 0;
+    while(at < raw.length){
+      const sep = raw.indexOf('\u0001', at);
+      if(sep < 0) break;
+      let end = raw.indexOf('\u0002', sep + 1);
+      if(end < 0) end = raw.length;
+      preloaded[raw.slice(at, sep)] = raw.slice(sep + 1, end);
+      at = end + 1;
+    }
+  }catch(e){ preloaded = null; }
 }
 
 function fileGet(name){
