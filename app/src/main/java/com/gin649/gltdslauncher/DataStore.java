@@ -178,11 +178,17 @@ final class DataStore {
      * these one at a time from the page costs two calls into the app each, which added up to seconds at start-up.
      */
     static String preload(Context ctx, int maxEach, int maxTotal) {
+        long p0 = System.currentTimeMillis();
         migrateCaches(ctx);
+        Perf.add("preload.step migrate", System.currentTimeMillis() - p0);
         org.json.JSONObject out = new org.json.JSONObject();
         int total = 0;
+        long p1 = System.currentTimeMillis();
         File[] files = dataDir(ctx).listFiles();
+        Perf.add("preload.step list files", System.currentTimeMillis() - p1);
+        long p2 = System.currentTimeMillis();
         if (files != null) {
+            Perf.add("preload.files in folder", files.length);
             for (File f : files) {
                 String n = f.getName();
                 if (!n.endsWith(".txt") || f.length() > maxEach * 3L) continue;
@@ -192,12 +198,18 @@ final class DataStore {
                     if (text.length() > maxEach) continue;
                     total += text.length();
                     out.put(key, text);
+                    int colon = key.indexOf(':', key.indexOf(':') + 1);
+                    Perf.add("preload.file kind " + (colon > 0 ? key.substring(0, colon) : key), 0);
                 } catch (Exception ignored) {
                 }
             }
         }
+        Perf.add("preload.step read files", System.currentTimeMillis() - p2);
         // then the newest cache entries, up to the size limit
+        long p3 = System.currentTimeMillis();
         CacheDb.get(ctx).preloadInto(out, maxEach, Math.max(0, maxTotal - total));
+        Perf.add("preload.step cache rows", System.currentTimeMillis() - p3);
+        Perf.add("preload.text size (chars)", total);
         return out.toString();
     }
 
