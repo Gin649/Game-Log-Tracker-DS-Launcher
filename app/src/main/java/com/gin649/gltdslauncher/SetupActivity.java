@@ -371,8 +371,7 @@ public class SetupActivity extends Activity {
         spZoom = null;
         emuSpinners.clear();
 
-        int skipped = skipScreens() ? 1 : 0;
-        titleView.setText((step + 1 - (skipScreens() && step > 4 ? 1 : 0)) + " of " + (LAST_STEP + 1 - skipped) + "   " + STEP_TITLES[step]);
+        titleView.setText((step + 1) + " of " + (LAST_STEP + 1) + "   " + STEP_TITLES[step]);
         backBtn.setText(step == 0 ? "Cancel" : "Back");
         nextBtn.setText(step == LAST_STEP ? "Finish" : "Next");
 
@@ -763,6 +762,10 @@ public class SetupActivity extends Activity {
     }
 
     private void stepScreens() {
+        if (!DisplayPicker.hasTwoScreens(this)) {
+            text("You are using a single-screen device, so the app shows the tracker and game art on this one screen. "
+                    + "Nothing to set up for screens.", 14, MUTED);
+        }
         if (DisplayPicker.hasTwoScreens(this)) {
             text("One screen only", 17, TEXT);
             text("This device has two screens. Tick this to use the app on just one of them, with the tracker and the game art "
@@ -778,21 +781,23 @@ public class SetupActivity extends Activity {
             which.add("Bottom screen");
             spSingle = spinner(which, "top".equals(singleWhich) ? 0 : 1);
         }
-        text("Top screen", 17, TEXT);
-        text("The screen that shows game art and runs your games. Automatic picks the screen this app is not on.", 13, MUTED);
-        List<String> items = new ArrayList<String>();
-        items.add("Automatic");
-        displayIds.clear();
-        DisplayManager dm = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
-        for (Display d : dm.getDisplays()) {
-            displayIds.add(d.getDisplayId());
-            items.add("Display " + d.getDisplayId() + ": " + d.getName());
+        if (DisplayPicker.hasTwoScreens(this)) {
+            text("Top screen", 17, TEXT);
+            text("The screen that shows game art and runs your games. Automatic picks the screen this app is not on.", 13, MUTED);
+            List<String> items = new ArrayList<String>();
+            items.add("Automatic");
+            displayIds.clear();
+            DisplayManager dm = (DisplayManager) getSystemService(Context.DISPLAY_SERVICE);
+            for (Display d : dm.getDisplays()) {
+                displayIds.add(d.getDisplayId());
+                items.add("Display " + d.getDisplayId() + ": " + d.getName());
+            }
+            int sel = 0;
+            if (topDisplay >= 0 && displayIds.contains(topDisplay)) sel = displayIds.indexOf(topDisplay) + 1;
+            spDisplay = spinner(items, sel);
         }
-        int sel = 0;
-        if (topDisplay >= 0 && displayIds.contains(topDisplay)) sel = displayIds.indexOf(topDisplay) + 1;
-        spDisplay = spinner(items, sel);
 
-        text("Tracker size on the bottom screen", 17, TEXT);
+        text("Display size", 17, TEXT);
         text("Compact shows the most on screen. Pick a larger size if text is too small.", 13, MUTED);
         List<String> zooms = new ArrayList<String>();
         int zsel = 1;
@@ -848,11 +853,6 @@ public class SetupActivity extends Activity {
         }
     }
 
-    /** The screens page only matters on a two-screen device. */
-    private boolean skipScreens() {
-        return !DisplayPicker.hasTwoScreens(this);
-    }
-
     private void goBack() {
         collect();
         if (step == 0) {
@@ -860,7 +860,6 @@ public class SetupActivity extends Activity {
             return;
         }
         step--;
-        if (step == 4 && skipScreens()) step--;
         render();
     }
 
@@ -878,7 +877,6 @@ public class SetupActivity extends Activity {
             return;
         }
         step++;
-        if (step == 4 && skipScreens()) step++;
         render();
     }
 
