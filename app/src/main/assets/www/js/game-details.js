@@ -80,34 +80,10 @@ function getLaunchBoxDescription(title, consoleName){
   }, 0));
 }
 
-// RA hacks are titled "~Hack~ Name". Their write-up is the author's first post in the hack's RA forum thread, not
-// the original game's text.
+// RA hacks are titled "~Hack~ Name". The original game's description would be wrong for them, so they show "Hack" and a
+// link to the hack's page on RomHacking.net (that site is behind a bot check, so it opens in the viewer, not in the app).
 const isHackTitle = t => /^\s*~hack~/i.test(String(t || ''));
-async function getHackInfo(gameId, title){
-  const out = { topic: 0, parent: '', text: null };
-  let info = null;
-  try{ info = await getGameExtended(gameId); }catch(e){}
-  if(!info) return out;
-  out.topic = Number(info.ForumTopicID) || 0;
-  const pid = Number(info.ParentGameID) || 0;
-  if(pid){ try{ const p = await getGameExtended(pid); out.parent = (p && p.Title) || ''; }catch(e){} }
-  if(out.topic && typeof thorBridge !== 'undefined' && thorBridge && thorBridge.forumFirstPost){
-    const cacheKey = `hack-desc:${out.topic}`;
-    try{
-      const r = await window.storage.get(cacheKey, false);
-      if(r && r.value){
-        const parsed = JSON.parse(r.value);
-        if(Date.now() - parsed.ts < (parsed.text ? 30 : 1) * 24 * 60 * 60 * 1000){ out.text = parsed.text; return out; }
-      }
-    }catch(e){}
-    const text = await new Promise(resolve => setTimeout(() => {
-      try{ resolve(thorBridge.forumFirstPost(out.topic) || ''); }catch(e){ resolve(''); }
-    }, 0));
-    out.text = text.length >= 40 ? tidyDescription(text) : null;
-    try{ await window.storage.set(cacheKey, JSON.stringify({ text: out.text, ts: Date.now() }), false); }catch(e){}
-  }
-  return out;
-}
+const hackSearchUrl = t => 'https://www.romhacking.net/hacks/?title=' + encodeURIComponent(String(t || '').replace(/^(?:\s*~[^~]*~)+\s*/, '').trim());
 
 function cleanDescription(raw){
   let text = String(raw || '').replace(/\r/g, '').trim();
@@ -235,9 +211,7 @@ function renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine,
   }
 
   if(hack){
-    const orig = hack.parent ? ' of ' + esc(String(hack.parent).replace(/^(?:~[^~]*~\s*)+/, '')) : '';
-    html += `<div class="gd-label${aboutOnly ? '' : ' gd-about-label'}">HACK</div><div class="gd-hack">Hack${orig}</div>`;
-    if(hack.topic) html += `<a class="patch-info-btn" href="https://retroachievements.org/forums/topic/${hack.topic}" target="_blank" rel="noopener">RA forum thread: the hack's notes \u2197</a>`;
+    html += `<div class="gd-label${aboutOnly ? '' : ' gd-about-label'}">ABOUT</div><div class="gd-hack">Hack<br><br><a href="${esc(hack.url)}" target="_blank" rel="noopener">Click here for details</a></div>`;
   }
   if(description){
     html += `<div class="gd-label${aboutOnly ? '' : ' gd-about-label'}">ABOUT</div><div class="gd-about"></div>`;
@@ -272,7 +246,7 @@ function setupGameDetailsUI(gameId, title, card, opts){
   const load = () => pending || (pending = Promise.allSettled([
     aboutOnly ? Promise.resolve(null) : getPlaytimeStats(gameId),
     isHackTitle(title) ? Promise.resolve(null) : getRawgDescription(title).then(d => d || getLaunchBoxDescription(title, opts && opts.consoleName)),
-    isHackTitle(title) ? getHackInfo(gameId, title) : Promise.resolve(null),
+    Promise.resolve(isHackTitle(title) ? { url: hackSearchUrl(title) } : null),
     aboutOnly ? Promise.resolve(null) : getMyTimes(gameId),
   ]));
   setTimeout(load, 400);
@@ -291,7 +265,7 @@ function setupGameDetailsUI(gameId, title, card, opts){
 
     const stats = statsRes.status === 'fulfilled' ? statsRes.value : null;
     const hack = hackRes.status === 'fulfilled' ? hackRes.value : null;
-    const description = isHackTitle(title) ? (hack && hack.text) : (descRes.status === 'fulfilled' ? descRes.value : null);
+    const description = isHackTitle(title) ? null : (descRes.status === 'fulfilled' ? descRes.value : null);
     const mine = mineRes.status === 'fulfilled' ? mineRes.value : null;
     renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine, hack);
     if(!stats && !description && !hack){ loaded = false; pending = null; } // both failed: retry next time
