@@ -574,18 +574,27 @@ final class ThorBridge {
     /** The keys that start with prefix, as a JSON array. */
     @JavascriptInterface
     public String dataList(String prefix) {
-        return new org.json.JSONArray(DataStore.list(act, prefix == null ? "" : prefix)).toString();
+        long t0 = System.currentTimeMillis();
+        String s = new org.json.JSONArray(DataStore.list(act, prefix == null ? "" : prefix)).toString();
+        Perf.add("bridge.dataList", System.currentTimeMillis() - t0);
+        return s;
     }
 
     /** Number of pieces the value is read in, or -1 when there is none. */
     @JavascriptInterface
     public int dataChunks(String key) {
-        return DataStore.chunks(act, key);
+        long t0 = System.currentTimeMillis();
+        int n = DataStore.chunks(act, key);
+        Perf.add("bridge.dataChunks", System.currentTimeMillis() - t0);
+        return n;
     }
 
     @JavascriptInterface
     public String dataChunk(String key, int index) {
-        return DataStore.chunk(act, key, index);
+        long t0 = System.currentTimeMillis();
+        String s = DataStore.chunk(act, key, index);
+        Perf.add("bridge.dataChunk", System.currentTimeMillis() - t0);
+        return s;
     }
 
     @JavascriptInterface

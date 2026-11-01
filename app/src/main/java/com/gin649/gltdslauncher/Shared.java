@@ -52,9 +52,14 @@ final class Shared {
             @Override
             public void run() {
                 RESCAN_QUEUED.set(false);
+                long t0 = System.currentTimeMillis();
                 INDEX.rebuild(systems() != null ? systems() : map);
+                Perf.add("scan.rebuild", System.currentTimeMillis() - t0);
+                Perf.mark("scan done");
+                long t1 = System.currentTimeMillis();
                 try {
                     LibrarySync.syncAll(appCtx, INDEX, map);
+                    Perf.add("scan.sync", System.currentTimeMillis() - t1);
                 } catch (Exception ignored) {
                     // the database is a cache: a failed sync must never stop the app
                 }

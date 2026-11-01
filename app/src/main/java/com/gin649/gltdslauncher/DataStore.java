@@ -31,10 +31,25 @@ final class DataStore {
     /** The folder everything is kept in. */
     static File root(Context ctx) {
         String chosen = Config.DATA_ROOT;
+        boolean all = false;
+        try {
+            all = Environment.isExternalStorageManager();
+        } catch (Exception ignored) {
+        }
+        File c = rootCache;
+        if (c != null && chosen.equals(rootFor) && all == rootAll) return c;
         File dir = chosen.isEmpty() ? defaultRoot() : new File(chosen);
-        if (dir != null && usable(dir)) return dir;
-        return ctx.getFilesDir();
+        File out = (dir != null && usable(dir)) ? dir : ctx.getFilesDir();
+        rootFor = chosen;
+        rootAll = all;
+        rootCache = out;
+        return out;
     }
+
+    // checking that the folder exists and can be written to costs a few file-system calls; do it once, not on every read
+    private static volatile File rootCache;
+    private static volatile String rootFor;
+    private static volatile boolean rootAll;
 
     /** The folder used when none was chosen, or null without file access. */
     static File defaultRoot() {
@@ -122,10 +137,15 @@ final class DataStore {
     private static String cachedText;
 
     private static synchronized String read(Context ctx, String key) throws IOException {
+        long t0 = System.currentTimeMillis();
         File f = fileFor(ctx, key);
-        if (!f.isFile()) return null;
+        if (!f.isFile()) {
+            Perf.add("data.read (missing)", System.currentTimeMillis() - t0);
+            return null;
+        }
         if (key.equals(cachedKey) && f.lastModified() == cachedStamp && f.length() > 0) return cachedText;
         String text = new String(readAll(f), "UTF-8");
+        Perf.add("data.read (" + (text.length() > 100000 ? "big" : "small") + ")", System.currentTimeMillis() - t0);
         cachedKey = key;
         cachedStamp = f.lastModified();
         cachedText = text;

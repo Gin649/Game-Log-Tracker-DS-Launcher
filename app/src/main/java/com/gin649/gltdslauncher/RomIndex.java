@@ -43,7 +43,8 @@ final class RomIndex {
     }
 
     void awaitReady(long maxMillis) {
-        long end = System.currentTimeMillis() + maxMillis;
+        long begin = System.currentTimeMillis();
+        long end = begin + maxMillis;
         while (!ready && System.currentTimeMillis() < end) {
             try {
                 Thread.sleep(100);
@@ -51,6 +52,8 @@ final class RomIndex {
                 return;
             }
         }
+        long waited = System.currentTimeMillis() - begin;
+        if (waited >= 100) Perf.add("index.wait (a bridge call waited for the ROM scan)", waited);
     }
 
     synchronized void rebuild(SystemMap map) {
