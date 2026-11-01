@@ -80,6 +80,13 @@ public class MainActivity extends Activity {
 
         current = this;
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        // art is only for the top screen: once, set it on for a two-screen device and off for a single-screen one
+        if (Prefs.getInt(this, "artDefaultsV1", 0) == 0) {
+            int on = DisplayPicker.hasTwoScreens(this) ? 1 : 0;
+            Prefs.putInt(this, "useEsdeMedia", on);
+            Prefs.putInt(this, "launchboxArt", on);
+            Prefs.putInt(this, "artDefaultsV1", 1);
+        }
         Config.load(this);
         Shared.init(this);
         // Shared.init has just started a scan; without this, the first resume would start a second one right behind it

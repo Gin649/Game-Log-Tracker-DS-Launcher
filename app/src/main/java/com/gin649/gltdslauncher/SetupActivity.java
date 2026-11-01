@@ -123,12 +123,12 @@ public class SetupActivity extends Activity {
         }
         // art is only for the top screen: on by default with two screens, off with one
         int artDefault = DisplayPicker.hasTwoScreens(this) ? 1 : 0;
-        launchBoxArt = Prefs.getInt(this, "launchboxArt", artDefault) == 1;
+        launchBoxArt = artDefault == 1;
         raPackage = get("raPackage", "");
         siteUrl = get("siteUrl", Config.DEFAULT_URL);
         if (siteUrl.startsWith("https://gin649.github.io/")) siteUrl = Config.DEFAULT_URL; // old default = built-in
         sgdbKey = get("sgdbKey", "");
-        useEsdeMedia = Prefs.getInt(this, "useEsdeMedia", artDefault) == 1;
+        useEsdeMedia = artDefault == 1;
         cssWidth = Prefs.getInt(this, "cssWidth", 720);
         topDisplay = DisplayPicker.prefs(this).getInt("topDisplay", -1);
         singleScreen = DisplayPicker.singleScreen(this);
