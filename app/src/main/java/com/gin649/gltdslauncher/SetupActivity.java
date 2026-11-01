@@ -371,7 +371,8 @@ public class SetupActivity extends Activity {
         spZoom = null;
         emuSpinners.clear();
 
-        titleView.setText((step + 1) + " of " + (LAST_STEP + 1) + "   " + STEP_TITLES[step]);
+        int skipped = skipScreens() ? 1 : 0;
+        titleView.setText((step + 1 - (skipScreens() && step > 4 ? 1 : 0)) + " of " + (LAST_STEP + 1 - skipped) + "   " + STEP_TITLES[step]);
         backBtn.setText(step == 0 ? "Cancel" : "Back");
         nextBtn.setText(step == LAST_STEP ? "Finish" : "Next");
 
@@ -847,6 +848,11 @@ public class SetupActivity extends Activity {
         }
     }
 
+    /** The screens page only matters on a two-screen device. */
+    private boolean skipScreens() {
+        return !DisplayPicker.hasTwoScreens(this);
+    }
+
     private void goBack() {
         collect();
         if (step == 0) {
@@ -854,6 +860,7 @@ public class SetupActivity extends Activity {
             return;
         }
         step--;
+        if (step == 4 && skipScreens()) step--;
         render();
     }
 
@@ -871,6 +878,7 @@ public class SetupActivity extends Activity {
             return;
         }
         step++;
+        if (step == 4 && skipScreens()) step++;
         render();
     }
 
