@@ -943,6 +943,38 @@ final class ThorBridge {
         if (j != null) j.cancel = true;
     }
 
+    // Native Android ports of games (see Ports.java)
+    @JavascriptInterface
+    public String portState(String slug, String name) {
+        return Ports.state(act, slug, name);
+    }
+
+    @JavascriptInterface
+    public void portGet(String slug, String repo) {
+        Ports.get(act, slug, repo);
+    }
+
+    @JavascriptInterface
+    public String portPlay(final String slug, final String name) {
+        final String[] out = new String[1];
+        final java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
+        act.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    out[0] = Ports.play(act, slug, name);
+                } finally {
+                    done.countDown();
+                }
+            }
+        });
+        try {
+            done.await(10, java.util.concurrent.TimeUnit.SECONDS);
+        } catch (InterruptedException ignored) {
+        }
+        return out[0] == null ? "{\"ok\":false,\"message\":\"Could not open the port.\"}" : out[0];
+    }
+
     /** Plays a ROM file by its path, such as a patched ROM that was just saved. */
     @JavascriptInterface
     public String launchFile(final String path) {

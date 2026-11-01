@@ -1,0 +1,267 @@
+package com.gin649.gltdslauncher;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.os.Environment;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.security.MessageDigest;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+
+/**
+ * Native Android ports of games (recompiled or reimplemented, such as Zelda 64 Recompiled). The list of which ports
+ * exist is ports.json in the app's pages. The newest download is looked up on the port's own GitHub releases page
+ * when you ask for it, then downloaded, checked and handed to Android's installer.
+ */
+final class Ports {
+
+    private Ports() {}
+
+    private static final class Job {
+        String state = "idle";   // idle, working, ready, error
+        String message = "";
+        int percent = -1;
+        String tag = "";
+    }
+
+    private static final Map<String, Job> JOBS = new HashMap<String, Job>();
+
+    private static synchronized Job job(String slug) {
+        Job j = JOBS.get(slug);
+        if (j == null) {
+            j = new Job();
+            JOBS.put(slug, j);
+        }
+        return j;
+    }
+
+    /** Package name of the installed port, or "" when it is not installed. */
+    static String installedPackage(Context ctx, String slug, String name) {
+        PackageManager pm = ctx.getPackageManager();
+        String saved = Prefs.get(ctx, "port.pkg." + slug, "");
+        if (!saved.isEmpty()) {
+            try {
+                pm.getPackageInfo(saved, 0);
+                return saved;
+            } catch (PackageManager.NameNotFoundException ignored) {
+            }
+        }
+        // installed some other way: an app named like the port
+        String want = name == null ? "" : name.toLowerCase(Locale.ROOT).trim();
+        if (want.length() >= 4) {
+            try {
+                for (ApplicationInfo ai : pm.getInstalledApplications(0)) {
+                    if (String.valueOf(pm.getApplicationLabel(ai)).toLowerCase(Locale.ROOT).trim().equals(want)) return ai.packageName;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return "";
+    }
+
+    static String state(Context ctx, String slug, String name) {
+        JSONObject o = new JSONObject();
+        try {
+            Job j = job(slug);
+            String pkg = installedPackage(ctx, slug, name);
+            o.put("installed", !pkg.isEmpty());
+            o.put("state", j.state);
+            o.put("message", j.message);
+            o.put("percent", j.percent);
+            o.put("tag", j.tag);
+        } catch (Exception ignored) {
+        }
+        return o.toString();
+    }
+
+    static String play(Activity act, String slug, String name) {
+        String pkg = installedPackage(act, slug, name);
+        if (pkg.isEmpty()) return "{\"ok\":false,\"message\":\"This port is not installed yet.\"}";
+        Intent i = act.getPackageManager().getLaunchIntentForPackage(pkg);
+        if (i == null) return "{\"ok\":false,\"message\":\"Could not open the port.\"}";
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            act.startActivity(i);
+            return "{\"ok\":true,\"message\":\"Starting the port…\"}";
+        } catch (Exception e) {
+            return "{\"ok\":false,\"message\":\"Could not open the port.\"}";
+        }
+    }
+
+    /** Looks up, downloads, checks and installs the newest build. Progress is read with state(). */
+    static void get(final Activity act, final String slug, final String repo) {
+        final Job j = job(slug);
+        synchronized (j) {
+            if ("working".equals(j.state)) return;
+            j.state = "working";
+            j.message = "Looking for the latest version…";
+            j.percent = -1;
+        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    run0(act, slug, repo, j);
+                } catch (Exception e) {
+                    fail(j, "Could not get the port. Check the internet connection.");
+                }
+            }
+        }, "port-" + slug).start();
+    }
+
+    private static void fail(Job j, String msg) {
+        j.state = "error";
+        j.message = msg;
+        j.percent = -1;
+    }
+
+    private static void run0(Activity act, String slug, String repo, Job j) throws Exception {
+        if (!repo.matches("[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")) {
+            fail(j, "Unknown port.");
+            return;
+        }
+        JSONObject rel = fetchJson("https://api.github.com/repos/" + repo + "/releases/latest");
+        if (rel == null) {
+            fail(j, "Could not reach GitHub.");
+            return;
+        }
+        JSONObject asset = pickAsset(rel.optJSONArray("assets"));
+        if (asset == null) {
+            fail(j, "No Android build in the latest release.");
+            return;
+        }
+        j.tag = rel.optString("tag_name", "");
+        String url = asset.optString("browser_download_url", "");
+        String digest = asset.optString("digest", "");
+        String sha = digest.startsWith("sha256:") ? digest.substring(7).toLowerCase(Locale.ROOT) : "";
+        if (!url.startsWith("https://")) {
+            fail(j, "No Android build in the latest release.");
+            return;
+        }
+
+        File dir = act.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+        if (dir == null) {
+            fail(j, "No storage available.");
+            return;
+        }
+        File apk = new File(dir, "port-" + slug.replaceAll("[^A-Za-z0-9_.-]", "_") + ".apk");
+        if (apk.exists()) apk.delete();
+
+        j.message = "Downloading " + j.tag + "…";
+        HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+        c.setConnectTimeout(10000);
+        c.setReadTimeout(20000);
+        c.setRequestProperty("User-Agent", "GLTThor-ports");
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        try {
+            if (c.getResponseCode() != 200) {
+                fail(j, "The download failed.");
+                return;
+            }
+            long total = c.getContentLengthLong();
+            InputStream in = c.getInputStream();
+            FileOutputStream out = new FileOutputStream(apk);
+            try {
+                byte[] buf = new byte[65536];
+                long got = 0;
+                int n;
+                while ((n = in.read(buf)) > 0) {
+                    out.write(buf, 0, n);
+                    md.update(buf, 0, n);
+                    got += n;
+                    if (total > 0) j.percent = (int) (got * 100 / total);
+                }
+            } finally {
+                out.close();
+                in.close();
+            }
+        } finally {
+            c.disconnect();
+        }
+
+        StringBuilder hex = new StringBuilder();
+        for (byte b : md.digest()) hex.append(String.format("%02x", b));
+        if (!sha.isEmpty() && !sha.equals(hex.toString())) {
+            apk.delete();
+            fail(j, "The file does not match its checksum, so it was not installed.");
+            return;
+        }
+        PackageInfo info = act.getPackageManager().getPackageArchiveInfo(apk.getAbsolutePath(), 0);
+        if (info == null) {
+            apk.delete();
+            fail(j, "The download is not a valid app.");
+            return;
+        }
+        Prefs.put(act, "port.pkg." + slug, info.packageName);
+        j.state = "ready";
+        j.percent = 100;
+        j.message = "Downloaded. Confirm the install when Android asks.";
+        final File file = apk;
+        final Context app = act.getApplicationContext();
+        act.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                UpdateChecker.installApk(app, file);
+            }
+        });
+    }
+
+    /** The build for 64-bit ARM phones: prefers names that say arm64, then universal, and skips other chips. */
+    private static JSONObject pickAsset(JSONArray assets) {
+        if (assets == null) return null;
+        JSONObject best = null;
+        int bestScore = -1;
+        for (int i = 0; i < assets.length(); i++) {
+            JSONObject a = assets.optJSONObject(i);
+            if (a == null) continue;
+            String n = a.optString("name", "").toLowerCase(Locale.ROOT);
+            if (!n.endsWith(".apk")) continue;
+            if (n.contains("x86") || n.contains("x64") || n.contains("x32") || n.contains("armeabi") || n.contains("armv7") || n.contains("debug")) continue;
+            int score = 1;
+            if (n.contains("universal")) score = 3;
+            if (n.contains("arm64") || n.contains("aarch64")) score = 4;
+            if (score > bestScore) {
+                best = a;
+                bestScore = score;
+            }
+        }
+        return best;
+    }
+
+    private static JSONObject fetchJson(String address) {
+        HttpURLConnection c = null;
+        try {
+            c = (HttpURLConnection) new URL(address).openConnection();
+            c.setConnectTimeout(8000);
+            c.setReadTimeout(8000);
+            c.setRequestProperty("Accept", "application/vnd.github+json");
+            c.setRequestProperty("User-Agent", "GLTThor-ports");
+            if (c.getResponseCode() != 200) return null;
+            InputStream in = c.getInputStream();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+            in.close();
+            return new JSONObject(out.toString("UTF-8"));
+        } catch (Exception e) {
+            return null;
+        } finally {
+            if (c != null) c.disconnect();
+        }
+    }
+}

@@ -236,6 +236,11 @@ public final class UpdateChecker {
                 && info.getLongVersionCode() > BuildConfig.VERSION_CODE;
     }
 
+    /** Hands a downloaded APK to Android's installer; asks for the "install unknown apps" setting first if needed. */
+    static void installApk(Context context, File apk) {
+        install(context, apk);
+    }
+
     private static void install(Context context, File apk) {
         if (!context.getPackageManager().canRequestPackageInstalls()) {
             pendingApk = apk;

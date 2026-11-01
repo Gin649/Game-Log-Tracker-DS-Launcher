@@ -1114,3 +1114,7 @@ html.top-panel #profile-hero{display:none;}
 .lib-table tbody tr.lib-sec:hover{background:transparent;}
 .lib-table tr.lib-sec td{padding:12px 10px 6px;border-bottom:1px solid var(--border);font-family:'Space Mono',monospace;font-size:0.6875rem;font-weight:700;letter-spacing:1px;color:var(--gold);}
 .lib-table tr.lib-sec.alt td{color:var(--muted);}
+
+.gd-port{margin-top:14px;padding-top:10px;border-top:1px solid var(--border, rgba(255,255,255,.12));}
+.gd-port-name{font-size:.95rem;margin:4px 0 8px;}
+.gd-port-note{font-size:.7rem;color:var(--muted);margin-top:6px;}

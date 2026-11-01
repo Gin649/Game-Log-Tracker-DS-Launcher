@@ -87,7 +87,8 @@ function thorPlayButtonHtml(){
   if(!thorBridge) return '';
   return `<div class="play-row"><button class="btn-view-achievements btn-play-thor" id="modal-play-btn"><span class="arrow">▶</span> Play on this device</button>
     <button class="btn-emu" id="modal-emu-btn" aria-label="Emulator for this game" title="Emulator for this game"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M7.5 6h9A5.5 5.5 0 0 1 22 11.5v2a4.5 4.5 0 0 1-8 2.8 1.6 1.6 0 0 0-1.2-.5h-1.6a1.6 1.6 0 0 0-1.2.5A4.5 4.5 0 0 1 2 13.5v-2A5.5 5.5 0 0 1 7.5 6zM7 9v1.5H5.5V12H7v1.5h1.5V12H10v-1.5H8.5V9H7zm9.5.5a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm2 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg></button></div>
-      <div class="thor-play-msg" id="modal-play-msg" style="display:none;"></div>`;
+      <div class="thor-play-msg" id="modal-play-msg" style="display:none;"></div>
+      <div id="modal-port"></div>`;
 }
 
 // Tells the app which game is open (for the top-screen art) and wires the Play button.
@@ -99,6 +100,7 @@ function thorWirePlay(card, gameId, title, consoleName, artUrl, romPath){
   const btn = card.querySelector('#modal-play-btn');
   const msg = card.querySelector('#modal-play-msg');
   if(!btn || !msg) return;
+  if(typeof thorWirePorts === 'function') thorWirePorts(card, title);
   const play = (disc) => {
     let res;
     try{ res = JSON.parse(thorBridge.launch(JSON.stringify(Object.assign({}, info, { disc: disc || '' })))); }
