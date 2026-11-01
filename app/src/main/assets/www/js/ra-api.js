@@ -149,11 +149,22 @@ function imgUrl(path){
 }
 
 // The login is stored on this device only.
+// Inside the Android app the keys live only in the app's private settings (the bridge), never in the tracker's
+// storage, which is a plain-text file in shared storage. In a browser they stay in storage.
+const keyBridge = () => (window.ThorBridge && typeof window.ThorBridge.setRaCreds === 'function') ? window.ThorBridge : null;
+const bridgeConfig = () => { try{ return JSON.parse(window.ThorBridge.getConfig()); }catch(e){ return null; } };
+
 async function saveCreds(username, apiKey){
+  const b = keyBridge();
+  if(b){ try{ b.setRaCreds(username || '', apiKey || ''); }catch(e){} return; }
   try{ await window.storage.set('ra-credentials', JSON.stringify({ username, apiKey }), false); }
   catch(e){}
 }
 async function loadCreds(){
+  if(keyBridge()){
+    const c = bridgeConfig();
+    return (c && c.raUser && c.raKey) ? { username: c.raUser, apiKey: c.raKey } : null;
+  }
   try{
     const r = await window.storage.get('ra-credentials', false);
     if(r && r.value) return JSON.parse(r.value);
@@ -161,6 +172,8 @@ async function loadCreds(){
   return null;
 }
 async function clearCreds(){
+  const b = keyBridge();
+  if(b){ try{ b.setRaCreds('', ''); }catch(e){} return; }
   try{ await window.storage.delete('ra-credentials', false); }catch(e){}
 }
 

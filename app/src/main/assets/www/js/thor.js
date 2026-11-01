@@ -202,23 +202,31 @@ if(thorBridge){
   };
 }
 
-// Copies the keys typed into the app's setup wizard into the tracker's storage, when the wizard
-// changed them or the tracker has none yet.
+// Older versions kept a copy of the keys in the tracker's storage (a plain-text file in shared storage). Move any
+// key that exists only there into the app's private settings, then delete the copy.
 async function thorSeedCredentials(){
-  if(!thorBridge) return;
+  if(!thorBridge || typeof thorBridge.setRaCreds !== 'function') return;
   let cfg = null;
   try{ cfg = JSON.parse(thorBridge.getConfig()); }catch(e){ return; }
   if(!cfg) return;
-
-  let seenRev = '';
-  try{ seenRev = localStorage.getItem('glt-thor-creds-rev') || ''; }catch(e){}
-  const changed = !!cfg.rev && cfg.rev !== seenRev;
-
   try{
-    if(cfg.raUser && cfg.raKey && (changed || !(await loadCreds()))) await saveCreds(cfg.raUser, cfg.raKey);
-    if(cfg.rawgKey && (changed || !(await loadRawgCreds()))) await saveRawgCreds(cfg.rawgKey);
-    if(cfg.rev){
-      try{ localStorage.setItem('glt-thor-creds-rev', cfg.rev); }catch(e){}
+    const r = await window.storage.get('ra-credentials', false).catch(() => null);
+    if(r && r.value){
+      if(!(cfg.raUser && cfg.raKey)){
+        const old = JSON.parse(r.value);
+        if(old && old.username && old.apiKey) thorBridge.setRaCreds(old.username, old.apiKey);
+      }
+      await window.storage.delete('ra-credentials', false);
+    }
+  }catch(e){}
+  try{
+    const r = await window.storage.get('rawg-credentials', false).catch(() => null);
+    if(r && r.value){
+      if(!cfg.rawgKey){
+        const old = JSON.parse(r.value);
+        if(old && old.apiKey) thorBridge.setRawgKey(old.apiKey);
+      }
+      await window.storage.delete('rawg-credentials', false);
     }
   }catch(e){}
 }

@@ -3,6 +3,10 @@
 let rawgCreds = null; // { apiKey }, loaded on first use
 
 async function loadRawgCreds(){
+  if(keyBridge()){
+    const c = bridgeConfig();
+    return (c && c.rawgKey) ? { apiKey: c.rawgKey } : null;
+  }
   try{
     const r = await window.storage.get('rawg-credentials', false);
     if(r && r.value) return JSON.parse(r.value);
@@ -10,10 +14,14 @@ async function loadRawgCreds(){
   return null;
 }
 async function saveRawgCreds(apiKey){
+  const b = keyBridge();
+  if(b){ try{ b.setRawgKey(apiKey || ''); }catch(e){} return; }
   try{ await window.storage.set('rawg-credentials', JSON.stringify({ apiKey }), false); }catch(e){}
 }
 async function removeRawgCreds(){
   rawgCreds = null;
+  const b = keyBridge();
+  if(b){ try{ b.setRawgKey(''); }catch(e){} return; }
   try{ await window.storage.delete('rawg-credentials', false); }catch(e){}
 }
 

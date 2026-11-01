@@ -43,6 +43,12 @@ async function exportLocalData(){
     version: 1,
     entries: all.filter(e => !isRebuildableCache(String(e.key))),
   };
+  // The app keeps the keys in its private settings, not in storage, so they are added here to travel with the backup.
+  if(keyBridge()){
+    const c = bridgeConfig();
+    if(c && c.raUser && c.raKey) payload.entries.push({ key: 'priv:ra-credentials', value: JSON.stringify({ username: c.raUser, apiKey: c.raKey }) });
+    if(c && c.rawgKey) payload.entries.push({ key: 'priv:rawg-credentials', value: JSON.stringify({ apiKey: c.rawgKey }) });
+  }
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -59,7 +65,19 @@ async function importLocalData(file){
   try{ payload = JSON.parse(await file.text()); }
   catch(e){ throw new Error('That file isn\'t valid JSON.'); }
   if(!payload || !Array.isArray(payload.entries)) throw new Error('This doesn\'t look like a Game Log Tracker backup file.');
-  await window.storage._putAllRaw(payload.entries);
+  let entries = payload.entries;
+  if(keyBridge()){
+    // inside the app the keys go to its private settings, not back into storage
+    entries = [];
+    for(const e of payload.entries){
+      try{
+        if(e.key === 'priv:ra-credentials'){ const o = JSON.parse(e.value); if(o.username && o.apiKey) await saveCreds(o.username, o.apiKey); continue; }
+        if(e.key === 'priv:rawg-credentials'){ const o = JSON.parse(e.value); if(o.apiKey) await saveRawgCreds(o.apiKey); continue; }
+      }catch(err){ continue; }
+      entries.push(e);
+    }
+  }
+  await window.storage._putAllRaw(entries);
 }
 
 // Opener button, close button, and a tap on the backdrop.

@@ -309,6 +309,20 @@ final class ThorBridge {
         return o.toString();
     }
 
+    /** The tracker's RetroAchievements login, kept in the app's private settings only. */
+    @JavascriptInterface
+    public void setRaCreds(String user, String key) {
+        Prefs.put(act, "raUser", user == null ? "" : user.trim());
+        Prefs.put(act, "raKey", key == null ? "" : key.trim());
+        Prefs.put(act, "credsRev", String.valueOf(System.currentTimeMillis()));
+    }
+
+    @JavascriptInterface
+    public void setRawgKey(String key) {
+        Prefs.put(act, "rawgKey", key == null ? "" : key.trim());
+        Prefs.put(act, "credsRev", String.valueOf(System.currentTimeMillis()));
+    }
+
     /** Closes the whole app: the tracker, the top screen and the setup window. */
     @JavascriptInterface
     public void exitApp() {
