@@ -718,8 +718,14 @@ public class SetupActivity extends Activity {
                     }
                     String raUse = d.found.isEmpty() ? "" : (raPkgNow.isEmpty() || !d.found.contains(raPkgNow) ? d.found.get(0) : raPkgNow);
                     d.coresRead = !raUse.isEmpty() && RaCores.installed(SetupActivity.this, raUse) != null;
+                    // only systems you actually have ROMs for (ES-DE makes an empty folder for every system)
+                    java.util.Set<String> withRoms = new java.util.HashSet<String>();
+                    try {
+                        for (RomIndex.Rom rom : Shared.index().all()) withRoms.add(rom.sys.folder);
+                    } catch (Exception ignored) {
+                    }
                     for (SystemMap.Sys sys : Shared.systems().all) {
-                        if (!sys.dir().isDirectory()) continue;
+                        if (withRoms.isEmpty() ? !sys.dir().isDirectory() : !withRoms.contains(sys.folder)) continue;
                         List<String> st = new ArrayList<String>();
                         for (String id : sys.standalones) {
                             String p = d.pkgs.get(id);
@@ -814,7 +820,7 @@ public class SetupActivity extends Activity {
 
             if (!any) {
                 text("Which emulator for each system?", 17, TEXT);
-                text("Only the systems found in your ROMs folder are listed, with the emulators you have installed.", 13, MUTED);
+                text("Only the systems you have ROMs for are listed, each with its installed emulators and the RetroArch cores for it.", 13, MUTED);
                 any = true;
             }
             text(sys.folder, 14, GOLD);
