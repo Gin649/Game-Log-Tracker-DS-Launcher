@@ -2,6 +2,28 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
+## v1.0.9
+
+### Added
+- ARMSX3 (PS3) and XenDroid (Xbox 360) emulators, with PS3 and Xbox 360 systems.
+- Dolphin CS as an emulator choice for GameCube and Wii.
+
+### Changed
+- ROM hacks no longer show the original game's description. They show "Hack" and a "Click here for details" link to the hack's page on RomHacking.net.
+- A cartridge ROM you pick for the backlog is now matched to its RetroAchievements game by its file hash first, whatever the file is called, then by name. Play starts the file you picked.
+- Setup, Your Emulators: the page now lists only the systems you have ROMs for, each with its installed emulators and RetroArch cores. When the app can see which cores you have installed, it lists just those. Otherwise it lists every core RetroArch has for that system, hack folders included. RetroArch counts as an emulator, and installed and not installed emulators sit in their own dropdowns.
+- Setup: "Tracker size" is now "Display size". A single-screen device still gets the screens page, with a note that you are on one screen and the Display size option.
+- Setup no longer asks about using existing pictures or LaunchBox art. On a dual-screen device both are turned on, and on a single-screen device both are turned off, since the art is only for the top screen. This also resets your earlier choice once, on the first start of this version.
+- Exported backups no longer include your RetroAchievements and RAWG keys.
+- Improved efficiency and startup time by moving game data into a database file.
+
+### Fixed
+- A game could start a different game with a similar name, such as Kirby's Dream Land for Kirby's Pinball Land. Titles now only match when the words that differ are things like a version or region. A game added from a ROM you picked also starts that exact file.
+- The setup wizard no longer loses what you entered when you leave the app to look up a key and come back.
+- Coming back to the app while the setup wizard was open could leave a "Setup is open" screen. It now brings the wizard back.
+- The setup wizard's emulator page could hang or load slowly. It now looks for emulators in the background.
+- The menu button no longer sits under the clock and battery hearts when they are on.
+
 ## v1.0.8
 
 ### Changed
