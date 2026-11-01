@@ -228,6 +228,10 @@
   "cores": [
    "swanstation",
    "mednafen_psx_hw"
+  ],
+  "standalones": [
+   "duckstation",
+   "duckstation_new"
   ]
  },
  {
@@ -397,7 +401,8 @@
   "ra": [
    "Dreamcast"
   ],
-  "core": "flycast"
+  "core": "flycast",
+  "standalone": "flycast"
  },
  {
   "folder": "psp",
@@ -517,7 +522,8 @@
   ],
   "core": "",
   "standalones": [
-   "vita3k"
+   "vita3k",
+   "vita3kplus"
   ]
  },
  {
@@ -548,7 +554,8 @@
   ],
   "core": "",
   "standalones": [
-   "armsx3"
+   "armsx3",
+   "aps3e"
   ]
  },
  {

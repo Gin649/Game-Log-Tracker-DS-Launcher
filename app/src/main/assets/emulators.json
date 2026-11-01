@@ -212,9 +212,7 @@
   "packages": [
    "org.vita3k.emulator"
   ],
-  "labels": [
-   "vita3k"
-  ],
+  "labels": [],
   "activity": "org.vita3k.emulator.Emulator",
   "clearTask": true,
   "data": "none",
@@ -267,5 +265,68 @@
   "extras": {
    "game_uri": "%ROMSAF%"
   }
+ },
+ {
+  "id": "duckstation_new",
+  "label": "DuckStation (new)",
+  "packages": [
+   "com.duckstation.app",
+   "com.duckstation"
+  ],
+  "labels": [],
+  "activity": "%PKG%.EmulationActivity",
+  "data": "none",
+  "extras": {
+   "bootPath": "%ROM%"
+  }
+ },
+ {
+  "id": "vita3kplus",
+  "label": "Vita3K+",
+  "packages": [
+   "org.vita3kplus.emulator"
+  ],
+  "labels": [
+   "vita3k+",
+   "vita3kplus"
+  ],
+  "activity": "org.vita3k.emulator.Emulator",
+  "clearTask": true,
+  "data": "none",
+  "arrayExtras": {
+   "AppStartParameters": [
+    "-r",
+    "%ROMBASE%"
+   ]
+  }
+ },
+ {
+  "id": "aps3e",
+  "label": "aPS3e",
+  "packages": [
+   "aenu.aps3e"
+  ],
+  "labels": [
+   "aps3e"
+  ],
+  "activity": "aenu.aps3e.EmulatorActivity",
+  "action": "aenu.intent.action.APS3E",
+  "data": "none",
+  "extras": {
+   "iso_uri": "%ROMFILEURI%"
+  }
+ },
+ {
+  "id": "flycast",
+  "label": "Flycast",
+  "packages": [
+   "com.flycast.emulator"
+  ],
+  "labels": [
+   "flycast"
+  ],
+  "activity": "com.flycast.emulator.MainActivity",
+  "action": "android.intent.action.VIEW",
+  "data": "saf"
  }
 ]

@@ -43,7 +43,7 @@ final class Recipes {
         final List<String> labels = new ArrayList<String>();
         final Map<String, String> extras = new LinkedHashMap<String, String>();
         final Map<String, Boolean> boolExtras = new LinkedHashMap<String, Boolean>();
-        /** Extras that are a list of strings; %ROM%, %ROMSAF% and %ROMBASE% work in each item. */
+        /** Extras that are a list of strings; %ROM%, %ROMSAF%, %ROMFILEURI% and %ROMBASE% work in each item. */
         final Map<String, List<String>> arrayExtras = new LinkedHashMap<String, List<String>>();
     }
 
@@ -211,8 +211,8 @@ final class Recipes {
         return buildAll(ctx, r, pkg, rom).get(0);
     }
 
-    private static String fillIn(String text, String uriText, String path, String base) {
-        return text.replace("%ROMSAF%", uriText).replace("%ROMBASE%", base).replace("%ROM%", path);
+    private static String fillIn(String text, String uriText, String path, String base, String fileUri) {
+        return text.replace("%ROMSAF%", uriText).replace("%ROMFILEURI%", fileUri).replace("%ROMBASE%", base).replace("%ROM%", path);
     }
 
     private static Intent build(Context ctx, Recipe r, String pkg, File rom, String activity, String action) {
@@ -220,7 +220,7 @@ final class Recipes {
         if (!action.isEmpty()) i.setAction(action);
         if (!r.category.isEmpty()) i.addCategory(r.category);
         if (!activity.isEmpty()) {
-            i.setComponent(new ComponentName(pkg, activity));
+            i.setComponent(new ComponentName(pkg, activity.replace("%PKG%", pkg)));
         } else {
             i.setPackage(pkg);
         }
@@ -231,6 +231,7 @@ final class Recipes {
         String base = dot > 0 ? fileName.substring(0, dot) : fileName;
         Uri uri = RomUri.forRom(ctx, rom);
         String uriText = RomUri.isContent(uri) ? uri.toString() : path;
+        String fileUri = Uri.fromFile(rom).toString();
 
         if ("saf".equals(r.data)) {
             i.setData(uri);
@@ -239,11 +240,11 @@ final class Recipes {
         }
 
         for (Map.Entry<String, String> e : r.extras.entrySet()) {
-            i.putExtra(e.getKey(), fillIn(e.getValue(), uriText, path, base));
+            i.putExtra(e.getKey(), fillIn(e.getValue(), uriText, path, base, fileUri));
         }
         for (Map.Entry<String, List<String>> e : r.arrayExtras.entrySet()) {
             String[] items = new String[e.getValue().size()];
-            for (int n = 0; n < items.length; n++) items[n] = fillIn(e.getValue().get(n), uriText, path, base);
+            for (int n = 0; n < items.length; n++) items[n] = fillIn(e.getValue().get(n), uriText, path, base, fileUri);
             i.putExtra(e.getKey(), items);
         }
         for (Map.Entry<String, Boolean> e : r.boolExtras.entrySet()) {
