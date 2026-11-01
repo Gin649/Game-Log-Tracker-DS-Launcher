@@ -774,16 +774,8 @@ public class SetupActivity extends Activity {
     }
 
     private void buildEmulators(EmuData d) {
-        text("RetroArch", 17, TEXT);
         List<String> found = d.found;
-        if (found.isEmpty()) {
-            text("RetroArch was not found. Install it to play most systems.", 14, GOLD);
-        } else {
-            int sel = Math.max(0, found.indexOf(raPackage));
-            spRa = spinner(found, sel);
-        }
-
-        text("Standalone emulators", 17, TEXT);
+        text("Emulators", 17, TEXT);
         final LinearLayout installedBox = new LinearLayout(this);
         installedBox.setOrientation(LinearLayout.VERTICAL);
         final LinearLayout notInstalled = new LinearLayout(this);
@@ -797,12 +789,15 @@ public class SetupActivity extends Activity {
             content.removeView(t);
             notInstalled.addView(t);
         } else {
-            for (String pkg : found) {
-                have++;
-                TextView t = text("Found: RetroArch (" + pkg + ")", 14, TEAL);
-                content.removeView(t);
-                installedBox.addView(t);
-            }
+            have++;
+            TextView t = text("Found: RetroArch", 14, TEAL);
+            content.removeView(t);
+            installedBox.addView(t);
+            // which RetroArch to use, when there is more than one (64-bit, 32-bit)
+            int sel = Math.max(0, found.indexOf(raPackage));
+            spRa = spinner(found, sel);
+            content.removeView(spRa);
+            installedBox.addView(spRa);
         }
         for (Recipes.Recipe r : d.recipes) {
             String pkg = d.pkgs.get(r.id);
