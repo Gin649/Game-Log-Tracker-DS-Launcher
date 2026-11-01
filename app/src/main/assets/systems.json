@@ -411,7 +411,11 @@
    "GameCube"
   ],
   "core": "dolphin",
-  "standalone": "dolphin"
+  "standalone": "dolphin",
+  "standalones": [
+   "dolphin",
+   "dolphincs"
+  ]
  },
  {
   "folder": "wii",
@@ -419,7 +423,11 @@
    "Wii"
   ],
   "core": "dolphin",
-  "standalone": "dolphin"
+  "standalone": "dolphin",
+  "standalones": [
+   "dolphin",
+   "dolphincs"
+  ]
  },
  {
   "folder": "msu-md",
