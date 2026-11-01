@@ -1,14 +1,56 @@
 // Native Android ports of a game (recompiled or reimplemented), offered in the game profile.
 // The list of ports is ports.json. Downloading, checking and installing are done by the app (ThorBridge port*).
 
+// The list lives in the app's GitHub repo (data/ports.json), so a port can be added without a new release. The app
+// keeps the last copy it downloaded, checks again at most every six hours, and falls back to the copy bundled in the app.
+const PORTS_URL = 'https://raw.githubusercontent.com/Gin649/Game-Log-Tracker-DS-Launcher/main/data/ports.json';
+const PORTS_CACHE_KEY = 'ports-catalog:v1';
+const PORTS_MAX_AGE = 6 * 60 * 60 * 1000;
+
 let portsCatalog = null;
+let portsLoading = null;
+
+async function fetchRemotePorts(){
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), 6000);
+  try{
+    const r = await fetch(PORTS_URL, { signal: ctl.signal, cache: 'no-store' });
+    if(!r.ok) return null;
+    const list = ((await r.json()).ports) || [];
+    return Array.isArray(list) && list.length ? list : null;
+  }catch(e){ return null; }
+  finally{ clearTimeout(t); }
+}
+
 async function loadPortsCatalog(){
   if(portsCatalog) return portsCatalog;
-  try{
-    const r = await fetch('./ports.json');
-    portsCatalog = ((await r.json()).ports) || [];
-  }catch(e){ portsCatalog = []; }
-  return portsCatalog;
+  if(portsLoading) return portsLoading;
+  portsLoading = (async () => {
+    let saved = null;
+    try{
+      const r = await window.storage.get(PORTS_CACHE_KEY, false);
+      if(r && r.value) saved = JSON.parse(r.value);
+    }catch(e){}
+    const savePorts = async list => {
+      try{ await window.storage.set(PORTS_CACHE_KEY, JSON.stringify({ ts: Date.now(), ports: list }), false); }catch(e){}
+    };
+
+    let list = saved && Array.isArray(saved.ports) && saved.ports.length ? saved.ports : null;
+    const fresh = !!(list && Date.now() - (saved.ts || 0) < PORTS_MAX_AGE);
+    if(list && !fresh){
+      // Show what we have now and look for a newer list in the background.
+      fetchRemotePorts().then(l => { if(l){ portsCatalog = l; savePorts(l); } });
+    }else if(!list){
+      list = await fetchRemotePorts();
+      if(list) savePorts(list);
+    }
+    if(!list){
+      try{ list = ((await (await fetch('./ports.json')).json()).ports) || []; }catch(e){ list = []; }
+    }
+    portsCatalog = list;
+    return list;
+  })();
+  return portsLoading;
 }
 
 // "The Legend of Zelda: Majora's Mask" and "Legend of Zelda, The - Majora's Mask (USA)" compare equal.

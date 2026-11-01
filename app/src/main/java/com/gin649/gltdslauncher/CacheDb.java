@@ -21,7 +21,7 @@ final class CacheDb extends SQLiteOpenHelper {
     private static final String[] PREFIXES = {
             "ra-hours:", "ra-gameinfo:", "ra-ach:", "ra-snap:", "ra-playtime-stats:", "ra-dash:", "ra-gamelist:",
             "ra-gamelist-h:", "ra-consoles-supported", "rawg-desc:", "rating-avg:", "guide-archive-index:",
-            "rapatches-tree-cache-v4", "social-cache:", "cheatsauto:",
+            "rapatches-tree-cache-v4", "social-cache:", "cheatsauto:", "ports-catalog:",
     };
 
     private static CacheDb instance;

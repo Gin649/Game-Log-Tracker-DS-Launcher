@@ -1,0 +1,1571 @@
+{
+ "ports": [
+  {
+   "id": "2-ship-2-harkinian-2-ship-2-harkinian-android",
+   "name": "2 Ship 2 Harkinian",
+   "repo": "linkzenic/2ship2harkinian-Android",
+   "games": [
+    "The Legend of Zelda: Majora's Mask"
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "aerogauge-aerogaugerecompiled",
+   "name": "AeroGauge",
+   "repo": "alondero/aerogauge-recomp",
+   "games": [
+    "AeroGauge"
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "ambermoon-ambermoon-net",
+   "name": "Ambermoon",
+   "repo": "Pyrdacor/Ambermoon.net",
+   "games": [
+    "Ambermoon"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "animal-crossing-new-horizons-recomp",
+   "name": "Animal Crossing: New Horizons",
+   "repo": "Nycolazs/ACNHRecomp",
+   "games": [
+    "Animal Crossing: New Horizons"
+   ],
+   "consoles": [
+    "switch"
+   ]
+  },
+  {
+   "id": "automobililamborghini-automobililamborghinirecompiled",
+   "name": "Automobili Lamborghini",
+   "repo": "alondero/automobililamborghini-recomp",
+   "games": [
+    "Automobili Lamborghini"
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "banjo-kazooie-banjo-recompiled",
+   "name": "Banjo-Kazooie",
+   "repo": "AurelioB/BanjoRecomp-Android",
+   "games": [
+    "Banjo-Kazooie"
+   ],
+   "consoles": [
+    "n64",
+    "mobile"
+   ]
+  },
+  {
+   "id": "banjo-kazooie-lighthouse-android",
+   "name": "Banjo-Kazooie",
+   "repo": "izzy2lost/Lighthouse",
+   "games": [
+    "Banjo-Kazooie"
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "buffy-the-vampire-slayer-chaos-bleeds-buffy-chaos-bleeds-pc",
+   "name": "Buffy the Vampire Slayer: Chaos Bleeds",
+   "repo": "KaikoClanworth1/buffy-chaos-bleeds-pc",
+   "games": [
+    "Buffy the Vampire Slayer: Chaos Bleeds"
+   ],
+   "consoles": [
+    "og xbox"
+   ]
+  },
+  {
+   "id": "burnout-3-takedown-takedawn",
+   "name": "Burnout 3: Takedown",
+   "repo": "xenophobentx/takedawn",
+   "games": [
+    "Burnout 3: Takedown"
+   ],
+   "consoles": [
+    "og xbox"
+   ]
+  },
+  {
+   "id": "burnout-revenge-xerenge",
+   "name": "Burnout Revenge",
+   "repo": "shipa-2/Xerenge",
+   "games": [
+    "Burnout Revenge"
+   ],
+   "consoles": [
+    "x360"
+   ]
+  },
+  {
+   "id": "caesariii-augustus",
+   "name": "Caesar III",
+   "repo": "Keriew/augustus",
+   "games": [
+    "Caesar III"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "caesariii-julius",
+   "name": "Caesar III",
+   "repo": "bvschaik/julius",
+   "games": [
+    "Caesar III"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "cave-story-doukutsu-rs",
+   "name": "Cave Story",
+   "repo": "doukutsu-rs/doukutsu-rs",
+   "games": [
+    "Cave Story"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "colin-mcrae-rally-2-0-opencmr2",
+   "name": "Colin McRae Rally 2.0",
+   "repo": "pablocpas/OpenCMR2",
+   "games": [
+    "Colin McRae Rally 2.0"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "crashbandicoot-crashbandicootlauncher",
+   "name": "Crash Bandicoot",
+   "repo": "Matteo842/CrashBandicoot-Launcher",
+   "games": [
+    "Crash Bandicoot"
+   ],
+   "consoles": [
+    "ps1"
+   ]
+  },
+  {
+   "id": "crashteamracing-ctrnativeandroid",
+   "name": "Crash Team Racing",
+   "repo": "Simon358/ctr-native-android",
+   "games": [
+    "Crash Team Racing"
+   ],
+   "consoles": [
+    "ps1"
+   ]
+  },
+  {
+   "id": "daytona-usa-daytona-usa-static-recomp",
+   "name": "Daytona USA",
+   "repo": "baliebox4916/daytona-arcade-recomp",
+   "games": [
+    "Daytona USA"
+   ],
+   "consoles": [
+    "arcade"
+   ]
+  },
+  {
+   "id": "diablo-devilutionx",
+   "name": "Diablo",
+   "repo": "diasurgical/DevilutionX",
+   "games": [
+    "Diablo"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "diddykongracing-dkrr",
+   "name": "Diddy Kong Racing",
+   "repo": "ThatGuyMcd/DKR-R",
+   "games": [
+    "Diddy Kong Racing"
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "doom-rpg-com-mobilerpgpack-phone",
+   "name": "Doom RPG",
+   "repo": "andreyvelsk/com.mobilerpgpack.phone",
+   "games": [
+    "Doom RPG"
+   ],
+   "consoles": [
+    "mobile"
+   ]
+  },
+  {
+   "id": "doraemon-3-nobita-no-machi-sos-dora3-64",
+   "name": "Doraemon 3: Nobita no Machi SOS!",
+   "repo": "citrongames/Dora64-3",
+   "games": [
+    "Doraemon 3: Nobita no Machi SOS!"
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "doraemon-nobita-to-mittsu-no-seireiseki-dora64",
+   "name": "Doraemon: Nobita to Mittsu no Seireiseki",
+   "repo": "citrongames/Dora64",
+   "games": [
+    "Doraemon: Nobita to Mittsu no Seireiseki"
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "eternalsonata-eternalsonatareprise",
+   "name": "Eternal Sonata",
+   "repo": "birabittoh/EternalSonataReprise",
+   "games": [
+    "Eternal Sonata"
+   ],
+   "consoles": [
+    "x360"
+   ]
+  },
+  {
+   "id": "final-fantasy-tactics-advance-ffta-recomp",
+   "name": "Final Fantasy Tactics Advance",
+   "repo": "james2doyle/ffta-recomp",
+   "games": [
+    "Final Fantasy Tactics Advance"
+   ],
+   "consoles": [
+    "gba"
+   ]
+  },
+  {
+   "id": "final-fantasy-tactics-advance-fftarecomp",
+   "name": "Final Fantasy Tactics Advance",
+   "repo": "Jorge262007/FFTARecomp",
+   "games": [
+    "Final Fantasy Tactics Advance"
+   ],
+   "consoles": [
+    "gba"
+   ]
+  },
+  {
+   "id": "gears-of-war-2-gears-of-war-2-pc-port",
+   "name": "Gears of War 2",
+   "repo": "santiquiroz/gears-of-war-2-pc-port",
+   "games": [
+    "Gears of War 2"
+   ],
+   "consoles": [
+    "x360"
+   ]
+  },
+  {
+   "id": "glider-pro-aerofoil",
+   "name": "Glider PRO",
+   "repo": "elasota/Aerofoil",
+   "games": [
+    "Glider PRO"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "guitar-hero-guitar-dream-engine",
+   "name": "Guitar Hero",
+   "repo": "mbracali/prj-gd-engine",
+   "games": [
+    "Guitar Hero"
+   ],
+   "consoles": [
+    "ps2",
+    "x360"
+   ]
+  },
+  {
+   "id": "half-life-xash3d-fwgs",
+   "name": "Half-Life",
+   "repo": "FWGS/xash3d-fwgs",
+   "games": [
+    "Half-Life",
+    "Half-Life: Opposing Force",
+    "Half-Life: Blue Shift",
+    "Half-Life: Decay PC Port",
+    "Gunman Chronicles",
+    "Underworld: Bloodline",
+    "Ricochet",
+    "Deathmatch Classic"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "heroes-of-might-and-magic-ii-fheroes2",
+   "name": "Heroes of Might and Magic II",
+   "repo": "ihhub/fheroes2",
+   "games": [
+    "Heroes of Might and Magic II"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "heroesofmightandmagiciii-vcmi",
+   "name": "Heroes of Might and Magic III",
+   "repo": "vcmi/vcmi",
+   "games": [
+    "Heroes of Might and Magic III"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "hollow-knight-hk-dual-souls",
+   "name": "Hollow Knight",
+   "repo": "igawa6/dualsouls",
+   "games": [
+    "Hollow Knight"
+   ],
+   "consoles": [
+    "mobile"
+   ]
+  },
+  {
+   "id": "hollow-knight-silksong-silksong-android",
+   "name": "Hollow Knight: Silksong",
+   "repo": "jakobkhansen/SilksongAndroid",
+   "games": [
+    "Hollow Knight: Silksong"
+   ],
+   "consoles": [
+    "mobile"
+   ]
+  },
+  {
+   "id": "hot-shots-tennis-opentennis",
+   "name": "Hot Shots Tennis",
+   "repo": "FIZL0/opentennis",
+   "games": [
+    "Hot Shots Tennis"
+   ],
+   "consoles": [
+    "ps2"
+   ]
+  },
+  {
+   "id": "hybrid-heaven-hybridheaven-recomp",
+   "name": "Hybrid Heaven",
+   "repo": "ogdanimal/HybridHeaven-Recomp",
+   "games": [
+    "Hybrid Heaven"
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "ico-ico-pc",
+   "name": "ICO",
+   "repo": "nathanialf/ico-pc",
+   "games": [
+    "ICO"
+   ],
+   "consoles": [
+    "ps2"
+   ]
+  },
+  {
+   "id": "jade-cocoon-story-of-the-tamamayu-jade-cocoon-on-bevy",
+   "name": "Jade Cocoon: Story of the Tamamayu",
+   "repo": "ufodriverr/jade-cocoon-bevy-public-v1",
+   "games": [
+    "Jade Cocoon: Story of the Tamamayu"
+   ],
+   "consoles": [
+    "ps1"
+   ]
+  },
+  {
+   "id": "james-pond-2-codename-robocod-james-pond-2-codename-robocod-recompiled",
+   "name": "James Pond 2: Codename RoboCod",
+   "repo": "griches/JamesPond2RobocodRecomp",
+   "games": [
+    "James Pond 2: Codename RoboCod"
+   ],
+   "consoles": [
+    "ami",
+    "gen"
+   ]
+  },
+  {
+   "id": "jazz-jackrabbit-openjazz",
+   "name": "Jazz Jackrabbit",
+   "repo": "AlisterT/openjazz",
+   "games": [
+    "Jazz Jackrabbit"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "jet-set-radio-future-jet-set-radio-future-unleashed",
+   "name": "Jet Set Radio Future",
+   "repo": "JuMatt/JetSetRadioFuture-Unleashed",
+   "games": [
+    "Jet Set Radio Future"
+   ],
+   "consoles": [
+    "og xbox"
+   ]
+  },
+  {
+   "id": "jill-of-the-jungle-jillandroid",
+   "name": "Jill of the Jungle",
+   "repo": "wootbeer/jillandroid",
+   "games": [
+    "Jill of the Jungle"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "katawa-shoujo-katawa-shoujo-re-engineered",
+   "name": "Katawa Shoujo",
+   "repo": "fleetingheart/ksre",
+   "games": [
+    "Katawa Shoujo"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "keen-dreams-reflectionhle",
+   "name": "Keen Dreams",
+   "repo": "ReflectionHLE/ReflectionHLE",
+   "games": [
+    "Keen Dreams"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "kingdom-hearts-chain-of-memories-rekhcom",
+   "name": "Kingdom Hearts: Chain of Memories",
+   "repo": "MatyMeatBoy/ReKHCom",
+   "games": [
+    "Kingdom Hearts: Chain of Memories"
+   ],
+   "consoles": [
+    "gba"
+   ]
+  },
+  {
+   "id": "knuckles-chaotix-chaotix-recompiled",
+   "name": "Knuckles' Chaotix",
+   "repo": "YuutaTsubasa/ChaotixRecompiled",
+   "games": [
+    "Knuckles' Chaotix"
+   ],
+   "consoles": [
+    "32x"
+   ]
+  },
+  {
+   "id": "knytt-stories-yknytt",
+   "name": "Knytt Stories",
+   "repo": "youkaicountry/yknytt",
+   "games": [
+    "Knytt Stories"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "legend-of-sword-and-fairy-sdlpal",
+   "name": "Legend of Sword and Fairy",
+   "repo": "sdlpal/sdlpal",
+   "games": [
+    "Legend of Sword and Fairy"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "lego-island-isle-portable",
+   "name": "LEGO Island",
+   "repo": "isledecomp/isle-portable",
+   "games": [
+    "LEGO Island"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "legoland",
+   "name": "Legoland",
+   "repo": "facundosterzerforino/legoland-port",
+   "games": [
+    "Legoland"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "lostodyssey-lostodysseyrecompiled",
+   "name": "Lost Odyssey",
+   "repo": "freefrank/LostOdysseyRecomp",
+   "games": [
+    "Lost Odyssey"
+   ],
+   "consoles": [
+    "x360"
+   ]
+  },
+  {
+   "id": "mario-kart-64-spaghettikart-android",
+   "name": "Mario Kart 64",
+   "repo": "izzy2lost/SpaghettiKart",
+   "games": [
+    "Mario Kart 64"
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "mariokartwii-kartpad",
+   "name": "Mario Kart Wii",
+   "repo": "chrissotraidis/kartpad",
+   "games": [
+    "Mario Kart Wii"
+   ],
+   "consoles": [
+    "wii"
+   ]
+  },
+  {
+   "id": "mario-party-4-party-board",
+   "name": "Mario Party 4",
+   "repo": "mariopartyrd/partyboard",
+   "games": [
+    "Mario Party 4"
+   ],
+   "consoles": [
+    "gcn"
+   ]
+  },
+  {
+   "id": "mario-party-4-party-board-zeranemesis",
+   "name": "Mario Party 4",
+   "repo": "zeranemesis/Marioparty4",
+   "games": [
+    "Mario Party 4"
+   ],
+   "consoles": [
+    "gcn"
+   ]
+  },
+  {
+   "id": "mario-party-6-mario-party-6-native-port",
+   "name": "Mario Party 6",
+   "repo": "iirg4x/mp6-native-port",
+   "games": [
+    "Mario Party 6"
+   ],
+   "consoles": [
+    "gcn"
+   ]
+  },
+  {
+   "id": "mdk-mdk-sdl",
+   "name": "MDK",
+   "repo": "nautilusbits/mdk-sdl",
+   "games": [
+    "MDK"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "mega-man-64-mega-man-64-recompiled-mobile",
+   "name": "Mega Man 64",
+   "repo": "DevZer0D4Y/MegaMan64Recompiled-Mobile",
+   "games": [
+    "Mega Man 64"
+   ],
+   "consoles": [
+    "n64",
+    "mobile"
+   ]
+  },
+  {
+   "id": "metal-gear-solid-mobile-metal-gear-solid-mobile-native-port",
+   "name": "Metal Gear Solid Mobile",
+   "repo": "LeithSilver/mgsm",
+   "games": [
+    "Metal Gear Solid Mobile"
+   ],
+   "consoles": [
+    "mobile"
+   ]
+  },
+  {
+   "id": "metroid-prime-metroidprimeport",
+   "name": "Metroid Prime",
+   "repo": "Odrannnn/MetroidPrimePort",
+   "games": [
+    "Metroid Prime"
+   ],
+   "consoles": [
+    "gcn"
+   ]
+  },
+  {
+   "id": "metroid-prime-2-echoes-unbound",
+   "name": "Metroid Prime 2: Echoes",
+   "repo": "Odrannnn/MetroidPrime2Port",
+   "games": [
+    "Metroid Prime 2: Echoes"
+   ],
+   "consoles": [
+    "gcn",
+    "wii"
+   ]
+  },
+  {
+   "id": "metroid-prime-hunters-second-hunt",
+   "name": "Metroid Prime Hunters",
+   "repo": "BountyHunterKanden/SecondHunt",
+   "games": [
+    "Metroid Prime Hunters"
+   ],
+   "consoles": [
+    "nds"
+   ]
+  },
+  {
+   "id": "mickey-donald-collection",
+   "name": "Mickey & Donald Collection",
+   "repo": "Darhkfox/MickeyAndDonaldCollection",
+   "games": [
+    "Mickey & Donald Collection"
+   ],
+   "consoles": [
+    "gen"
+   ]
+  },
+  {
+   "id": "monsterhunterportable3rdhdver-yakumo",
+   "name": "Monster Hunter Portable 3rd HD Ver.",
+   "repo": "TeamGDB/Yakumo",
+   "games": [
+    "Monster Hunter Portable 3rd HD Ver."
+   ],
+   "consoles": [
+    "psp"
+   ]
+  },
+  {
+   "id": "monster-hunter-tri-oceantrirecomp-android",
+   "name": "Monster Hunter Tri",
+   "repo": "Kiridor123/OceanTriRecomp-Android",
+   "games": [
+    "Monster Hunter Tri"
+   ],
+   "consoles": [
+    "wii",
+    "mobile"
+   ]
+  },
+  {
+   "id": "mother-3-mother-3-native-port-recompilation",
+   "name": "MOTHER 3",
+   "repo": "josiahg2502-glitch/Mother3Recomp",
+   "games": [
+    "MOTHER 3"
+   ],
+   "consoles": [
+    "gba"
+   ]
+  },
+  {
+   "id": "mystical-ninja-starring-goemon-goemon64recomp-android",
+   "name": "Mystical Ninja Starring Goemon",
+   "repo": "ogdanimal/Goemon64Recomp-Android",
+   "games": [
+    "Mystical Ninja Starring Goemon"
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "need-for-speed-ii-special-edition-nfsiise",
+   "name": "Need for Speed II: Special Edition",
+   "repo": "zaps166/NFSIISE",
+   "games": [
+    "Need for Speed II: Special Edition"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "new-super-mario-bros-wii-nsmb-wii-multiplayer-decompilation",
+   "name": "New Super Mario Bros. Wii",
+   "repo": "WitherBlitz/NSMB-Wii-Multiplayer-Recompilation",
+   "games": [
+    "New Super Mario Bros. Wii"
+   ],
+   "consoles": [
+    "wii"
+   ]
+  },
+  {
+   "id": "perfect-dark-perfect-dark-android",
+   "name": "Perfect Dark",
+   "repo": "izzy2lost/perfect_dark",
+   "games": [
+    "Perfect Dark"
+   ],
+   "consoles": [
+    "n64",
+    "mobile"
+   ]
+  },
+  {
+   "id": "pikmin-opennectar",
+   "name": "Pikmin",
+   "repo": "SSunnKing/Open-Nectar---Pikmin-Native-PC-Mobile-Port",
+   "games": [
+    "Pikmin",
+    "Pikmin 2"
+   ],
+   "consoles": [
+    "gcn"
+   ]
+  },
+  {
+   "id": "pilotwings-64-birdman64",
+   "name": "Pilotwings 64",
+   "repo": "NoahVl/Birdman64",
+   "games": [
+    "Pilotwings 64"
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "pokemonemerald-emeraldrecomp",
+   "name": "Pokemon Emerald",
+   "repo": "mstan/EmeraldRecomp",
+   "games": [
+    "Pokemon Emerald"
+   ],
+   "consoles": [
+    "gba"
+   ]
+  },
+  {
+   "id": "pokemonredblueyellowgoldsilvercrystal-gen1recompproject",
+   "name": "Pokemon RBY / GSC / FRLF / RSE",
+   "repo": "bryanthaboi/gen1recomp",
+   "games": [
+    "Pokemon Red",
+    "Pokemon Blue",
+    "Pokemon Yellow",
+    "Pokemon Gold",
+    "Pokemon Silver",
+    "Pokemon Crystal",
+    "Pokemon FireRed",
+    "Pokemon LeafGreen",
+    "Pokemon Ruby",
+    "Pokemon Sapphire",
+    "Pokemon Emerald"
+   ],
+   "consoles": [
+    "gb",
+    "gbc",
+    "gba"
+   ]
+  },
+  {
+   "id": "pokemonsnap-snap64recomp",
+   "name": "Pokemon Snap",
+   "repo": "JackandBeans/Snap64Recomp",
+   "games": [
+    "Pokemon Snap"
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "prince-of-persia-sdlpop-android",
+   "name": "Prince of Persia",
+   "repo": "mgrz18/sdlpop-android",
+   "games": [
+    "Prince of Persia"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "prince-of-persia-the-sands-of-time-resot",
+   "name": "Prince of Persia: The Sands of Time",
+   "repo": "FulGerNet/rePOP",
+   "games": [
+    "Prince of Persia: The Sands of Time"
+   ],
+   "consoles": [
+    "og xbox"
+   ]
+  },
+  {
+   "id": "raptor-call-of-the-shadows-raptor",
+   "name": "Raptor: Call of the Shadows",
+   "repo": "skynettx/raptor",
+   "games": [
+    "Raptor: Call of the Shadows"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "ratchet-clank-openrac",
+   "name": "Ratchet & Clank",
+   "repo": "OpenRAC/OpenRAC",
+   "games": [
+    "Ratchet & Clank"
+   ],
+   "consoles": [
+    "ps2"
+   ]
+  },
+  {
+   "id": "residentevilgaiden-regaidenrecomp",
+   "name": "Resident Evil Gaiden",
+   "repo": "sergiomanzur/regaiden-recomp",
+   "games": [
+    "Resident Evil Gaiden"
+   ],
+   "consoles": [
+    "gbc"
+   ]
+  },
+  {
+   "id": "rocket-robot-on-wheels-rocket-r",
+   "name": "Rocket: Robot on Wheels",
+   "repo": "ThatGuyMcd/Rocket-R",
+   "games": [
+    "Rocket: Robot on Wheels"
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "rollercoaster-tycoon-2-openrct2",
+   "name": "RollerCoaster Tycoon 2",
+   "repo": "OpenRCT2/OpenRCT2",
+   "games": [
+    "RollerCoaster Tycoon 2"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "saru-get-you-saru-saru-daisakusen-ape-escape-mind-over-monkey",
+   "name": "Saru Get You: Saru Saru Daisakusen",
+   "repo": "jackgllghr/bigmission-recomp",
+   "games": [
+    "Saru Get You: Saru Saru Daisakusen"
+   ],
+   "consoles": [
+    "psp"
+   ]
+  },
+  {
+   "id": "sid-meier-s-simgolf-opensgolf",
+   "name": "Sid Meier's SimGolf",
+   "repo": "crspytopgn/opensgolf",
+   "games": [
+    "Sid Meier's SimGolf"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "silenthill-silenthillnativepcport",
+   "name": "Silent Hill",
+   "repo": "SlickAmogus/silent-hill-decomp",
+   "games": [
+    "Silent Hill"
+   ],
+   "consoles": [
+    "ps1"
+   ]
+  },
+  {
+   "id": "simcity-urbanrecomp-enhanced",
+   "name": "SimCity",
+   "repo": "kandowontu2/UrbanRecomp",
+   "games": [
+    "SimCity"
+   ],
+   "consoles": [
+    "snes"
+   ]
+  },
+  {
+   "id": "sin-and-punishment-snprecomp",
+   "name": "Sin and Punishment",
+   "repo": "wootbeer/snprecomp",
+   "games": [
+    "Sin and Punishment"
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "skies-of-arcadia-legends-skies-of-arcadia-legends-recompiled",
+   "name": "Skies of Arcadia Legends",
+   "repo": "ogdanimal/SkiesOfArcadiaLegends-Recomp",
+   "games": [
+    "Skies of Arcadia Legends"
+   ],
+   "consoles": [
+    "gcn"
+   ]
+  },
+  {
+   "id": "sonic3knuckles-sonic3air",
+   "name": "Sonic 3 & Knuckles",
+   "repo": "Eukaryot/sonic3air",
+   "games": [
+    "Sonic 3 & Knuckles"
+   ],
+   "consoles": [
+    "gen"
+   ]
+  },
+  {
+   "id": "soniccd-rsdkv3decompilation",
+   "name": "Sonic CD (2011)",
+   "repo": "RSDKModding/RSDKv3-Decompilation",
+   "games": [
+    "Sonic CD (2011)"
+   ],
+   "consoles": [
+    "mobile"
+   ]
+  },
+  {
+   "id": "sonic-free-riders-free-riders-recompiled",
+   "name": "Sonic Free Riders",
+   "repo": "YuutaTsubasa/Free-Riders-Recompiled",
+   "games": [
+    "Sonic Free Riders"
+   ],
+   "consoles": [
+    "x360"
+   ]
+  },
+  {
+   "id": "sonic-r-sonic-r-android",
+   "name": "Sonic R",
+   "repo": "ZinexDa/sonic-r-android",
+   "games": [
+    "Sonic R"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "sonicthehedgehog2013-sonic1forever",
+   "name": "Sonic the Hedgehog (2013)",
+   "repo": "ElspethThePict/S1Forever",
+   "games": [
+    "Sonic the Hedgehog (2013)"
+   ],
+   "consoles": [
+    "mobile",
+    "gen"
+   ]
+  },
+  {
+   "id": "star-fox-64-starship-android",
+   "name": "Star Fox 64",
+   "repo": "izzy2lost/Starship",
+   "games": [
+    "Star Fox 64"
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "starfox-starfoxenhanced",
+   "name": "Star Fox [Enhanced]",
+   "repo": "kandowontu2/starfox-enhanced",
+   "games": [
+    "Star Fox"
+   ],
+   "consoles": [
+    "snes"
+   ]
+  },
+  {
+   "id": "star-wars-jedi-knight-dark-forces-ii-openjkdf2",
+   "name": "Star Wars Jedi Knight: Dark Forces II",
+   "repo": "shinyquagsire23/OpenJKDF2",
+   "games": [
+    "Star Wars Jedi Knight: Dark Forces II"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "supermario64-ghostship",
+   "name": "Super Mario 64",
+   "repo": "harbourmasters/ghostship",
+   "games": [
+    "Super Mario 64"
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "super-mario-64-sm64coopdx",
+   "name": "Super Mario 64",
+   "repo": "ManIsCat2/sm64coopdx",
+   "games": [
+    "Super Mario 64"
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "super-mario-galaxy-galaxy-android",
+   "name": "Super Mario Galaxy",
+   "repo": "OpenPort-Labs/Galaxy-Android",
+   "games": [
+    "Super Mario Galaxy"
+   ],
+   "consoles": [
+    "wii"
+   ]
+  },
+  {
+   "id": "super-mario-strikers-strikers-android",
+   "name": "Super Mario Strikers",
+   "repo": "luisxl15/Strikers-Android-Port",
+   "games": [
+    "Super Mario Strikers"
+   ],
+   "consoles": [
+    "gcn",
+    "mobile"
+   ]
+  },
+  {
+   "id": "super-mario-sunshine-mareshine",
+   "name": "Super Mario Sunshine",
+   "repo": "TheM3dium/mareshine",
+   "games": [
+    "Super Mario Sunshine"
+   ],
+   "consoles": [
+    "gcn"
+   ]
+  },
+  {
+   "id": "super-mario-sunshine-sms-launcher-for-android",
+   "name": "Super Mario Sunshine",
+   "repo": "chasem-dev/sms-android",
+   "games": [
+    "Super Mario Sunshine"
+   ],
+   "consoles": [
+    "gcn"
+   ]
+  },
+  {
+   "id": "super-mario-world-super-mario-world-remastered-plus",
+   "name": "Super Mario World",
+   "repo": "BTFighter/Super-Mario-World-Remastered-Plus",
+   "games": [
+    "Super Mario World"
+   ],
+   "consoles": [
+    "snes"
+   ]
+  },
+  {
+   "id": "super-robot-taisen-64-marchwind-64",
+   "name": "Super Robot Taisen 64",
+   "repo": "dyzz/srw64-recomp",
+   "games": [
+    "Super Robot Taisen 64"
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "supersmashbros-battleship",
+   "name": "Super Smash Bros.",
+   "repo": "JRickey/BattleShip",
+   "games": [
+    "Super Smash Bros."
+   ],
+   "consoles": [
+    "n64"
+   ]
+  },
+  {
+   "id": "supersmashbrosmelee-meleepc",
+   "name": "Super Smash Bros. Melee",
+   "repo": "999sian/melee-pc",
+   "games": [
+    "Super Smash Bros. Melee"
+   ],
+   "consoles": [
+    "gcn"
+   ]
+  },
+  {
+   "id": "tails-adventure-tails-adventure-remake",
+   "name": "Tails Adventure",
+   "repo": "mechakotik/tails-adventure",
+   "games": [
+    "Tails Adventure"
+   ],
+   "consoles": [
+    "gg"
+   ]
+  },
+  {
+   "id": "the-binding-of-isaac-isaacrecomp",
+   "name": "The Binding of Isaac",
+   "repo": "whylurking/IsaacRecomp",
+   "games": [
+    "The Binding of Isaac"
+   ],
+   "consoles": [
+    "pc",
+    "mobile",
+    "switch"
+   ]
+  },
+  {
+   "id": "the-legend-of-zelda-a-link-to-the-past-relic-of-the-past",
+   "name": "The Legend of Zelda: A Link to the Past",
+   "repo": "drizztdourden08/relic-of-the-past",
+   "games": [
+    "The Legend of Zelda: A Link to the Past"
+   ],
+   "consoles": [
+    "snes"
+   ]
+  },
+  {
+   "id": "the-legend-of-zelda-link-s-awakening-lasrecompandroid",
+   "name": "The Legend of Zelda: Link's Awakening",
+   "repo": "mamcjr/LASRecompAndroid",
+   "games": [
+    "The Legend of Zelda: Link's Awakening"
+   ],
+   "consoles": [
+    "mobile"
+   ]
+  },
+  {
+   "id": "the-legend-of-zelda-majora-s-mask-zelda64-recompiled-android",
+   "name": "The Legend of Zelda: Majora's Mask",
+   "repo": "linkzenic/Zelda64Recomp-Android",
+   "games": [
+    "The Legend of Zelda: Majora's Mask"
+   ],
+   "consoles": [
+    "n64",
+    "mobile"
+   ]
+  },
+  {
+   "id": "the-legend-of-zelda-majora-s-mask-3d-majora-remasked",
+   "name": "The Legend of Zelda: Majora's Mask 3D",
+   "repo": "OTPR26/DekUI-Fork",
+   "games": [
+    "The Legend of Zelda: Majora's Mask 3D"
+   ],
+   "consoles": [
+    "3ds"
+   ]
+  },
+  {
+   "id": "the-legend-of-zelda-ocarina-of-time-ship-of-harkinian-android",
+   "name": "The Legend of Zelda: Ocarina of Time",
+   "repo": "linkzenic/Shipwright-Ports",
+   "games": [
+    "The Legend of Zelda: Ocarina of Time"
+   ],
+   "consoles": [
+    "n64",
+    "mobile"
+   ]
+  },
+  {
+   "id": "the-legend-of-zelda-ocarina-of-time-3d-ocarina-retuned",
+   "name": "The Legend of Zelda: Ocarina of Time 3D",
+   "repo": "OTPR26/Ocarina-ReTuned",
+   "games": [
+    "The Legend of Zelda: Ocarina of Time 3D"
+   ],
+   "consoles": [
+    "3ds"
+   ]
+  },
+  {
+   "id": "the-legend-of-zelda-oracle-of-ages-oracle-of-seasons-oracles-decomp",
+   "name": "The Legend of Zelda: Oracle of Ages / Oracle of Seasons",
+   "repo": "kirby-letsgo/oracles-decomp",
+   "games": [
+    "The Legend of Zelda: Oracle of Ages",
+    "The Legend of Zelda: Oracle of Seasons"
+   ],
+   "consoles": [
+    "gbc"
+   ]
+  },
+  {
+   "id": "the-legend-of-zelda-oracle-of-seasons-oracle-of-ages-the-oracles-project",
+   "name": "The Legend of Zelda: Oracle of Seasons / Oracle of Ages",
+   "repo": "thibautbus/top",
+   "games": [
+    "The Legend of Zelda: Oracle of Ages",
+    "The Legend of Zelda: Oracle of Seasons"
+   ],
+   "consoles": [
+    "gbc"
+   ]
+  },
+  {
+   "id": "thelegendofzeldatheminishcap-projectpicori",
+   "name": "The Legend of Zelda: The Minish Cap",
+   "repo": "999sian/tmc",
+   "games": [
+    "The Legend of Zelda: The Minish Cap"
+   ],
+   "consoles": [
+    "gba"
+   ]
+  },
+  {
+   "id": "the-legend-of-zelda-the-wind-waker-hd-tloz-tww-hd-recompiled-android",
+   "name": "The Legend of Zelda: The Wind Waker HD",
+   "repo": "GreenNaugahyde/ZeldaWWHDRecompAndroid",
+   "games": [
+    "The Legend of Zelda: The Wind Waker HD"
+   ],
+   "consoles": [
+    "wiiu"
+   ]
+  },
+  {
+   "id": "the-legend-of-zelda-the-wind-waker-hd-windwakerhd-android-plus",
+   "name": "The Legend of Zelda: The Wind Waker HD",
+   "repo": "Nycolazs/WindWakerHD-Android-Plus",
+   "games": [
+    "The Legend of Zelda: The Wind Waker HD"
+   ],
+   "consoles": [
+    "wiiu"
+   ]
+  },
+  {
+   "id": "the-legend-of-zelda-the-wind-waker-hd-wind-waker-hd-recompiled-android-enhanced",
+   "name": "The Legend of Zelda: The Wind Waker HD",
+   "repo": "SSunnKing/ZeldaWWHDRecompAndroid---ENHANCED",
+   "games": [
+    "The Legend of Zelda: The Wind Waker HD"
+   ],
+   "consoles": [
+    "wiiu"
+   ]
+  },
+  {
+   "id": "the-legend-of-zelda-the-wind-waker-hd-zeldawwhdrecomp",
+   "name": "The Legend of Zelda: The Wind Waker HD",
+   "repo": "ZeldaWWHDRecomp/ZeldaWWHDRecomp",
+   "games": [
+    "The Legend of Zelda: The Wind Waker HD"
+   ],
+   "consoles": [
+    "wiiu"
+   ]
+  },
+  {
+   "id": "thelegendofzeldatwilightprincess-dusklight",
+   "name": "The Legend of Zelda: Twilight Princess",
+   "repo": "TwilitRealm/dusklight",
+   "games": [
+    "The Legend of Zelda: Twilight Princess"
+   ],
+   "consoles": [
+    "gcn"
+   ]
+  },
+  {
+   "id": "the-settlers-freeserf-net",
+   "name": "The Settlers",
+   "repo": "Pyrdacor/freeserf.net",
+   "games": [
+    "The Settlers"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "the-settlers-3-jsettlers",
+   "name": "The Settlers 3",
+   "repo": "dos-ise/settlers-remake",
+   "games": [
+    "The Settlers 3"
+   ],
+   "consoles": [
+    "pc",
+    "mobile"
+   ]
+  },
+  {
+   "id": "the-simpsons-hit-run-the-simpsons-hit-run-android",
+   "name": "The Simpsons: Hit & Run",
+   "repo": "Carlox33/The-Simpsons-Hit-and-Run-Android",
+   "games": [
+    "The Simpsons: Hit & Run"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "tiny-toon-adventures-buster-busts-loose-buster-busts-loose-pc-port",
+   "name": "Tiny Toon Adventures: Buster Busts Loose!",
+   "repo": "Darhkfox/BusterBustsLoose",
+   "games": [
+    "Tiny Toon Adventures: Buster Busts Loose!"
+   ],
+   "consoles": [
+    "snes"
+   ]
+  },
+  {
+   "id": "tyrian-2000-opentyrian2000",
+   "name": "Tyrian 2000",
+   "repo": "andyvand/opentyrian2000",
+   "games": [
+    "Tyrian 2000"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "ultima-iii-exodus",
+   "name": "Ultima III: Exodus",
+   "repo": "synthwave-pixel/ultima3",
+   "games": [
+    "Ultima III: Exodus"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "ultima-v-warriors-of-destiny-ultima-v",
+   "name": "Ultima V: Warriors of Destiny",
+   "repo": "synthwave-pixel/ultima5",
+   "games": [
+    "Ultima V: Warriors of Destiny"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "ultima-vii-the-black-gate-exult",
+   "name": "Ultima VII: The Black Gate",
+   "repo": "exult/exult",
+   "games": [
+    "Ultima VII: The Black Gate"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "uncharted-the-nathan-drake-collection-uncharted-android",
+   "name": "Uncharted: The Nathan Drake Collection",
+   "repo": "revvv991/uncharted-android",
+   "games": [
+    "Uncharted: The Nathan Drake Collection"
+   ],
+   "consoles": [
+    "ps4",
+    "mobile"
+   ]
+  },
+  {
+   "id": "wario-land-super-mario-land-3-bigodao",
+   "name": "Wario Land: Super Mario Land 3",
+   "repo": "GABRIELNNK/Bigodao",
+   "games": [
+    "Wario Land: Super Mario Land 3"
+   ],
+   "consoles": [
+    "gb",
+    "gbc"
+   ]
+  },
+  {
+   "id": "warioware-twisted-warioware-twisted-recomp",
+   "name": "WarioWare: Twisted!",
+   "repo": "mstan/WarioWareTwistedRecomp",
+   "games": [
+    "WarioWare: Twisted!"
+   ],
+   "consoles": [
+    "gba"
+   ]
+  },
+  {
+   "id": "whiplash-roller",
+   "name": "Whiplash",
+   "repo": "FatalDecomp/ROLLER",
+   "games": [
+    "Whiplash"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "woody-woodpecker-escape-from-buzz-buzzard-park-woodyre",
+   "name": "Woody Woodpecker: Escape from Buzz Buzzard Park",
+   "repo": "jjmhalew/WoodyRE",
+   "games": [
+    "Woody Woodpecker: Escape from Buzz Buzzard Park"
+   ],
+   "consoles": [
+    "pc"
+   ]
+  },
+  {
+   "id": "wwe-smackdown-vs-raw-2011-wwe-svr2011-pc",
+   "name": "WWE SmackDown vs. Raw 2011",
+   "repo": "KaikoClanworth1/wwe-svr2011-pc",
+   "games": [
+    "WWE SmackDown vs. Raw 2011"
+   ],
+   "consoles": [
+    "x360"
+   ]
+  },
+  {
+   "id": "xenogears-xenogears-ex-machina",
+   "name": "Xenogears",
+   "repo": "brianblakely/xenogears-ex-machina",
+   "games": [
+    "Xenogears"
+   ],
+   "consoles": [
+    "ps1"
+   ]
+  },
+  {
+   "id": "yu-gi-oh-forbidden-memories-yu-gi-oh-forbidden-memories-recompiled",
+   "name": "Yu-Gi-Oh! Forbidden Memories",
+   "repo": "Unchiga/Yu-Gi-Oh-Forbidden-Memories-Recompiled",
+   "games": [
+    "Yu-Gi-Oh! Forbidden Memories"
+   ],
+   "consoles": [
+    "ps1"
+   ]
+  },
+  {
+   "id": "z2rs",
+   "name": "Zelda II: The Adventure of Link",
+   "repo": "troyedwardsjr/z2rs",
+   "games": [
+    "The Legend of Zelda: The Adventure of Link"
+   ],
+   "consoles": [
+    "nes"
+   ]
+  },
+  {
+   "id": "zombies-ate-my-neighbors-undead-neighbor-eaters-droid",
+   "name": "Zombies Ate My Neighbors",
+   "repo": "sirdankz/Undead-Neighbor-Eaters-Droid",
+   "games": [
+    "Zombies Ate My Neighbors"
+   ],
+   "consoles": [
+    "snes"
+   ]
+  }
+ ]
+}
