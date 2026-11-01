@@ -357,6 +357,7 @@ public class SetupActivity extends Activity {
 
     // steps
     private void render() {
+        emuGen++;
         content.removeAllViews();
         etUser = null;
         etKey = null;
@@ -679,16 +680,80 @@ public class SetupActivity extends Activity {
         Shared.reload(this);
     }
 
+    /** Everything the emulator page lists, worked out off the main thread (it reads app lists and folders). */
+    private static final class EmuData {
+        final List<String> found = new ArrayList<String>();
+        final List<Recipes.Recipe> recipes = new ArrayList<Recipes.Recipe>();
+        final Map<String, String> pkgs = new HashMap<String, String>();
+        final List<SystemMap.Sys> systems = new ArrayList<SystemMap.Sys>();
+        final Map<String, List<String>> standalone = new HashMap<String, List<String>>();
+        final Map<String, List<String>> cores = new HashMap<String, List<String>>();
+        boolean coresRead;
+    }
+
+    private int emuGen;
+
     private void stepEmulators() {
-        text("RetroArch", 17, TEXT);
-        List<String> found = new ArrayList<String>();
-        for (String pkg : RA_PACKAGES) {
-            try {
-                getPackageManager().getPackageInfo(pkg, 0);
-                found.add(pkg);
-            } catch (Exception ignored) {
+        final int gen = ++emuGen;
+        text("Looking for your emulators...", 14, MUTED);
+        final String raPkgNow = raPackage;
+        final Map<String, String> choices = new HashMap<String, String>(emuChoice);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final EmuData d = new EmuData();
+                try {
+                    RaCores.refresh();
+                    for (String pkg : RA_PACKAGES) {
+                        try {
+                            getPackageManager().getPackageInfo(pkg, 0);
+                            d.found.add(pkg);
+                        } catch (Exception ignored) {
+                        }
+                    }
+                    for (Recipes.Recipe r : Recipes.all(SetupActivity.this)) {
+                        String pkg = Recipes.installedPackage(SetupActivity.this, r);
+                        d.recipes.add(r);
+                        d.pkgs.put(r.id, pkg == null ? "" : pkg);
+                    }
+                    String raUse = d.found.isEmpty() ? "" : (raPkgNow.isEmpty() || !d.found.contains(raPkgNow) ? d.found.get(0) : raPkgNow);
+                    d.coresRead = !raUse.isEmpty() && RaCores.installed(SetupActivity.this, raUse) != null;
+                    for (SystemMap.Sys sys : Shared.systems().all) {
+                        if (!sys.dir().isDirectory()) continue;
+                        List<String> st = new ArrayList<String>();
+                        for (String id : sys.standalones) {
+                            String p = d.pkgs.get(id);
+                            if (p != null && !p.isEmpty()) st.add(id);
+                        }
+                        List<String> cores = new ArrayList<String>();
+                        if (!raUse.isEmpty()) {
+                            String curVal = choices.containsKey(sys.folder) ? choices.get(sys.folder) : get("emu." + sys.folder, "");
+                            String curCore = curVal.startsWith("retroarch:") ? curVal.substring(10).split("@")[0] : "";
+                            cores = RaCores.forSystem(SetupActivity.this, sys, raUse, curCore);
+                        }
+                        d.systems.add(sys);
+                        d.standalone.put(sys.folder, st);
+                        d.cores.put(sys.folder, cores);
+                    }
+                } catch (Exception ignored) {
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (isFinishing() || isDestroyed() || gen != emuGen || step != 3) return;
+                        content.removeAllViews();
+                        emuSpinners.clear();
+                        spRa = null;
+                        buildEmulators(d);
+                    }
+                });
             }
-        }
+        }).start();
+    }
+
+    private void buildEmulators(EmuData d) {
+        text("RetroArch", 17, TEXT);
+        List<String> found = d.found;
         if (found.isEmpty()) {
             text("RetroArch was not found. Install it to play most systems.", 14, GOLD);
         } else {
@@ -697,9 +762,9 @@ public class SetupActivity extends Activity {
         }
 
         text("Standalone emulators", 17, TEXT);
-        for (Recipes.Recipe r : Recipes.all(this)) {
-            String pkg = Recipes.installedPackage(this, r);
-            if (pkg != null) {
+        for (Recipes.Recipe r : d.recipes) {
+            String pkg = d.pkgs.get(r.id);
+            if (pkg != null && !pkg.isEmpty()) {
                 text("Found: " + r.label + " (" + pkg + ")", 14, TEAL);
             } else {
                 text("Not installed: " + r.label, 14, MUTED);
@@ -711,32 +776,25 @@ public class SetupActivity extends Activity {
         boolean haveRa = !found.isEmpty();
         emuValues.clear();
         boolean any = false;
-        for (SystemMap.Sys sys : Shared.systems().all) {
-            if (!sys.dir().isDirectory()) continue;
-
+        for (SystemMap.Sys sys : d.systems) {
             List<String> items = new ArrayList<String>();
             List<String> values = new ArrayList<String>();
-            for (String id : sys.standalones) {
+            for (String id : d.standalone.get(sys.folder)) {
                 Recipes.Recipe r = Recipes.byId(this, id);
-                if (r == null || Recipes.installedPackage(this, r) == null) continue;
+                if (r == null) continue;
                 items.add("Standalone: " + r.label);
                 values.add("standalone:" + id);
             }
-            if (haveRa) {
-                String curVal = emuChoice.containsKey(sys.folder) ? emuChoice.get(sys.folder) : get("emu." + sys.folder, "");
-                String curCore = curVal.startsWith("retroarch:") ? curVal.substring(10).split("@")[0] : "";
-                List<String> cores = RaCores.forSystem(this, sys, raPackage.isEmpty() ? found.get(0) : raPackage, curCore);
-                for (String c : cores) {
-                    items.add("RetroArch: " + c);
-                    values.add("retroarch:" + c);
-                }
+            for (String c : d.cores.get(sys.folder)) {
+                items.add("RetroArch: " + c);
+                values.add("retroarch:" + c);
             }
             if (items.isEmpty()) continue;
 
             if (!any) {
                 text("Which emulator for each system?", 17, TEXT);
                 text("Only the systems found in your ROMs folder are listed, with the emulators you have installed.", 13, MUTED);
-                if (haveRa && RaCores.installed(this, raPackage.isEmpty() ? found.get(0) : raPackage) == null) {
+                if (haveRa && !d.coresRead) {
                     text("Couldn't find RetroArch's cores, so every core the app knows for a system is listed, installed or not. "
                             + "To list only the installed ones, set RetroArch's Cores folder to /storage/emulated/0/RetroArch/cores "
                             + "and give this app file access.", 13, MUTED);

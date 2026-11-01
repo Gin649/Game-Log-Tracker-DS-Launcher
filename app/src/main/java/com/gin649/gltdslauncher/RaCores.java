@@ -44,6 +44,30 @@ final class RaCores {
      */
     static Set<String> installed(Context ctx, String pkg) {
         if (pkg == null || pkg.isEmpty()) return null;
+        Cached c = cache.get(pkg);
+        if (c != null && System.currentTimeMillis() - c.at < 30000) return c.cores;
+        Set<String> r = scan(ctx, pkg);
+        cache.put(pkg, new Cached(r));
+        return r;
+    }
+
+    private static final class Cached {
+        final Set<String> cores;
+        final long at = System.currentTimeMillis();
+
+        Cached(Set<String> cores) {
+            this.cores = cores;
+        }
+    }
+
+    private static final java.util.Map<String, Cached> cache = new java.util.HashMap<String, Cached>();
+
+    /** Forget what was found, so the next look reads the folders again. */
+    static void refresh() {
+        cache.clear();
+    }
+
+    private static Set<String> scan(Context ctx, String pkg) {
         List<File> dirs = new ArrayList<File>();
         try {
             ApplicationInfo ai = ctx.getPackageManager().getApplicationInfo(pkg, 0);
