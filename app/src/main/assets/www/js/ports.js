@@ -77,18 +77,17 @@ function thorWirePorts(card, title){
   portsForGame(title).then(ports => {
     if(!ports.length || !card.isConnected) return;
     host.innerHTML = '';
-    ports.forEach(p => wirePort(card, host, p));
+    ports.forEach(p => wirePort(card, host, p, ports.length > 1));
   });
 }
 
-function wirePort(card, host, p){
+function wirePort(card, host, p, several){
   const b = window.ThorBridge;
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const tag = several ? ' (' + esc(p.name) + ')' : ''; // only when a game has more than one port, to tell them apart
   const box = document.createElement('div');
   box.className = 'gd-port';
-  box.innerHTML = `<div class="gd-label">ANDROID PORT</div>
-    <div class="gd-port-name">${esc(p.name)}</div>
-    <button class="btn-view-achievements btn-play-thor gd-port-btn"></button>
+  box.innerHTML = `<button class="btn-view-achievements btn-play-thor gd-port-btn"></button>
     <div class="thor-play-msg gd-port-msg" style="display:none;"></div>
     <div class="gd-port-note">A native Android version of this game. It needs your own copy of the game.</div>`;
   host.appendChild(box);
@@ -111,7 +110,7 @@ function wirePort(card, host, p){
     const s = read();
     if(s.installed){
       btn.disabled = false;
-      btn.innerHTML = '<span class="arrow">▶</span> Play installed Android port';
+      btn.innerHTML = '<span class="arrow">▶</span> Play installed Android port' + tag;
       btn.dataset.mode = 'play';
       if(s.state === 'ready') say('');
       stop();
@@ -125,7 +124,7 @@ function wirePort(card, host, p){
     }
     btn.disabled = false;
     btn.dataset.mode = 'get';
-    btn.innerHTML = s.state === 'error' ? 'Try again' : '⬇ Get the Android port';
+    btn.innerHTML = s.state === 'error' ? 'Try again' + tag : '⬇ Get the Android port' + tag;
     if(s.state === 'error') say(s.message || 'Could not get the port.', true);
     else if(s.state === 'ready'){
       say(s.message || '', false);

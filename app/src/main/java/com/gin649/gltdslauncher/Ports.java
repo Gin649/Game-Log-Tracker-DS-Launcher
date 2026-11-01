@@ -95,7 +95,16 @@ final class Ports {
         if (i == null) return "{\"ok\":false,\"message\":\"Could not open the port.\"}";
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try {
-            act.startActivity(i);
+            // opens where games open: the top screen (the other screen when "use one screen only" is on)
+            int display = DisplayPicker.gameDisplayId(act, false);
+            if (display >= 0) {
+                android.app.ActivityOptions options = android.app.ActivityOptions.makeBasic();
+                options.setLaunchDisplayId(display);
+                act.startActivity(i, options.toBundle());
+            } else {
+                act.startActivity(i);
+            }
+            ArtWatch.start(act, pkg);
             return "{\"ok\":true,\"message\":\"Starting the port…\"}";
         } catch (Exception e) {
             return "{\"ok\":false,\"message\":\"Could not open the port.\"}";
