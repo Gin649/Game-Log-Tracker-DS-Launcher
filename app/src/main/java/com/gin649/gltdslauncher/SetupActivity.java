@@ -757,6 +757,22 @@ public class SetupActivity extends Activity {
         }).start();
     }
 
+    /** A button that shows or hides a group of rows under it. */
+    private void addDropdown(final String label, final LinearLayout box, boolean open) {
+        final Button toggle = action(label, null);
+        box.setVisibility(open ? View.VISIBLE : View.GONE);
+        toggle.setText(label + (open ? "  \u25b4" : "  \u25be"));
+        toggle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean show = box.getVisibility() != View.VISIBLE;
+                box.setVisibility(show ? View.VISIBLE : View.GONE);
+                toggle.setText(label + (show ? "  \u25b4" : "  \u25be"));
+            }
+        });
+        content.addView(box);
+    }
+
     private void buildEmulators(EmuData d) {
         text("RetroArch", 17, TEXT);
         List<String> found = d.found;
@@ -768,14 +784,20 @@ public class SetupActivity extends Activity {
         }
 
         text("Standalone emulators", 17, TEXT);
+        final LinearLayout installedBox = new LinearLayout(this);
+        installedBox.setOrientation(LinearLayout.VERTICAL);
         final LinearLayout notInstalled = new LinearLayout(this);
         notInstalled.setOrientation(LinearLayout.VERTICAL);
         notInstalled.setVisibility(View.GONE);
-        int missing = 0;
+        int have = 0, missing = 0;
+        List<TextView> haveRows = new ArrayList<TextView>();
         for (Recipes.Recipe r : d.recipes) {
             String pkg = d.pkgs.get(r.id);
             if (pkg != null && !pkg.isEmpty()) {
-                text("Found: " + r.label + " (" + pkg + ")", 14, TEAL);
+                have++;
+                TextView t = text("Found: " + r.label + " (" + pkg + ")", 14, TEAL);
+                content.removeView(t);
+                installedBox.addView(t);
             } else {
                 missing++;
                 TextView t = text(r.label, 14, MUTED);
@@ -783,19 +805,11 @@ public class SetupActivity extends Activity {
                 notInstalled.addView(t);
             }
         }
+        if (have > 0) {
+            addDropdown("Installed (" + have + ")", installedBox, true);
+        }
         if (missing > 0) {
-            final String closed = "Not installed (" + missing + ")  \u25be";
-            final String open = "Not installed (" + missing + ")  \u25b4";
-            final Button toggle = action(closed, null);
-            toggle.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    boolean show = notInstalled.getVisibility() != View.VISIBLE;
-                    notInstalled.setVisibility(show ? View.VISIBLE : View.GONE);
-                    toggle.setText(show ? open : closed);
-                }
-            });
-            content.addView(notInstalled);
+            addDropdown("Not installed (" + missing + ")", notInstalled, false);
         }
 
         // One choice per system folder you have: every standalone emulator that is installed and can play it,
