@@ -95,7 +95,7 @@ final class DiscPatcher {
     }
 
     /** Runs a tool and waits. Percentages in its output ("45.2% complete") drive the progress bar. */
-    private static void exec(List<String> cmd, Progress p, String phase) throws IOException {
+    static void exec(List<String> cmd, Progress p, String phase) throws IOException {
         ProcessBuilder pb = new ProcessBuilder(cmd);
         pb.redirectErrorStream(true);
         final Process proc = pb.start();
@@ -147,13 +147,13 @@ final class DiscPatcher {
         }
     }
 
-    private static void deleteTree(File f) {
+    static void deleteTree(File f) {
         File[] kids = f.listFiles();
         if (kids != null) for (File k : kids) deleteTree(k);
         f.delete();
     }
 
-    private static void requireSpace(File dir, long needed) throws PatchException {
+    static void requireSpace(File dir, long needed) throws PatchException {
         long free = dir.getUsableSpace();
         if (free > 0 && free < needed) {
             throw new PatchException("Not enough free space for this. It needs about " + (needed / 1048576 + 1) + " MB free and "

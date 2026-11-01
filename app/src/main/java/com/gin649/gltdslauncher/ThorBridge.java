@@ -943,6 +943,67 @@ final class ThorBridge {
         if (j != null) j.cancel = true;
     }
 
+    /** Unpacks or converts the game's ROM into Downloads/Roms for Ports. Poll with discPatchStatus. Returns {ok, job} or {ok:false, message}. */
+    @JavascriptInterface
+    public String portRomStart(String json) {
+        JSONObject o = new JSONObject();
+        try {
+            if (!Environment.isExternalStorageManager()) {
+                o.put("ok", false);
+                o.put("message", "Allow access to all files first (Settings).");
+                return o.toString();
+            }
+            JSONObject in = new JSONObject(json);
+            final RomIndex.Rom rom = Shared.findRom(in.optString("title"), in.optString("console"));
+            if (rom == null) {
+                o.put("ok", false);
+                o.put("message", "No ROM found for this game on this device.");
+                return o.toString();
+            }
+            DiscPatcher.setTools(new File(act.getApplicationInfo().nativeLibraryDir, "libchdman.so"),
+                    new File(act.getApplicationInfo().nativeLibraryDir, "libdolphintool.so"));
+            final String jobId = nextId();
+            final DiscJob job = new DiscJob();
+            job.phase = "Starting";
+            DISC_JOBS.put(jobId, job);
+            Thread t = new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        File out = RomExport.run(rom.file, new DiscPatcher.Progress() {
+                            public void update(String phase, long done, long total) {
+                                job.phase = phase;
+                                job.done = done;
+                                job.total = total;
+                            }
+
+                            public boolean cancelled() {
+                                return job.cancel;
+                            }
+                        });
+                        job.name = out.getName();
+                        job.path = out.getPath();
+                        job.state = "done";
+                    } catch (Throwable e) {
+                        job.message = e instanceof OutOfMemoryError ? "Ran out of memory preparing this ROM."
+                                : (e.getMessage() == null ? "Could not prepare the ROM." : e.getMessage());
+                        job.state = "error";
+                    }
+                }
+            }, "port-rom");
+            t.setDaemon(true);
+            t.start();
+            o.put("ok", true);
+            o.put("job", jobId);
+        } catch (Exception e) {
+            try {
+                o.put("ok", false);
+                o.put("message", e.getMessage() == null ? "Could not start." : e.getMessage());
+            } catch (Exception ignored) {
+            }
+        }
+        return o.toString();
+    }
+
     // Native Android ports of games (see Ports.java)
     @JavascriptInterface
     public String portState(String slug, String name) {
