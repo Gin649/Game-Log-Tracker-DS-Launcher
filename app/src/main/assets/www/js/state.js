@@ -27,6 +27,7 @@ function enqueueTask(fn){
   return run;
 }
 let activeTab = 'overview';
+let libraryDirty = false; // playtime arrived while the library list was not on screen
 const gameExtendedCache = {}; // GameID -> API_GetGameExtended result
 
 const $ = (sel) => document.querySelector(sel);

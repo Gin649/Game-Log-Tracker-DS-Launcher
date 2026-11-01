@@ -193,14 +193,18 @@ async function loadAll(opts){
     renderRecentGames(recentGamesData);
     setTimeout(() => {
       let lastDraw = 0;
+      // The library list is only redrawn while you are looking at it. Otherwise it is marked and drawn when you open it.
+      const redraw = () => {
+        if(activeTab !== 'library'){ libraryDirty = true; return; }
+        libraryDirty = false;
+        try{ renderLibrary(); }catch(e){ console.error('renderLibrary failed:', e); }
+      };
       loadEstimatedHoursFor(remainingByRecency, () => {
         const now = Date.now();
         if(now - lastDraw < 4000) return;
         lastDraw = now;
-        try{ renderLibrary(); }catch(e){ console.error('renderLibrary failed:', e); }
-      }).then(() => {
-        try{ renderLibrary(); }catch(e){ console.error('renderLibrary failed:', e); }
-      });
+        redraw();
+      }).then(redraw);
     }, 3000);
   });
 }

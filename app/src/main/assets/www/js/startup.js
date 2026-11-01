@@ -14,6 +14,8 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     $('#system-chips').classList.toggle('visible', tabName === 'library' || tabName === 'year' || tabName === 'backlog');
     if(tabName === 'apps' && typeof renderApps === 'function') renderApps();
 
+    if(tabName === 'library' && libraryDirty){ libraryDirty = false; try{ renderLibrary(); }catch(e){} }
+
     try{ renderSystemChips(); }catch(e){}
   });
 });
