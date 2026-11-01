@@ -80,6 +80,35 @@ function getLaunchBoxDescription(title, consoleName){
   }, 0));
 }
 
+// RA hacks are titled "~Hack~ Name". Their write-up is the author's first post in the hack's RA forum thread, not
+// the original game's text.
+const isHackTitle = t => /^\s*~hack~/i.test(String(t || ''));
+async function getHackInfo(gameId, title){
+  const out = { topic: 0, parent: '', text: null };
+  let info = null;
+  try{ info = await getGameExtended(gameId); }catch(e){}
+  if(!info) return out;
+  out.topic = Number(info.ForumTopicID) || 0;
+  const pid = Number(info.ParentGameID) || 0;
+  if(pid){ try{ const p = await getGameExtended(pid); out.parent = (p && p.Title) || ''; }catch(e){} }
+  if(out.topic && typeof thorBridge !== 'undefined' && thorBridge && thorBridge.forumFirstPost){
+    const cacheKey = `hack-desc:${out.topic}`;
+    try{
+      const r = await window.storage.get(cacheKey, false);
+      if(r && r.value){
+        const parsed = JSON.parse(r.value);
+        if(Date.now() - parsed.ts < (parsed.text ? 30 : 1) * 24 * 60 * 60 * 1000){ out.text = parsed.text; return out; }
+      }
+    }catch(e){}
+    const text = await new Promise(resolve => setTimeout(() => {
+      try{ resolve(thorBridge.forumFirstPost(out.topic) || ''); }catch(e){ resolve(''); }
+    }, 0));
+    out.text = text.length >= 40 ? tidyDescription(text) : null;
+    try{ await window.storage.set(cacheKey, JSON.stringify({ text: out.text, ts: Date.now() }), false); }catch(e){}
+  }
+  return out;
+}
+
 function cleanDescription(raw){
   let text = String(raw || '').replace(/\r/g, '').trim();
   // RAWG often adds a Spanish copy after a line that just says "Español".
@@ -184,14 +213,14 @@ function playtimeBox(label, seconds, players, mine){
 }
 
 // aboutOnly: non-RA games have no playtime data, so only the write-up shows.
-function renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine){
+function renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine, hack){
   if(description) description = tidyDescription(description); // fixes write-ups cached before tidying existed
   const hard = statsMode === 'hardcore';
   const m = (!aboutOnly && stats) ? (hard ? stats.hardcore : stats.casual) : null;
   const my = (!aboutOnly && mine) ? (hard ? mine.hardcore : mine.casual) : null;
   const hasTimes = !!(m && (m.beat || m.master)) || !!(my && (my.beat || my.master));
 
-  if(!hasTimes && !description){
+  if(!hasTimes && !description && !hack){
     wrap.innerHTML = `<div class="gd-empty">${aboutOnly ? 'No write-up available for this game yet.' : 'No details available for this game yet.'}</div>`;
     addManualSection(wrap, manualCtx);
     return;
@@ -205,6 +234,11 @@ function renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine)
       : '<div class="gd-empty">No playtime data yet.</div>';
   }
 
+  if(hack){
+    const orig = hack.parent ? ' of ' + esc(String(hack.parent).replace(/^(?:~[^~]*~\s*)+/, '')) : '';
+    html += `<div class="gd-label${aboutOnly ? '' : ' gd-about-label'}">HACK</div><div class="gd-hack">Hack${orig}</div>`;
+    if(hack.topic) html += `<a class="patch-info-btn" href="https://retroachievements.org/forums/topic/${hack.topic}" target="_blank" rel="noopener">RA forum thread: the hack's notes \u2197</a>`;
+  }
   if(description){
     html += `<div class="gd-label${aboutOnly ? '' : ' gd-about-label'}">ABOUT</div><div class="gd-about"></div>`;
     if(description.length > 280) html += '<button class="gd-more">Read more</button>';
@@ -237,7 +271,8 @@ function setupGameDetailsUI(gameId, title, card, opts){
   let pending = null;
   const load = () => pending || (pending = Promise.allSettled([
     aboutOnly ? Promise.resolve(null) : getPlaytimeStats(gameId),
-    getRawgDescription(title).then(d => d || getLaunchBoxDescription(title, opts && opts.consoleName)),
+    isHackTitle(title) ? Promise.resolve(null) : getRawgDescription(title).then(d => d || getLaunchBoxDescription(title, opts && opts.consoleName)),
+    isHackTitle(title) ? getHackInfo(gameId, title) : Promise.resolve(null),
     aboutOnly ? Promise.resolve(null) : getMyTimes(gameId),
   ]));
   setTimeout(load, 400);
@@ -251,13 +286,14 @@ function setupGameDetailsUI(gameId, title, card, opts){
 
     loaded = true;
     wrap.innerHTML = '<div class="achievements-list-loading">Loading details…</div>';
-    const [statsRes, descRes, mineRes] = await load();
+    const [statsRes, descRes, hackRes, mineRes] = await load();
     if(card.dataset.gameId !== String(gameId)) return; // another game was opened meanwhile
 
     const stats = statsRes.status === 'fulfilled' ? statsRes.value : null;
-    const description = descRes.status === 'fulfilled' ? descRes.value : null;
+    const hack = hackRes.status === 'fulfilled' ? hackRes.value : null;
+    const description = isHackTitle(title) ? (hack && hack.text) : (descRes.status === 'fulfilled' ? descRes.value : null);
     const mine = mineRes.status === 'fulfilled' ? mineRes.value : null;
-    renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine);
-    if(!stats && !description){ loaded = false; pending = null; } // both failed: retry next time
+    renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine, hack);
+    if(!stats && !description && !hack){ loaded = false; pending = null; } // both failed: retry next time
   });
 }
