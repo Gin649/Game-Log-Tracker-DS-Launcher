@@ -24,8 +24,9 @@ final class UsageCount {
     static void ping(final Context ctx) {
         if (CODE.isEmpty()) return;
         final boolean debug = BuildConfig.DEBUG; // test builds show up under /debug/ so they can be told apart, and send every launch
-        final String day = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
-        if (!debug && day.equals(Prefs.get(ctx, "countDay2", ""))) return;
+        // once a day per version, so an update is counted on its first start, and test builds never use up the day
+        final String day = new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date()) + " " + BuildConfig.VERSION_NAME;
+        if (!debug && day.equals(Prefs.get(ctx, "countDay3", ""))) return;
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -44,7 +45,7 @@ final class UsageCount {
                         ua = "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Mobile Safari/537.36";
                     }
                     c.setRequestProperty("User-Agent", ua + " GLTThor/" + BuildConfig.VERSION_NAME);
-                    if (c.getResponseCode() / 100 == 2) Prefs.put(ctx, "countDay2", day); // otherwise try again next start
+                    if (c.getResponseCode() / 100 == 2 && !debug) Prefs.put(ctx, "countDay3", day); // otherwise try again next start
                 } catch (Exception ignored) {
                     // a counter must never get in the way
                 } finally {
