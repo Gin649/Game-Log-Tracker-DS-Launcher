@@ -19,6 +19,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import org.json.JSONObject;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
@@ -130,6 +131,7 @@ public class SetupActivity extends Activity {
         topDisplay = DisplayPicker.prefs(this).getInt("topDisplay", -1);
         singleScreen = DisplayPicker.singleScreen(this);
         singleWhich = DisplayPicker.singleWhich(this);
+        restoreDraft();
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -177,6 +179,82 @@ public class SetupActivity extends Activity {
 
         if (frontend.equals("esde") && esRoot.isEmpty()) esRoot = guessEsRoot();
         render();
+    }
+
+    private boolean closing;
+
+    /** What was typed or chosen so far, kept when the app is left (to look up a key, say) in case Android closes the wizard meanwhile. */
+    private void saveDraft() {
+        try {
+            JSONObject d = new JSONObject();
+            d.put("step", step);
+            d.put("raUser", raUser);
+            d.put("raKey", raKey);
+            d.put("rawgKey", rawgKey);
+            d.put("sgdbKey", sgdbKey);
+            d.put("romsRoot", romsRoot);
+            d.put("romsTree", romsTree);
+            d.put("esRoot", esRoot);
+            d.put("dataRoot", dataRoot);
+            d.put("frontend", frontend);
+            d.put("raPackage", raPackage);
+            d.put("siteUrl", siteUrl);
+            d.put("launchBoxArt", launchBoxArt);
+            d.put("useEsdeMedia", useEsdeMedia);
+            d.put("cssWidth", cssWidth);
+            d.put("topDisplay", topDisplay);
+            d.put("singleScreen", singleScreen);
+            d.put("singleWhich", singleWhich);
+            JSONObject emu = new JSONObject();
+            for (Map.Entry<String, String> e : emuChoice.entrySet()) emu.put(e.getKey(), e.getValue());
+            d.put("emu", emu);
+            put("wizardDraft", d.toString());
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void restoreDraft() {
+        String raw = get("wizardDraft", "");
+        if (raw.isEmpty()) return;
+        try {
+            JSONObject d = new JSONObject(raw);
+            step = Math.max(0, Math.min(LAST_STEP, d.optInt("step", 0)));
+            raUser = d.optString("raUser", raUser);
+            raKey = d.optString("raKey", raKey);
+            rawgKey = d.optString("rawgKey", rawgKey);
+            sgdbKey = d.optString("sgdbKey", sgdbKey);
+            romsRoot = d.optString("romsRoot", romsRoot);
+            romsTree = d.optString("romsTree", romsTree);
+            esRoot = d.optString("esRoot", esRoot);
+            dataRoot = d.optString("dataRoot", dataRoot);
+            frontend = d.optString("frontend", frontend);
+            raPackage = d.optString("raPackage", raPackage);
+            siteUrl = d.optString("siteUrl", siteUrl);
+            launchBoxArt = d.optBoolean("launchBoxArt", launchBoxArt);
+            useEsdeMedia = d.optBoolean("useEsdeMedia", useEsdeMedia);
+            cssWidth = d.optInt("cssWidth", cssWidth);
+            topDisplay = d.optInt("topDisplay", topDisplay);
+            singleScreen = d.optBoolean("singleScreen", singleScreen);
+            singleWhich = d.optString("singleWhich", singleWhich);
+            JSONObject emu = d.optJSONObject("emu");
+            if (emu != null) {
+                java.util.Iterator<String> keys = emu.keys();
+                while (keys.hasNext()) {
+                    String k = keys.next();
+                    emuChoice.put(k, emu.getString(k));
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (!closing) {
+            collect();
+            saveDraft();
+        }
+        super.onPause();
     }
 
     @Override
@@ -838,6 +916,8 @@ public class SetupActivity extends Activity {
 
     /** Closes the wizard and removes it from the recent-apps list too, so it does not stay open in the taskbar. */
     private void closeWizard() {
+        closing = true;
+        put("wizardDraft", "");
         finishAndRemoveTask();
     }
 }
