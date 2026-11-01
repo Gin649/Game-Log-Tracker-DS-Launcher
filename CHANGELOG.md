@@ -2,6 +2,11 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
+## v1.2.0
+
+### Fixed
+- Leftover cache files from earlier versions (guide archive indexes and auto-fetched cheats, one small file each) are now moved into the database file on start, so the data folder no longer fills up with them. Auto-fetched cheats are now kept in the database too.
+
 ## v1.0.9
 
 ### Added
