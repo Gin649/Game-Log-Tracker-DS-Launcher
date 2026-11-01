@@ -805,9 +805,12 @@ public class SetupActivity extends Activity {
                 notInstalled.addView(t);
             }
         }
-        if (have > 0) {
-            addDropdown("Installed (" + have + ")", installedBox, true);
+        if (have == 0) {
+            TextView none = text("None found yet", 14, MUTED);
+            content.removeView(none);
+            installedBox.addView(none);
         }
+        addDropdown("Installed (" + have + ")", installedBox, true);
         if (missing > 0) {
             addDropdown("Not installed (" + missing + ")", notInstalled, false);
         }

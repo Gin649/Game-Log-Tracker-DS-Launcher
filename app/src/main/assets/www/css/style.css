@@ -176,6 +176,7 @@
     transform:translateZ(0);-webkit-transform:translateZ(0);will-change:transform;
     font-family:'Space Mono',monospace;font-size:14px;font-weight:700;color:var(--text);
   }
+  .gd-hack a{color:var(--gold-dim);text-decoration:underline;}
   body.show-status .device-status{display:flex;}
   body.show-status{padding-top:calc(24px + var(--status-h) + env(safe-area-inset-top));}
   .device-status .ds-hearts{display:flex;align-items:center;gap:3px;}
