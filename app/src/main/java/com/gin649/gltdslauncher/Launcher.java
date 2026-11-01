@@ -151,8 +151,10 @@ final class Launcher {
     }
 
     /** mode: "" = ask first when a multi-disc game has no playlist, "create" = make one and play it, "first" = disc 1 only. */
-    static JSONObject launch(Activity act, String title, String console, String mode) {
-        RomIndex.Rom r = Shared.findRom(title, console);
+    static JSONObject launch(Activity act, String title, String console, String mode, String file) {
+        // A game added from a ROM you picked keeps that file's path: play that exact file, not a look-alike by name
+        RomIndex.Rom r = Shared.findRomByPath(file);
+        if (r == null) r = Shared.findRom(title, console);
         // Standalone emulators such as Dolphin don't read .m3u playlists: ask which disc to start instead
         if (r != null && !usesRetroArch(act, r)) {
             List<File> discs = discFiles(r);
@@ -196,6 +198,12 @@ final class Launcher {
                 }
                 return o;
             }
+        }
+        if (r != null && file != null && !file.isEmpty() && r.file.getPath().equals(file)) {
+            if (!Environment.isExternalStorageManager()) {
+                return result(false, "Allow \"All files access\" for this app in Android settings, then try again.");
+            }
+            return launchRom(act, r);
         }
         return launch(act, title, console);
     }

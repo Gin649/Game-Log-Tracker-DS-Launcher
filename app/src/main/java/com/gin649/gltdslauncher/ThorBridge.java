@@ -77,7 +77,7 @@ final class ThorBridge {
     public String launch(String json) {
         try {
             JSONObject o = new JSONObject(json);
-            return Launcher.launch(act, o.optString("title"), o.optString("console"), o.optString("disc")).toString();
+            return Launcher.launch(act, o.optString("title"), o.optString("console"), o.optString("disc"), o.optString("file")).toString();
         } catch (Exception e) {
             return "{\"ok\":false,\"message\":\"Bad launch request.\"}";
         }

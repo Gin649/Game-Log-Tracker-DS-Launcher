@@ -91,9 +91,9 @@ function thorPlayButtonHtml(){
 }
 
 // Tells the app which game is open (for the top-screen art) and wires the Play button.
-function thorWirePlay(card, gameId, title, consoleName, artUrl){
+function thorWirePlay(card, gameId, title, consoleName, artUrl, romPath){
   if(!thorBridge) return;
-  const info = { gameId: String(gameId), title: title, console: consoleName, art: artUrl || '' };
+  const info = { gameId: String(gameId), title: title, console: consoleName, art: artUrl || '', file: romPath || '' };
   thorViewing(info);
 
   const btn = card.querySelector('#modal-play-btn');

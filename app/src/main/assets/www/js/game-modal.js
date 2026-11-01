@@ -207,7 +207,7 @@ function renderCustomGameModal(gameId, local, card){
     }
   });
 
-  thorWirePlay(card, gameId, local.Title, local.ConsoleName, boxArt);
+  thorWirePlay(card, gameId, local.Title, local.ConsoleName, boxArt, local.romPath);
   attachRawgLookup(gameId, local.Title, card);
   setupGameDetailsUI(gameId, local.Title, card, { aboutOnly: true, consoleName: local.ConsoleName });
   setupGameGuideUI(gameId, local.Title, card, local.ConsoleID);

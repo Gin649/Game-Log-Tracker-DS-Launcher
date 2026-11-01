@@ -136,7 +136,12 @@ final class Matcher {
         Set<String> union = new HashSet<String>(a);
         union.addAll(b);
         double j = union.isEmpty() ? 0 : (double) inter.size() / union.size();
-        return j >= 0.6 ? (int) (30 + 20 * j) : 0;
+        if (j < 0.6) return 0;
+        // The words the two titles do not share must only be noise ("version", "the", a region...). Otherwise
+        // "Kirby's Pinball Land" would pass for "Kirby's Dream Land", which shares most of its words.
+        Set<String> diff = new HashSet<String>(union);
+        diff.removeAll(inter);
+        return onlyNoise(diff.toArray(new String[0])) ? (int) (30 + 20 * j) : 0;
     }
 
     private static int regionBonus(String fileName) {

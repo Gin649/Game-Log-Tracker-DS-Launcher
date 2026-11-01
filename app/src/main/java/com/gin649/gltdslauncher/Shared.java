@@ -65,6 +65,16 @@ final class Shared {
         return Matcher.best(INDEX.forSystems(sys), title);
     }
 
+    /** The ROM in the list at exactly this path, or null. */
+    static RomIndex.Rom findRomByPath(String path) {
+        if (path == null || path.isEmpty()) return null;
+        INDEX.awaitReady(4000);
+        for (RomIndex.Rom r : INDEX.all()) {
+            if (r.file.getPath().equals(path)) return r;
+        }
+        return null;
+    }
+
     /** Resolve art for the game now open in the tracker and push it to the top screen. */
     static void showViewing(final String title, final String console, final String artUrl) {
         final int token = VIEW_TOKEN.incrementAndGet();
