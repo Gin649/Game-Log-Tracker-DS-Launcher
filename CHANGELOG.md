@@ -2,6 +2,18 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
+## v1.1.2
+
+### Added
+- Android ports: when a game has a native Android port, its profile offers "Download and Install the Android Port". Once installed, the same button becomes "Play installed Android port" and opens it on the top screen. The list of ports comes from two community catalogues. A port is shown only if it has an Android build and your device can run it. If a game has more than one, each is named on its button.
+- Prepare ROM button beside the port button: unzips the game's ROM (and turns CHD, RVZ and other disc formats into plain files, and N64 files into .z64) and saves it to Downloads, in "Roms for Ports", ready to pick inside the port.
+- Display Options, Game view: choose List View (the default) or Tile View for the Game Library and Backlog. Tile View shows the Last Played style tiles, with the three most recent first and the rest A-Z, and you can set 3, 4 or 5 tiles per row.
+
+### Changed
+- Easier navigation: the tabs, console row, search bar and column headings now stay in place while the list scrolls, and the controller moves through them more naturally.
+- Console chips no longer show a name cut in half at the edge, and the console you are on is always in view, including the last one.
+- Pull to refresh needs a shorter pull, starts only near the top edge, and its bar is smaller.
+
 ## v1.1.1
 
 ### Added
