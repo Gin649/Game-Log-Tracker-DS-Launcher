@@ -69,14 +69,24 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   const row = document.getElementById('system-chips');
   if(!row) return;
   let queued = false;
+  let lastActive = null;
   function apply(){
     queued = false;
     const box = row.getBoundingClientRect();
     if(!box.width) return;
+    // The console you are on is always kept in view: when it changes, the row scrolls to centre it.
+    const active = row.querySelector('.chip.active');
+    const key = active ? active.textContent : null;
+    if(active && key !== lastActive && row.classList.contains('visible')){
+      const max = Math.max(0, row.scrollWidth - row.clientWidth);
+      row.scrollLeft = Math.min(max, Math.max(0, active.offsetLeft - (row.clientWidth - active.offsetWidth) / 2));
+    }
+    lastActive = key;
     row.querySelectorAll('.chip').forEach(c => {
       const r = c.getBoundingClientRect();
       const cut = r.right > box.right + 1 || r.left < box.left - 1;
-      c.style.visibility = cut ? 'hidden' : '';
+      const keep = c.classList.contains('active') || c.classList.contains('pad-focus'); // never hide the one you are on
+      c.style.visibility = cut && !keep ? 'hidden' : '';
     });
   }
   const soon = () => { if(!queued){ queued = true; requestAnimationFrame(apply); } };
