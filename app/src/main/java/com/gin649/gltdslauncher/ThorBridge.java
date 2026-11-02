@@ -1015,8 +1015,8 @@ final class ThorBridge {
 
     /** "yes", "no" or "checking": does this port have an Android build in its recent releases? */
     @JavascriptInterface
-    public String portAvailable(String repo) {
-        return Ports.available(act, repo);
+    public String portAvailable(String repo, String pattern) {
+        return Ports.available(act, repo, pattern);
     }
 
     /** What this device can run: {abis, sdk, vulkan}. */
@@ -1026,8 +1026,8 @@ final class ThorBridge {
     }
 
     @JavascriptInterface
-    public void portGet(String slug, String repo) {
-        Ports.get(act, slug, repo);
+    public void portGet(String slug, String repo, String pattern, String zipEntry) {
+        Ports.get(act, slug, repo, pattern, zipEntry);
     }
 
     @JavascriptInterface

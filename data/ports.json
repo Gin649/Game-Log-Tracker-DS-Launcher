@@ -342,7 +342,8 @@
      "arm64-v8a"
     ],
     "min_sdk": 24
-   }
+   },
+   "zip": "(?i)\\.zip$"
   },
   {
    "id": "doraemon-nobita-to-mittsu-no-seireiseki-dora64",
@@ -360,7 +361,9 @@
      "arm64-v8a"
     ],
     "min_sdk": 24
-   }
+   },
+   "pattern": "(?i)android.*\\.zip$",
+   "zip": "(?i)\\.apk$"
   },
   {
    "id": "eternalsonata-eternalsonatareprise",
@@ -491,7 +494,9 @@
      "arm64-v8a"
     ],
     "min_sdk": 24
-   }
+   },
+   "pattern": "(?i)android.*\\.zip$",
+   "zip": "(?i)\\.apk$"
   },
   {
    "id": "heroesofmightandmagiciii-vcmi",
@@ -720,7 +725,8 @@
      "arm64-v8a"
     ],
     "min_sdk": 24
-   }
+   },
+   "pattern": "(?i)-android\\.apk$"
   },
   {
    "id": "knytt-stories-yknytt",
@@ -843,7 +849,9 @@
      "arm64-v8a"
     ],
     "min_sdk": 24
-   }
+   },
+   "pattern": "(?i)android.*\\.zip$",
+   "zip": "(?i)\\.apk$"
   },
   {
    "id": "mario-party-4-party-board-zeranemesis",
@@ -861,7 +869,8 @@
      "arm64-v8a"
     ],
     "min_sdk": 24
-   }
+   },
+   "pattern": "(?i)phone.*\\.apk$"
   },
   {
    "id": "mario-party-6-mario-party-6-native-port",
@@ -1330,7 +1339,8 @@
      "arm64-v8a"
     ],
     "min_sdk": 24
-   }
+   },
+   "pattern": "(?i)android.*\\.apk$"
   },
   {
    "id": "saru-get-you-saru-saru-daisakusen-ape-escape-mind-over-monkey",
@@ -1446,7 +1456,9 @@
      "arm64-v8a"
     ],
     "min_sdk": 24
-   }
+   },
+   "pattern": "(?i)android.*\\.zip$",
+   "zip": "(?i)\\.apk$"
   },
   {
    "id": "sonic-free-riders-free-riders-recompiled",
@@ -1464,7 +1476,8 @@
      "arm64-v8a"
     ],
     "min_sdk": 24
-   }
+   },
+   "pattern": "(?i)-android-arm64\\.apk$"
   },
   {
    "id": "sonic-r-sonic-r-android",
@@ -1566,7 +1579,9 @@
      "arm64-v8a"
     ],
     "min_sdk": 24
-   }
+   },
+   "pattern": "(?i)android.*\\.zip$",
+   "zip": "(?i)\\.apk$"
   },
   {
    "id": "super-mario-64-sm64coopdx",
@@ -2002,7 +2017,8 @@
      "arm64-v8a"
     ],
     "min_sdk": 24
-   }
+   },
+   "pattern": "(?i)ntsc.*\\.apk$"
   },
   {
    "id": "tiny-toon-adventures-buster-busts-loose-buster-busts-loose-pc-port",
@@ -2078,7 +2094,8 @@
      "arm64-v8a"
     ],
     "min_sdk": 24
-   }
+   },
+   "pattern": "(?i)signed\\.apk$"
   },
   {
    "id": "uncharted-the-nathan-drake-collection-uncharted-android",
@@ -2249,6 +2266,3802 @@
     "snes"
    ],
    "package": "com.zamn.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "waterdish-2ship2harkinian-android",
+   "name": "2 Ship 2 Harkinian (Waterdish)",
+   "repo": "Waterdish/2ship2harkinian-Android",
+   "games": [
+    "The Legend of Zelda: Majora's Mask"
+   ],
+   "consoles": [
+    "n64"
+   ],
+   "package": "com.dishii.mm",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "jameriquiah-2ship2harkinian",
+   "name": "2 Ship 2 Harkinian (Jameriquiah)",
+   "repo": "Jameriquiah/2ship2harkinian",
+   "games": [
+    "The Legend of Zelda: Majora's Mask"
+   ],
+   "consoles": [
+    "n64"
+   ],
+   "package": "com.dishii.mm",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "shadowpilotx-abuse-android",
+   "name": "Abuse",
+   "repo": "ShadowPilotX/Abuse-Android",
+   "games": [
+    "Abuse"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "org.libsdl.app",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "zwaetschge-acgc-android-port",
+   "name": "Animal Crossing (port de PC)",
+   "repo": "zwaetschge/ACGC-Android-Port",
+   "games": [
+    "Animal Crossing"
+   ],
+   "consoles": [
+    "gamecube"
+   ],
+   "package": "com.acpc.port",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "am2r-android-am2r-autopatcher-android",
+   "name": "AM2R Autopatcher",
+   "repo": "am2r-android/AM2R-Autopatcher-Android",
+   "games": [
+    "AM2R: Another Metroid 2 Remake"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.community.am2r.patcher",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "ds17f-andropolis",
+   "name": "Andropolis",
+   "repo": "ds17f/andropolis",
+   "games": [
+    "Micropolis"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "io.github.ds17f.andropolis",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "pauloubirajara-asuras-wrath-recomp",
+   "name": "Asura's Wrath Recomp",
+   "repo": "PauloUbirajara/asuras-wrath-recomp",
+   "games": [
+    "Asura's Wrath"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.recomp.asurawrath",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "mrot4-babel-recomp",
+   "name": "Babel Recomp",
+   "repo": "mrOt4/babel-recomp",
+   "games": [
+    "Illusion of Gaia"
+   ],
+   "consoles": [
+    "snes"
+   ],
+   "package": "com.mr0ta.babelrecomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "differentnet-barony-android-port",
+   "name": "Barony para Android",
+   "repo": "DifferentNet/barony-android-port",
+   "games": [
+    "Barony"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.zhdan.baronyport",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "ranggacasper-black-android",
+   "name": "Black para Android",
+   "repo": "RanggaCasper/Black-Android",
+   "games": [
+    "Black"
+   ],
+   "consoles": [
+    "xbox"
+   ],
+   "package": "com.racas.black",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "ducvd89-bloodborne-android",
+   "name": "Bloodborne Android",
+   "repo": "ducvd89/Bloodborne-Android",
+   "games": [
+    "Bloodborne"
+   ],
+   "consoles": [
+    "other"
+   ],
+   "package": "com.ducvd89.bloodborne",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "jayeldragon-blue-dragon-android",
+   "name": "Blue Dragon (JayElDragon)",
+   "repo": "JayElDragon/blue-dragon-android",
+   "games": [
+    "Blue Dragon"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.zolaware.reblue.test",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "redzerogotcha-bluedroid",
+   "name": "Blue Dragon (RedZeroGotcha)",
+   "repo": "RedZeroGotcha/BlueDroid",
+   "games": [
+    "Blue Dragon"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.zolaware.reblue",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "mamcjr-botwrecompandroid",
+   "name": "BOTW Recomp",
+   "repo": "mamcjr/BOTWRecompAndroid",
+   "games": [
+    "The Legend of Zelda: Breath of the Wild"
+   ],
+   "consoles": [
+    "switch"
+   ],
+   "package": "com.botwrecomp.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "wootbeer-btgarecomp",
+   "name": "BattleTanx: Global Assault Recompiled",
+   "repo": "wootbeer/btgarecomp",
+   "games": [
+    "BattleTanx: Global Assault"
+   ],
+   "consoles": [
+    "n64"
+   ],
+   "package": "io.github.wootbeer.btgarecomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "dr3amyberry-callofrecomp",
+   "name": "Call of Recomp",
+   "repo": "Dr3amyBerry/callofrecomp",
+   "games": [
+    "Call of Duty"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "org.callofrecomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "armac911-carmageddon-android-port",
+   "name": "Carmageddon",
+   "repo": "armac911/Carmageddon-Android-Port",
+   "games": [
+    "Carmageddon"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.androgaming.carma.next",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "link4electronics-carpocalypse2",
+   "name": "Carpocalypse 2",
+   "repo": "Link4Electronics/Carpocalypse2",
+   "games": [
+    "Carmageddon 2"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.carpocalypse2.game",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "belmantegu-celesteandroid",
+   "name": "Celeste Android",
+   "repo": "BelmanteGu/CelesteAndroid",
+   "games": [
+    "Celeste"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "org.celesteandroid.celeste",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "ekyso-cinderbox",
+   "name": "Cinderbox",
+   "repo": "Ekyso/Cinderbox",
+   "games": [
+    "Stardew Valley"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.game.cinderbox",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "codepdbh-cbfd-recompiled-android-evolved",
+   "name": "Conker's Bad Fur Day: Recompiled",
+   "repo": "codepdbh/CBFD-Recompiled-Android-Evolved",
+   "games": [
+    "Conker's Bad Fur Day"
+   ],
+   "consoles": [
+    "n64"
+   ],
+   "package": "com.codepdbh.cbfdrecomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "canavarit-crispydoom-android-port",
+   "name": "Crispy Doom",
+   "repo": "CanavarIT/CrispyDoom-Android-port",
+   "games": [
+    "DOOM"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.crispy.doom",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "igawa6-ctr-native-android",
+   "name": "CTR Native (igawa6)",
+   "repo": "igawa6/ctr-native-android",
+   "games": [
+    "Crash Team Racing"
+   ],
+   "consoles": [
+    "ps1"
+   ],
+   "package": "com.ctrnative",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "andiweli-cubeevil4-android",
+   "name": "CubeEvil4",
+   "repo": "Andiweli/CubeEvil4-Android",
+   "games": [
+    "Resident Evil 4"
+   ],
+   "consoles": [
+    "gamecube"
+   ],
+   "package": "com.ast.cubeevil4",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "sergiomanzur-cvlod-recomp",
+   "name": "LoD Recomp",
+   "repo": "sergiomanzur/cvlod_recomp",
+   "games": [
+    "Castlevania: Legacy of Darkness"
+   ],
+   "consoles": [
+    "n64"
+   ],
+   "package": "org.cvlod.recomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "n1v0k-d2android-releases",
+   "name": "D2 Android",
+   "repo": "N1v0k/D2Android-Releases",
+   "games": [
+    "Diablo 2"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "at.d2andrpub",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "vwing-daggerfall-unity-android",
+   "name": "Daggerfall Unity",
+   "repo": "Vwing/daggerfall-unity-android",
+   "games": [
+    "The Elder Scrolls II: Daggerfall"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "net.dfworkshop.dfu",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   },
+   "pattern": "(?i)il2cpp-64bit.*\\.apk$"
+  },
+  {
+   "id": "recomp-code-dbz-bt4-recomp",
+   "name": "Budokai Tenkaichi 4",
+   "repo": "recomp-code/dbz-bt4-recomp",
+   "games": [
+    "Dragon Ball Z: Budokai Tenkaichi 3"
+   ],
+   "consoles": [
+    "ps2"
+   ],
+   "package": "io.github.recompcode.dbzbt4",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "dfdx047-dbz3-android",
+   "name": "Dragon Fury",
+   "repo": "dfdx047/DBZ3-Android",
+   "games": [
+    "DBZ Budokai HD Collection"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.dfdx047.dragonfury",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "contatg-def-jam-android-native-port",
+   "name": "Def Jam: Fight for NY",
+   "repo": "contatg/Def-Jam-Android-Native-Port",
+   "games": [
+    "Def Jam: Fight for NY"
+   ],
+   "consoles": [
+    "xbox"
+   ],
+   "package": "org.defjamffny.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "wootbeer-descent-android",
+   "name": "Descent",
+   "repo": "wootbeer/Descent-Android",
+   "games": [
+    "Descent"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "wootbeer.descent",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "sindufha-devil-may-cry-3-recomp",
+   "name": "Devil May Cry 3 Recomp",
+   "repo": "sindufha/Devil-may-cry-3-recomp",
+   "games": [
+    "Devil May Cry 3 Special Edition"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "local.dmc3.runtimeprobe",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "masterllgod-digimon-world-4-port-nativo",
+   "name": "Digimon World 4",
+   "repo": "Masterllgod/digimon-world-4-port-nativo",
+   "games": [
+    "Digimon World 4"
+   ],
+   "consoles": [
+    "xbox"
+   ],
+   "package": "com.xboxport.digimonworld4",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "deivid22srk-dk64-recomp-android",
+   "name": "Donkey Kong 64: Recompiled",
+   "repo": "deivid22srk/dk64-recomp-android",
+   "games": [
+    "Donkey Kong 64"
+   ],
+   "consoles": [
+    "n64"
+   ],
+   "package": "com.deivid22srk.dk64recomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   }
+  },
+  {
+   "id": "dfdx047-dragon-burst",
+   "name": "Dragon Burst",
+   "repo": "dfdx047/Dragon-Burst",
+   "games": [
+    "Dragon Ball Z: Burst Limit"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.dfdx047.dragonburst",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "dorpxp-driftdroid",
+   "name": "DriftDroid",
+   "repo": "dorPXP/driftdroid",
+   "games": [
+    "Mario Kart Wii"
+   ],
+   "consoles": [
+    "wii"
+   ],
+   "package": "com.driftdroid.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "firestarter1996-droidosaur",
+   "name": "Droidosaur",
+   "repo": "firestarter1996/Droidosaur",
+   "games": [
+    "Nanosaur"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "io.jor.nanosaur",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "igawa6-dusklight",
+   "name": "Dusklight (igawa6)",
+   "repo": "igawa6/dusklight",
+   "games": [
+    "The Legend of Zelda: Twilight Princess"
+   ],
+   "consoles": [
+    "gamecube"
+   ],
+   "package": "dev.twilitrealm.dusk",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "datfooldive-dw5-android",
+   "name": "Dynasty Warriors 5",
+   "repo": "datfooldive/DW5-Android",
+   "games": [
+    "Dynasty Warriors 5"
+   ],
+   "consoles": [
+    "xbox"
+   ],
+   "package": "com.datfooldive.dw5",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "rages4calm-earthbound-companion",
+   "name": "EarthBound Companion",
+   "repo": "rages4calm/earthbound-companion",
+   "games": [
+    "EarthBound"
+   ],
+   "consoles": [
+    "snes"
+   ],
+   "package": "org.earthbound.companion.preview",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "thesoim-ecstatica-1994-port-android",
+   "name": "Ecstatica",
+   "repo": "Thesoim/Ecstatica-1994---Port-Android-",
+   "games": [
+    "Ecstatica"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "thesoim.ecstatica",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "ivanitos-x-eduke32-android",
+   "name": "EDuke32",
+   "repo": "ivanitos-x/eduke32-android",
+   "games": [
+    "Duke Nukem 3D"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.codex.eduke32",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "imjustadudegamer-provenance-elite-force-ii-decomp-android-linux",
+   "name": "Provenance Elite Force II",
+   "repo": "imjustadudegamer/Provenance-Elite-Force-II-decomp-Android-linux",
+   "games": [
+    "Star Trek: Elite Force II"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.provenanceef2",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "goldoire-pokeemerald-dualscreen",
+   "name": "Emerald Recomp (Goldoire)",
+   "repo": "Goldoire/pokeemerald-dualscreen",
+   "games": [
+    "Pokémon Esmeralda"
+   ],
+   "consoles": [
+    "gba"
+   ],
+   "package": "com.pokeemerald.dualscreen",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "nycolazs-eowrecomp",
+   "name": "EoW Recomp",
+   "repo": "Nycolazs/EoWRecomp",
+   "games": [
+    "The Legend of Zelda: Echoes of Wisdom"
+   ],
+   "consoles": [
+    "switch"
+   ],
+   "package": "com.eowrecomp.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "gabrick75-fh2-recompiled",
+   "name": "FH2 Recompiled",
+   "repo": "Gabrick75/fh2-recompiled",
+   "games": [
+    "Forza Horizon 2"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.forzahorizon2.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "kurkobein112-bit-fifa-street-2012-android",
+   "name": "FIFA Street 2012",
+   "repo": "kurkobein112-bit/FIFA-STREET-2012-ANDROID",
+   "games": [
+    "FIFA Street 2012"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "org.restreet.android.publicrelease",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   }
+  },
+  {
+   "id": "kalasyan-fire-emblem-ss-recomp",
+   "name": "Fire Emblem The Sacred Stones Recomp",
+   "repo": "kalasyan/fire-emblem-ss-recomp",
+   "games": [
+    "Fire Emblem The Sacred Stones"
+   ],
+   "consoles": [
+    "gba"
+   ],
+   "package": "dev.fe8.android.eu",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "karlos-fr-fun-tracks-recomp-releases",
+   "name": "Fun Tracks",
+   "repo": "Karlos-fr/fun-tracks-recomp-releases",
+   "games": [
+    "Fun Tracks"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.karlos.funtracks",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "izzy2lost-g-diffuser",
+   "name": "G-Diffuser",
+   "repo": "izzy2lost/G-Diffuser",
+   "games": [
+    "F-zero X"
+   ],
+   "consoles": [
+    "n64"
+   ],
+   "package": "com.gdiffuser.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "tinsarfal-gdroid",
+   "name": "GDroid",
+   "repo": "tinsarfal/GDroid",
+   "games": [
+    "garry's mod"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.gmodvr.flat",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "underdecoded-gen2recomped",
+   "name": "Gen2Recomped",
+   "repo": "UNDERdecoded/Gen2Recomped",
+   "games": [
+    "Pokémon Oro y Plata"
+   ],
+   "consoles": [
+    "gbc"
+   ],
+   "package": "com.underdecodedhd.gen2recomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "mysorez-generalszh-android-port",
+   "name": "Generals Zero Hour",
+   "repo": "MYSOREZ/GeneralsZH-Android-Port",
+   "games": [
+    "Command & Conquer: Generals - Zero Hour"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.generalsx.zerohour",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "arnaldolima1-gow-ghost-of-sparta-pc",
+   "name": "Ghost of Sparta PC",
+   "repo": "arnaldolima1/gow-ghost-of-sparta-pc",
+   "games": [
+    "God of War: Ghost of Sparta"
+   ],
+   "consoles": [
+    "psp"
+   ],
+   "package": "io.sparta",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   }
+  },
+  {
+   "id": "mooncellar-team-glassline",
+   "name": "Glassline",
+   "repo": "MoonCellar-Team/Glassline",
+   "games": [
+    "Mirror's Edge"
+   ],
+   "consoles": [
+    "other"
+   ],
+   "package": "space.mooncellar.rooftops",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "owaissseeee-godhandandroidport",
+   "name": "God Hand",
+   "repo": "owaissseeee/GodHandAndroidPort",
+   "games": [
+    "God Hand"
+   ],
+   "consoles": [
+    "ps2"
+   ],
+   "package": "com.owaissseeee.godhand",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "wootbeer-gotandroid",
+   "name": "God of Thunder",
+   "repo": "wootbeer/gotandroid",
+   "games": [
+    "God of Thunder"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "wootbeer.gotandroid",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "wootbeer-gsrandroid",
+   "name": "Golden Sun Recompiled",
+   "repo": "wootbeer/gsrandroid",
+   "games": [
+    "Golden Sun"
+   ],
+   "consoles": [
+    "gba"
+   ],
+   "package": "wootbeer.gsrandroid",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "jeffory-goldeneye-recomp",
+   "name": "GoldenEye Recomp",
+   "repo": "jeffory/GoldenEye-Recomp",
+   "games": [
+    "GoldenEye 007"
+   ],
+   "consoles": [
+    "n64"
+   ],
+   "package": "com.sunjaycy.goldeneye",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "arnaldolima1-gow-chains-of-olympus-pc",
+   "name": "God of War: Chains of Olympus",
+   "repo": "arnaldolima1/gow-chains-of-olympus-pc",
+   "games": [
+    "God of War: Chains of Olympus"
+   ],
+   "consoles": [
+    "psp"
+   ],
+   "package": "io.olympus",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "zfitness-gow3-android",
+   "name": "God of War III Remastered",
+   "repo": "zFitness/gow3_android",
+   "games": [
+    "God of War III Remastered"
+   ],
+   "consoles": [
+    "other"
+   ],
+   "package": "com.gow3.android.bionic",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   }
+  },
+  {
+   "id": "matt-pulsipher-gt3-revisited",
+   "name": "GT3 Revisites",
+   "repo": "matt-pulsipher/GT3-revisited",
+   "games": [
+    "Gran Turismo 3"
+   ],
+   "consoles": [
+    "ps2"
+   ],
+   "package": "org.gt3revisited.gt3r",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "codepdbh-psprecomp-lcs-android",
+   "name": "LCS Android",
+   "repo": "codepdbh/PSPRecomp-LCS-Android",
+   "games": [
+    "Grand Theft Auto: Liberty City Stories"
+   ],
+   "consoles": [
+    "psp"
+   ],
+   "package": "com.psprecomp.lcs",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "codepdbh-psprecomp-vcs-android",
+   "name": "VCS Android",
+   "repo": "codepdbh/PSPRecomp-VCS-Android",
+   "games": [
+    "Grand Theft Auto: Vice City Stories"
+   ],
+   "consoles": [
+    "psp"
+   ],
+   "package": "com.psprecomp.vcs",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   }
+  },
+  {
+   "id": "ayanokoji989-halo-2",
+   "name": "Halo 2",
+   "repo": "Ayanokoji989/Halo-2",
+   "games": [
+    "Halo 2"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.halo2.edition.debug",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "opencommunityedition-opence",
+   "name": "Halo CE Android (OpenCommunityEdition)",
+   "repo": "OpenCommunityEdition/OpenCE",
+   "games": [
+    "Halo: Combat Evolved"
+   ],
+   "consoles": [
+    "xbox"
+   ],
+   "package": "com.halo.decomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   },
+   "pattern": "(?i)android-release\\.zip$",
+   "zip": "(?i)\\.apk$"
+  },
+  {
+   "id": "fulgernet-halo-ce-android",
+   "name": "Halo CE Android (FulGerNet)",
+   "repo": "FulGerNet/halo-ce-android",
+   "games": [
+    "Halo: Combat Evolved"
+   ],
+   "consoles": [
+    "xbox"
+   ],
+   "package": "com.halo.decomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "andiweli-haloce-android-aaos",
+   "name": "Halo CE Android (Andiweli)",
+   "repo": "Andiweli/HaloCE-Android-AAOS",
+   "games": [
+    "Halo: Combat Evolved"
+   ],
+   "consoles": [
+    "xbox"
+   ],
+   "package": "com.halo.decomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "chupathingyce-chupathingyce",
+   "name": "Halo CE Android (ChupathingyCE)",
+   "repo": "ChupathingyCE/chupathingyce",
+   "games": [
+    "Halo: Combat Evolved"
+   ],
+   "consoles": [
+    "xbox"
+   ],
+   "package": "dev.horrible.chupathingyce",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   },
+   "pattern": "(?i)android64-release\\.zip$",
+   "zip": "(?i)\\.apk$"
+  },
+  {
+   "id": "fractumseraph-opence",
+   "name": "Halo CE Android (FractumSeraph)",
+   "repo": "FractumSeraph/OpenCE",
+   "games": [
+    "Halo: Combat Evolved"
+   ],
+   "consoles": [
+    "xbox"
+   ],
+   "package": "net.fractumseraph.halo",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   },
+   "pattern": "(?i)android64\\.apk$"
+  },
+  {
+   "id": "igawa6-harvestmoon64recomp",
+   "name": "Harvest Moon 64: Recompiled",
+   "repo": "igawa6/HarvestMoon64Recomp",
+   "games": [
+    "Harvest Moon 64"
+   ],
+   "consoles": [
+    "n64"
+   ],
+   "package": "io.github.hm64recomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "vasysik-horizon-android",
+   "name": "Horizon",
+   "repo": "Vasysik/horizon-android",
+   "games": [
+    "Minecraft Java rust rewrite"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "dev.horizon.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "aabrole-huntersrecomp",
+   "name": "Hunters Recomp",
+   "repo": "aabrole/HuntersRecomp",
+   "games": [
+    "Metroid Prime Hunters"
+   ],
+   "consoles": [
+    "ds"
+   ],
+   "package": "com.thor.mph",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "glkarin-com-n0n3m4-diii4a",
+   "name": "idTech4A++",
+   "repo": "glKarin/com.n0n3m4.diii4a",
+   "games": [
+    "DOOM 3"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.karin.idTech4Amm",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "erickmendes22-iss-android",
+   "name": "inFAMOUS Second Son",
+   "repo": "erickmendes22/iss_android",
+   "games": [
+    "inFAMOUS Second Son"
+   ],
+   "consoles": [
+    "ps4"
+   ],
+   "package": "com.daedalus.iss.bionic",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   }
+  },
+  {
+   "id": "sergiomanzur-issd-native",
+   "name": "ISSD Native",
+   "repo": "sergiomanzur/issd-native",
+   "games": [
+    "International Superstar Soccer Deluxe"
+   ],
+   "consoles": [
+    "snes"
+   ],
+   "package": "com.issdnative",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "deathkiller-jazz2",
+   "name": "Jazz² Resurrection",
+   "repo": "deathkiller/jazz2",
+   "games": [
+    "Jazz Jackrabbit 2"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "jazz2.resurrection",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   },
+   "pattern": "(?i)android.*\\.zip$",
+   "zip": "(?i)\\.apk$"
+  },
+  {
+   "id": "dorpxp-driftdroid",
+   "name": "KartPad (dorPXP)",
+   "repo": "dorPXP/driftdroid",
+   "games": [
+    "Mario Kart Wii"
+   ],
+   "consoles": [
+    "wii"
+   ],
+   "package": "com.driftdroid.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "sonofskywalker3-khdays-358-android",
+   "name": "Kingdom Hearts 358/2 Days",
+   "repo": "sonofskywalker3/khdays-358-android",
+   "games": [
+    "Kingdom Hearts 358/2 Days"
+   ],
+   "consoles": [
+    "ds"
+   ],
+   "package": "com.sonofskywalker3.khdays358",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "nycolazs-lasrecomp-android-plus",
+   "name": "LAS Recomp",
+   "repo": "Nycolazs/LASRecomp-Android-Plus",
+   "games": [
+    "The Legend of Zelda: Link's Awakening"
+   ],
+   "consoles": [
+    "switch"
+   ],
+   "package": "com.lasrecomp.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "lbalab-lba2-classic-community",
+   "name": "LBA2 Classic Community",
+   "repo": "LBALab/lba2-classic-community",
+   "games": [
+    "Little Big Adventure 2"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "org.lbalab.lba2cc",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "mjkoo-isle-portable",
+   "name": "isle-portable",
+   "repo": "mjkoo/isle-portable",
+   "games": [
+    "LEGO Island"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "dev.mjkoo.isle",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "vaduur-libertyrecompandroid",
+   "name": "LibertyRecomp",
+   "repo": "vaduur/LibertyRecompAndroid",
+   "games": [
+    "Grand Theft Auto IV"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.libertyrecomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "ttom795-lms-android",
+   "name": "LEGO Marvel Super Heroes",
+   "repo": "ttom795/LMS_Android",
+   "games": [
+    "Lego Marvel Super Heroes"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.tj.legomarvel",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "player124413-looking-glass-android-edition",
+   "name": "Looking Glass - American McGee's Alice Re-Remaster",
+   "repo": "Player124413/Looking-Glass-android-edition",
+   "games": [
+    "American McGee's Alice in Wonderland"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.lookingglass.alice",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "jayeldragon-luigis-mansion-android",
+   "name": "Luigi's Mansion Recomp",
+   "repo": "JayElDragon/luigis-mansion-android",
+   "games": [
+    "Luigi's Mansion"
+   ],
+   "consoles": [
+    "gamecube"
+   ],
+   "package": "com.personal.luigismansion",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "sansnope-marathonrecomp-android",
+   "name": "Marathon Recomp (SansNope)",
+   "repo": "SansNope/MarathonRecomp-Android",
+   "games": [
+    "Sonic the Hedgehog (2006)"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "io.github.sansnope.marathonrecomp.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "mymes1-marathon-recomp-android",
+   "name": "Marathon Recomp (mymes1)",
+   "repo": "mymes1/Marathon-Recomp-Android",
+   "games": [
+    "Sonic the Hedgehog (2006)"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.sega.sonic2006",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "player124413-marathonrecomp-android-test-edition",
+   "name": "Marathon Recomp (Player124413)",
+   "repo": "Player124413/MarathonRecomp_android-test-edition",
+   "games": [
+    "Sonic the Hedgehog (2006)"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.sega.marathon",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "ayanokoji989-max-payne",
+   "name": "Max Payne 2: The Fall of Max Payne",
+   "repo": "Ayanokoji989/Max-Payne",
+   "games": [
+    "Max Payne 2: The Fall of Max Payne"
+   ],
+   "consoles": [
+    "xbox"
+   ],
+   "package": "com.maxpayne2.edition.debug",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "randomityguy-mbhaxe",
+   "name": "MBHaxe",
+   "repo": "RandomityGuy/MBHaxe",
+   "games": [
+    "Marble Blast Gold"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.randomityguy.mbhaxe.mbu",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "gabrielbskk-mcla-recomp-android-g",
+   "name": "Midnight Club: Los Angeles Recomp",
+   "repo": "gabrielbskk/mcla-recomp-android-g",
+   "games": [
+    "Midnight Club: Los Angeles"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "org.mcla.recomp.openbeta",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "luisxl15-metal-gear-solid-2-sons-of-liberty-for-android",
+   "name": "Metal Gear Solid 2 HD: Sons of Liberty",
+   "repo": "luisxl15/METAL-GEAR-SOLID-2-Sons-of-Liberty-for-Android",
+   "games": [
+    "Metal Gear Solid 2 HD: Sons of Liberty"
+   ],
+   "consoles": [
+    "other"
+   ],
+   "package": "jp.konami.mgs2hd.shield",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "kalasyan-metroid-fs-recomp",
+   "name": "Metroid Fusion Recomp",
+   "repo": "kalasyan/metroid-fs-recomp",
+   "games": [
+    "Metroid Fusion"
+   ],
+   "consoles": [
+    "gba"
+   ],
+   "package": "dev.mf.android.eu",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "kalasyan-metroid-zm-recomp",
+   "name": "Metroid Zero Mission Recomp",
+   "repo": "kalasyan/metroid-zm-recomp",
+   "games": [
+    "Metroid Zero Mission"
+   ],
+   "consoles": [
+    "gba"
+   ],
+   "package": "dev.mzm.android.eu",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "pateeerq-freedomuniterecomp",
+   "name": "Freedom Unite Recomp",
+   "repo": "PateeerQ/FreedomUniteRecomp",
+   "games": [
+    "Monster Hunter Freedom Unite"
+   ],
+   "consoles": [
+    "psp"
+   ],
+   "package": "com.pateeerq.mhfu",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "masterllgod-midnight-club-3-dub-edition-remix-port-nativo",
+   "name": "Midnight Club 3: DUB Edition Remix",
+   "repo": "Masterllgod/midnight-club-3-dub-edition-remix-port-nativo",
+   "games": [
+    "Midnight Club 3: DUB Edition Remix"
+   ],
+   "consoles": [
+    "xbox"
+   ],
+   "package": "com.xboxport.midnightclub3",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "genissonemilio-zeldaminishcapandroid",
+   "name": "The Minish Cap (Project Picori) (GenissonEmilio)",
+   "repo": "GenissonEmilio/ZeldaMinishCapAndroid",
+   "games": [
+    "The Legend of Zelda: The Minish Cap"
+   ],
+   "consoles": [
+    "gba"
+   ],
+   "package": "io.github.genissonemilio.minishcap",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "masterllgod-mortal-kombat-armageddon-port-nativo",
+   "name": "Mortal Kombat: Armageddon",
+   "repo": "Masterllgod/mortal-kombat-armageddon-port-nativo",
+   "games": [
+    "Mortal Kombat: Armageddon"
+   ],
+   "consoles": [
+    "xbox"
+   ],
+   "package": "com.xboxport.mkarmageddon",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "shenbolado1-mk8d-launcher",
+   "name": "MK8D-Launcher",
+   "repo": "shenbolado1/MK8D-Launcher",
+   "games": [
+    "Mario Kart 8 Deluxe"
+   ],
+   "consoles": [
+    "switch"
+   ],
+   "package": "org.nx2a.t0100152000022000",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "sandstranger-com-mobilerpgpack-phone",
+   "name": "Mobile RPG Pack",
+   "repo": "sandstranger/com.mobilerpgpack.phone",
+   "games": [
+    "Wolfenstein RPG"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.mobilerpgpack.phone",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   },
+   "pattern": "(?i)arm64-v8a.*\\.apk$"
+  },
+  {
+   "id": "doutorraposo-moonpearl",
+   "name": "moonpearl (DoutorRaposo)",
+   "repo": "DoutorRaposo/moonpearl",
+   "games": [
+    "The Legend of Zelda: A Link to the Past"
+   ],
+   "consoles": [
+    "snes"
+   ],
+   "package": "io.github.doutorraposo.moonpearl",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "waterdish-zelda3-android",
+   "name": "moonpearl (Waterdish)",
+   "repo": "Waterdish/zelda3-android",
+   "games": [
+    "The Legend of Zelda: A Link to the Past"
+   ],
+   "consoles": [
+    "snes"
+   ],
+   "package": "com.dishii.zelda3",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "samyost1-zelda3-android",
+   "name": "moonpearl (samyost1)",
+   "repo": "samyost1/zelda3-android",
+   "games": [
+    "The Legend of Zelda: A Link to the Past"
+   ],
+   "consoles": [
+    "snes"
+   ],
+   "package": "com.dishii.zelda3",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "ranggacasper-mostwanted-android",
+   "name": "Need for Speed: Most Wanted",
+   "repo": "RanggaCasper/MostWanted-Android",
+   "games": [
+    "Need for speed most wanted black edition"
+   ],
+   "consoles": [
+    "xbox"
+   ],
+   "package": "com.racas.mostwanted",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   }
+  },
+  {
+   "id": "tmcleroy-muscle-march-recomp",
+   "name": "Muscle March Recomp",
+   "repo": "tmcleroy/muscle-march-recomp",
+   "games": [
+    "Muscle March Wii"
+   ],
+   "consoles": [
+    "wii"
+   ],
+   "package": "io.github.tmcleroy.musclemarch",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "jesaias1-iw4lj",
+   "name": "IW4LJ (MW2)",
+   "repo": "jesaias1/IW4LJ",
+   "games": [
+    "Call of Duty: Modern Warfare 2"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "dev.iw4j.iw4l",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 31
+   },
+   "pattern": "(?i)^IW4LJ\\.apk$"
+  },
+  {
+   "id": "masterllgod-naruto-rise-of-a-ninja-port-nativo",
+   "name": "Naruto: Rise of a Ninja (port nativo)",
+   "repo": "Masterllgod/naruto-rise-of-a-ninja-port-nativo",
+   "games": [
+    "Naruto: Rise of a Ninja"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.naruto.port",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   }
+  },
+  {
+   "id": "masterllgod-naruto-storm-2-port-nativo",
+   "name": "Naruto Shippuden: Ultimate Ninja Storm 2",
+   "repo": "Masterllgod/naruto-storm-2-port-nativo",
+   "games": [
+    "Naruto Storm 2"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.naruto.storm2",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   }
+  },
+  {
+   "id": "masterllgod-naruto-storm-3-full-burst-port-nativo",
+   "name": "Naruto Storm 3 Full Burst (port nativo)",
+   "repo": "Masterllgod/naruto-storm-3-full-burst-port-nativo",
+   "games": [
+    "Naruto Shippuden: Ultimate Ninja Storm 3 Full Burst"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.naruto.storm3",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "masterllgod-naruto-storm-generations-port-nativo",
+   "name": "Naruto Storm Generations (port nativo)",
+   "repo": "Masterllgod/naruto-storm-generations-port-nativo",
+   "games": [
+    "Naruto Shippuden: Ultimate Ninja Storm Generations"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.naruto.stormgenerations",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "masterllgod-naruto-x-boruto-connections-port-nativo",
+   "name": "Naruto x Boruto: Ultimate Ninja Storm Connections",
+   "repo": "Masterllgod/naruto-x-boruto-connections-port-nativo",
+   "games": [
+    "Naruto x Boruto Ultimate Ninja Storm Connections"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.naruto.storm4conn",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "deivid22srk-naughtybear-restuff-android",
+   "name": "Naughty Bear ReStuff",
+   "repo": "deivid22srk/naughtybear-restuff-android",
+   "games": [
+    "Naughty Bear"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.deivid22srk.restuff",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "sirbilliams-neutron1-android",
+   "name": "Jimmy Neutron: Boy Genius",
+   "repo": "sirbilliams/neutron1-Android",
+   "games": [
+    "Jimmy Neutron: Boy Genius"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.sirbilliams.neutron1",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "codepdbh-nfscarbonpc-androidevolved",
+   "name": "NFS Carbon PC",
+   "repo": "codepdbh/nfscarbonpc-androidevolved",
+   "games": [
+    "Need for Speed: Carbon"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.nfscarbon.androidevolved",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "codepdbh-nfs-carbon-360-android-recomp",
+   "name": "NFS Carbon Recomp (codepdbh)",
+   "repo": "codepdbh/NFS-CARBON-360-ANDROID-RECOMP",
+   "games": [
+    "Need for Speed: Carbon"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.nfscarbon.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "sampreeth004-nfs-carbon-recomp",
+   "name": "NFS Carbon Recomp (Sampreeth004)",
+   "repo": "Sampreeth004/nfs-carbon-recomp",
+   "games": [
+    "Need for Speed: Carbon"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.eagames.nfscarbon",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "zloikiller-nfs3recompiled-android",
+   "name": "NFS III Recompiled (ZloiKILLER)",
+   "repo": "ZloiKILLER/nfs3recompiled-android",
+   "games": [
+    "Need for Speed III: Hot Pursuit"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "dev.nfs3hp.port",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "codepdbh-nfs3-hp-androidevolved",
+   "name": "NFS III Recompiled (codepdbh)",
+   "repo": "codepdbh/NFS3-HP-AndroidEvolved",
+   "games": [
+    "Need for Speed III: Hot Pursuit"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.nfsrecompiled.nfs3hp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "codepdbh-nfsmw-android",
+   "name": "NFS Most Wanted Android (codepdbh)",
+   "repo": "codepdbh/nfsmw-android",
+   "games": [
+    "Need for Speed: Most Wanted"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.nfsmw.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "codepdbh-nfsmwpc-recompiled",
+   "name": "NFS Most Wanted Android (codepdbh)",
+   "repo": "codepdbh/nfsmwpc-recompiled",
+   "games": [
+    "Need for Speed: Most Wanted"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.nfsmw.androidevolved",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "debarshi-sarkar-nfsmw-recomp-android",
+   "name": "NFS Most Wanted Android (DEBARSHI-SARKAR)",
+   "repo": "DEBARSHI-SARKAR/nfsmw-recomp-android",
+   "games": [
+    "Need for Speed: Most Wanted"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "dev.recompkit.nfsmw",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "codepdbh-nfsu1-recompiled",
+   "name": "NFSU Recompiled",
+   "repo": "codepdbh/nfsu1-recompiled",
+   "games": [
+    "Need for Speed: Underground"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.nfsu1.androidevolved",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "codepdbh-nfsu2-recompiled",
+   "name": "NFSU2 Recompiled (codepdbh)",
+   "repo": "codepdbh/nfsu2-recompiled",
+   "games": [
+    "Need for Speed: Underground 2"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.nfsu2.androidevolved",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "mininxd-nfsu2-revived-android",
+   "name": "NFSU2 Recompiled (mininxd)",
+   "repo": "mininxd/NFSU2-Revived-Android",
+   "games": [
+    "Need for Speed: Underground 2"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "io.mininxd.nfsu2",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "cowkillers-ninja-gaiden-sigma-2-nx2android",
+   "name": "Ninja Gaiden Sigma 2",
+   "repo": "CowKillers/ninja-gaiden-sigma-2-nx2android",
+   "games": [
+    "Ninja Gaiden Sigma 2"
+   ],
+   "consoles": [
+    "switch"
+   ],
+   "package": "org.nx2a.t0100696014f4a000",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "windroid-emu-recomp-zelda-3ds-android",
+   "name": "Ocarina ReTuned (WINDROID-EMU)",
+   "repo": "WINDROID-EMU/RECOMP-ZELDA-3DS-ANDROID",
+   "games": [
+    "The Legend of Zelda: Ocarina of Time 3D"
+   ],
+   "consoles": [
+    "other"
+   ],
+   "package": "org.triaevum.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "andiweli-openmw-android",
+   "name": "OpenMW",
+   "repo": "Andiweli/OpenMW-Android",
+   "games": [
+    "The Elder Scrolls III: Morrowind"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.ast.openmw",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "kittycache9-opensa2",
+   "name": "Open SA 2",
+   "repo": "kittycache9/OpenSA2",
+   "games": [
+    "Sonic Adventure 2"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.sa2recomp.app",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "rohanbhattacharyya-osbm",
+   "name": "OpenStarbound Mobile",
+   "repo": "RohanBhattacharyya/oSBM",
+   "games": [
+    "Starbound"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.devoflife.osbm.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "rolipayr15-openxray16-android-port",
+   "name": "OpenXRay",
+   "repo": "rolipayr15/OpenXray16-Android-Port",
+   "games": [
+    "S.T.A.L.K.E.R.: Shadow of Chernobyl"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "org.openxray.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "brandon04gonzalez-p5r-android",
+   "name": "P5R Android",
+   "repo": "Brandon04Gonzalez/p5r-android",
+   "games": [
+    "Persona 5 Royal"
+   ],
+   "consoles": [
+    "other"
+   ],
+   "package": "io.github.p5rrecomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "mr4xd3mn-perfect-dark-android",
+   "name": "Perfect Dark (Mr4xd3mn)",
+   "repo": "Mr4xd3mn/perfect-dark-android",
+   "games": [
+    "Perfect Dark"
+   ],
+   "consoles": [
+    "n64"
+   ],
+   "package": "org.sdl2.perfectdark",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "dzakyraf-pes2017-recomp",
+   "name": "PES 2017",
+   "repo": "dzakyraf/pes2017-recomp",
+   "games": [
+    "PES 2017"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.pes2017.recomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "datfooldive-pes5-android",
+   "name": "PES 5",
+   "repo": "datfooldive/PES5-Android",
+   "games": [
+    "Pro Evolution Soccer 5"
+   ],
+   "consoles": [
+    "xbox"
+   ],
+   "package": "com.datfooldive.pes5",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "wootbeer-pbfandroid",
+   "name": "Pinball Fantasies",
+   "repo": "wootbeer/pbfandroid",
+   "games": [
+    "Pinball Fantasies"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "wootbeer.pbfandroid",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "adamkulik-pocket-wormhole",
+   "name": "Pocket Wormhole",
+   "repo": "adamkulik/pocket-wormhole",
+   "games": [
+    "FTL: Faster Than Light"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.pocketwormhole.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "jayeldragon-poke-survivor",
+   "name": "Poke Survivors",
+   "repo": "JayElDragon/poke-survivor",
+   "games": [
+    "Poke Survivors"
+   ],
+   "consoles": [
+    "other"
+   ],
+   "package": "jayeldragonpokesurvivor.mobile",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "missingno7-pre2-port",
+   "name": "Prehistorik 2 Port",
+   "repo": "missingno7/pre2_port",
+   "games": [
+    "Prehistorik 2"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "org.pre2port.pre2",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "thebardockgames-precursor",
+   "name": "Precursor",
+   "repo": "thebardockgames/Precursor",
+   "games": [
+    "Jak and Daxter: The Precursor Legacy"
+   ],
+   "consoles": [
+    "ps2"
+   ],
+   "package": "io.github.thebardockgames.precursor",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "udarmolota-pridroid",
+   "name": "PriDroid",
+   "repo": "udarmolota/pridroid",
+   "games": [
+    "Prison Architect"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.pridroid",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "genrythefox0-project-2099",
+   "name": "Project 2099",
+   "repo": "GenryTheFox0/Project-2099",
+   "games": [
+    "Spider-Man: Edge of Time"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "org.genry.project2099",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "vinterus-proto-re",
+   "name": "Prototype Recomp",
+   "repo": "VinTeRuS/proto-re",
+   "games": [
+    "Prototype"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.protore.game",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "stonecoldos-pt-pc",
+   "name": "P.T.",
+   "repo": "StoneColdOS/pt-pc",
+   "games": [
+    "P.T."
+   ],
+   "consoles": [
+    "ps4"
+   ],
+   "package": "com.ptport.app",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   }
+  },
+  {
+   "id": "wszqkzqk-pvz-portable",
+   "name": "PvZ Portable",
+   "repo": "wszqkzqk/PvZ-Portable",
+   "games": [
+    "Plants vs. Zombies"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "io.github.wszqkzqk.pvzportable",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "zhes-20-r-e-p-o-e-v-r",
+   "name": "R.E.P.O. Mobile Port",
+   "repo": "Zhes-20/R.E.P.O.E.V.R",
+   "games": [
+    "R.E.P.O."
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.Zhes.REPOPort",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "jjmhalew-rampagere",
+   "name": "RampageRE",
+   "repo": "jjmhalew/RampageRE",
+   "games": [
+    "Rampage: Total Destruction"
+   ],
+   "consoles": [
+    "ps2"
+   ],
+   "package": "io.github.jjmhalew.rampagere",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   },
+   "pattern": "(?i)android.*\\.zip$",
+   "zip": "(?i)\\.apk$"
+  },
+  {
+   "id": "moddedrounds-rb2-android",
+   "name": "Dragon Ball Raging Blast 2 Recomp",
+   "repo": "moddedrounds/RB2-Android",
+   "games": [
+    "Dragon Ball Raging Blast 2"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "org.rb2recomp.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "deivid22srk-rechan-android",
+   "name": "ReChan",
+   "repo": "deivid22srk/ReChan-Android",
+   "games": [
+    "Jackie Chan Stuntmaster"
+   ],
+   "consoles": [
+    "ps1"
+   ],
+   "package": "com.deivid22srk.rechan",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "tokeneffortports-recompiledsteel",
+   "name": "ReCompiled Steel",
+   "repo": "tokeneffortports/ReCompiledSteel",
+   "games": [
+    "Real Steel"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.recompiledsteel.app",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   }
+  },
+  {
+   "id": "deivid22srk-redahm-android",
+   "name": "ReDAHM",
+   "repo": "deivid22srk/redahm-android",
+   "games": [
+    "Destroy All Humans! Path of the Furon"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "io.redahm.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "innersargento-renut-android",
+   "name": "Renut",
+   "repo": "Innersargento/Renut-Android",
+   "games": [
+    "Banjo-Kazooie: Nuts & Bolts"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "org.renut.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "konovalov-aleks-resl",
+   "name": "reSL",
+   "repo": "konovalov-aleks/reSL",
+   "games": [
+    "ShortLine"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.konovalovaleks.resl",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "codepdbh-revc-android-evolved-enhanced-mod",
+   "name": "reVC Enhanced",
+   "repo": "codepdbh/reVC-android-evolved-ENHANCED-MOD",
+   "games": [
+    "Grand Theft Auto: Vice City"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.revc.game.enhanced",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "udarmolota-rimdroid",
+   "name": "RimDroid",
+   "repo": "udarmolota/RimDroid",
+   "games": [
+    "RimWorld"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.rimdroid",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   },
+   "pattern": "(?i)^rimdroid-release-[^_]*\\.apk$"
+  },
+  {
+   "id": "thegreatbbd94-ux-ring-racers-srb2-port",
+   "name": "Dr. Robotnik's Ring Racers (thegreatbbd94-ux)",
+   "repo": "thegreatbbd94-ux/ring-racers-srb2-port",
+   "games": [
+    "Dr. Robotnik's Ring Racers"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "org.kartkrew.ringracers",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "bitten2up-ringracers",
+   "name": "Dr. Robotnik's Ring Racers (bitten2up)",
+   "repo": "bitten2up/RingRacers",
+   "games": [
+    "Dr. Robotnik's Ring Racers"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "org.kartkrew.ringracers",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "silentsudin-roadtripadventure-recomp",
+   "name": "Road Trip Recomp",
+   "repo": "silentsudin/RoadTripAdventure-recomp",
+   "games": [
+    "Road Trip Adventure"
+   ],
+   "consoles": [
+    "ps2"
+   ],
+   "package": "io.github.silentsudin.roadtrip",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "lordingard-sacredstonesrecomp",
+   "name": "Sacred Stones Recomp",
+   "repo": "Lordingard/SacredStonesRecomp",
+   "games": [
+    "Fire Emblem: The Sacred Stones"
+   ],
+   "consoles": [
+    "gba"
+   ],
+   "package": "com.lordingard.sacredstonesrecomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "ranggacasper-shaolinmonks-android",
+   "name": "Shaolin Monks para Android",
+   "repo": "RanggaCasper/ShaolinMonks-Android",
+   "games": [
+    "Mortal Kombat: Shaolin Monks"
+   ],
+   "consoles": [
+    "xbox"
+   ],
+   "package": "com.racas.shaolinmonks",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   }
+  },
+  {
+   "id": "buku313-skate3-mobile",
+   "name": "Skate 3 Mobile (Buku313)",
+   "repo": "Buku313/Skate3-Mobile",
+   "games": [
+    "Skate 3"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "chat.buku.skate3",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   },
+   "pattern": "(?i)-Android\\.apk$"
+  },
+  {
+   "id": "andrewnakas-skate3-android",
+   "name": "Skate 3 Mobile (andrewnakas)",
+   "repo": "andrewnakas/skate3-android",
+   "games": [
+    "Skate 3"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.nakas.skate3",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   }
+  },
+  {
+   "id": "darchap-skate3-port",
+   "name": "Skate 3 Mobile (darchap)",
+   "repo": "darchap/Skate3-Port",
+   "games": [
+    "Skate 3"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "io.skate3port.game",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24,
+    "vulkan": true
+   }
+  },
+  {
+   "id": "ttom795-skyrim-android",
+   "name": "The Elder Scrolls V: Skyrim",
+   "repo": "ttom795/Skyrim_Android",
+   "games": [
+    "Elder Scrolls V : Skyrim"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.tj.skyrim",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "mircowuffwuff-super-mario-bros-remastered-android",
+   "name": "Super Mario Bros. Remastered",
+   "repo": "mircowuffwuff/super-mario-bros.-remastered-android",
+   "games": [
+    "Super Mario Bros."
+   ],
+   "consoles": [
+    "nes"
+   ],
+   "package": "com.mircowuffwuff.smb1r",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "mstan-supermarioland2recomp",
+   "name": "Super Mario Land 2 Recomp",
+   "repo": "mstan/SuperMarioLand2Recomp",
+   "games": [
+    "Super Mario Land 2: 6 Golden Coins"
+   ],
+   "consoles": [
+    "gb"
+   ],
+   "package": "com.mstan.supermarioland2recomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "jbcgames-sms-android",
+   "name": "Super Mario Sunshine",
+   "repo": "jbcgames/sms-android",
+   "games": [
+    "Super Mario Sunshine"
+   ],
+   "consoles": [
+    "gamecube"
+   ],
+   "package": "com.jbcgames.sunshine",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "kardeiro-snowboardkids2-recomp-android",
+   "name": "Snowboard Kids 2 Recomp",
+   "repo": "kardeiro/snowboardkids2-recomp-Android",
+   "games": [
+    "Snowboard Kids 2"
+   ],
+   "consoles": [
+    "n64"
+   ],
+   "package": "com.snowboardkids2.recomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "linkzenic-shipwright-android",
+   "name": "Ship of Harkinian (linkzenic)",
+   "repo": "linkzenic/Shipwright-Android",
+   "games": [
+    "The Legend of Zelda: Ocarina of Time"
+   ],
+   "consoles": [
+    "n64"
+   ],
+   "package": "com.linkzenic.soh",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "waterdish-shipwright-android",
+   "name": "Ship of Harkinian (Waterdish)",
+   "repo": "Waterdish/Shipwright-Android",
+   "games": [
+    "The Legend of Zelda: Ocarina of Time"
+   ],
+   "consoles": [
+    "n64"
+   ],
+   "package": "com.dishii.soh",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "rsdkmodding-rsdkv5-decompilation",
+   "name": "Sonic Mania (RSDKv5)",
+   "repo": "RSDKModding/RSDKv5-Decompilation",
+   "games": [
+    "Sonic Mania"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "org.rems.rsdkv5",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 21
+   },
+   "pattern": "(?i)android.*\\.zip$",
+   "zip": "(?i)\\.apk$"
+  },
+  {
+   "id": "rsdkmodding-rsdkv4-decompilation",
+   "name": "Sonic 1 y 2 (RSDKv4)",
+   "repo": "RSDKModding/RSDKv4-Decompilation",
+   "games": [
+    "Sonic the Hedgehog"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.decomp.rsdkv4",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   },
+   "pattern": "(?i)android.*\\.zip$",
+   "zip": "(?i)\\.apk$"
+  },
+  {
+   "id": "sergiomanzur-symphonyrecomp",
+   "name": "Symphony Recomp",
+   "repo": "sergiomanzur/SymphonyRecomp",
+   "games": [
+    "Castlevania: Symphony of the Night"
+   ],
+   "consoles": [
+    "ps1"
+   ],
+   "package": "com.blacklabelhq.sotn",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "pakompom-spacerangershd-fpc",
+   "name": "Space Rangers HD (FPC)",
+   "repo": "pakompom/SpaceRangersHD_FPC",
+   "games": [
+    "Space Rangers HD: A War Apart"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "io.github.pakompom.spacerangershd",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "yancharkin-spelunkyclassichd",
+   "name": "Spelunky Classic HD",
+   "repo": "yancharkin/SpelunkyClassicHD",
+   "games": [
+    "Spelunky Classic"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.github.yancharkin.SpelunkyClassicHD",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "hapqe-ssbu-recomp",
+   "name": "OpenSmash",
+   "repo": "hapqe/ssbu-recomp",
+   "games": [
+    "Super Smash Bros. Ultimate"
+   ],
+   "consoles": [
+    "switch"
+   ],
+   "package": "me.hapke.opensmash",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "n0madic-starcraft64-recomp",
+   "name": "StarCraft 64 Recompiled",
+   "repo": "n0madic/StarCraft64-recomp",
+   "games": [
+    "StarCraft 64"
+   ],
+   "consoles": [
+    "n64"
+   ],
+   "package": "com.nomadic.sc64.launcher",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "kinopiowarrior-stardroid",
+   "name": "StarDroid",
+   "repo": "kinopiowarrior/StarDroid",
+   "games": [
+    "StarCraft + Broodwars"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "org.openbw.androidtest",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "modinmobilests-sts2mobilelauncher",
+   "name": "StS2 Mobile Launcher (ModinMobileSTS)",
+   "repo": "ModinMobileSTS/Sts2MobileLauncher",
+   "games": [
+    "Slay the Spire 2"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.megacrit.sts2re",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "ekyso-sts2-launcher",
+   "name": "StS2 Mobile Launcher (Ekyso)",
+   "repo": "Ekyso/StS2-Launcher",
+   "games": [
+    "Slay the Spire 2"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.game.sts2launcher",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "slopport-supaplex-android",
+   "name": "Supaplex",
+   "repo": "SlopPort/supaplex-android",
+   "games": [
+    "Supaplex"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "pl.offline.supaplex",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "raekwon1603-super-metroid-android",
+   "name": "Super Metroid (Raekwon1603)",
+   "repo": "Raekwon1603/super_metroid-android",
+   "games": [
+    "Super Metroid"
+   ],
+   "consoles": [
+    "snes"
+   ],
+   "package": "com.raekwon.supermetroid",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "mrjackspade-supermetroiddecomp",
+   "name": "Super Metroid (MrJackSpade)",
+   "repo": "MrJackSpade/SuperMetroidDecomp",
+   "games": [
+    "Super Metroid"
+   ],
+   "consoles": [
+    "snes"
+   ],
+   "package": "org.supermetroid.csharp.testing",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "pettersdark-symphonyrecomp-dual",
+   "name": "SymphonyRecomp-DUAL",
+   "repo": "pettersdark/SymphonyRecomp-DUAL",
+   "games": [
+    "Castlevania: Symphony of the Night"
+   ],
+   "consoles": [
+    "ps1"
+   ],
+   "package": "com.blacklabelhq.sotn",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "raposomiguel50-system-shock-android",
+   "name": "System Shock para Android",
+   "repo": "raposomiguel50/system-shock-android",
+   "games": [
+    "System Shock"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "io.github.raposomiguel50.systemshock",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "dfdx047-tenkaichi3decompandroid",
+   "name": "Dragon Rage Budokai Tenkaichi 3",
+   "repo": "dfdx047/Tenkaichi3DecompAndroid",
+   "games": [
+    "Dragon Ball Z: Budokai Tenkaichi 3"
+   ],
+   "consoles": [
+    "ps2"
+   ],
+   "package": "com.dfdx047.dragonrage",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "datfooldive-the-warriors-android",
+   "name": "The Warriors",
+   "repo": "datfooldive/The-Warriors-Android",
+   "games": [
+    "The Warriors"
+   ],
+   "consoles": [
+    "xbox"
+   ],
+   "package": "com.datfooldive.warriors",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "redmemories-theamazingspidermanrevived",
+   "name": "The Amazing Spider-Man Revived",
+   "repo": "RedMemories/TheAmazingSpidermanRevived",
+   "games": [
+    "The Amazing Spider-Man"
+   ],
+   "consoles": [
+    "other"
+   ],
+   "package": "com.redmemories.amazingspiderman",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "moddedrounds-thp8-android",
+   "name": "Project 8 Recomp",
+   "repo": "moddedrounds/THP8-Android",
+   "games": [
+    "Tony Hawk's Project 8"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "org.project8recomp.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "cesarus85-tiberian-dawn-for-android-and-meta-quest",
+   "name": "Tiberian Dawn para Android",
+   "repo": "Cesarus85/Tiberian-Dawn-for-Android-and-Meta-Quest",
+   "games": [
+    "Command & Conquer"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "org.tiberiandawn.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   },
+   "pattern": "(?i)mobile.*\\.apk$"
+  },
+  {
+   "id": "samyost1-tmc-android",
+   "name": "Minish Cap Dual Screen",
+   "repo": "samyost1/tmc-android",
+   "games": [
+    "The Legend of Zelda: The Minish Cap"
+   ],
+   "consoles": [
+    "gba"
+   ],
+   "package": "dev.picori.tmc",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "igawa6-tomba2recompds",
+   "name": "Tomba! 2 Recompiled",
+   "repo": "igawa6/Tomba2RecompDS",
+   "games": [
+    "Tomba! 2: The Evil Swine Return"
+   ],
+   "consoles": [
+    "ps1"
+   ],
+   "package": "io.github.tomba2recomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "frostie77-tooie-recompiled",
+   "name": "Tooie Recompiled",
+   "repo": "Frostie77/Tooie-Recompiled",
+   "games": [
+    "Banjo-Tooie"
+   ],
+   "consoles": [
+    "n64"
+   ],
+   "package": "io.github.banjotooierecompiled.release",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "deivid22srk-twistedmetal4recomp-android",
+   "name": "Twisted Metal 4 Recomp",
+   "repo": "deivid22srk/TwistedMetal4Recomp-Android",
+   "games": [
+    "Twisted Metal 4"
+   ],
+   "consoles": [
+    "ps1"
+   ],
+   "package": "com.deivid22srk.twistedmetal4",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "sansnope-unleashedrecomp-android",
+   "name": "Unleashed Recompiled",
+   "repo": "SansNope/UnleashedRecomp-Android",
+   "games": [
+    "Sonic Unleashed"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.sega.sonicunr",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "andiweli-unreal-android",
+   "name": "Unreal para Android",
+   "repo": "Andiweli/Unreal-Android",
+   "games": [
+    "Unreal"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.ast.unreal",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "andiweli-ut99-android",
+   "name": "UT99 para Android",
+   "repo": "Andiweli/UT99-Android",
+   "games": [
+    "Unreal Tournament"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.ast.ut99",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "udarmolota-valdroid",
+   "name": "ValDroid",
+   "repo": "udarmolota/ValDroid",
+   "games": [
+    "Valheim"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.valdroid",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "imjustadudegamer-voyagersp-android",
+   "name": "Voyager SP",
+   "repo": "imjustadudegamer/VoyagerSP-Android",
+   "games": [
+    "Star Trek: Voyager - Elite Force"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.voyager.efsp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "hllartyparty-waverace64recompforandroid",
+   "name": "Wave Race 64 Recomp",
+   "repo": "HLLArtyParty/WaveRace64RecompForAndroid",
+   "games": [
+    "Wave Race 64"
+   ],
+   "consoles": [
+    "n64"
+   ],
+   "package": "com.hllartyparty.waverace64recomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "dorakyuraduang-whitealbum2-android",
+   "name": "WHITE ALBUM2 para Android",
+   "repo": "dorakyuraduang/whitealbum2-Android",
+   "games": [
+    "WHITE ALBUM2"
+   ],
+   "consoles": [
+    "ps3"
+   ],
+   "package": "org.wa2.port",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "kalasyan-wl4-recomp",
+   "name": "Wario Land 4 Recomp",
+   "repo": "kalasyan/Wl4-recomp",
+   "games": [
+    "Wario Land 4"
+   ],
+   "consoles": [
+    "gba"
+   ],
+   "package": "dev.wl4.android",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "xhyn-ph-xhyn-iv-recomp",
+   "name": "XHYN IV",
+   "repo": "XHYN-PH/XHYN-IV-recomp",
+   "games": [
+    "GTA 4"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.xhyn.ivrecomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "sala01-ygo-fm-android",
+   "name": "Yu-Gi-Oh! Forbidden Memories Recompiled (Sala01)",
+   "repo": "Sala01/ygo-fm-android",
+   "games": [
+    "Yu-Gi-Oh! Forbidden Memories"
+   ],
+   "consoles": [
+    "ps1"
+   ],
+   "package": "org.unchiga.yfmrecomp",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "dfdx047-zandatsu",
+   "name": "Zandatsu",
+   "repo": "dfdx047/Zandatsu",
+   "games": [
+    "Metal Gear Rising Revengeance"
+   ],
+   "consoles": [
+    "xbox360"
+   ],
+   "package": "com.dfdx047.zandatsu",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "andiweli-zgloom-android",
+   "name": "ZGloom",
+   "repo": "Andiweli/ZGloom-Android",
+   "games": [
+    "Gloom, Gloom Deluxe, Gloom 3"
+   ],
+   "consoles": [
+    "amiga"
+   ],
+   "package": "com.ast.gloomcollection",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "udarmolota-zomdroid",
+   "name": "Zomdroid",
+   "repo": "udarmolota/zomdroid",
+   "games": [
+    "Project Zomboid"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.zomdroid",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "abduznik-zumaportable",
+   "name": "Zuma Portable",
+   "repo": "abduznik/ZumaPortable",
+   "games": [
+    "Zuma Deluxe"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "io.github.abduznik.zuma",
+   "requirements": {
+    "abi": [
+     "arm64-v8a"
+    ],
+    "min_sdk": 24
+   }
+  },
+  {
+   "id": "kerryhigh-zzt-android",
+   "name": "ZZT",
+   "repo": "kerryhigh/zzt-android",
+   "games": [
+    "ZZT"
+   ],
+   "consoles": [
+    "pc"
+   ],
+   "package": "com.kerry.zzt",
    "requirements": {
     "abi": [
      "arm64-v8a"

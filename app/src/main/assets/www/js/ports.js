@@ -102,7 +102,7 @@ function thorWirePorts(card, title, consoleName){
         for(let i = 0; i < 20; i++){
           if(!card.isConnected) return false;
           let a = 'unknown';
-          try{ a = window.ThorBridge.portAvailable(q.repo); }catch(e){}
+          try{ a = window.ThorBridge.portAvailable(q.repo, q.pattern || ''); }catch(e){}
           if(a === 'yes') return true;
           if(a === 'no' || a === 'unknown') return false;
           await new Promise(r => setTimeout(r, 600));
@@ -187,7 +187,7 @@ function wirePort(card, host, p, several, first, title, consoleName){
       say(res.message || '', !res.ok);
       return;
     }
-    try{ b.portGet(p.id, p.repo); }catch(e){ say('Could not start the download.', true); return; }
+    try{ b.portGet(p.id, p.repo, p.pattern || '', p.zip || ''); }catch(e){ say('Could not start the download.', true); return; }
     render();
     start();
   });

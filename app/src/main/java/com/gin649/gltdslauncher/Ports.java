@@ -133,7 +133,7 @@ final class Ports {
     }
 
     /** Looks up, downloads, checks and installs the newest build. Progress is read with state(). */
-    static void get(final Activity act, final String slug, final String repo) {
+    static void get(final Activity act, final String slug, final String repo, final String pattern, final String zipEntry) {
         final Job j = job(slug);
         synchronized (j) {
             if ("working".equals(j.state)) return;
@@ -145,7 +145,7 @@ final class Ports {
             @Override
             public void run() {
                 try {
-                    run0(act, slug, repo, j);
+                    run0(act, slug, repo, pattern, zipEntry, j);
                 } catch (Exception e) {
                     fail(j, "Could not get the port. Check the internet connection.");
                 }
@@ -159,32 +159,18 @@ final class Ports {
         j.percent = -1;
     }
 
-    private static void run0(Activity act, String slug, String repo, Job j) throws Exception {
+    private static void run0(Activity act, String slug, String repo, String pattern, String zipEntry, Job j) throws Exception {
         if (!repo.matches("[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")) {
             fail(j, "Unknown port.");
             return;
         }
-        JSONObject rel = fetchJson("https://api.github.com/repos/" + repo + "/releases/latest");
-        if (rel == null) {
+        JSONObject[] found = findBuild(repo, pattern);
+        if (found == null) {
             fail(j, "Could not reach GitHub.");
             return;
         }
-        JSONObject asset = pickAsset(rel.optJSONArray("assets"));
-        if (asset == null) {
-            // The newest release may not carry the Android file (some projects publish it separately), so look back
-            // through the recent ones, newest first, for one that does.
-            JSONObject all = fetchJson("https://api.github.com/repos/" + repo + "/releases?per_page=20");
-            JSONArray list = all == null ? null : all.optJSONArray("list");
-            for (int i = 0; list != null && i < list.length() && asset == null; i++) {
-                JSONObject r = list.optJSONObject(i);
-                if (r == null || r.optBoolean("draft")) continue;
-                JSONObject a = pickAsset(r.optJSONArray("assets"));
-                if (a != null) {
-                    asset = a;
-                    rel = r;
-                }
-            }
-        }
+        JSONObject rel = found[0];
+        JSONObject asset = found[1];
         if (asset == null) {
             fail(j, "No Android build in the recent releases.");
             return;
@@ -197,6 +183,7 @@ final class Ports {
             fail(j, "No Android build found.");
             return;
         }
+        boolean zipped = zipEntry != null && !zipEntry.isEmpty();
 
         File dir = act.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
         if (dir == null) {
@@ -205,6 +192,8 @@ final class Ports {
         }
         File apk = new File(dir, "port-" + slug.replaceAll("[^A-Za-z0-9_.-]", "_") + ".apk");
         if (apk.exists()) apk.delete();
+        File dl = zipped ? new File(dir, apk.getName() + ".zip") : apk;
+        if (dl.exists()) dl.delete();
 
         j.message = "Downloading " + j.tag + "…";
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
@@ -219,7 +208,7 @@ final class Ports {
             }
             long total = c.getContentLengthLong();
             InputStream in = c.getInputStream();
-            FileOutputStream out = new FileOutputStream(apk);
+            FileOutputStream out = new FileOutputStream(dl);
             try {
                 byte[] buf = new byte[65536];
                 long got = 0;
@@ -241,9 +230,39 @@ final class Ports {
         StringBuilder hex = new StringBuilder();
         for (byte b : md.digest()) hex.append(String.format("%02x", b));
         if (!sha.isEmpty() && !sha.equals(hex.toString())) {
-            apk.delete();
+            dl.delete();
             fail(j, "The file does not match its checksum, so it was not installed.");
             return;
+        }
+        if (zipped) { // the app is inside the downloaded zip
+            java.util.regex.Pattern want = java.util.regex.Pattern.compile(zipEntry);
+            java.util.zip.ZipFile z = new java.util.zip.ZipFile(dl);
+            boolean got = false;
+            try {
+                java.util.Enumeration<? extends java.util.zip.ZipEntry> en = z.entries();
+                while (en.hasMoreElements() && !got) {
+                    java.util.zip.ZipEntry e = en.nextElement();
+                    if (e.isDirectory() || !want.matcher(new File(e.getName()).getName()).find()) continue;
+                    InputStream zin = z.getInputStream(e);
+                    FileOutputStream zout = new FileOutputStream(apk);
+                    try {
+                        byte[] buf = new byte[65536];
+                        int n;
+                        while ((n = zin.read(buf)) > 0) zout.write(buf, 0, n);
+                        got = true;
+                    } finally {
+                        zout.close();
+                        zin.close();
+                    }
+                }
+            } finally {
+                z.close();
+                dl.delete();
+            }
+            if (!got) {
+                fail(j, "No app found inside the download.");
+                return;
+            }
         }
         PackageInfo info = act.getPackageManager().getPackageArchiveInfo(apk.getAbsolutePath(), 0);
         if (info == null) {
@@ -266,7 +285,7 @@ final class Ports {
     }
 
     /** The build for 64-bit ARM phones: prefers names that say arm64, then universal, and skips other chips. */
-    private static JSONObject pickAsset(JSONArray assets) {
+    private static JSONObject pickAsset(JSONArray assets, java.util.regex.Pattern pat) {
         if (assets == null) return null;
         JSONObject best = null;
         int bestScore = -1;
@@ -274,7 +293,7 @@ final class Ports {
             JSONObject a = assets.optJSONObject(i);
             if (a == null) continue;
             String n = a.optString("name", "").toLowerCase(Locale.ROOT);
-            if (!n.endsWith(".apk")) continue;
+            if (pat == null ? !n.endsWith(".apk") : !pat.matcher(a.optString("name", "")).find()) continue;
             if (n.contains("x86") || n.contains("x64") || n.contains("x32") || n.contains("armeabi") || n.contains("armv7") || n.contains("debug")) continue;
             int score = 1;
             if (n.contains("universal")) score = 3;
@@ -287,6 +306,29 @@ final class Ports {
         return best;
     }
 
+    private static java.util.regex.Pattern compile(String pattern) {
+        try {
+            return pattern == null || pattern.isEmpty() ? null : java.util.regex.Pattern.compile(pattern);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** The newest release (pre-releases too, drafts never) that has the Android file: {release, asset}, asset null if none, null if GitHub can't be reached. */
+    private static JSONObject[] findBuild(String repo, String pattern) {
+        java.util.regex.Pattern pat = compile(pattern);
+        JSONObject all = fetchJson("https://api.github.com/repos/" + repo + "/releases?per_page=20");
+        JSONArray list = all == null ? null : all.optJSONArray("list");
+        if (list == null) return null;
+        for (int i = 0; i < list.length(); i++) {
+            JSONObject r = list.optJSONObject(i);
+            if (r == null || r.optBoolean("draft")) continue;
+            JSONObject a = pickAsset(r.optJSONArray("assets"), pat);
+            if (a != null) return new JSONObject[]{r, a};
+        }
+        return new JSONObject[]{null, null};
+    }
+
     private static final Map<String, String> AVAILABLE = new HashMap<String, String>(); // repo -> "yes" / "no" / "checking"
     private static final long AVAILABLE_TTL = 6L * 60 * 60 * 1000;
 
@@ -294,7 +336,7 @@ final class Ports {
      * Whether a port has an Android build in its recent releases: "yes", "no", or "checking" while the answer is
      * being looked up in the background. A lookup that fails (no network) answers "unknown" and is tried again later.
      */
-    static String available(final Context ctx, final String repo) {
+    static String available(final Context ctx, final String repo, final String pattern) {
         if (repo == null || !repo.matches("[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")) return "no";
         final android.content.SharedPreferences sp = ctx.getSharedPreferences("ports-available", Context.MODE_PRIVATE);
         synchronized (AVAILABLE) {
@@ -320,18 +362,8 @@ final class Ports {
             public void run() {
                 String answer = "unknown";
                 try {
-                    JSONObject all = fetchJson("https://api.github.com/repos/" + repo + "/releases?per_page=20");
-                    JSONArray list = all == null ? null : all.optJSONArray("list");
-                    if (list != null) {
-                        answer = "no";
-                        for (int i = 0; i < list.length(); i++) {
-                            JSONObject r = list.optJSONObject(i);
-                            if (r != null && !r.optBoolean("draft") && pickAsset(r.optJSONArray("assets")) != null) {
-                                answer = "yes";
-                                break;
-                            }
-                        }
-                    }
+                    JSONObject[] found = findBuild(repo, pattern);
+                    if (found != null) answer = found[1] != null ? "yes" : "no";
                 } catch (Exception ignored) {
                 }
                 synchronized (AVAILABLE) {
