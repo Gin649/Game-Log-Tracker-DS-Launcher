@@ -248,7 +248,16 @@
     if(next && (dir === 'up' || dir === 'down')){
       // Entering a row of headings or filters lands on the one you are on: the Game heading, the current
       // console, the current tab.
-      if(next.matches('.lib-table th') && !cur.matches('.lib-table th')){
+      if(next.closest('.tile-grid') && next.matches('.cart')){
+        // In tile view, up and down step through the rows on the leftmost tile of each.
+        const top = next.getBoundingClientRect().top;
+        let left = next, l = next.getBoundingClientRect().left;
+        next.closest('.tile-grid').querySelectorAll('.cart').forEach(t => {
+          const r = t.getBoundingClientRect();
+          if(Math.abs(r.top - top) <= 12 && r.left < l){ l = r.left; left = t; }
+        });
+        next = left;
+      }else if(next.matches('.lib-table th') && !cur.matches('.lib-table th')){
         next = next.closest('tr').querySelector('th') || next;
       }else if(next.closest('#system-chips') && !cur.closest('#system-chips')){
         next = document.querySelector('#system-chips .chip.active') || next;
