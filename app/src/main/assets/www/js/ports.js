@@ -91,14 +91,14 @@ function thorWirePorts(card, title, consoleName){
   if(!host || !window.ThorBridge || typeof window.ThorBridge.portState !== 'function') return;
   portsForGame(title).then(async ports => {
     ports = ports.filter(portRunsHere);
-    // A game can have several ports. Once one is installed that's the one to offer, not the others.
-    const have = ports.filter(q => {
-      try{ return JSON.parse(window.ThorBridge.portState(q.id, q.name, q.package || '')).installed; }catch(e){ return false; }
-    });
-    if(have.length) ports = have;
-    else if(typeof window.ThorBridge.portAvailable === 'function'){
-      // Only ports that really have an Android build are shown; the check runs in the background and takes a moment.
+    // Installed ports always show. The others show only when they really have an Android build; that check runs
+    // in the background and takes a moment.
+    const isInstalled = q => {
+      try{ return !!JSON.parse(window.ThorBridge.portState(q.id, q.name, q.package || '')).installed; }catch(e){ return false; }
+    };
+    if(typeof window.ThorBridge.portAvailable === 'function'){
       const verdict = await Promise.all(ports.map(async q => {
+        if(isInstalled(q)) return true;
         for(let i = 0; i < 20; i++){
           if(!card.isConnected) return false;
           let a = 'unknown';
