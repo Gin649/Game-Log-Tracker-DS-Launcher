@@ -84,8 +84,9 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     lastActive = key;
     row.querySelectorAll('.chip').forEach(c => {
       const r = c.getBoundingClientRect();
-      const cut = r.right > box.right + 1 || r.left < box.left - 1;
-      const keep = c.classList.contains('active') || c.classList.contains('pad-focus'); // never hide the one you are on
+      const cut = r.right > box.right + 3 || r.left < box.left - 3;
+      const keep = c.classList.contains('active') || c.classList.contains('pad-focus') // never hide the one you are on
+        || (c === row.querySelector('.chip:last-of-type') && row.scrollLeft >= row.scrollWidth - row.clientWidth - 2); // the last one, once scrolled all the way
       c.style.visibility = cut && !keep ? 'hidden' : '';
     });
   }

@@ -1159,3 +1159,5 @@ html.top-panel body,html.top-panel body.show-status{padding-top:calc(var(--statu
 
 /* Tabs: the highlighted one gets the same yellow square as everything else. */
 body.pad-mode .tab-btn.pad-focus{outline-offset:-3px;}
+
+.chip-row::after{content:'';flex:0 0 14px;} /* room after the last console so it can scroll fully into view */
