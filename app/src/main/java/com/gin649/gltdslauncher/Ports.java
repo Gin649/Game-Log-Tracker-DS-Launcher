@@ -171,7 +171,22 @@ final class Ports {
         }
         JSONObject asset = pickAsset(rel.optJSONArray("assets"));
         if (asset == null) {
-            fail(j, "No Android build in the latest release.");
+            // The newest release may not carry the Android file (some projects publish it separately), so look back
+            // through the recent ones, newest first, for one that does.
+            JSONObject all = fetchJson("https://api.github.com/repos/" + repo + "/releases?per_page=20");
+            JSONArray list = all == null ? null : all.optJSONArray("list");
+            for (int i = 0; list != null && i < list.length() && asset == null; i++) {
+                JSONObject r = list.optJSONObject(i);
+                if (r == null || r.optBoolean("draft")) continue;
+                JSONObject a = pickAsset(r.optJSONArray("assets"));
+                if (a != null) {
+                    asset = a;
+                    rel = r;
+                }
+            }
+        }
+        if (asset == null) {
+            fail(j, "No Android build in the recent releases.");
             return;
         }
         j.tag = rel.optString("tag_name", "");
@@ -179,7 +194,7 @@ final class Ports {
         String digest = asset.optString("digest", "");
         String sha = digest.startsWith("sha256:") ? digest.substring(7).toLowerCase(Locale.ROOT) : "";
         if (!url.startsWith("https://")) {
-            fail(j, "No Android build in the latest release.");
+            fail(j, "No Android build found.");
             return;
         }
 
@@ -287,7 +302,9 @@ final class Ports {
             int n;
             while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
             in.close();
-            return new JSONObject(out.toString("UTF-8"));
+            String text = out.toString("UTF-8").trim();
+            if (text.startsWith("[")) return new JSONObject().put("list", new JSONArray(text)); // a list comes back as {list: [...]}
+            return new JSONObject(text);
         } catch (Exception e) {
             return null;
         } finally {
