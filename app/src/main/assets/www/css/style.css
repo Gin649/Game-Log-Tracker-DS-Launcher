@@ -1159,3 +1159,5 @@ html.top-panel body,html.top-panel body.show-status{padding-top:calc(var(--statu
 
 /* Tabs: the highlighted one is shown by a yellow underline, the same for every tab, not a box. */
 body.pad-mode .tab-btn.pad-focus{outline:none;box-shadow:none;color:var(--text);border-bottom-color:var(--gold);}
+/* While the highlight is on a tab, only that tab shows the underline. */
+body.pad-mode .tabs:has(.tab-btn.pad-focus) .tab-btn:not(.pad-focus){border-bottom-color:transparent;}
