@@ -44,6 +44,8 @@ final class RomExport {
             out = new File(Environment.getExternalStorageDirectory(), path);
         }
         if (!out.isDirectory() && !out.mkdirs()) throw new DiscPatcher.PatchException("Could not create the folder " + out.getPath() + ".");
+        File[] old = out.listFiles(); // leftovers from a run that was cut short
+        if (old != null) for (File f : old) if (f.getName().startsWith(".work-")) DiscPatcher.deleteTree(f);
         String name = rom.getName();
         String ext = DiscPatcher.ext(name);
         String stem = DiscPatcher.safeName(name.contains(".") ? name.substring(0, name.lastIndexOf('.')) : name);
@@ -63,6 +65,8 @@ final class RomExport {
 
     /** Unpacks a zip into a temporary folder, then treats the main file in it like any other ROM. */
     private static File fromZip(File zip, File out, String stem, DiscPatcher.Progress p) throws IOException {
+        File direct = fromZipDirect(zip, out, stem, p);
+        if (direct != null) return direct;
         File work = new File(out, ".work-" + System.nanoTime());
         if (!work.mkdir()) throw new DiscPatcher.PatchException("Could not create a working folder in Downloads.");
         try {
@@ -129,6 +133,68 @@ final class RomExport {
             return convert(main, out, stem, p);
         } finally {
             DiscPatcher.deleteTree(work);
+        }
+    }
+
+    /**
+     * A zip with one plain game file in it (a cartridge ROM) is written straight to its final name, so no working
+     * folder shows up in Downloads and nothing is copied twice. Returns null for anything else.
+     */
+    private static File fromZipDirect(File zip, File out, String stem, DiscPatcher.Progress p) throws IOException {
+        ZipFile z = new ZipFile(zip);
+        try {
+            ZipEntry only = null;
+            Enumeration<? extends ZipEntry> en = z.entries();
+            while (en.hasMoreElements()) {
+                ZipEntry e = en.nextElement();
+                if (e.isDirectory()) continue;
+                String leaf = new File(e.getName()).getName();
+                if (leaf.startsWith(".") || JUNK.contains(DiscPatcher.ext(leaf))) continue;
+                if (only != null) return null;
+                only = e;
+            }
+            if (only == null) return null;
+            String ext = DiscPatcher.ext(only.getName());
+            if (ext.equals("cue") || ext.equals("chd") || ext.equals("m3u") || DiscPatcher.isDolphinFormat(ext)) return null;
+            boolean n64 = ext.equals("z64") || ext.equals("v64") || ext.equals("n64");
+            long size = Math.max(only.getSize(), 1);
+            DiscPatcher.requireSpace(out, size + (16L << 20));
+            File dest = new File(out, stem + (n64 ? ".z64" : (ext.isEmpty() ? "" : "." + ext)));
+            File part = new File(out, dest.getName() + ".part");
+            InputStream in = z.getInputStream(only);
+            try {
+                if (n64) {
+                    n64Stream(in, size, part, p, "Unpacking the zip");
+                } else {
+                    OutputStream os = new FileOutputStream(part);
+                    try {
+                        byte[] buf = new byte[1 << 20];
+                        long done = 0;
+                        int n;
+                        while ((n = in.read(buf)) > 0) {
+                            os.write(buf, 0, n);
+                            done += n;
+                            p.update("Unpacking the zip", done, size);
+                            if (p.cancelled()) throw new DiscPatcher.PatchException("Cancelled.");
+                        }
+                    } finally {
+                        os.close();
+                    }
+                }
+            } catch (IOException | RuntimeException e) {
+                part.delete();
+                throw e;
+            } finally {
+                in.close();
+            }
+            if (dest.exists()) dest.delete();
+            if (!part.renameTo(dest)) {
+                part.delete();
+                throw new DiscPatcher.PatchException("Could not save the ROM.");
+            }
+            return dest;
+        } finally {
+            z.close();
         }
     }
 
@@ -202,10 +268,17 @@ final class RomExport {
 
     /** N64 files in any byte order become big-endian (.z64), which is what ports expect. */
     private static void n64ToZ64(File src, File dest, DiscPatcher.Progress p) throws IOException {
-        long total = src.length();
+        InputStream in = new FileInputStream(src);
+        try {
+            n64Stream(in, src.length(), dest, p, "Saving");
+        } finally {
+            in.close();
+        }
+    }
+
+    private static void n64Stream(InputStream in, long total, File dest, DiscPatcher.Progress p, String phase) throws IOException {
         byte[] buf = new byte[1 << 20];
         long done = 0;
-        InputStream in = new FileInputStream(src);
         OutputStream os = new FileOutputStream(dest);
         try {
             int mode = -1; // 0 big-endian, 1 v64 (pairs swapped), 2 n64 (words reversed)
@@ -226,12 +299,11 @@ final class RomExport {
                 }
                 os.write(buf, 0, n);
                 done += n;
-                p.update("Saving", done, Math.max(total, 1));
+                p.update(phase, done, Math.max(total, 1));
                 if (p.cancelled()) throw new DiscPatcher.PatchException("Cancelled.");
             }
         } finally {
             os.close();
-            in.close();
         }
     }
 
