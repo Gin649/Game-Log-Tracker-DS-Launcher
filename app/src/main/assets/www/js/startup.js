@@ -86,7 +86,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
       const r = c.getBoundingClientRect();
       const cut = r.right > box.right + 3 || r.left < box.left - 3;
       const keep = c.classList.contains('active') || c.classList.contains('pad-focus') // never hide the one you are on
-        || (c === row.querySelector('.chip:last-of-type') && row.scrollLeft >= row.scrollWidth - row.clientWidth - 2); // the last one, once scrolled all the way
+        || (c === row.querySelectorAll('.chip')[row.querySelectorAll('.chip').length - 1] && row.scrollLeft >= row.scrollWidth - row.clientWidth - 2); // the last one, once scrolled all the way
       c.style.visibility = cut && !keep ? 'hidden' : '';
     });
   }
