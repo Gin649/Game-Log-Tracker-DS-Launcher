@@ -19,13 +19,14 @@ For all app related discussions and my Game of the Month Competition. Play some 
 **The tracker** is the full Game Log Tracker web app, bundled along with many improvements. 
 
 - **Last Played** with your RetroAchievements profile, recently played games and your latest unlocks.
-- **Game Library** with every game you've played on RA. Search it, filter by system, and see progress, awards and playtime. The three games you played most recently sit at the top under a Recently Played heading, then everything else is listed by name under All Games A–Z. Tap a column heading to sort by anything else. Pick a console and the top three are the last ones you played on that console.
+- **Game Library** with every game you've played on RA. Search it, filter by system, and see progress, awards and playtime. The three games you played most recently sit at the top under a Recently Played heading, then everything else is listed by name under All Games A–Z. Tap a column heading to sort by anything else. Pick a console and the top three are the last ones you played on that console. Game Library and Backlog can also be shown as tiles instead of a list: turn on Tile View under Display Options, Game view, and choose 3, 4 or 5 tiles per row.
 - **Console tabs** can be put in your own order and renamed. Hold a tab in Game Library or Backlog, drag a tab to move it, tap it to rename it, and press the teal OK button to finish. Game Library and Backlog share one order, Beaten uses your names, and the app remembers them.
 - **Backlog** is for games you plan to play, including games from systems RA doesn't track. It's sorted by name. Besides searching by title, Add game can pick games straight from your ROM files (several at once), or add every game in a system folder. Each is matched to its RetroAchievements entry by name, and one RA doesn't list is added as a plain entry, and its picture is filled in from your frontend's media, then SteamGridDB (with a key), LaunchBox, then RAWG. A game leaves the Backlog and goes to the Library as soon as you press Play. A game RA doesn't list gets Now Playing ticked for you at that moment.
 - **Beaten** groups everything you've beaten or mastered by the year you did it.
 - **Apps** lists the apps installed on your device, so you can open them without leaving the launcher. Tap the star on an app to add it to your favourites, which is what the tab shows by default. All apps shows everything, and the search box finds an app by name. On two screens, apps open on the top screen by default. Hold an app to choose the top or bottom screen for it, and your choice is remembered.
 - **Social** shows the people you follow on RetroAchievements and what they've unlocked lately.
 - **Casual / Hardcore** is one switch in the menu that flips every stat, list and progress bar.
+- **A heading that stays put.** The tabs, console row, title, search bar and column headings stay in place while the list scrolls underneath them.
 
 The web version has the full details: https://github.com/Gin649/Game-Log-Tracker
 
@@ -50,9 +51,11 @@ When a game has several fan arts online (up to six), swipe left or right on the 
 ### Playing your games
 
 - **RetroArch** starts the game with the right core for the system.
-- **Standalone emulators:** Dolphin (GameCube, Wii), DuckStation (PS1), PPSSPP (PSP), Mupen64Plus (N64), ARMSX2 (PS2), WatermelonDS (DS), Azahar (3DS), Eden (Switch), Cemu (Wii U), Vita3K (Vita) and HakuX (Xbox).
+- **Standalone emulators:** Dolphin (GameCube, Wii), DuckStation (PS1), PPSSPP (PSP), Mupen64Plus (N64), ARMSX2 (PS2), ARMSX3 and aPS3e (PS3), WatermelonDS (DS), Azahar (3DS), Eden (Switch), Cemu (Wii U), Vita3K and Vita3K+ (Vita), Flycast (Dreamcast), HakuX (Xbox) and XenDroid (Xbox 360). DuckStation has a newer version too, and Dolphin CS is available for GameCube and Wii.
 - You choose which emulator or RetroArch core each system uses, and you can change it any time from Launcher settings.
 - **A different emulator for one game.** The controller button next to Play on this device opens a list of the emulators and RetroArch cores that can play that game. Pick one and only that game uses it, for example the 32-bit RetroArch for a game that won't run in the 64-bit one. Choose Default to go back to the system's emulator.
+- **Android ports.** Some games have a native Android version, made from the game's code. When a game has one, its profile shows a Download and Install the Android Port button. The app downloads the port and installs it (Android asks you to confirm), and the same button then becomes Play installed Android port, which opens it on the top screen. If a game has more than one port, each is named on its button. Ports are only shown if they have an Android build and your device can run them, and the list updates itself, so new ports appear without an app update. You need your own copy of the game.
+- **Prepare ROM for a port.** Ports can't open zip, CHD or RVZ files. The button beside the port button unpacks your ROM (and turns CHD and RVZ discs into plain files, and N64 files into .z64) and saves it to Downloads, in a "Roms for Ports" folder, so you can pick it inside the port. Your original is never changed.
 - **Multi-disc games** show as one entry in your backlog and library, whichever disc you pick. In RetroArch the game's .m3u playlist is used, and if there isn't one, the first time you play the app offers to create it for you. Standalone emulators can't read playlists, so they ask which disc to start.
 - A game with no ROM on the device shows "Not located on this device" instead of Play.
 - The app reads your ROMs folder, whether you use ES-DE or no frontend at all. Folders named in full, like "Game Boy Advance" or "SNES", are recognised too.
@@ -70,11 +73,14 @@ When a game has several fan arts online (up to six), swipe left or right on the 
 | X | Refresh the game profile or the main screen |
 | L1 / R1 | Previous / next console (wraps around at either end) |
 | L2 / R2 | Previous / next tab (wraps around at either end) |
+| Left / right on the tabs or the console row | Switch tab or console straight away, like L2 / R2 and L1 / R1 |
+
+In Tile View, up and down move through the first tile of each row. Going up from the first game goes to the column heading, then the console you are on, then your tab.
 
 
 ### Other things
 
-- Text size controls in the menu, and a tracker size setting for the bottom screen in Launcher settings.
+- Text size controls and the List / Tile view choice under Display Options in the menu, and a tracker size setting for the bottom screen in Launcher settings.
 - An optional clock and battery readout, with the battery shown as pixel hearts. Turn it on under Display in the menu.
 - The app checks for new versions and offers to download and install them. The prompt shows the new version and points to GitHub or Discord for details.
 - About, at the bottom of the menu, shows the app version and links to GitHub and Discord.
