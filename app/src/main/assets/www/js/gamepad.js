@@ -177,17 +177,15 @@
       // Up and down go to the next row, even when that row is shorter (three recent tiles above a row of five):
       // take the nearest row first, then the closest one across within it.
       const c0 = cur.getBoundingClientRect();
-      const rows = [];
-      let near = Infinity;
+      let rowTop = dir === 'down' ? Infinity : -Infinity;
+      const ahead = [];
       for(const it of list){
         if(it.el === cur) continue;
-        const cy0 = c0.top + c0.height / 2, ry0 = it.r.top + it.r.height / 2;
-        if((dir === 'down' ? ry0 - cy0 : cy0 - ry0) <= 1) continue;
-        const primary = Math.max(0, dir === 'down' ? it.r.top - c0.bottom : c0.top - it.r.bottom);
-        rows.push({ it, primary });
-        if(primary < near) near = primary;
+        if(dir === 'down' ? it.r.top <= c0.top + 12 : it.r.top >= c0.top - 12) continue; // same row, or behind
+        ahead.push(it);
+        rowTop = dir === 'down' ? Math.min(rowTop, it.r.top) : Math.max(rowTop, it.r.top);
       }
-      list = rows.filter(x => x.primary <= near + 12).map(x => x.it);
+      list = ahead.filter(it => Math.abs(it.r.top - rowTop) <= 12);
     }
     const c = cur.getBoundingClientRect();
     const cx = c.left + c.width / 2, cy = c.top + c.height / 2;
