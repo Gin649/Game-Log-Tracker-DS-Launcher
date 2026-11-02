@@ -34,3 +34,30 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   }
   updateRaConnectionView();
 })();
+
+
+// Measures the pinned heading (tabs, console chips, title and search bar) so the pieces stack under each other and
+// anything scrolled into view lands below them.
+(function pinHeading(){
+  const root = document.documentElement;
+  const status = () => (document.body.classList.contains('show-status') ? 28 : 0);
+  const h = el => (el && el.offsetParent !== null ? el.getBoundingClientRect().height : 0);
+  function measure(){
+    const tabs = h(document.querySelector('.tabs'));
+    const chips = h(document.querySelector('#system-chips.visible'));
+    const head = h(document.querySelector('.tab-panel.active .panel-head'));
+    root.style.setProperty('--stk-tabs', tabs + 'px');
+    root.style.setProperty('--stk-chips', chips + 'px');
+    root.style.setProperty('--stk-all', (status() + tabs + chips + head + 8) + 'px');
+  }
+  let queued = false;
+  const soon = () => { if(queued) return; queued = true; requestAnimationFrame(() => { queued = false; measure(); }); };
+  if(window.ResizeObserver){
+    const ro = new ResizeObserver(soon);
+    ['.tabs', '#system-chips', '.panel-head'].forEach(sel => document.querySelectorAll(sel).forEach(el => ro.observe(el)));
+  }
+  window.addEventListener('resize', soon);
+  document.addEventListener('click', soon, true);
+  new MutationObserver(soon).observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
+  soon();
+})();

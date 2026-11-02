@@ -344,7 +344,7 @@
   }
 
   /* Tabs */
-  .tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:18px;}
+  .tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:0;padding-bottom:0;}
   .tab-btn{
     background:transparent;border:none;color:var(--muted);
     padding:10px 12px 10px 8px;margin-right:14px;font-size:0.8125rem;
@@ -1133,3 +1133,13 @@ html.top-panel #profile-hero{display:none;}
 .textsize-row.view-row{flex-wrap:wrap;}
 .textsize-row.view-row .display-note{flex-basis:100%;}
 .textsize-btn.view-btn{width:auto;min-width:0;padding:0 12px;white-space:nowrap;flex:1 1 0;}
+
+/* Static heading: the tabs, console chips and each tab's title and search bar stay put; only what is below scrolls. */
+.tabs,.chip-row.visible,.panel-head{position:sticky;background:var(--bg);}
+.tabs{top:calc(var(--status-h) + env(safe-area-inset-top, 0px));z-index:22;padding-top:6px;}
+.chip-row.visible{top:calc(var(--status-h) + env(safe-area-inset-top, 0px) + var(--stk-tabs, 0px));z-index:21;padding-top:12px;margin-bottom:0;}
+.panel-head{top:calc(var(--status-h) + env(safe-area-inset-top, 0px) + var(--stk-tabs, 0px) + var(--stk-chips, 0px));z-index:20;display:flow-root;padding-bottom:1px;}
+.panel-head .lib-search-row{margin-bottom:0;padding-bottom:12px;}
+.tab-panel > .section-title:first-child{margin-top:18px;}
+.panel-head .section-title{margin:14px 0 10px;}
+html{scroll-padding-top:var(--stk-all, 0px);}
