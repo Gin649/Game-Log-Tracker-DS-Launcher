@@ -317,7 +317,7 @@ final class Ports {
     /** The newest release (pre-releases too, drafts never) that has the Android file: {release, asset}, asset null if none, null if GitHub can't be reached. */
     private static JSONObject[] findBuild(String repo, String pattern) {
         java.util.regex.Pattern pat = compile(pattern);
-        JSONObject all = fetchJson("https://api.github.com/repos/" + repo + "/releases?per_page=20");
+        JSONObject all = fetchJson("https://api.github.com/repos/" + repo + "/releases?per_page=100");
         JSONArray list = all == null ? null : all.optJSONArray("list");
         if (list == null) return null;
         for (int i = 0; i < list.length(); i++) {
