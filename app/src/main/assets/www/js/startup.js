@@ -61,3 +61,25 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   new MutationObserver(soon).observe(document.body, { attributes: true, attributeFilter: ['class'], subtree: true });
   soon();
 })();
+
+// A console chip that runs off the edge of the row is hidden until you scroll to it, so no name is ever cut in half.
+(function clipChips(){
+  const row = document.getElementById('system-chips');
+  if(!row) return;
+  let queued = false;
+  function apply(){
+    queued = false;
+    const box = row.getBoundingClientRect();
+    if(!box.width) return;
+    row.querySelectorAll('.chip').forEach(c => {
+      const r = c.getBoundingClientRect();
+      const cut = r.right > box.right + 1 || r.left < box.left - 1;
+      c.style.visibility = cut ? 'hidden' : '';
+    });
+  }
+  const soon = () => { if(!queued){ queued = true; requestAnimationFrame(apply); } };
+  row.addEventListener('scroll', soon, { passive: true });
+  window.addEventListener('resize', soon);
+  new MutationObserver(soon).observe(row, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+  soon();
+})();
