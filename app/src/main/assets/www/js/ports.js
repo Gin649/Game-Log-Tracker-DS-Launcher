@@ -74,7 +74,6 @@ async function portsForGame(title){
 // A port that needs more than this device has (CPU type, Android version, Vulkan) is not offered at all.
 let portDeviceInfo = null;
 function portRunsHere(p){
-  if(!p.package) return false; // not in Recompa's list of ports with a confirmed Android build
   const r = p.requirements;
   if(!r) return true;
   if(!portDeviceInfo){
@@ -90,13 +89,28 @@ function portRunsHere(p){
 function thorWirePorts(card, title, consoleName){
   const host = card.querySelector('#modal-port');
   if(!host || !window.ThorBridge || typeof window.ThorBridge.portState !== 'function') return;
-  portsForGame(title).then(ports => {
+  portsForGame(title).then(async ports => {
     ports = ports.filter(portRunsHere);
     // A game can have several ports. Once one is installed that's the one to offer, not the others.
     const have = ports.filter(q => {
       try{ return JSON.parse(window.ThorBridge.portState(q.id, q.name, q.package || '')).installed; }catch(e){ return false; }
     });
     if(have.length) ports = have;
+    else if(typeof window.ThorBridge.portAvailable === 'function'){
+      // Only ports that really have an Android build are shown; the check runs in the background and takes a moment.
+      const verdict = await Promise.all(ports.map(async q => {
+        for(let i = 0; i < 20; i++){
+          if(!card.isConnected) return false;
+          let a = 'unknown';
+          try{ a = window.ThorBridge.portAvailable(q.repo); }catch(e){}
+          if(a === 'yes') return true;
+          if(a === 'no' || a === 'unknown') return false;
+          await new Promise(r => setTimeout(r, 600));
+        }
+        return false;
+      }));
+      ports = ports.filter((q, i) => verdict[i]);
+    }
     if(!ports.length || !card.isConnected) return;
     host.innerHTML = ports.length > 1 ? '<div class="gd-port-multi">Multiple Android ports available</div>' : '';
     ports.forEach((p, i) => wirePort(card, host, p, ports.length > 1, i === 0, title, consoleName));

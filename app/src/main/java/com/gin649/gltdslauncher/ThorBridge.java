@@ -1013,6 +1013,12 @@ final class ThorBridge {
         return Ports.state(act, slug, name, pkg);
     }
 
+    /** "yes", "no" or "checking": does this port have an Android build in its recent releases? */
+    @JavascriptInterface
+    public String portAvailable(String repo) {
+        return Ports.available(act, repo);
+    }
+
     /** What this device can run: {abis, sdk, vulkan}. */
     @JavascriptInterface
     public String portDevice() {

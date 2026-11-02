@@ -287,6 +287,66 @@ final class Ports {
         return best;
     }
 
+    private static final Map<String, String> AVAILABLE = new HashMap<String, String>(); // repo -> "yes" / "no" / "checking"
+    private static final long AVAILABLE_TTL = 6L * 60 * 60 * 1000;
+
+    /**
+     * Whether a port has an Android build in its recent releases: "yes", "no", or "checking" while the answer is
+     * being looked up in the background. A lookup that fails (no network) answers "unknown" and is tried again later.
+     */
+    static String available(final Context ctx, final String repo) {
+        if (repo == null || !repo.matches("[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")) return "no";
+        final android.content.SharedPreferences sp = ctx.getSharedPreferences("ports-available", Context.MODE_PRIVATE);
+        synchronized (AVAILABLE) {
+            String mem = AVAILABLE.get(repo);
+            if ("checking".equals(mem)) return "checking";
+            String saved = sp.getString(repo, "");
+            int at = saved.indexOf(':');
+            if (at > 0) {
+                try {
+                    long when = Long.parseLong(saved.substring(0, at));
+                    if (System.currentTimeMillis() - when < AVAILABLE_TTL) return saved.substring(at + 1);
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            if ("unknown".equals(mem) && mem != null) {
+                AVAILABLE.remove(repo);
+                return "unknown";
+            }
+            AVAILABLE.put(repo, "checking");
+        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String answer = "unknown";
+                try {
+                    JSONObject all = fetchJson("https://api.github.com/repos/" + repo + "/releases?per_page=20");
+                    JSONArray list = all == null ? null : all.optJSONArray("list");
+                    if (list != null) {
+                        answer = "no";
+                        for (int i = 0; i < list.length(); i++) {
+                            JSONObject r = list.optJSONObject(i);
+                            if (r != null && !r.optBoolean("draft") && pickAsset(r.optJSONArray("assets")) != null) {
+                                answer = "yes";
+                                break;
+                            }
+                        }
+                    }
+                } catch (Exception ignored) {
+                }
+                synchronized (AVAILABLE) {
+                    if ("unknown".equals(answer)) {
+                        AVAILABLE.put(repo, "unknown");
+                    } else {
+                        AVAILABLE.remove(repo);
+                        sp.edit().putString(repo, System.currentTimeMillis() + ":" + answer).apply();
+                    }
+                }
+            }
+        }, "port-available").start();
+        return "checking";
+    }
+
     private static JSONObject fetchJson(String address) {
         HttpURLConnection c = null;
         try {
