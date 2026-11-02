@@ -287,7 +287,7 @@ function renderSocialDetail(f, unlocks, unlocksError, awards, awardsError){
         </div>`;
     }).join('') + '</div>';
   }
-  html += `<div class="section-title" style="margin-top:18px;">${statsMode === 'hardcore' ? 'Recently mastered' : 'Recently beaten'}</div>`;
+  html += `<div class="section-title" style="margin-top:18px;">Recently beaten or mastered</div>`;
   if(awardsError){
     html += `<div class="error-box">Could not load games: ${esc(awardsError)}</div>`;
   }else if(!awards){
