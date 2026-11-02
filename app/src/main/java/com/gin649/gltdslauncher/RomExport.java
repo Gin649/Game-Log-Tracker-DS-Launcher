@@ -60,6 +60,9 @@ final class RomExport {
                 if (result.renameTo(named)) result = named;
             }
         }
+        if (result == null || !result.isFile() || result.length() == 0) {
+            throw new DiscPatcher.PatchException("The ROM file was not created. Check there is free space and that the app may use all files.");
+        }
         return result;
     }
 

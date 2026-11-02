@@ -216,7 +216,7 @@ function wirePort(card, host, p, several, first, title, consoleName, last){
         }
         busy = false;
         romBtn.disabled = false;
-        if(s.state === 'done') say('Saved to ' + (p.delivery && p.delivery.mode === 'shared_folder' && p.delivery.path ? p.delivery.path : 'Downloads/Roms for Ports') + ': ' + (s.name || '') + (p.delivery && p.delivery.mode === 'shared_folder' ? '.' : '. Pick it inside the port.'), false);
+        if(s.state === 'done') say('Saved to ' + String(s.path || s.name || '').replace('/storage/emulated/0/', '') + (p.delivery && p.delivery.mode === 'shared_folder' ? '' : '. Pick it inside the port.'), false);
         else say(s.message || 'Could not prepare the ROM.', true);
       };
       say('Starting…', false);

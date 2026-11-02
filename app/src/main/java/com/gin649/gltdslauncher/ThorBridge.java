@@ -892,6 +892,7 @@ final class ThorBridge {
                         Shared.rescan();
                         job.state = "done";
                     } catch (Throwable e) {
+                        android.util.Log.e("RomExport", "prepare failed", e);
                         job.message = e instanceof OutOfMemoryError ? "Ran out of memory while patching this disc."
                                 : (e.getMessage() == null ? "Patching failed." : e.getMessage());
                         job.state = "error";
