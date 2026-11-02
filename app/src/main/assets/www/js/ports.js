@@ -97,7 +97,7 @@ function thorWirePorts(card, title, consoleName){
     });
     if(have.length) ports = have;
     if(!ports.length || !card.isConnected) return;
-    host.innerHTML = '';
+    host.innerHTML = ports.length > 1 ? '<div class="gd-port-multi">Multiple Android ports available</div>' : '';
     ports.forEach((p, i) => wirePort(card, host, p, ports.length > 1, i === 0, title, consoleName));
   });
 }

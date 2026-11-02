@@ -1143,3 +1143,5 @@ html.top-panel #profile-hero{display:none;}
 .tab-panel > .section-title:first-child{margin-top:18px;}
 .panel-head .section-title{margin:14px 0 10px;}
 html{scroll-padding-top:var(--stk-all, 0px);}
+
+.gd-port-multi{font-family:'Space Mono',monospace;font-size:.75rem;color:var(--gold);margin:6px 0 4px;}
