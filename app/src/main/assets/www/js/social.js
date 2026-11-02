@@ -5,6 +5,8 @@ const SOCIAL_MAX_FRIENDS = 100;           // RA's page size for the Following li
 const SOCIAL_PLAYING_MS = 10 * 60 * 1000; // presence newer than this is "Playing now"
 const SOCIAL_CACHE_MS = 2 * 60 * 1000;    // reopening within this reuses what's loaded
 const SOCIAL_UNLOCK_DAYS = 14;
+const SOCIAL_UNLOCK_SHOWN = 5;
+const SOCIAL_AWARDS_SHOWN = 5;
 const SOCIAL_WORKERS = 6;                 // summary requests at once
 const SOCIAL_FRIENDS_URL = 'https://retroachievements.org/friends.php';
 let socialFriends = [];   // [{ name, points, summary, failed }]
@@ -26,7 +28,8 @@ function socialSlim(s){
     RichPresenceMsg: s.RichPresenceMsg,
     RichPresenceMsgDate: s.RichPresenceMsgDate,
     LastActivity: s.LastActivity ? { lastupdate: s.LastActivity.lastupdate } : undefined,
-    TotalPoints: s.TotalPoints
+    TotalPoints: s.TotalPoints,
+    TotalSoftcorePoints: s.TotalSoftcorePoints
   };
 }
 const socialStoreKey = () => `social-cache:${creds.username.trim().toLowerCase()}`;
@@ -232,7 +235,17 @@ async function loadSocial(force){
   }
 }
 
-function renderSocialDetail(f, unlocks, unlocksError){
+// Hardcore or casual points, following the mode the app is in. The casual total is only known
+// once the summary has been refreshed after this update, so an older saved copy falls back to hardcore.
+function socialPointsText(f){
+  const sum = f.summary || {};
+  if(statsMode !== 'hardcore' && sum.TotalSoftcorePoints != null){
+    return Number(sum.TotalSoftcorePoints || 0).toLocaleString() + ' casual points';
+  }
+  return Number(f.points || sum.TotalPoints || 0).toLocaleString() + ' hardcore points';
+}
+
+function renderSocialDetail(f, unlocks, unlocksError, awards, awardsError){
   const body = $('#social-body');
   const info = socialInfo(f);
   const profileUrl = 'https://retroachievements.org/user/' + encodeURIComponent(f.name);
@@ -248,7 +261,7 @@ function renderSocialDetail(f, unlocks, unlocksError){
     html += `<div class="soc-now">
         ${info.game ? `<p class="soc-game">${esc(info.game)}${f.summary.LastGame && f.summary.LastGame.ConsoleName ? ` <span class="soc-console">· ${esc(f.summary.LastGame.ConsoleName)}</span>` : ''}</p>` : ''}
         ${info.presence ? `<p class="soc-rp">${esc(info.presence)}</p>` : ''}
-        <p class="soc-rp">${esc(Number(f.points || f.summary.TotalPoints || 0).toLocaleString())} hardcore points</p>
+        <p class="soc-rp">${esc(socialPointsText(f))}</p>
       </div>`;
   }
   html += `<a class="btn-primary soc-profile-link" href="${profileUrl}" target="_blank" rel="noopener">View profile on RetroAchievements ↗</a>
@@ -274,6 +287,29 @@ function renderSocialDetail(f, unlocks, unlocksError){
         </div>`;
     }).join('') + '</div>';
   }
+  html += `<div class="section-title" style="margin-top:18px;">${statsMode === 'hardcore' ? 'Recently mastered' : 'Recently beaten'}</div>`;
+  if(awardsError){
+    html += `<div class="error-box">Could not load games: ${esc(awardsError)}</div>`;
+  }else if(!awards){
+    html += '<div class="loading">Loading</div>';
+  }else{
+    const shown = awards.filter(g => awardCountsInMode(g.HighestAwardKind)).slice(0, SOCIAL_AWARDS_SHOWN);
+    if(shown.length === 0){
+      html += '<div class="empty">No beaten or mastered games found.</div>';
+    }else{
+      html += '<div class="unlock-list">' + shown.map(g => {
+        const d = parseRADate(g.HighestAwardDate);
+        return `<div class="unlock">
+          <div class="unlock-row">
+            <img src="${esc(imgUrl(g.ImageIcon))}" alt="">
+            <div class="info"><p class="t">${esc(g.Title)}</p><p class="g">${esc(g.ConsoleName || '')}</p></div>
+            ${awardPill(g.HighestAwardKind)}
+            <div class="when">${d ? esc(timeAgo(g.HighestAwardDate)) : ''}</div>
+          </div>
+        </div>`;
+      }).join('') + '</div>';
+    }
+  }
   body.innerHTML = html;
   socialWireAvatars(body);
   $('#social-back-btn').addEventListener('click', renderSocialList);
@@ -290,21 +326,29 @@ async function openSocialDetail(name){
   const key = name.toLowerCase();
   const cached = socialUnlocksCache[key];
   if(cached && (Date.now() - cached.at) < SOCIAL_CACHE_MS){
-    renderSocialDetail(f, cached.list, '');
+    renderSocialDetail(f, cached.list, '', cached.awards, '');
     return;
   }
-  renderSocialDetail(f, null, '');
-  try{
-    const data = await raFetch('API_GetUserRecentAchievements.php', { u: name, m: SOCIAL_UNLOCK_DAYS * 1440 });
-    const list = (Array.isArray(data) ? data : []).slice().sort((a, b) => {
-      const da = parseRADate(a.Date), db = parseRADate(b.Date);
-      return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
-    }).slice(0, 15);
-    socialUnlocksCache[key] = { at: Date.now(), list };
-    if(socialView.mode === 'detail' && socialView.name === name) renderSocialDetail(f, list, '');
-  }catch(e){
-    if(socialView.mode === 'detail' && socialView.name === name) renderSocialDetail(f, [], e && e.message ? e.message : String(e));
-  }
+  const entry = { at: Date.now(), list: null, awards: null, listErr: '', awardsErr: '' };
+  const show = () => {
+    if(socialView.mode === 'detail' && socialView.name === name){
+      renderSocialDetail(f, entry.list, entry.listErr, entry.awards, entry.awardsErr);
+    }
+  };
+  show();
+  const msg = e => e && e.message ? e.message : String(e);
+  const time = d => { const x = parseRADate(d); return x ? x.getTime() : 0; };
+  await Promise.all([
+    raFetch('API_GetUserRecentAchievements.php', { u: name, m: SOCIAL_UNLOCK_DAYS * 1440 }).then(data => {
+      entry.list = (Array.isArray(data) ? data : []).slice().sort((a, b) => time(b.Date) - time(a.Date)).slice(0, SOCIAL_UNLOCK_SHOWN);
+    }).catch(e => { entry.listErr = msg(e); entry.list = []; }).then(show),
+    raFetch('API_GetUserCompletionProgress.php', { u: name, c: 500 }).then(data => {
+      const results = (data && data.Results) || [];
+      entry.awards = results.filter(g => g.HighestAwardKind && g.HighestAwardDate && !isSubsetGame(g))
+        .sort((a, b) => time(b.HighestAwardDate) - time(a.HighestAwardDate));
+    }).catch(e => { entry.awardsErr = msg(e); entry.awards = []; }).then(show)
+  ]);
+  if(!entry.listErr && !entry.awardsErr) socialUnlocksCache[key] = entry;
 }
 
 function openSocialModal(){
