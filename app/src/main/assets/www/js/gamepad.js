@@ -246,12 +246,13 @@
 
   // Puts the highlight on the first game of the tab that is showing: the first recently played
   // card, library or backlog row, or Beaten by Year tile. Does nothing if there is no game yet.
-  function focusFirstGame(){
+  function focusFirstGame(tries){
     if(menuOpen() || topOverlay()) return;
     const panel = document.querySelector('.tab-panel.active');
     if(!panel) return;
-    const first = candidates(panel).find(i => i.el.matches('.cart, .lib-table tbody tr:not(.lib-sec), .year-item'));
+    const first = candidates(panel).find(i => i.el.matches('.cart, .lib-table tbody tr:not(.lib-sec), .year-item, .app-launch'));
     if(first) setFocus(first.el);
+    else if(panel.id === 'tab-apps' && (tries || 0) < 8) setTimeout(() => focusFirstGame((tries || 0) + 1), 250); // the app list fills in a moment after the tab opens
   }
 
   // Buttons
