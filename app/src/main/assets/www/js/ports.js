@@ -113,20 +113,20 @@ function thorWirePorts(card, title, consoleName){
     }
     if(!ports.length || !card.isConnected) return;
     host.innerHTML = ports.length > 1 ? '<div class="gd-port-multi">Multiple Android ports available</div>' : '';
-    ports.forEach((p, i) => wirePort(card, host, p, ports.length > 1, i === 0, title, consoleName));
+    ports.forEach((p, i) => wirePort(card, host, p, ports.length > 1, i === 0, title, consoleName, i === ports.length - 1));
   });
 }
 
-function wirePort(card, host, p, several, first, title, consoleName){
+function wirePort(card, host, p, several, first, title, consoleName, last){
   const b = window.ThorBridge;
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const tag = several ? ' (' + esc(p.name) + ')' : ''; // only when a game has more than one port, to tell them apart
   const box = document.createElement('div');
   box.className = 'gd-port';
-  const romBtnHtml = first ? `<button class="btn-emu gd-port-rom-btn" aria-label="Get this game's ROM ready for the port" title="Get this game's ROM ready for the port (unzips it and saves it to Downloads/Roms for Ports)"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-1 3h2v4h2.5L13 19.5 8.5 16H11v-4z"/></svg></button>` : '';
+  const romBtnHtml = first ? `<button class="btn-emu gd-port-rom-btn" aria-label="Get this game's ROM ready for the port" title="Get this game's ROM ready for the port (unzips it and saves it to Downloads/Roms for Ports)"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-1 3h2v4h2.5L13 19.5 8.5 16H11v-4z"/></svg></button>` : '<span class="btn-emu-spacer"></span>'; // other ports get an empty space so their buttons are the same width
   box.innerHTML = `<div class="play-row"><button class="btn-view-achievements btn-play-thor gd-port-btn"></button>${romBtnHtml}</div>
     <div class="thor-play-msg gd-port-msg" style="display:none;"></div>
-    ${first ? '<div class="gd-port-note">A native Android version of this game. It needs your own copy of the game.</div>' : ''}`;
+    ${last ? '<div class="gd-port-note">A native Android version of this game. It needs your own copy of the game.</div>' : ''}`;
   host.appendChild(box);
   const btn = box.querySelector('.gd-port-btn');
   const msg = box.querySelector('.gd-port-msg');

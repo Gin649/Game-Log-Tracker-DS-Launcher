@@ -1164,3 +1164,4 @@ body.pad-mode .tab-btn.pad-focus{outline-offset:-3px;}
 .chip-row::after{content:'';flex:0 0 14px;} /* room after the last console so it can scroll fully into view */
 
 .gd-port .play-row{margin-top:0;}
+.btn-emu-spacer{flex:0 0 54px;}
