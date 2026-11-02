@@ -228,6 +228,17 @@
     }
     const cur = ensureFocus();
     if(!cur) return;
+    if((dir === 'left' || dir === 'right') && cur.classList.contains('tab-btn') && !menuOpen() && !topOverlay()){
+      // On the headings, left and right switch the tab at once (like L2 / R2) and the highlight goes with it.
+      const tabs = Array.from(document.querySelectorAll('.tab-btn')).filter(isVisible);
+      const at = tabs.indexOf(cur);
+      if(at >= 0 && tabs.length > 1){
+        const to = tabs[(at + (dir === 'right' ? 1 : -1) + tabs.length) % tabs.length];
+        to.click();
+        setFocus(to);
+      }
+      return;
+    }
     let next = pick(cur, dir, candidates(getRoot()));
     if(next && (dir === 'up' || dir === 'down')){
       // Entering a row of headings or filters lands on the one you are on: the Game heading, the current
