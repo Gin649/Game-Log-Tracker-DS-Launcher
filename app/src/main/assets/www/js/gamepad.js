@@ -325,6 +325,18 @@
     }
   }
 
+  // Centres the chosen console in the row, then makes sure the chip at the left edge shows its whole name
+  // instead of a cut-off piece.
+  function revealChip(row, active){
+    const max = Math.max(0, row.scrollWidth - row.clientWidth);
+    let target = active.offsetLeft - (row.clientWidth - active.offsetWidth) / 2;
+    target = Math.min(max, Math.max(0, target));
+    row.querySelectorAll('.chip').forEach(c => {
+      if(c.offsetLeft < target && c.offsetLeft + c.offsetWidth > target + 1) target = Math.max(0, c.offsetLeft - 6);
+    });
+    row.scrollLeft = target;
+  }
+
   // Library, Beaten by Year and Backlog share a row of console filters; step through it.
   function switchSystem(delta){
     if(menuOpen() || topOverlay()) return;
@@ -338,7 +350,7 @@
     if(next === cur) return;
     chips[next].click(); // redraws the row, so look the active chip up again afterwards
     const active = row.querySelector('.chip.active');
-    if(active) active.scrollIntoView({ block: 'nearest', inline: 'center' });
+    if(active) revealChip(row, active);
     focusFirstGame();
   }
 

@@ -1145,3 +1145,11 @@ html.top-panel #profile-hero{display:none;}
 html{scroll-padding-top:var(--stk-all, 0px);}
 
 .gd-port-multi{font-family:'Space Mono',monospace;font-size:.75rem;color:var(--gold);margin:6px 0 4px;}
+
+/* On the Thor's lower screen the top of the page sits right under the status strip, so the layout looks the same
+   before and after you scroll, and more of the list fits. */
+html.top-panel body,html.top-panel body.show-status{padding-top:calc(var(--status-h) + env(safe-area-inset-top, 0px));}
+.tabs{padding-top:2px;}
+.chip-row.visible{padding-top:8px;padding-bottom:6px;}
+.panel-head .section-title{margin:8px 0 6px;}
+.panel-head .lib-search-row{padding-bottom:8px;}
