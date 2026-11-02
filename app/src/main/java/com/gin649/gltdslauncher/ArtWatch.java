@@ -130,8 +130,10 @@ final class ArtWatch {
             UsageEvents.Event e = new UsageEvents.Event();
             Map<String, Boolean> shown = new HashMap<String, Boolean>();
             boolean any = false;
+            String lastForeground = "";
             while (events.hasNextEvent()) {
                 events.getNextEvent(e);
+                if (e.getEventType() == 1 && e.getPackageName() != null) lastForeground = e.getPackageName();
                 if (!pkg.equals(e.getPackageName())) continue;
                 int t = e.getEventType();
                 String cls = String.valueOf(e.getClassName());
@@ -143,7 +145,11 @@ final class ArtWatch {
                 }
             }
             if (!any) return true; // no sign of the emulator yet; keep waiting
-            return shown.containsValue(Boolean.TRUE);
+            if (shown.containsValue(Boolean.TRUE)) return true;
+            // The game is only covered, not closed, while Android's file picker (choosing a ROM inside a port) or a
+            // permission prompt is on top of it.
+            return lastForeground.contains("documentsui") || lastForeground.contains("permissioncontroller")
+                    || lastForeground.equals("com.android.externalstorage");
         } catch (Exception ex) {
             return true;
         }
