@@ -74,6 +74,7 @@ async function portsForGame(title){
 // A port that needs more than this device has (CPU type, Android version, Vulkan) is not offered at all.
 let portDeviceInfo = null;
 function portRunsHere(p){
+  if(!p.package) return false; // not in Recompa's list of ports with a confirmed Android build
   const r = p.requirements;
   if(!r) return true;
   if(!portDeviceInfo){
