@@ -239,6 +239,11 @@
       }
       return;
     }
+    if((dir === 'left' || dir === 'right') && cur.closest('#system-chips') && cur.classList.contains('chip')
+       && !cur.closest('#system-chips').classList.contains('editing') && !menuOpen() && !topOverlay()){
+      switchSystem(dir === 'right' ? 1 : -1, true); // on the console row, left and right change console at once, like L1 / R1
+      return;
+    }
     let next = pick(cur, dir, candidates(getRoot()));
     if(next && (dir === 'up' || dir === 'down')){
       // Entering a row of headings or filters lands on the one you are on: the Game heading, the current
@@ -361,7 +366,7 @@
   }
 
   // Library, Beaten by Year and Backlog share a row of console filters; step through it.
-  function switchSystem(delta){
+  function switchSystem(delta, keepFocus){
     if(menuOpen() || topOverlay()) return;
     const row = $('#system-chips');
     if(!row || !row.classList.contains('visible')) return;
@@ -374,7 +379,8 @@
     chips[next].click(); // redraws the row, so look the active chip up again afterwards
     const active = row.querySelector('.chip.active');
     if(active) revealChip(row, active);
-    focusFirstGame();
+    if(keepFocus && active) setFocus(active);
+    else focusFirstGame();
   }
 
   // In the manual viewer L1 / R1 turn a page up or down and L2 / R2 zoom out or in. Each returns
