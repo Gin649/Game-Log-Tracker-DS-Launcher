@@ -1097,7 +1097,8 @@ html.top-panel #profile-hero{display:none;}
 .btn-line.gold{color:var(--gold);}
 
 .play-row{ display:flex; gap:8px; align-items:stretch; }
-.play-row .btn-play-thor{ flex:1; }
+.play-row{ margin-top:14px; }
+.play-row .btn-play-thor{ flex:1; margin-top:0; }
 .btn-emu{ flex:0 0 54px; background:var(--panel); border:1px solid var(--border); border-radius:8px; color:var(--gold); display:flex; align-items:center; justify-content:center; cursor:pointer; }
 .btn-emu:active{ border-color:var(--gold); }
 #thor-choice .app-pop-card{ max-height:80vh; overflow-y:auto; }
@@ -1115,7 +1116,7 @@ html.top-panel #profile-hero{display:none;}
 .lib-table tr.lib-sec td{padding:12px 10px 6px;border-bottom:1px solid var(--border);font-family:'Space Mono',monospace;font-size:0.6875rem;font-weight:700;letter-spacing:1px;color:var(--gold);}
 .lib-table tr.lib-sec.alt td{color:var(--muted);}
 
-.gd-port{margin-top:14px;padding-top:10px;border-top:1px solid var(--border, rgba(255,255,255,.12));}
+.gd-port{margin-top:10px;padding-top:8px;border-top:1px solid var(--border, rgba(255,255,255,.12));}
 .gd-port-name{font-size:.95rem;margin:4px 0 8px;}
 .gd-port-note{font-size:.7rem;color:var(--muted);margin-top:6px;}
 
@@ -1161,3 +1162,5 @@ html.top-panel body,html.top-panel body.show-status{padding-top:calc(var(--statu
 body.pad-mode .tab-btn.pad-focus{outline-offset:-3px;}
 
 .chip-row::after{content:'';flex:0 0 14px;} /* room after the last console so it can scroll fully into view */
+
+.gd-port .play-row{margin-top:0;}

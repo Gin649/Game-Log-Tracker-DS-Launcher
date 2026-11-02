@@ -161,7 +161,7 @@ function wirePort(card, host, p, several, first, title, consoleName){
     }
     btn.disabled = false;
     btn.dataset.mode = 'get';
-    btn.innerHTML = s.state === 'error' ? 'Try again' + tag : '⬇ Get the Android port' + tag;
+    btn.innerHTML = s.state === 'error' ? 'Try again' + tag : (several ? 'Download and Install' : 'Download and Install the Android Port') + tag;
     if(s.state === 'error') say(s.message || 'Could not get the port.', true);
     else if(s.state === 'ready'){
       say(s.message || '', false);
