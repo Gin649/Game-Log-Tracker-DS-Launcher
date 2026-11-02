@@ -3,8 +3,8 @@
   let touchStartY = 0;
   let pulling = false;
   let currentPull = 0;
-  const PULL_THRESHOLD = 70;
-  const MAX_PULL = 100;
+  const PULL_THRESHOLD = 40;
+  const MAX_PULL = 56;
 
   const indicator = document.createElement('div');
   indicator.className = 'pull-refresh-indicator';
@@ -187,7 +187,7 @@
     padRefreshing = true;
     indicator.classList.toggle('over-profile', !!onProfile);
     indicator.textContent = 'Refreshing…';
-    indicator.style.height = '44px';
+    indicator.style.height = '32px';
     Promise.resolve(job).catch(() => {}).finally(() => {
       padRefreshing = false;
       indicator.style.height = '0px';
