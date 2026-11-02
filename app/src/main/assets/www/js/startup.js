@@ -48,13 +48,15 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     const head = h(document.querySelector('.tab-panel.active .panel-head'));
     root.style.setProperty('--stk-tabs', tabs + 'px');
     root.style.setProperty('--stk-chips', chips + 'px');
-    root.style.setProperty('--stk-all', (status() + tabs + chips + head + 8) + 'px');
+    const th = h(document.querySelector('.tab-panel.active .lib-table th'));
+    root.style.setProperty('--stk-sum', (status() + tabs + chips + head) + 'px');
+    root.style.setProperty('--stk-all', (status() + tabs + chips + head + th + 8) + 'px');
   }
   let queued = false;
   const soon = () => { if(queued) return; queued = true; requestAnimationFrame(() => { queued = false; measure(); }); };
   if(window.ResizeObserver){
     const ro = new ResizeObserver(soon);
-    ['.tabs', '#system-chips', '.panel-head'].forEach(sel => document.querySelectorAll(sel).forEach(el => ro.observe(el)));
+    ['.tabs', '#system-chips', '.panel-head', '#lib-table-wrap', '#backlog-table-wrap'].forEach(sel => document.querySelectorAll(sel).forEach(el => ro.observe(el)));
   }
   window.addEventListener('resize', soon);
   document.addEventListener('click', soon, true);

@@ -228,7 +228,18 @@
     }
     const cur = ensureFocus();
     if(!cur) return;
-    const next = pick(cur, dir, candidates(getRoot()));
+    let next = pick(cur, dir, candidates(getRoot()));
+    if(next && (dir === 'up' || dir === 'down')){
+      // Entering a row of headings or filters lands on the one you are on: the Game heading, the current
+      // console, the current tab.
+      if(next.matches('.lib-table th') && !cur.matches('.lib-table th')){
+        next = next.closest('tr').querySelector('th') || next;
+      }else if(next.closest('#system-chips') && !cur.closest('#system-chips')){
+        next = document.querySelector('#system-chips .chip.active') || next;
+      }else if(next.classList.contains('tab-btn') && !cur.classList.contains('tab-btn')){
+        next = document.querySelector('.tab-btn.active') || next;
+      }
+    }
     if(next) setFocus(next);
     else if(dir === 'up' || dir === 'down') scrollBy(getScroller(), dir === 'down' ? STEP_SCROLL : -STEP_SCROLL);
   }
