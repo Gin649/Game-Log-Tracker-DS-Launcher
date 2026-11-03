@@ -118,6 +118,18 @@ final class ThorBridge {
         }
     }
 
+    /** The description your frontend (ES-DE gamelist.xml) has for the game's ROM, or "" when it was never scraped. */
+    @JavascriptInterface
+    public String esdeDescription(String title, String console) {
+        try {
+            RomIndex.Rom rom = Shared.findRom(title, console);
+            if (rom == null) return "";
+            return MediaFinder.description(rom.sys.folder, rom.file.getName());
+        } catch (Exception ignored) {
+            return "";
+        }
+    }
+
     /** LaunchBox's description for a game (used when RetroAchievements and RAWG have none), or "". Blocks on the network. */
     @JavascriptInterface
     public String launchboxDescription(String title, String console) {

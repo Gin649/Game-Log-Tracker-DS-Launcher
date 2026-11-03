@@ -35,37 +35,16 @@ async function getPlaytimeStats(gameId){
   return stats;
 }
 
-// RAWG's description as plain text, or null when it has none for this game.
-async function getRawgDescription(title){
-  if(!rawgCreds) rawgCreds = await loadRawgCreds();
-  if(!rawgCreds || !rawgCreds.apiKey) return null;
-
-  const clean = String(title).replace(/^(?:~[^~]*~\s*)+/, '').trim(); // drop "~Hack~" style tags
-  const cacheKey = `rawg-desc:${clean.toLowerCase()}`;
-  try{
-    const r = await window.storage.get(cacheKey, false);
-    if(r && r.value){
-      const parsed = JSON.parse(r.value);
-      if(Date.now() - parsed.ts < (parsed.text ? DESCRIPTION_TTL : DESCRIPTION_MISS_TTL)) return parsed.text;
-    }
-  }catch(e){}
-
-  const key = encodeURIComponent(rawgCreds.apiKey);
-  const search = await rawgGetShared(`https://api.rawg.io/api/games?key=${key}&search=${encodeURIComponent(clean)}&page_size=5`);
-  const results = (search && search.results) || [];
-  const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  const want = norm(clean);
-  // An exact title, or one that contains the other, so a similar sequel doesn't lend its text.
-  const match = results.find(g => norm(g.name) === want) ||
-    results.find(g => { const n = norm(g.name); return n.length >= 4 && want.length >= 4 && (n.includes(want) || want.includes(n)); });
-
-  let text = null;
-  if(match){
-    const detail = await rawgGet(`https://api.rawg.io/api/games/${match.id}?key=${key}`);
-    text = cleanDescription(detail && detail.description_raw);
-  }
-  try{ await window.storage.set(cacheKey, JSON.stringify({ text, ts: Date.now() }), false); }catch(e){}
-  return text;
+// The write-up your own frontend saved (ES-DE gamelist.xml). Only inside the launcher app; "" or null when none.
+function getEsdeDescription(title, consoleName){
+  if(typeof thorBridge === 'undefined' || !thorBridge || !thorBridge.esdeDescription || !consoleName) return Promise.resolve(null);
+  const clean = String(title).replace(/^(?:~[^~]*~\s*)+/, '').trim();
+  return new Promise(resolve => setTimeout(() => {
+    try{
+      const t = tidyDescription(thorBridge.esdeDescription(clean, consoleName));
+      resolve(t.length >= 40 ? t : null);
+    }catch(e){ resolve(null); }
+  }, 0));
 }
 
 // LaunchBox's write-up, used to fill the gaps when RAWG has none. Only inside the launcher app.
@@ -253,13 +232,14 @@ function setupGameDetailsUI(gameId, title, card, opts){
     const t = i && i.summary ? tidyDescription(i.summary) : '';
     return t.length >= 40 ? t : null;
   }).catch(() => null);
-  const rawgText = () => getRawgDescription(title).catch(() => null);
-  // The source picked in Display Options goes first; the other one and LaunchBox are the fallbacks.
+  // Your frontend's own text first, then LaunchBox, then IGDB.
   const descP = () => {
     if(isHackTitle(title)) return Promise.resolve(null);
-    let first = rawgText, second = igdbText;
-    try{ if(localStorage.getItem('glt-desc-source') !== 'rawg'){ first = igdbText; second = rawgText; } }catch(e){}
-    return first().then(d => d || second()).then(d => d || getLaunchBoxDescription(title, opts && opts.consoleName)).catch(() => null);
+    const consoleName = opts && opts.consoleName;
+    return getEsdeDescription(title, consoleName)
+      .then(d => d || getLaunchBoxDescription(title, consoleName))
+      .then(d => d || igdbText())
+      .catch(() => null);
   };
   let descPromise = null;
   const load = () => pending || (pending = (descPromise = descP(), Promise.allSettled([

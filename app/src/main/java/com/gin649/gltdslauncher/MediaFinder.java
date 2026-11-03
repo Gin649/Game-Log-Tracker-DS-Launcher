@@ -67,6 +67,7 @@ final class MediaFinder {
     static synchronized void reset() {
         LISTINGS.clear();
         GAMELISTS.clear();
+        DESCS.clear();
     }
 
     static Found lookup(RomIndex.Rom rom) {
@@ -260,6 +261,69 @@ final class MediaFinder {
         } catch (Exception ignored) {
             // a gamelist that can't be read is simply not used
         }
+        return out;
+    }
+
+    private static final Map<String, Object[]> DESCS = new HashMap<String, Object[]>(); // path -> {lastModified, map}
+
+    /**
+     * The description ES-DE (or another frontend) has saved for a ROM in a gamelist.xml: ES-DE's own gamelists/[system]/
+     * folder first, then one beside the ROMs. "" when the game was never scraped.
+     */
+    static String description(String systemFolder, String romFileName) {
+        if (systemFolder == null || romFileName == null) return "";
+        List<File> xmls = new ArrayList<File>();
+        if (!Config.ES_ROOT.isEmpty()) {
+            File gl = child(new File(Config.ES_ROOT), "gamelists");
+            if (gl != null) {
+                File d = child(gl, systemFolder);
+                if (d == null) {
+                    SystemMap sm = Shared.systems();
+                    String base = sm == null ? systemFolder : sm.baseOf(systemFolder);
+                    if (!base.equals(systemFolder)) d = child(gl, base);
+                }
+                if (d != null) xmls.add(new File(d, "gamelist.xml"));
+            }
+        }
+        if (!Config.ROMS_ROOT.isEmpty()) xmls.add(new File(new File(Config.ROMS_ROOT, systemFolder), "gamelist.xml"));
+        String fn = romFileName.toLowerCase(Locale.ROOT);
+        int dot = fn.lastIndexOf('.');
+        String bare = dot > 0 ? fn.substring(0, dot) : fn;
+        for (File xml : xmls) {
+            Map<String, String> m = descriptions(xml);
+            if (m == null) continue;
+            String d = m.get(fn);
+            if (d == null) d = m.get(bare);
+            if (d != null && !d.isEmpty()) return d;
+        }
+        return "";
+    }
+
+    @SuppressWarnings("unchecked")
+    private static synchronized Map<String, String> descriptions(File xml) {
+        if (!xml.isFile()) return null;
+        Object[] cached = DESCS.get(xml.getPath());
+        if (cached != null && ((Long) cached[0]) == xml.lastModified()) return (Map<String, String>) cached[1];
+        Map<String, String> out = new HashMap<String, String>();
+        try {
+            org.w3c.dom.Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xml);
+            NodeList games = doc.getElementsByTagName("game");
+            for (int i = 0; i < games.getLength(); i++) {
+                Node n = games.item(i);
+                if (n.getNodeType() != Node.ELEMENT_NODE) continue;
+                Element g = (Element) n;
+                String path = tag(g, "path");
+                String desc = tag(g, "desc");
+                if (path.isEmpty() || desc.isEmpty()) continue;
+                String fn = path.substring(path.replace('\\', '/').lastIndexOf('/') + 1).toLowerCase(Locale.ROOT);
+                out.put(fn, desc);
+                int dot = fn.lastIndexOf('.');
+                if (dot > 0 && !out.containsKey(fn.substring(0, dot))) out.put(fn.substring(0, dot), desc);
+            }
+        } catch (Exception ignored) {
+            // a gamelist that can't be read is simply not used
+        }
+        DESCS.put(xml.getPath(), new Object[]{xml.lastModified(), out});
         return out;
     }
 
