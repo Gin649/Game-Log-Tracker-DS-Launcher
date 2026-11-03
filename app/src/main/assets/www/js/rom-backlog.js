@@ -190,7 +190,9 @@ async function rawgArtFor(title){
 async function fillMissingCustomArt(){
   if(customArtRunning || typeof creds === 'undefined' || !creds) return;
   const WEEK = 7 * 24 * 60 * 60 * 1000;
-  const todo = libraryData.filter(g => g.manual && g.customConsole && !g.ImageIcon && !(g.artTried && Date.now() - g.artTried < WEEK));
+  // a RAWG picture is a screenshot: look once more for a real cover for those
+  const shot = g => /rawg\.io/.test(g.ImageIcon || '') && g.artVer !== 2;
+  const todo = libraryData.filter(g => g.manual && g.customConsole && (!g.ImageIcon || shot(g)) && (shot(g) || !(g.artTried && Date.now() - g.artTried < WEEK)));
   if(!todo.length) return;
   customArtRunning = true;
   let found = 0;
@@ -207,6 +209,7 @@ async function fillMissingCustomArt(){
         [cur, saved].forEach(e => {
           if(!e) return;
           e.artTried = Date.now();
+          e.artVer = 2;
           if(url){ e.ImageIcon = url; e.ImageBoxArt = url; }
         });
         await saveManualGames(manual);

@@ -397,6 +397,15 @@ final class ThorBridge {
                         } catch (java.io.IOException ignored) {
                         }
                     }
+                    // A game that isn't on RetroAchievements has no other picture, so SteamGridDB's cover is the last
+                    // resort before a RAWG screenshot. Game profiles (ids start with "modal-") never use it.
+                    if (url.isEmpty() && !id.startsWith("modal-") && SteamGridDbClient.enabled(act)) {
+                        try {
+                            String g = SteamGridDbClient.gridFor(act, title);
+                            if (g != null) url = g;
+                        } catch (java.io.IOException ignored) {
+                        }
+                    }
                 } catch (Exception ignored) {
                 }
                 MainActivity.deliverCustomArt(id, url);
