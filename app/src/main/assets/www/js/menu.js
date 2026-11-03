@@ -138,3 +138,20 @@ document.querySelectorAll('.cols-btn').forEach(b => b.addEventListener('click', 
   applyGameViewButtons(); redrawGameViews();
   try{ window.storage.set(TILECOLS_KEY, String(tileCols), false); }catch(err){}
 }));
+
+
+// Theme picker (Display Options). RETRO is the original look; the rest set CSS variables on <html>.
+(function(){
+  const buttons = document.querySelectorAll('.theme-btn');
+  function mark(id){ buttons.forEach(b => b.classList.toggle('on', b.dataset.themeId === id)); }
+  function apply(id){
+    if(id === 'retro') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', id);
+    try{ localStorage.setItem('glt-theme', id); }catch(e){}
+    mark(id);
+  }
+  let cur = 'retro';
+  try{ cur = localStorage.getItem('glt-theme') || 'retro'; }catch(e){}
+  mark(cur);
+  buttons.forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); apply(b.dataset.themeId); }));
+})();
