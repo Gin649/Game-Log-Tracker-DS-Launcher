@@ -1,6 +1,6 @@
 /* Game Log Tracker styles */
 
-  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&family=Metal+Mania&family=Rubik+Distressed&family=Comic+Neue:wght@700&family=Press+Start+2P&family=Pixelify+Sans:wght@400;700&family=Rajdhani:wght@500;600;700&family=Saira:wght@400;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&family=Metal+Mania&family=Rubik+Distressed&family=Comic+Neue:wght@700&family=Press+Start+2P&family=Nunito:wght@400;600;700;800&family=Rajdhani:wght@500;600;700&family=Saira:wght@400;600;700&display=swap');
 
   :root{
     --bg:#15121f;
@@ -1180,10 +1180,10 @@ html[data-theme="nes"]{
   --radius:0px;--font-mono:'Press Start 2P',monospace;--font-ui:'Press Start 2P',monospace;--btn-shadow:3px 3px 0 #7a000a;
 }
 html[data-theme="snes"]{
-  --bg:#2b2a3a;--bg-alt:#3c3a52;--panel:#474566;--panel-2:#524f75;--border:#8a86b0;
-  --gold:#c9a2ff;--gold-dim:#8a6cc0;--teal:#7fd1c7;--text:#f1eefc;--muted:#b6b1d6;--danger:#ff8f8f;
-  --gold-rgb:201,162,255;--teal-rgb:127,209,199;--bg-rgb:43,42,58;--on-gold:#241a38;
-  --radius:8px;--font-mono:'Pixelify Sans',monospace;--font-ui:'Pixelify Sans',monospace;--btn-shadow:0 3px 0 #6b49a8;
+  --bg:#c1c1c2;--bg-alt:#9794a0;--panel:#d4d4d5;--panel-2:#b9b8bd;--border:#3b3b3b;
+  --gold:#5a3f8e;--gold-dim:#8968b8;--teal:#6a4fa3;--text:#2a2a2c;--muted:#5b5963;--danger:#b3362b;
+  --gold-rgb:90,63,142;--teal-rgb:106,79,163;--bg-rgb:193,193,194;--on-gold:#fff;
+  --radius:8px;--font-mono:'Nunito',sans-serif;--font-ui:'Nunito',sans-serif;--btn-shadow:0 3px 0 #5a4380;
 }
 html[data-theme="psx"]{
   --bg:#0a0e1f;--bg-alt:#101731;--panel:#141d3d;--panel-2:#1a2650;--border:#26356b;
@@ -1208,3 +1208,5 @@ html[data-theme="psx"] body,html[data-theme="xbox"] body{background-image:radial
 .theme-col{display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:9px 14px 9px 26px;background:var(--bg-alt);border-top:1px solid var(--border);}
 .theme-col .theme-btn{text-align:left;}
 .desc-btn.on{border-color:var(--gold);color:var(--gold);}
+html[data-theme="snes"] .chip.active,html[data-theme="snes"] .btn-primary{background:#8968b8;border-color:#8968b8;color:#fff;}
+html[data-theme="snes"] .brand .name{font-weight:800;}
