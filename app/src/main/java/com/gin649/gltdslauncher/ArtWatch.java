@@ -33,6 +33,8 @@ final class ArtWatch {
     private static boolean sawCovered;
     private static int goneStreak;
     private static boolean active;
+    private static String playKey;      // where this session's time is added, or null
+    private static long lastTickElapsed;
 
     private ArtWatch() {}
 
@@ -51,6 +53,11 @@ final class ArtWatch {
 
     /** A game was just started in this emulator package. */
     static synchronized void start(Context context, String emulatorPackage) {
+        start(context, emulatorPackage, null);
+    }
+
+    /** As above, and the time the game is on screen is added to Playtime under this key. */
+    static synchronized void start(Context context, String emulatorPackage, String timeKey) {
         stop();
         if (emulatorPackage == null || emulatorPackage.isEmpty()) return;
         Context c = context.getApplicationContext();
@@ -58,6 +65,8 @@ final class ArtWatch {
         app = c;
         pkg = emulatorPackage;
         startedAtElapsed = SystemClock.elapsedRealtime();
+        lastTickElapsed = startedAtElapsed;
+        playKey = timeKey;
         startedAtWall = System.currentTimeMillis();
         sawCovered = false;
         goneStreak = 0;
@@ -101,13 +110,18 @@ final class ArtWatch {
         }
 
         sawCovered = true;
+        long nowE = SystemClock.elapsedRealtime();
+        long delta = nowE - lastTickElapsed;
+        lastTickElapsed = nowE;
         if (age < GRACE_MS) {
+            addPlay(delta);
             MAIN.postDelayed(TICK, POLL_MS);
             return;
         }
 
         if (gameOnScreen()) {
             goneStreak = 0;
+            addPlay(delta);
         } else {
             goneStreak++;
         }
@@ -117,6 +131,10 @@ final class ArtWatch {
             return;
         }
         MAIN.postDelayed(TICK, POLL_MS);
+    }
+
+    private static void addPlay(long ms) {
+        if (playKey != null && app != null) Playtime.add(app, playKey, ms);
     }
 
     /** True if the emulator has an activity on screen, or if that can't be told (never guess it closed). */

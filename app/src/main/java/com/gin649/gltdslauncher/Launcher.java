@@ -349,7 +349,7 @@ final class Launcher {
                         Toast.makeText(fact, "Could not start " + fstarted + ": " + e.getMessage(), Toast.LENGTH_LONG).show();
                         return;
                     }
-                    ArtWatch.start(fact, pkg);
+                    ArtWatch.start(fact, pkg, Playtime.key(from));
                     LibrarySync.markPlayed(fact, from);
                 }
             }, START_DELAY_MS);
@@ -359,7 +359,7 @@ final class Launcher {
         Exception last = startIntents(act, intents, display);
         if (last != null) return result(false, "Could not start " + started + ": " + last.getMessage());
 
-        ArtWatch.start(act, pkg);
+        ArtWatch.start(act, pkg, Playtime.key(rom));
         LibrarySync.markPlayed(act, rom);
         return result(true, "Starting " + rom.name + " in " + started + "...");
     }

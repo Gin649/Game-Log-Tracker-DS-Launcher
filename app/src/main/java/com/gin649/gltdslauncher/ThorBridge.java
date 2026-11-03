@@ -73,6 +73,17 @@ final class ThorBridge {
         Shared.showLogo();
     }
 
+    /** Seconds played in this game on this device (for games RetroAchievements doesn't track), or 0. */
+    @JavascriptInterface
+    public long playtime(String title, String console) {
+        try {
+            RomIndex.Rom rom = Shared.findRom(title, console);
+            return rom == null ? 0 : Playtime.seconds(act, Playtime.key(rom));
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
     /** The start-up animation on the top screen when a game starts (on unless switched off). */
     @JavascriptInterface
     public boolean startupAnim() {
