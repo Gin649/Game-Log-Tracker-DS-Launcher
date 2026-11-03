@@ -1221,3 +1221,5 @@ html[data-theme] .brand .mark{object-fit:contain;width:auto;max-width:150px;}
 
 /* "All" stays pinned at the left of the console row while the other consoles scroll under it. */
 .chip-row:not(.editing) > .chip[data-sys="All"]{position:sticky;left:0;z-index:3;box-shadow:8px 0 0 0 var(--bg);}
+.chip-row:not(.editing){scroll-snap-type:x proximity;}
+.chip-row:not(.editing) > .chip:not([data-sys="All"]){scroll-snap-align:start;}
