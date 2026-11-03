@@ -1,6 +1,6 @@
 /* Game Log Tracker styles */
 
-  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&family=Metal+Mania&family=Rubik+Distressed&family=Comic+Neue:wght@700&family=Press+Start+2P&family=Nunito:wght@400;600;700;800&family=Rajdhani:wght@500;600;700&family=Open+Sans:wght@400;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&family=Metal+Mania&family=Rubik+Distressed&family=Comic+Neue:wght@700&family=Press+Start+2P&family=Nunito:wght@400;600;700;800&family=Exo+2:wght@400;600;700&family=Open+Sans:wght@400;600;700&display=swap');
 
   :root{
     --bg:#15121f;
@@ -1189,7 +1189,7 @@ html[data-theme="psx"]{
   --bg:#0a0e1f;--bg-alt:#101731;--panel:#141d3d;--panel-2:#1a2650;--border:#26356b;
   --gold:#4aa3ff;--gold-dim:#2c6aa8;--teal:#3ddc97;--text:#e8f0ff;--muted:#8a9bc8;--danger:#ff6b8a;
   --gold-rgb:74,163,255;--teal-rgb:61,220,151;--bg-rgb:10,14,31;--on-gold:#021228;
-  --radius:6px;--font-mono:'Rajdhani',sans-serif;--font-ui:'Rajdhani',sans-serif;--btn-shadow:0 0 12px rgba(74,163,255,.5);
+  --radius:6px;--font-mono:'Exo 2',sans-serif;--font-ui:'Exo 2',sans-serif;--btn-shadow:0 0 12px rgba(74,163,255,.5);
 }
 html[data-theme="xbox"]{
   --bg:#0e1410;--bg-alt:#142018;--panel:#1a2a1f;--panel-2:#223628;--border:#2d4a35;
