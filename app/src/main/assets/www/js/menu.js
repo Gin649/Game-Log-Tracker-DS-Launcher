@@ -53,7 +53,7 @@ let textSizePct = TEXTSIZE_DEFAULT;
 
 function applyTextSize(){
   // NES's pixel font is very wide, so its text is scaled down to sit like the others.
-  const themeScale = document.documentElement.getAttribute('data-theme') === 'nes' ? 0.7 : 1;
+  const themeScale = document.documentElement.getAttribute('data-theme') === 'nintendo' ? 0.7 : 1;
   document.documentElement.style.fontSize = (TEXTSIZE_BASE_PX * textSizePct / 100 * themeScale) + 'px';
   $('#textsize-label').textContent = textSizePct + '%';
   $('#textsize-dec').disabled = textSizePct <= TEXTSIZE_MIN;
@@ -156,6 +156,7 @@ document.querySelectorAll('.cols-btn').forEach(b => b.addEventListener('click', 
   }
   let cur = 'retro';
   try{ cur = localStorage.getItem('glt-theme') || 'retro'; }catch(e){}
+  cur = ({ nes: 'nintendo', psx: 'playstation', snes: 'retro' })[cur] || cur; // renamed or removed themes
   mark(cur);
   try{ if(typeof thorBridge !== 'undefined' && thorBridge && thorBridge.setTheme) thorBridge.setTheme(cur); }catch(e){}
   buttons.forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); apply(b.dataset.themeId); }));

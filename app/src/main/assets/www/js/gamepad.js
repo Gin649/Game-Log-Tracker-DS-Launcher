@@ -186,6 +186,15 @@
         rowTop = dir === 'down' ? Math.min(rowTop, it.r.top) : Math.max(rowTop, it.r.top);
       }
       list = ahead.filter(it => Math.abs(it.r.top - rowTop) <= 12);
+      if(cur.closest('#modal-card')){
+        // In a game profile, down and up follow the left edge: Play, then Play port, and so on, not the buttons beside them.
+        let hit = null, bestD = Infinity;
+        for(const it of list){
+          const d = Math.abs(it.r.left - c0.left);
+          if(d < bestD){ bestD = d; hit = it.el; }
+        }
+        return hit;
+      }
     }
     const c = cur.getBoundingClientRect();
     const cx = c.left + c.width / 2, cy = c.top + c.height / 2;

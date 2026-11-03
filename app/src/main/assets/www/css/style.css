@@ -1173,22 +1173,16 @@ body.pad-mode .tab-btn.pad-focus{outline-offset:-3px;}
 
 
 /* ===== Themes (Display Options -> Theme). RETRO is the default look above. ===== */
-html[data-theme="nes"]{
+html[data-theme="nintendo"]{
   --bg:#0d0d0d;--bg-alt:#1f1f1f;--panel:#2a2a2a;--panel-2:#333;--border:#6b6b6b;
   --gold:#e60012;--gold-dim:#8f000b;--teal:#e8d0a0;--text:#f4f0e6;--muted:#a8a095;--danger:#ff7a5c;
   --gold-rgb:230,0,18;--teal-rgb:232,208,160;--bg-rgb:13,13,13;--on-gold:#fff;
   --radius:0px;--font-mono:'Press Start 2P',monospace;--font-ui:'Press Start 2P',monospace;--btn-shadow:3px 3px 0 #7a000a;
 }
-html[data-theme="snes"]{
-  --bg:#b6b1e2;--bg-alt:#8968b8;--panel:#c1c1c2;--panel-2:#b0b0b3;--border:#3b3b3b;
-  --gold:#4b2f80;--gold-dim:#7a5cb0;--teal:#5a3f8e;--text:#2a2a2c;--muted:#4a4852;--danger:#b3362b;
-  --gold-rgb:75,47,128;--teal-rgb:90,63,142;--bg-rgb:182,177,226;--on-gold:#fff;
-  --radius:8px;--font-mono:'Nunito',sans-serif;--font-ui:'Nunito',sans-serif;--btn-shadow:0 3px 0 #5a4380;
-}
-html[data-theme="psx"]{
+html[data-theme="playstation"]{
   --bg:#0a0e1f;--bg-alt:#101731;--panel:#141d3d;--panel-2:#1a2650;--border:#26356b;
-  --gold:#4aa3ff;--gold-dim:#2c6aa8;--teal:#3ddc97;--text:#e8f0ff;--muted:#8a9bc8;--danger:#ff6b8a;
-  --gold-rgb:74,163,255;--teal-rgb:61,220,151;--bg-rgb:10,14,31;--on-gold:#021228;
+  --gold:#4aa3ff;--gold-dim:#2c6aa8;--teal:#aebbd6;--text:#e8f0ff;--muted:#8a9bc8;--danger:#ff6b8a;
+  --gold-rgb:74,163,255;--teal-rgb:174,187,214;--bg-rgb:10,14,31;--on-gold:#021228;
   --radius:6px;--font-mono:'Exo 2',sans-serif;--font-ui:'Exo 2',sans-serif;--btn-shadow:0 0 12px rgba(74,163,255,.5);
 }
 html[data-theme="xbox"]{
@@ -1197,19 +1191,16 @@ html[data-theme="xbox"]{
   --gold-rgb:155,240,11;--teal-rgb:47,191,47;--bg-rgb:14,20,16;--on-gold:#06130a;
   --radius:4px;--font-mono:'Open Sans',sans-serif;--font-ui:'Open Sans',sans-serif;--btn-shadow:none;
 }
-html[data-theme="nes"] body{line-height:1.7;}
-html[data-theme="nes"] .card,html[data-theme="nes"] .chip.active,html[data-theme="nes"] .btn,html[data-theme="nes"] .btn-primary{box-shadow:var(--btn-shadow);}
-html[data-theme="snes"] .chip.active{box-shadow:var(--btn-shadow);}
-html[data-theme="psx"] .chip.active{box-shadow:var(--btn-shadow);}
-html[data-theme="psx"] .brand .name{letter-spacing:3px;text-transform:uppercase;}
+html[data-theme="nintendo"] body{line-height:1.7;}
+html[data-theme="nintendo"] .card,html[data-theme="nintendo"] .chip.active,html[data-theme="nintendo"] .btn,html[data-theme="nintendo"] .btn-primary{box-shadow:var(--btn-shadow);}
+html[data-theme="playstation"] .chip.active{box-shadow:var(--btn-shadow);}
+html[data-theme="playstation"] .brand .name{letter-spacing:3px;text-transform:uppercase;}
 html[data-theme="xbox"] .brand .name{letter-spacing:2px;text-transform:uppercase;font-weight:700;}
-html[data-theme="psx"] body,html[data-theme="xbox"] body{background-image:radial-gradient(circle at 20% 0%, rgba(var(--gold-rgb),0.07), transparent 40%),radial-gradient(circle at 80% 100%, rgba(var(--teal-rgb),0.06), transparent 40%);}
+html[data-theme="playstation"] body,html[data-theme="xbox"] body{background-image:radial-gradient(circle at 20% 0%, rgba(var(--gold-rgb),0.07), transparent 40%),radial-gradient(circle at 80% 100%, rgba(var(--teal-rgb),0.06), transparent 40%);}
 .theme-btn.on{border-color:var(--gold);color:var(--gold);}
 .theme-col{display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:9px 14px 9px 26px;background:var(--bg-alt);border-top:1px solid var(--border);}
 .theme-col .theme-btn{text-align:left;}
 .desc-btn.on{border-color:var(--gold);color:var(--gold);}
-html[data-theme="snes"] .chip.active,html[data-theme="snes"] .btn-primary{background:#8968b8;border-color:#8968b8;color:#fff;}
-html[data-theme="snes"] .brand .name{font-weight:800;}
 
 /* start-up animation (also used over the launcher on a single screen) */
   #crt-root{display:none;position:fixed;inset:0;z-index:99999;background:#000;overflow:hidden;}
@@ -1219,27 +1210,12 @@ html[data-theme="snes"] .brand .name{font-weight:800;}
   #crt-b{position:absolute;left:0;right:0;height:100px;background:linear-gradient(#fff0,#fff3,#fff0);opacity:0;pointer-events:none;}
   #crt-t{position:absolute;left:0;right:0;top:50%;margin-top:-76px;text-align:center;color:#fff;font:bold 68px/76px monospace;letter-spacing:22px;text-indent:22px;opacity:.3;pointer-events:none;text-shadow:0 0 6px #fff4;}
   #crt-sl{background:repeating-linear-gradient(#0000 0 2px,#0006 2px 3px);pointer-events:none;}
-/* SNES: text on the purple surfaces is white */
-html[data-theme="snes"] .dropdown-subitem,
-html[data-theme="snes"] .dropdown-subitem:hover,
-html[data-theme="snes"] .textsize-row,
-html[data-theme="snes"] .textsize-row .display-note,
-html[data-theme="snes"] .theme-col,
-html[data-theme="snes"] .theme-col .display-note,
-html[data-theme="snes"] .display-row,
-html[data-theme="snes"] .display-row .display-note,
-html[data-theme="snes"] .field input,
-html[data-theme="snes"] .modal-progress,
-html[data-theme="snes"] .gd-label,
-html[data-theme="snes"] .gd-mode,
-html[data-theme="snes"] .gd-empty,
-html[data-theme="snes"] .soc-now,
-html[data-theme="snes"] .soc-now *,
-html[data-theme="snes"] .yt-item{color:#fff;--text:#fff;--muted:#efeaff;}
-html[data-theme="snes"] .textsize-btn{background:var(--panel);color:var(--text);--text:#2a2a2c;}
-
-/* the themes swap the Game Log Tracker mark for the theme's own label */
-html[data-theme="nes"] .brand .mark{content:url("data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%20100%20100%27%3E%3Crect%20x=%273%27%20y=%273%27%20width=%2794%27%20height=%2794%27%20rx=%2714%27%20fill=%27%23e60012%27/%3E%3Crect%20x=%279%27%20y=%279%27%20width=%2782%27%20height=%2782%27%20rx=%279%27%20fill=%27%230d0d0d%27/%3E%3Ctext%20x=%2750%27%20y=%2750%27%20dy=%27.35em%27%20text-anchor=%27middle%27%20font-family=%27Arial%2CHelvetica%2Csans-serif%27%20font-weight=%27bold%27%20font-size=%2730%27%20fill=%27%23e60012%27%3ENES%3C/text%3E%3C/svg%3E");}
-html[data-theme="snes"] .brand .mark{content:url("data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%20100%20100%27%3E%3Crect%20x=%273%27%20y=%273%27%20width=%2794%27%20height=%2794%27%20rx=%2714%27%20fill=%27%234b2f80%27/%3E%3Crect%20x=%279%27%20y=%279%27%20width=%2782%27%20height=%2782%27%20rx=%279%27%20fill=%27%23b6b1e2%27/%3E%3Ctext%20x=%2750%27%20y=%2750%27%20dy=%27.35em%27%20text-anchor=%27middle%27%20font-family=%27Arial%2CHelvetica%2Csans-serif%27%20font-weight=%27bold%27%20font-size=%2722%27%20fill=%27%234b2f80%27%3ESNES%3C/text%3E%3C/svg%3E");}
-html[data-theme="psx"] .brand .mark{content:url("data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%20100%20100%27%3E%3Crect%20x=%273%27%20y=%273%27%20width=%2794%27%20height=%2794%27%20rx=%2714%27%20fill=%27%234aa3ff%27/%3E%3Crect%20x=%279%27%20y=%279%27%20width=%2782%27%20height=%2782%27%20rx=%279%27%20fill=%27%230a0e1f%27/%3E%3Ctext%20x=%2750%27%20y=%2750%27%20dy=%27.35em%27%20text-anchor=%27middle%27%20font-family=%27Arial%2CHelvetica%2Csans-serif%27%20font-weight=%27bold%27%20font-size=%2730%27%20fill=%27%234aa3ff%27%3EPSX%3C/text%3E%3C/svg%3E");}
-html[data-theme="xbox"] .brand .mark{content:url("data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%20100%20100%27%3E%3Crect%20x=%273%27%20y=%273%27%20width=%2794%27%20height=%2794%27%20rx=%2714%27%20fill=%27%239bf00b%27/%3E%3Crect%20x=%279%27%20y=%279%27%20width=%2782%27%20height=%2782%27%20rx=%279%27%20fill=%27%230e1410%27/%3E%3Ctext%20x=%2750%27%20y=%2750%27%20dy=%27.35em%27%20text-anchor=%27middle%27%20font-family=%27Arial%2CHelvetica%2Csans-serif%27%20font-weight=%27bold%27%20font-size=%2722%27%20fill=%27%239bf00b%27%3EXBOX%3C/text%3E%3C/svg%3E");}
+/* the themes swap the Game Log Tracker mark for the console's own logo (files in logos/) */
+html[data-theme="nintendo"] .brand .mark{content:url("../logos/nintendo.png");}
+html[data-theme="playstation"] .brand .mark{content:url("../logos/playstation.png");}
+html[data-theme="xbox"] .brand .mark{content:url("../logos/xbox.png");}
+html[data-theme] .brand .mark{object-fit:contain;width:auto;max-width:150px;}
+/* theme picker: a logo and the name on each row */
+.theme-col .theme-btn{display:flex;align-items:center;gap:12px;height:46px;padding:4px 10px;}
+.theme-col .theme-btn img{height:34px;width:64px;object-fit:contain;flex:none;border-radius:4px;}
+.theme-col .theme-btn span{flex:1;}
