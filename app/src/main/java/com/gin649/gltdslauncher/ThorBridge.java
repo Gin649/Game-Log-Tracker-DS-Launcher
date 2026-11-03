@@ -108,6 +108,14 @@ final class ThorBridge {
         Prefs.put(act, "startupAnim", on ? "1" : "0");
     }
 
+    /** The app theme (retro, nes, snes, psx or xbox), kept here so the top screen can follow it. */
+    @JavascriptInterface
+    public void setTheme(String id) {
+        String t = id == null ? "retro" : id.replaceAll("[^a-z]", "");
+        Prefs.put(act, "theme", t.isEmpty() ? "retro" : t);
+        ArtActivity.applyTheme();
+    }
+
     @JavascriptInterface
     public String launch(String json) {
         try {

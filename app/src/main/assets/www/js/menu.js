@@ -150,12 +150,14 @@ document.querySelectorAll('.cols-btn').forEach(b => b.addEventListener('click', 
     if(id === 'retro') document.documentElement.removeAttribute('data-theme');
     else document.documentElement.setAttribute('data-theme', id);
     try{ localStorage.setItem('glt-theme', id); }catch(e){}
+    try{ if(typeof thorBridge !== 'undefined' && thorBridge && thorBridge.setTheme) thorBridge.setTheme(id); }catch(e){} // the top screen follows
     mark(id);
     applyTextSize();
   }
   let cur = 'retro';
   try{ cur = localStorage.getItem('glt-theme') || 'retro'; }catch(e){}
   mark(cur);
+  try{ if(typeof thorBridge !== 'undefined' && thorBridge && thorBridge.setTheme) thorBridge.setTheme(cur); }catch(e){}
   buttons.forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); apply(b.dataset.themeId); }));
 })();
 

@@ -174,6 +174,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
             @Override
             public void onPageFinished(WebView view, String url) {
                 panelReady = true;
+                applyThemeNow();
                 applyPanel();
             }
         });
@@ -307,6 +308,27 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     @Override
     public void onArt(ArtBus.State s) {
         render(s);
+    }
+
+    /** Re-themes the top screen to match the app's theme. */
+    static void applyTheme() {
+        final ArtActivity a = instance;
+        if (a == null) return;
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                a.applyThemeNow();
+            }
+        });
+    }
+
+    private void applyThemeNow() {
+        if (!panelReady || panel == null) return;
+        String t = Prefs.get(this, "theme", "retro");
+        if (!t.matches("[a-z]+")) t = "retro";
+        String js = "(function(d){var t='" + t + "';if(t==='retro')d.removeAttribute('data-theme');else d.setAttribute('data-theme',t);"
+                + "d.style.fontSize=(t==='nes'?'11.2px':'');})(document.documentElement)";
+        panel.evaluateJavascript(js, null);
     }
 
     /**
