@@ -71,14 +71,14 @@ public class SetupActivity extends Activity {
     private boolean firstRun;
     private boolean finished;
 
-    private String raUser, raKey, rawgKey, romsRoot, romsTree, esRoot, raPackage, siteUrl;
+    private String raUser, raKey, romsRoot, romsTree, esRoot, raPackage, siteUrl;
     /** "esde" or "none" (any other frontend, or no frontend at all). */
     private String frontend;
     /** Folder chosen for the app's own files; empty means the default. */
     private String dataRoot = "";
     private CheckBox cbLaunchBox;
     private boolean launchBoxArt;
-    private String origUser, origKey, origRawg;
+    private String origUser, origKey;
     private String sgdbKey;
     private EditText etSgdb;
     private CheckBox cbEsdeMedia;
@@ -90,7 +90,7 @@ public class SetupActivity extends Activity {
     private final Map<String, List<String>> emuValues = new HashMap<String, List<String>>();
 
     // views of the step on screen
-    private EditText etUser, etKey, etRawg;
+    private EditText etUser, etKey;
     private Spinner spRa, spDisplay, spZoom, spSingle;
     private CheckBox cbSingle;
     private boolean singleScreen;
@@ -108,10 +108,8 @@ public class SetupActivity extends Activity {
         firstRun = !Prefs.setupDone(this);
         raUser = get("raUser", "");
         raKey = get("raKey", "");
-        rawgKey = get("rawgKey", "");
         origUser = raUser;
         origKey = raKey;
-        origRawg = rawgKey;
         romsRoot = get("romsRoot", "");
         romsTree = get("romsTree", "");
         esRoot = get("esRoot", "");
@@ -192,7 +190,6 @@ public class SetupActivity extends Activity {
             d.put("step", step);
             d.put("raUser", raUser);
             d.put("raKey", raKey);
-            d.put("rawgKey", rawgKey);
             d.put("sgdbKey", sgdbKey);
             d.put("romsRoot", romsRoot);
             d.put("romsTree", romsTree);
@@ -223,7 +220,6 @@ public class SetupActivity extends Activity {
             step = Math.max(0, Math.min(LAST_STEP, d.optInt("step", 0)));
             raUser = d.optString("raUser", raUser);
             raKey = d.optString("raKey", raKey);
-            rawgKey = d.optString("rawgKey", rawgKey);
             sgdbKey = d.optString("sgdbKey", sgdbKey);
             romsRoot = d.optString("romsRoot", romsRoot);
             romsTree = d.optString("romsTree", romsTree);
@@ -363,7 +359,6 @@ public class SetupActivity extends Activity {
         content.removeAllViews();
         etUser = null;
         etKey = null;
-        etRawg = null;
         etSgdb = null;
         cbEsdeMedia = null;
         cbLaunchBox = null;
@@ -467,15 +462,6 @@ public class SetupActivity extends Activity {
             @Override
             public void onClick(View v) {
                 openUrl("https://retroachievements.org/settings");
-            }
-        });
-        text("RAWG (optional)", 17, TEXT);
-        text("A free key that adds ratings and game details.", 13, MUTED);
-        etRawg = field("RAWG API key", rawgKey, false);
-        action("Get a free RAWG key", new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                openUrl("https://rawg.io/apidocs");
             }
         });
         text("SteamGridDB (optional)", 17, TEXT);
@@ -903,7 +889,6 @@ public class SetupActivity extends Activity {
         fileAccessRow();
         StringBuilder sb = new StringBuilder();
         sb.append("RetroAchievements: ").append(raUser.isEmpty() ? "not set" : raUser).append("\n");
-        sb.append("RAWG key: ").append(rawgKey.isEmpty() ? "not set" : "set").append("\n");
         sb.append("SteamGridDB: ").append(sgdbKey.isEmpty() ? "not set" : "key set").append("\n");
         sb.append("Free LaunchBox art: ").append(launchBoxArt ? "on" : "off").append("\n");
         sb.append("ROMs: ").append(romsRoot.isEmpty() ? "not chosen" : romsRoot).append("\n");
@@ -921,7 +906,6 @@ public class SetupActivity extends Activity {
     private void collect() {
         if (etUser != null) raUser = etUser.getText().toString().trim();
         if (etKey != null) raKey = etKey.getText().toString().trim();
-        if (etRawg != null) rawgKey = etRawg.getText().toString().trim();
         if (etSgdb != null) sgdbKey = etSgdb.getText().toString().trim();
         if (cbEsdeMedia != null) useEsdeMedia = cbEsdeMedia.isChecked();
         if (cbLaunchBox != null) launchBoxArt = cbLaunchBox.isChecked();
@@ -973,8 +957,7 @@ public class SetupActivity extends Activity {
     private void save() {
         put("raUser", raUser);
         put("raKey", raKey);
-        put("rawgKey", rawgKey);
-        if (!raUser.equals(origUser) || !raKey.equals(origKey) || !rawgKey.equals(origRawg)) {
+        if (!raUser.equals(origUser) || !raKey.equals(origKey)) {
             put("credsRev", String.valueOf(System.currentTimeMillis()));
         }
 

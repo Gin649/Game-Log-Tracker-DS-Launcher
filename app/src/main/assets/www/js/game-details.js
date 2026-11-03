@@ -1,5 +1,5 @@
 // Game Details: other players' median playtime from RA (in the current mode), your own times,
-// a write-up from RAWG and the manual (manuals.js).
+// a write-up (ES-DE, LaunchBox or IGDB) and the manual (manuals.js).
 
 const PLAYTIME_TTL = 7 * 24 * 60 * 60 * 1000; // medians barely move
 const PLAYTIME_MISS_TTL = 10 * 60 * 1000;
@@ -47,7 +47,7 @@ function getEsdeDescription(title, consoleName){
   }, 0));
 }
 
-// LaunchBox's write-up, used to fill the gaps when RAWG has none. Only inside the launcher app.
+// LaunchBox's write-up, used to fill the gaps when ES-DE has none. Only inside the launcher app.
 function getLaunchBoxDescription(title, consoleName){
   if(typeof thorBridge === 'undefined' || !thorBridge || !thorBridge.launchboxDescription || !consoleName) return Promise.resolve(null);
   const clean = String(title).replace(/^(?:~[^~]*~\s*)+/, '').trim();
@@ -66,14 +66,14 @@ const hackSearchUrl = t => 'https://www.romhacking.net/hacks/?title=' + encodeUR
 
 function cleanDescription(raw){
   let text = String(raw || '').replace(/\r/g, '').trim();
-  // RAWG often adds a Spanish copy after a line that just says "Español".
+  // Text sources often add a Spanish copy after a line that just says "Español".
   const es = text.search(/\n\s*espa[ñn]ol\s*:?\s*(\n|$)/i);
   if(es > 0) text = text.slice(0, es).trim();
   text = tidyDescription(text);
   return text.length >= 40 ? text : null;
 }
 
-// RAWG text has line breaks mid-sentence. A break only stays between a sentence end and a new
+// The text has line breaks mid-sentence. A break only stays between a sentence end and a new
 // sentence; the rest become spaces.
 function tidyDescription(text){
   return String(text || '').replace(/\r/g, '').split(/\n{2,}/).map(para => {
@@ -261,7 +261,7 @@ function setupGameDetailsUI(gameId, title, card, opts){
     loaded = true;
     wrap.innerHTML = '<div class="achievements-list-loading">Loading details…</div>';
     const [statsRes, , hackRes, mineRes, igdbRes] = await load();
-    // The write-up can come late (RAWG is the slow one): wait a moment for it, then show the rest and fill it in after.
+    // The write-up can come late (IGDB is the slow one): wait a moment for it, then show the rest and fill it in after.
     const early = await Promise.race([descPromise, new Promise(r => setTimeout(() => r(undefined), 2500))]);
     if(card.dataset.gameId !== String(gameId)) return; // another game was opened meanwhile
 

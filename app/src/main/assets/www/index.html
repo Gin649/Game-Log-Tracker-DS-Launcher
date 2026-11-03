@@ -239,7 +239,7 @@
         <select id="addgame-system"><option>Loading systems…</option></select>
       </div>
       <div class="field" id="addgame-custom-console-field" style="display:none;">
-        <div class="hint">Not on RetroAchievements: pick the platform once you find a match below. Box art and details come from RAWG, and the game won't count toward RetroAchievements stats.</div>
+        <div class="hint">Not on RetroAchievements: pick the platform once you find a match below. Box art and details come from IGDB, and the game won't count toward RetroAchievements stats.</div>
       </div>
       <div class="field">
         <label>Game title</label>
@@ -270,33 +270,13 @@
   </div>
 </div>
 
-<div id="rawg-backdrop" class="modal-backdrop">
-  <div class="modal-card" id="rawg-card">
-    <button class="modal-close" id="rawg-close-btn">✕</button>
-    <div class="modal-body">
-      <h2 style="margin-bottom:4px;">RAWG ratings</h2>
-      <p class="sub" style="margin-bottom:18px;">Optional. Shows a review score on each game's profile, from RAWG (Metacritic scores where RAWG has them).</p>
-
-      <div class="field">
-        <label>API Key</label>
-        <input id="rawg-api-key" type="text" autocomplete="off">
-        <div class="hint">Free: get a key at <a href="https://rawg.io/apidocs" target="_blank" rel="noopener">rawg.io/apidocs</a> (20,000 requests a month).</div>
-      </div>
-      <div style="display:flex; gap:8px;">
-        <button class="btn-primary" id="rawg-save-btn" style="flex:1;">Save</button>
-        <button class="btn-line danger" id="rawg-remove-btn" style="flex:1;">Remove key</button>
-      </div>
-      <div id="rawg-status"></div>
-    </div>
-  </div>
-</div>
 
 <div id="data-backdrop" class="modal-backdrop">
   <div class="modal-card" id="data-card">
     <button class="modal-close" id="data-close-btn">✕</button>
     <div class="modal-body">
       <h2 style="margin-bottom:4px;">Data</h2>
-      <p class="sub" style="margin-bottom:18px;">Everything (your RA login, RAWG key and added games) is stored only on this device. Export a backup before reinstalling or moving to another device, then import it there.</p>
+      <p class="sub" style="margin-bottom:18px;">Everything (your RA login and added games) is stored only on this device. Export a backup before reinstalling or moving to another device, then import it there.</p>
 
       <div class="field">
         <label>Export</label>
@@ -345,7 +325,7 @@
       <div class="about-credits">
         <div class="about-credits-title">Credits</div>
         <p>Special thanks to <a id="about-link-4" href="https://www.joeysretrohandhelds.com/" target="_blank" rel="noopener">Joey</a> (<a id="about-link-5" href="https://www.joeysretrohandhelds.com/" target="_blank" rel="noopener">joeysretrohandhelds.com</a>) for helping make this app possible.</p>
-        <p>Achievement data from <a id="about-link-6" href="https://retroachievements.org" target="_blank" rel="noopener">RetroAchievements</a>. Ratings and box art from <a id="about-link-7" href="https://rawg.io" target="_blank" rel="noopener">RAWG</a>. Text guides from the GameFAQs archive on <a id="about-link-8" href="https://archive.org" target="_blank" rel="noopener">archive.org</a>, indexed by the Guide Watch project.</p>
+        <p>Achievement data from <a id="about-link-6" href="https://retroachievements.org" target="_blank" rel="noopener">RetroAchievements</a>. Ratings, game details and box art from <a id="about-link-7" href="https://www.igdb.com" target="_blank" rel="noopener">IGDB</a>. Text guides from the GameFAQs archive on <a id="about-link-8" href="https://archive.org" target="_blank" rel="noopener">archive.org</a>, indexed by the Guide Watch project.</p>
       </div>
     </div>
   </div>
@@ -366,7 +346,7 @@
 <script src="js/walkthroughs.js"></script>
 <script src="js/imported-files.js"></script>
 <script src="js/manual-games.js"></script>
-<script src="js/rawg.js"></script>
+<script src="js/igdb.js"></script>
 <script src="js/views.js"></script>
 <script src="js/manuals.js"></script>
 <script src="js/game-details.js"></script>

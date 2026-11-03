@@ -65,7 +65,7 @@ function manualNorm(s){
   return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 }
 
-// The site's system names that could match a console name from RetroAchievements or RAWG.
+// The site's system names that could match a console name from RetroAchievements or IGDB.
 function manualSystemsFor(consoleName){
   const key = String(consoleName || '').trim().toLowerCase();
   if(!key) return [];

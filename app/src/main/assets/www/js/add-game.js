@@ -1,4 +1,4 @@
-// Add Game: RA system search, RAWG search for other systems, and adding several at once.
+// Add Game: RA system search, IGDB search for other systems, and adding several at once.
 
 function rankGames(games, query){
   const q = foldText(query.trim());
@@ -76,24 +76,22 @@ async function searchAddGame(){
       resultsEl.innerHTML = '<div class="ag-empty">Enter a title to search.</div>';
       return;
     }
-    resultsEl.innerHTML = '<div class="loading">Searching RAWG</div>';
+    resultsEl.innerHTML = '<div class="loading">Searching</div>';
     try{
-      const results = await searchRawgForAddGame(query);
+      const results = await searchIgdbGames(query);
       if(results.length === 0){
-        resultsEl.innerHTML = '<div class="ag-empty">No matching games found on RAWG.</div>';
+        resultsEl.innerHTML = '<div class="ag-empty">No matching games found.</div>';
         return;
       }
-      // The platform is picked from RAWG's list for the game, so it's always spelled the same way.
+      // The platform is picked from IGDB's list for the game, so it's always spelled the same way.
       resultsEl.innerHTML = results.map(g => {
-        const plats = (g.platforms || [])
-          .map(p => p && p.platform && p.platform.name)
-          .filter(Boolean);
+        const plats = Array.isArray(g.platforms) ? g.platforms.filter(Boolean) : [];
         const platOptions = plats.length
           ? plats.map(p => `<option value="${p}">${p}</option>`).join('')
           : `<option value="">Unknown platform</option>`;
         return `
-            <div class="ag-result ag-result-custom" data-rawg-id="${g.id}">
-              <img src="${g.background_image || ''}" alt="">
+            <div class="ag-result ag-result-custom" data-game-id="${g.id}">
+              <img src="${g.cover || ''}" alt="">
               <span class="t">${g.name}</span>
               <span class="n">${g.released ? g.released.slice(0,4) : ''}</span>
               <select class="ag-platform-select">${platOptions}</select>
@@ -102,15 +100,15 @@ async function searchAddGame(){
           `;
       }).join('');
       resultsEl.querySelectorAll('.ag-result-custom').forEach(row => {
-        const id = Number(row.getAttribute('data-rawg-id'));
+        const id = Number(row.getAttribute('data-game-id'));
         const match = results.find(g => g.id === id);
         const select = row.querySelector('.ag-platform-select');
         row.querySelector('.ag-add-btn').addEventListener('click', () => {
-          if(match) addManualGameFromRawg(match, select.value || 'Unknown');
+          if(match) addManualGameFromSearch(match, select.value || 'Unknown');
         });
       });
     }catch(e){
-      resultsEl.innerHTML = `<div class="error-box">Search failed: ${/abort/i.test(String(e && e.message)) ? 'RAWG took too long to answer. Try again in a moment.' : e.message}</div>`;
+      resultsEl.innerHTML = `<div class="error-box">Search failed: ${/abort/i.test(String(e && e.message)) ? 'The search took too long to answer. Try again in a moment.' : e.message}</div>`;
     }
     return;
   }
@@ -166,22 +164,8 @@ async function searchAddGame(){
       checkbox.addEventListener('change', applySelection);
     });
   }catch(e){
-    resultsEl.innerHTML = `<div class="error-box">Search failed: ${/abort/i.test(String(e && e.message)) ? 'RAWG took too long to answer. Try again in a moment.' : e.message}</div>`;
+    resultsEl.innerHTML = `<div class="error-box">Search failed: ${/abort/i.test(String(e && e.message)) ? 'The search took too long to answer. Try again in a moment.' : e.message}</div>`;
   }
-}
-
-async function searchRawgForAddGame(title){
-  if(!rawgCreds) rawgCreds = await loadRawgCreds();
-  if(!rawgCreds || !rawgCreds.apiKey) throw new Error('RAWG isn\'t set up. Add a key under RAWG Ratings in the menu first.');
-  const url = `https://api.rawg.io/api/games?key=${encodeURIComponent(rawgCreds.apiKey)}&search=${encodeURIComponent(title)}&page_size=10`;
-  // RAWG is sometimes slow to answer: someone typing a title to add is waiting for it, so give it longer and try twice
-  let json;
-  try{ json = await rawgGet(url, 20000); }
-  catch(e){
-    if(/HTTP 4\d\d/.test(String(e && e.message))) throw e; // a refused key won't change on a retry
-    json = await rawgGet(url, 20000);
-  }
-  return (json && json.results) || [];
 }
 
 // A manually added RA game that hasn't been played yet.
@@ -225,21 +209,21 @@ async function addManualGamesBulk(selections){
   });
 }
 
-async function addManualGameFromRawg(rawgGame, customConsole){
+async function addManualGameFromSearch(found, customConsole){
   return enqueueTask(async () => {
     const gameId = -Date.now(); // negative, so it never clashes with a real RA GameID
     if(libraryData.some(x => x.GameID === gameId)){
       closeAddGameModal();
       return;
     }
-    const genre = (rawgGame.genres && rawgGame.genres.length) ? rawgGame.genres.map(g => g.name).join(', ') : null;
+    const genre = (found.genres && found.genres.length) ? found.genres.join(', ') : null;
     const entry = {
       GameID: gameId,
-      Title: rawgGame.name,
+      Title: found.name,
       ConsoleID: null,
       ConsoleName: await raConsoleNameFor(customConsole),
-      ImageIcon: rawgGame.background_image || null,
-      ImageBoxArt: rawgGame.background_image || null,
+      ImageIcon: found.cover || null,
+      ImageBoxArt: found.cover || null,
       MaxPossible: 0,
       NumAwarded: 0,
       NumAwardedHardcore: 0,
@@ -251,7 +235,7 @@ async function addManualGameFromRawg(rawgGame, customConsole){
       manual: true,
       customConsole: true, // not on RA
       genre: genre,
-      released: rawgGame.released || null,
+      released: found.released || null,
       manualStarted: false,
       manualBeaten: false,
       manualBeatenDate: null,

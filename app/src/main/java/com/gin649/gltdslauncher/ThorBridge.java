@@ -138,7 +138,7 @@ final class ThorBridge {
         }
     }
 
-    /** LaunchBox's description for a game (used when RetroAchievements and RAWG have none), or "". Blocks on the network. */
+    /** LaunchBox's description for a game (used when RetroAchievements has none), or "". Blocks on the network. */
     @JavascriptInterface
     public String launchboxDescription(String title, String console) {
         try {
@@ -262,7 +262,6 @@ final class ThorBridge {
         try {
             o.put("raUser", Prefs.get(act, "raUser", ""));
             o.put("raKey", Prefs.get(act, "raKey", ""));
-            o.put("rawgKey", Prefs.get(act, "rawgKey", ""));
             o.put("rev", Prefs.get(act, "credsRev", ""));
         } catch (Exception ignored) {
         }
@@ -274,12 +273,6 @@ final class ThorBridge {
     public void setRaCreds(String user, String key) {
         Prefs.put(act, "raUser", user == null ? "" : user.trim());
         Prefs.put(act, "raKey", key == null ? "" : key.trim());
-        Prefs.put(act, "credsRev", String.valueOf(System.currentTimeMillis()));
-    }
-
-    @JavascriptInterface
-    public void setRawgKey(String key) {
-        Prefs.put(act, "rawgKey", key == null ? "" : key.trim());
         Prefs.put(act, "credsRev", String.valueOf(System.currentTimeMillis()));
     }
 
@@ -374,7 +367,7 @@ final class ThorBridge {
     /**
      * Looks for a box-art style picture for a game the tracker has no art for: your frontend's media, then
      * SteamGridDB (with a key), then LaunchBox. The page gets the address in window.thorCustomArt(id, url),
-     * with an empty url when nothing was found (it then tries RAWG itself).
+     * with an empty url when nothing was found .
      */
     @JavascriptInterface
     public void customArt(final String id, final String title, final String folder, final String romPath) {
@@ -411,7 +404,7 @@ final class ThorBridge {
                         }
                     }
                     // A game that isn't on RetroAchievements has no other picture, so SteamGridDB's cover is the last
-                    // resort before a RAWG screenshot. Game profiles (ids start with "modal-") never use it.
+                    // resort. Game profiles (ids start with "modal-") never use it.
                     if (url.isEmpty() && !id.startsWith("modal-") && SteamGridDbClient.enabled(act)) {
                         try {
                             String g = SteamGridDbClient.gridFor(act, title);

@@ -1,14 +1,4 @@
-// Settings modals: RAWG key, Data export / import, About.
-
-async function openRawgModal(){
-  $('#rawg-backdrop').classList.add('open');
-  $('#rawg-status').innerHTML = '';
-  const existing = await loadRawgCreds();
-  $('#rawg-api-key').value = existing ? existing.apiKey : '';
-}
-function closeRawgModal(){
-  $('#rawg-backdrop').classList.remove('open');
-}
+// Settings modals: Data export / import, About.
 
 function openDataModal(){
   $('#data-backdrop').classList.add('open');
@@ -41,7 +31,7 @@ async function exportLocalData(){
     app: 'Game Log Tracker',
     exportedAt: new Date().toISOString(),
     version: 1,
-    // the saved login (RetroAchievements and RAWG keys) is never written into a backup file
+    // the saved login (RetroAchievements) is never written into a backup file
     entries: all.filter(e => !isRebuildableCache(String(e.key)) && !/^(priv|shared):(ra|rawg)-credentials$/.test(String(e.key))),
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -67,7 +57,7 @@ async function importLocalData(file){
     for(const e of payload.entries){
       try{
         if(e.key === 'priv:ra-credentials'){ const o = JSON.parse(e.value); if(o.username && o.apiKey) await saveCreds(o.username, o.apiKey); continue; }
-        if(e.key === 'priv:rawg-credentials'){ const o = JSON.parse(e.value); if(o.apiKey) await saveRawgCreds(o.apiKey); continue; }
+        if(e.key === 'priv:rawg-credentials') continue; // RAWG isn't used any more
       }catch(err){ continue; }
       entries.push(e);
     }
@@ -81,9 +71,6 @@ function wireModal(openSel, closeSel, backdropId, open, close){
   $(closeSel).addEventListener('click', close);
   $('#' + backdropId).addEventListener('click', (e) => { if(e.target.id === backdropId) close(); });
 }
-// The RAWG window is still opened from a game's rating link; its key is set in Launcher settings.
-$('#rawg-close-btn').addEventListener('click', closeRawgModal);
-$('#rawg-backdrop').addEventListener('click', (e) => { if(e.target.id === 'rawg-backdrop') closeRawgModal(); });
 wireModal('#btn-social-open', '#social-close-btn', 'social-backdrop', openSocialModal, closeSocialModal);
 wireModal('#btn-about-open', '#about-close-btn', 'about-backdrop', openAboutModal, closeAboutModal);
 wireModal('#btn-data-settings-open', '#data-close-btn', 'data-backdrop', openDataModal, closeDataModal);
@@ -119,35 +106,4 @@ $('#data-import-file').addEventListener('change', async (e) => {
   }finally{
     e.target.value = '';
   }
-});
-
-$('#rawg-save-btn').addEventListener('click', async () => {
-  const apiKey = $('#rawg-api-key').value.trim();
-  const statusEl = $('#rawg-status');
-  if(!apiKey){
-    statusEl.innerHTML = '<div class="error-box">Enter an API key.</div>';
-    return;
-  }
-  const btn = $('#rawg-save-btn');
-  btn.disabled = true; btn.textContent = 'Verifying…';
-  statusEl.innerHTML = '';
-
-  rawgCreds = { apiKey };
-  await saveRawgCreds(apiKey);
-  try{
-    // RAWG has no key check, so try a real lookup.
-    const result = await fetchRawgRatingLive('Super Mario Bros');
-    if(!result) throw new Error('Key saved, but a test lookup came back empty. Check the key is right.');
-    statusEl.innerHTML = statusLine('Connected. Ratings will show on game details from now on.', '--teal');
-  }catch(e){
-    statusEl.innerHTML = `<div class="error-box">Couldn't verify: ${e.message}</div>`;
-  }finally{
-    btn.disabled = false; btn.textContent = 'Save';
-  }
-});
-
-$('#rawg-remove-btn').addEventListener('click', async () => {
-  await removeRawgCreds();
-  $('#rawg-api-key').value = '';
-  $('#rawg-status').innerHTML = statusLine('RAWG key removed. Ratings stop showing until a new key is saved.', '--muted');
 });

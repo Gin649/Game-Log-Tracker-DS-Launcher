@@ -165,7 +165,7 @@ async function addRomsToBacklog(items){
 }
 
 // Pictures for games that aren't on RetroAchievements: your frontend's media, SteamGridDB (with a key) and
-// LaunchBox through the app, then RAWG from here. One game at a time, and each is only tried once a week.
+// LaunchBox and SteamGridDB through the app. One game at a time, and each is only tried once a week.
 const customArtWaiting = new Map(); // GameID -> resolve
 let customArtRunning = false;
 
@@ -200,13 +200,6 @@ function betterBoxArt(gameId, title, consoleName, romPath){
 }
 window.cachedBoxArt = function(gameId){ try{ return localStorage.getItem('betterArt3:' + gameId) || ''; }catch(e){ return ''; } };
 window.betterBoxArt = betterBoxArt;
-
-async function rawgArtFor(title){
-  try{
-    const results = await searchRawgForAddGame(title);
-    return (results[0] && results[0].background_image) || '';
-  }catch(e){ return ''; }
-}
 
 // Games added before this knew about RetroAchievements games without achievements: a plain entry that RA does have
 // becomes the RA game (its own profile, and it moves to the Library once played).
@@ -268,6 +261,16 @@ async function relinkCustomGames(){
   return changed;
 }
 
+// IGDB's cover for a game when nothing on the device or LaunchBox has one. Only an exact title match is used.
+async function igdbCoverFor(title){
+  try{
+    const results = await searchIgdbGames(title);
+    const want = romMatchKey(title);
+    const hit = results.find(g => g.cover && romMatchKey(g.name) === want);
+    return hit ? hit.cover : '';
+  }catch(e){ return ''; }
+}
+
 async function fillMissingCustomArt(){
   try{ await relinkCustomGames(); }catch(e){}
   if(customArtRunning || typeof creds === 'undefined' || !creds) return;
@@ -282,7 +285,7 @@ async function fillMissingCustomArt(){
     for(const g of todo){
       let url = '';
       if(thorBridge && typeof thorBridge.customArt === 'function') url = await nativeCustomArt(g);
-      if(!url) url = await rawgArtFor(g.Title);
+      if(!url) url = await igdbCoverFor(g.Title);
       await enqueueTask(async () => {
         const cur = libraryData.find(x => x.GameID === g.GameID);
         if(!cur) return;

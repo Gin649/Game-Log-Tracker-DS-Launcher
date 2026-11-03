@@ -281,16 +281,7 @@ async function thorSeedCredentials(){
       await window.storage.delete('ra-credentials', false);
     }
   }catch(e){}
-  try{
-    const r = await window.storage.get('rawg-credentials', false).catch(() => null);
-    if(r && r.value){
-      if(!cfg.rawgKey){
-        const old = JSON.parse(r.value);
-        if(old && old.apiKey) thorBridge.setRawgKey(old.apiKey);
-      }
-      await window.storage.delete('rawg-credentials', false);
-    }
-  }catch(e){}
+  try{ await window.storage.delete('rawg-credentials', false); }catch(e){} // RAWG isn't used any more
 }
 
 function onDomReady(fn){
