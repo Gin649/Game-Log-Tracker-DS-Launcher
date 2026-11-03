@@ -272,7 +272,7 @@ final class LibraryScraper {
                 offline = true;
             }
         }
-        if (Config.LAUNCHBOX_ART) {
+        if (Config.LAUNCHBOX_ART && DisplayPicker.topScreenInUse(ctx)) { // fan art and miximages are for the top screen
             try {
                 LaunchBoxArt.Art art = LaunchBoxArt.fetch(ctx, g.systemId, g.title, true);
                 if (art != null) {
@@ -300,7 +300,7 @@ final class LibraryScraper {
         }
 
         // 4. a miximage from LaunchBox's box art, screenshot and logo
-        if (Config.LAUNCHBOX_ART) {
+        if (Config.LAUNCHBOX_ART && DisplayPicker.topScreenInUse(ctx)) { // fan art and miximages are for the top screen
             try {
                 LaunchBoxArt.Art art = LaunchBoxArt.fetch(ctx, g.systemId, g.title, false);
                 if (art != null) {

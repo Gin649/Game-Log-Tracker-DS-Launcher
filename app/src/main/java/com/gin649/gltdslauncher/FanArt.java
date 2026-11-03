@@ -235,7 +235,7 @@ final class FanArt {
                     complete = false;
                 }
             }
-            if (Config.LAUNCHBOX_ART) {
+            if (Config.LAUNCHBOX_ART && DisplayPicker.topScreenInUse(ctx)) { // fan art is for the top screen
                 for (String file : LaunchBoxArt.fanFiles(ctx, g.systemId, g.title)) {
                     if (files(ctx, g).size() >= MAX) break;
                     if (has(ctx, g, file)) continue;

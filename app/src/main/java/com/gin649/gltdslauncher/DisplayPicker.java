@@ -90,6 +90,13 @@ final class DisplayPicker {
         prefs(c).edit().putBoolean("singleScreen", on).putString("singleWhich", which).apply();
     }
 
+    /** False on a single-screen device or when the app is set to one screen: there is no top screen to show fan art on. */
+    static boolean topScreenInUse(Context c) {
+        if (singleScreen(c)) return false;
+        android.hardware.display.DisplayManager dm = (android.hardware.display.DisplayManager) c.getSystemService(Context.DISPLAY_SERVICE);
+        return dm == null || dm.getDisplays().length >= 2;
+    }
+
     /** True when this device has two screens, whatever the single-screen setting says. */
     static boolean hasTwoScreens(Activity a) {
         return pair(a) != null;
