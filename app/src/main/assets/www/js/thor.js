@@ -92,6 +92,24 @@ function thorPlayButtonHtml(){
 }
 
 // Tells the app which game is open (for the top-screen art) and wires the Play button.
+// Other names IGDB knows a game by, joined the way the matcher reads RetroAchievements' own "Name | Other name".
+function thorMatchTitle(title, alts){
+  return alts && alts.length ? title + ' | ' + alts.join(' | ') : title;
+}
+
+// The time played on this device (for games RetroAchievements has no playtime for), in the profile's Playtime row.
+function thorFillPlaytime(card, title, consoleName){
+  try{
+    const sec = (thorBridge && thorBridge.playtime) ? Number(thorBridge.playtime(title, consoleName)) : 0;
+    const el = card.querySelector('#manual-playtime-val');
+    if(el && sec >= 60){
+      const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+      el.textContent = (h ? h + 'h ' : '') + m + 'm';
+      el.style.color = 'var(--gold)';
+    }
+  }catch(e){}
+}
+
 function thorWirePlay(card, gameId, title, consoleName, artUrl, romPath){
   if(!thorBridge) return;
   const info = { gameId: String(gameId), title: title, console: consoleName, art: artUrl || '', file: romPath || '' };
@@ -134,6 +152,21 @@ function thorWirePlay(card, gameId, title, consoleName, artUrl, romPath){
     btn.classList.add('no-rom');
     btn.innerHTML = 'Not located on this device';
     if(emuBtn0) emuBtn0.style.display = 'none';
+
+    // Not found under the game's own name: try the other names IGDB has for it (regional and alternative titles).
+    if(typeof getIgdbInfo !== 'function' || (typeof isHackTitle === 'function' && isHackTitle(title))) return;
+    getIgdbInfo(title).then(g => {
+      if(!g || !g.alts || !g.alts.length || !card.isConnected) return;
+      let found = false;
+      try{ found = thorBridge.hasRom(JSON.stringify(Object.assign({}, info, { alts: g.alts }))); }catch(e){}
+      if(!found) return;
+      info.alts = g.alts; // used by Play and the emulator choice from here on
+      btn.disabled = false;
+      btn.classList.remove('no-rom');
+      btn.innerHTML = '<span class="arrow">\u25b6</span> Play on this device';
+      if(emuBtn0) emuBtn0.style.display = '';
+      thorFillPlaytime(card, thorMatchTitle(title, g.alts), consoleName);
+    }).catch(() => {});
   }, 0);
 
   const emuBtn = card.querySelector('#modal-emu-btn');

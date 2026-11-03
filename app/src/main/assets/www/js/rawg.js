@@ -123,3 +123,29 @@ async function getRawgRating(title, forceRefresh){
   try{ await window.storage.set(cacheKey, JSON.stringify({ data, ts: Date.now() }), false); }catch(e){}
   return data;
 }
+
+// IGDB's other names for a game and its time to beat, through the Worker (for games RetroAchievements has no data on).
+// Resolves to { name, id, alts: [names], beat: { hastily, normally, completely, count } | null }, or null when
+// IGDB has nothing or can't be reached. Found games are kept a month, misses a day, failures not at all.
+async function getIgdbInfo(title){
+  const clean = String(title).replace(/^(?:~[^~]*~\s*)+/, '').trim();
+  if(!clean) return null;
+  const cacheKey = `igdb-info:${clean.toLowerCase()}`;
+  try{
+    const r = await window.storage.get(cacheKey, false);
+    if(r && r.value){
+      const parsed = JSON.parse(r.value);
+      const ttl = parsed.data ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+      if(Date.now() - parsed.ts < ttl) return parsed.data;
+    }
+  }catch(e){}
+  let data = null;
+  try{
+    const res = await fetchWithTimeout(`https://ra-proxy.gin649.workers.dev/igdb/info?name=${encodeURIComponent(clean)}`, 12000);
+    if(!res.ok) return null;
+    const j = await res.json();
+    data = (j && j.id) ? { name: j.name, id: j.id, alts: Array.isArray(j.alts) ? j.alts : [], beat: j.beat || null } : null;
+  }catch(e){ return null; }
+  try{ await window.storage.set(cacheKey, JSON.stringify({ data, ts: Date.now() }), false); }catch(e){}
+  return data;
+}

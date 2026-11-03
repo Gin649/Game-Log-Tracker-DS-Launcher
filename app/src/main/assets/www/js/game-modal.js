@@ -209,15 +209,7 @@ function renderCustomGameModal(gameId, local, card){
 
   thorWirePlay(card, gameId, local.Title, local.ConsoleName, boxArt, local.romPath);
   // Games RetroAchievements doesn't know: the time played on this device, counted while the game is on screen.
-  try{
-    const sec = (typeof thorBridge !== 'undefined' && thorBridge && thorBridge.playtime) ? Number(thorBridge.playtime(local.Title, local.ConsoleName)) : 0;
-    const el = card.querySelector('#manual-playtime-val');
-    if(el && sec >= 60){
-      const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
-      el.textContent = (h ? h + 'h ' : '') + m + 'm';
-      el.style.color = 'var(--gold)';
-    }
-  }catch(e){}
+  thorFillPlaytime(card, local.Title, local.ConsoleName);
   attachRawgLookup(gameId, local.Title, card);
   setupGameDetailsUI(gameId, local.Title, card, { aboutOnly: true, consoleName: local.ConsoleName });
   setupGameGuideUI(gameId, local.Title, card, local.ConsoleID);

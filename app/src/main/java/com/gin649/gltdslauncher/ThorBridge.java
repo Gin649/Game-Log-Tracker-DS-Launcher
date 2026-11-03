@@ -84,6 +84,19 @@ final class ThorBridge {
         }
     }
 
+    /** The game's title followed by the other names given for it (" | " separated), which the ROM matcher tries too. */
+    private static String matchTitle(JSONObject o) {
+        String title = o.optString("title");
+        org.json.JSONArray alts = o.optJSONArray("alts");
+        if (alts == null) return title;
+        StringBuilder sb = new StringBuilder(title);
+        for (int i = 0; i < alts.length(); i++) {
+            String a = alts.optString(i);
+            if (!a.isEmpty()) sb.append(" | ").append(a);
+        }
+        return sb.toString();
+    }
+
     /** The start-up animation on the top screen when a game starts (on unless switched off). */
     @JavascriptInterface
     public boolean startupAnim() {
@@ -99,7 +112,7 @@ final class ThorBridge {
     public String launch(String json) {
         try {
             JSONObject o = new JSONObject(json);
-            return Launcher.launch(act, o.optString("title"), o.optString("console"), o.optString("disc"), o.optString("file")).toString();
+            return Launcher.launch(act, matchTitle(o), o.optString("console"), o.optString("disc"), o.optString("file")).toString();
         } catch (Exception e) {
             return "{\"ok\":false,\"message\":\"Bad launch request.\"}";
         }
@@ -131,7 +144,7 @@ final class ThorBridge {
     public boolean hasRom(String json) {
         try {
             JSONObject o = new JSONObject(json);
-            return Shared.findRom(o.optString("title"), o.optString("console")) != null;
+            return Shared.findRom(matchTitle(o), o.optString("console")) != null;
         } catch (Exception e) {
             return true; // when unsure, leave Play usable
         }
@@ -142,7 +155,7 @@ final class ThorBridge {
     public String emuOptions(String json) {
         try {
             JSONObject o = new JSONObject(json);
-            RomIndex.Rom rom = Shared.findRom(o.optString("title"), o.optString("console"));
+            RomIndex.Rom rom = Shared.findRom(matchTitle(o), o.optString("console"));
             if (rom == null) return "{\"ok\":false,\"message\":\"No ROM found for this game on the device.\"}";
             return Launcher.emulatorOptions(act, rom).toString();
         } catch (Exception e) {
@@ -155,7 +168,7 @@ final class ThorBridge {
     public boolean setEmu(String json) {
         try {
             JSONObject o = new JSONObject(json);
-            RomIndex.Rom rom = Shared.findRom(o.optString("title"), o.optString("console"));
+            RomIndex.Rom rom = Shared.findRom(matchTitle(o), o.optString("console"));
             if (rom == null) return false;
             String v = o.optString("value");
             if (v.isEmpty()) Prefs.remove(act, Launcher.gameKey(rom));

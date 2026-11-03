@@ -189,20 +189,26 @@ function playtimeBox(label, seconds, players, mine){
 }
 
 // aboutOnly: non-RA games have no playtime data, so only the write-up shows.
-function renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine, hack){
+function renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine, hack, igdb){
   if(description) description = tidyDescription(description); // fixes write-ups cached before tidying existed
   const hard = statsMode === 'hardcore';
   const m = (!aboutOnly && stats) ? (hard ? stats.hardcore : stats.casual) : null;
   const my = (!aboutOnly && mine) ? (hard ? mine.hardcore : mine.casual) : null;
+  // Games RetroAchievements has no playtime for borrow IGDB's: a normal playthrough, and everything done.
+  const ib = (aboutOnly && igdb && igdb.beat && (igdb.beat.normally || igdb.beat.completely)) ? igdb.beat : null;
   const hasTimes = !!(m && (m.beat || m.master)) || !!(my && (my.beat || my.master));
 
-  if(!hasTimes && !description && !hack){
+  if(!hasTimes && !ib && !description && !hack){
     wrap.innerHTML = `<div class="gd-empty">${aboutOnly ? 'No write-up available for this game yet.' : 'No details available for this game yet.'}</div>`;
     addManualSection(wrap, manualCtx);
     return;
   }
 
   let html = '';
+  if(ib){
+    html += `<div class="gd-head"><span class="gd-label">AVERAGE PLAYTIME</span><span class="gd-mode">IGDB</span></div>`;
+    html += `<div class="gd-boxes">${playtimeBox('TIME TO BEAT', ib.normally, ib.count, null)}${playtimeBox('TIME TO 100%', ib.completely, ib.count, null)}</div>`;
+  }
   if(!aboutOnly){
     html += `<div class="gd-head"><span class="gd-label">AVERAGE PLAYTIME</span><span class="gd-mode">${hard ? 'Hardcore' : 'Casual'}</span></div>`;
     html += hasTimes
@@ -211,10 +217,10 @@ function renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine,
   }
 
   if(hack){
-    html += `<div class="gd-label${aboutOnly ? '' : ' gd-about-label'}">ABOUT</div><div class="gd-hack">Hack<br><br><a href="${esc(hack.url)}" target="_blank" rel="noopener">Click here for details</a></div>`;
+    html += `<div class="gd-label${aboutOnly && !ib ? '' : ' gd-about-label'}">ABOUT</div><div class="gd-hack">Hack<br><br><a href="${esc(hack.url)}" target="_blank" rel="noopener">Click here for details</a></div>`;
   }
   if(description){
-    html += `<div class="gd-label${aboutOnly ? '' : ' gd-about-label'}">ABOUT</div><div class="gd-about"></div>`;
+    html += `<div class="gd-label${aboutOnly && !ib ? '' : ' gd-about-label'}">ABOUT</div><div class="gd-about"></div>`;
     if(description.length > 280) html += '<button class="gd-more">Read more</button>';
   }
   wrap.innerHTML = html;
@@ -248,6 +254,7 @@ function setupGameDetailsUI(gameId, title, card, opts){
     isHackTitle(title) ? Promise.resolve(null) : getRawgDescription(title).then(d => d || getLaunchBoxDescription(title, opts && opts.consoleName)),
     Promise.resolve(isHackTitle(title) ? { url: hackSearchUrl(title) } : null),
     aboutOnly ? Promise.resolve(null) : getMyTimes(gameId),
+    aboutOnly && !isHackTitle(title) ? getIgdbInfo(title) : Promise.resolve(null),
   ]));
   setTimeout(load, 400);
 
@@ -260,14 +267,15 @@ function setupGameDetailsUI(gameId, title, card, opts){
 
     loaded = true;
     wrap.innerHTML = '<div class="achievements-list-loading">Loading details…</div>';
-    const [statsRes, descRes, hackRes, mineRes] = await load();
+    const [statsRes, descRes, hackRes, mineRes, igdbRes] = await load();
     if(card.dataset.gameId !== String(gameId)) return; // another game was opened meanwhile
 
     const stats = statsRes.status === 'fulfilled' ? statsRes.value : null;
     const hack = hackRes.status === 'fulfilled' ? hackRes.value : null;
     const description = isHackTitle(title) ? null : (descRes.status === 'fulfilled' ? descRes.value : null);
     const mine = mineRes.status === 'fulfilled' ? mineRes.value : null;
-    renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine, hack);
+    const igdb = igdbRes && igdbRes.status === 'fulfilled' ? igdbRes.value : null;
+    renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine, hack, igdb);
     if(!stats && !description && !hack){ loaded = false; pending = null; } // both failed: retry next time
   });
 }

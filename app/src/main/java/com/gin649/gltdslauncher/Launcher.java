@@ -223,7 +223,7 @@ final class Launcher {
                 if (s.dir().isDirectory()) folders.add(s.folder);
             }
             String where = folders.isEmpty() ? "no Roms folder matches " + console : "looked in " + folders;
-            return result(false, "No ROM found for " + Matcher.display(title) + " (" + where + ").");
+            return result(false, "No ROM found for " + Matcher.display(title.split("\\|")[0].trim()) + " (" + where + ").");
         }
         return launchRom(act, rom);
     }
