@@ -20,37 +20,19 @@
   #stage .about-top .modal-card{display:block;margin:10px auto;max-width:600px;}
   #stage .btn-hamburger{zoom:0.7;}
   #stage .dropdown-menu{zoom:0.7;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;}
-  /* Start-up animation (see crt-start.js): a 4:3 CRT picture, full height, black on both sides. */
+  /* Start-up animation (see crt-start.js): full-screen static that waves into a dark picture. */
   #crt-root{display:none;position:fixed;inset:0;z-index:99999;background:#000;overflow:hidden;}
-  #crt-tv{position:absolute;left:50%;top:50%;width:729px;height:410px;margin:-205px 0 0 -364.5px;transform-origin:50% 50%;}
-  #crt-case{position:absolute;inset:0;border-radius:30px;background:linear-gradient(180deg,#e0b27a30 0,#0000 12%,#0000 85%,#0008 100%),linear-gradient(100deg,#7b5230,#8f6339 30%,#6e4a2b 55%,#845a35 80%,#684628);box-shadow:inset 0 3px 4px #f0c48a66,inset 0 -5px 10px #0008,inset 3px 0 5px #f0c48a22,inset -3px 0 6px #0006;}
-  #crt-grain{position:absolute;inset:0;border-radius:30px;overflow:hidden;}
-  #crt-grain svg{position:absolute;inset:0;width:100%;height:100%;mix-blend-mode:multiply;opacity:.75;}
-  #crt-bez{position:absolute;left:34px;top:30px;width:460px;height:350px;border-radius:22px;background:#0e0c13;box-shadow:inset 0 0 0 3px #26232e,inset 0 6px 16px #000,0 0 0 4px #3a2414,0 0 0 6px #b98a5a55;}
-  #crt-scr{position:absolute;left:10px;top:10px;width:440px;height:330px;border-radius:44px/38px;overflow:hidden;background:#000;}
-  #crt-side{position:absolute;left:514px;top:30px;width:170px;height:350px;border-radius:14px;background:linear-gradient(#34281f,#211a14);box-shadow:inset 0 2px 8px #000,0 0 0 3px #3a2414,0 0 0 5px #b98a5a44;}
-  .crt-knob{position:absolute;top:34px;width:68px;height:68px;border-radius:50%;background:repeating-conic-gradient(from 0deg,#0003 0 4deg,#0000 4deg 12deg),radial-gradient(circle at 35% 28%,#f2f2f6,#9a9aa6 45%,#55555f 80%);box-shadow:0 5px 10px #000b,inset 0 -3px 5px #0006,inset 0 2px 3px #fff9;}
-  .crt-knob::before{content:'';position:absolute;inset:11px;border-radius:50%;background:radial-gradient(circle at 35% 28%,#d6d6dc,#6a6a75);box-shadow:inset 0 2px 3px #fff8,inset 0 -2px 4px #0006;}
-  .crt-knob::after{content:'';position:absolute;left:32px;top:8px;width:5px;height:24px;background:#1b1b20;border-radius:2px;transform-origin:50% 26px;}
-  #crt-k1{left:12px;}#crt-k1::after{transform:rotate(30deg);}
-  #crt-k2{left:90px;}#crt-k2::after{transform:rotate(-40deg);}
-  .crt-gr{position:absolute;left:20px;width:130px;height:4px;background:#080706;border-radius:2px;box-shadow:0 1px 0 #ffffff14;}
-  .crt-btn{position:absolute;top:262px;width:34px;height:18px;border-radius:4px;background:linear-gradient(#5a5a64,#2f2f36);box-shadow:0 2px 3px #000a,inset 0 1px 1px #fff5;}
-  #crt-led{position:absolute;left:80px;top:318px;width:10px;height:10px;border-radius:50%;background:#e44;box-shadow:0 0 8px #e44;}
-  #crt-s,#crt-c,#crt-wv,#crt-n,#crt-sl,#crt-vg,#crt-gl{position:absolute;inset:0;}
-  #crt-s{overflow:hidden;background:#000;}
-  #crt-c{background:#b8b8c4;}
+  #crt-full{position:absolute;left:50%;top:50%;width:960px;height:540px;margin:-270px 0 0 -480px;transform-origin:50% 50%;overflow:hidden;background:#000;}
+  #crt-wv,#crt-n,#crt-sl{position:absolute;inset:0;}
   #crt-wv{overflow:hidden;}
-  .crt-st{position:absolute;left:-60px;width:560px;height:8px;overflow:hidden;}
-  .crt-st>div{position:absolute;left:0;width:560px;height:330px;background:
-    repeating-linear-gradient(90deg,#0000 0 54px,#5fd3b01c 54px 56px),
-    repeating-linear-gradient(0deg,#0000 0 54px,#5fd3b014 54px 56px),
+  .crt-st{position:absolute;left:-120px;width:1200px;height:8px;overflow:hidden;}
+  .crt-st>div{position:absolute;left:0;width:1200px;height:540px;background:
+    repeating-linear-gradient(90deg,#0000 0 118px,#5fd3b01c 118px 120px),
+    repeating-linear-gradient(0deg,#0000 0 118px,#5fd3b014 118px 120px),
     radial-gradient(ellipse at 50% 50%,#1b1830,#0b0a12 75%);}
-  #crt-n{width:440px;height:330px;opacity:0;image-rendering:pixelated;filter:brightness(.55) contrast(.9);pointer-events:none;}
-  #crt-b{position:absolute;left:0;right:0;height:60px;background:linear-gradient(#fff0,#fff3,#fff0);opacity:0;pointer-events:none;}
+  #crt-n{width:960px;height:540px;opacity:1;image-rendering:pixelated;filter:brightness(.55) contrast(.9);pointer-events:none;}
+  #crt-b{position:absolute;left:0;right:0;height:100px;background:linear-gradient(#fff0,#fff3,#fff0);opacity:0;pointer-events:none;}
   #crt-sl{background:repeating-linear-gradient(#0000 0 2px,#0006 2px 3px);pointer-events:none;}
-  #crt-vg{background:radial-gradient(ellipse at 50% 50%,#0000 55%,#000a 100%);pointer-events:none;}
-  #crt-gl{background:linear-gradient(125deg,#fff3 0,#fff0 28%);pointer-events:none;}
 </style>
 </head>
 <body>
