@@ -14,7 +14,7 @@ final class Shared {
     private static final AtomicInteger VIEW_TOKEN = new AtomicInteger();
     private static final RomIndex INDEX = new RomIndex();
     private static SystemMap systems;
-    private static Context appCtx;
+    static Context appCtx;
 
     private Shared() {}
 

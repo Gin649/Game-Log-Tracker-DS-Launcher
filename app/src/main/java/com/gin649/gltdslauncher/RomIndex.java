@@ -25,7 +25,8 @@ final class RomIndex {
             this.file = file;
             this.name = name;
             this.rel = rel;
-            this.norm = Matcher.norm(name);
+            String t = ArcadeNames.applies(sys.folder) ? ArcadeNames.title(name) : null;
+            this.norm = Matcher.norm(t != null ? t : name);
         }
     }
 
