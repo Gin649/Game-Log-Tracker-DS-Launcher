@@ -51,6 +51,13 @@ final class EsdeImport {
         PLATFORM_TO_RA.put("atari7800", "Atari 7800");
         PLATFORM_TO_RA.put("atarilynx", "Atari Lynx");
         PLATFORM_TO_RA.put("arcade", "Arcade");
+        PLATFORM_TO_RA.put("nds", "Nintendo DS");
+        PLATFORM_TO_RA.put("n3ds", "Nintendo 3DS");
+        PLATFORM_TO_RA.put("3ds", "Nintendo 3DS");
+        PLATFORM_TO_RA.put("wiiu", "Wii U");
+        PLATFORM_TO_RA.put("dreamcast", "Dreamcast");
+        PLATFORM_TO_RA.put("saturn", "Sega Saturn");
+        PLATFORM_TO_RA.put("psvita", "PlayStation Vita");
     }
 
     private static final Pattern CORE = Pattern.compile("([A-Za-z0-9_\\-]+?)_libretro(?:_android)?\\.so");

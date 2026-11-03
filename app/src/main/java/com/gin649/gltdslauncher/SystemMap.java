@@ -172,9 +172,12 @@ final class SystemMap {
                 for (int j = 0; j < a.length(); j++) s.cores.add(a.getString(j));
             }
             if (o.has("ra")) {
-                s.ra.clear();
                 JSONArray r = o.getJSONArray("ra");
-                for (int j = 0; j < r.length(); j++) s.ra.add(r.getString(j));
+                // an empty list (a system imported from your frontend that has no RA name) must not wipe the built-in names
+                if (r.length() > 0) {
+                    s.ra.clear();
+                    for (int j = 0; j < r.length(); j++) s.ra.add(r.getString(j));
+                }
             }
         }
     }
