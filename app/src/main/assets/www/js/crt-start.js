@@ -1,14 +1,13 @@
 // The old-TV start-up animation on the top screen: a wood-grain TV (16:9 overall, 4:3 picture) that turns on
-// as static and tunes in to the game's name. ArtActivity calls GLTCrt.start(title) when Play is pressed
+// as static, waves into a dim picture, and the emulator opens over it. ArtActivity calls GLTCrt.start() when Play is pressed
 // and GLTCrt.stop() when the emulator takes over the screen.
 (function(){
   const W = 440, H = 330, DUR = 2.0;   // the picture is drawn at this size, then scaled to the screen's height
   let root, flash, strips = [], noise, nctx, nimg, bar, built = false;
-  let raf = 0, t0 = 0, audio = null, failsafe = 0, title = '';
+  let raf = 0, t0 = 0, audio = null, failsafe = 0;
   const cl = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
   const ease = x => 1 - Math.pow(1 - x, 3);
-  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-
+  
   function build(){
     root = document.createElement('div');
     root.id = 'crt-root';
@@ -34,34 +33,17 @@
     built = true;
   }
 
-  // The biggest font (up to 24px) that keeps the name on one line inside the picture.
-  function fitSize(text){
-    const probe = document.createElement('span');
-    probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font:bold 24px monospace;letter-spacing:2px;';
-    probe.textContent = text;
-    document.body.appendChild(probe);
-    const w = probe.getBoundingClientRect().width;
-    probe.remove();
-    return Math.max(9, Math.min(24, Math.floor(24 * 370 / Math.max(w, 1))));
-  }
-
-  // Just the name: no (USA), [!], disc tags or file extension.
-  function cleanTitle(name){
-    let t = String(name || '').replace(/\.[A-Za-z0-9]{2,4}$/, '');
-    t = t.replace(/\s*[\(\[][^\)\]]*[\)\]]/g, '').replace(/\s{2,}/g, ' ').trim();
-    return t || String(name || 'Game');
-  }
-
+  // What the static clears into: a dim picture with a faint grid, so the wave can be seen. No title:
+  // the emulator opens over it.
   function fill(){
     const wv = root.querySelector('#crt-wv');
     wv.innerHTML = '';
     strips = [];
-    const size = fitSize(title);
     for(let y = 0; y < H; y += 8){
       const d = document.createElement('div');
       d.className = 'crt-st';
       d.style.top = y + 'px';
-      d.innerHTML = '<div style="top:' + (-y) + 'px"><div style="font-size:' + size + 'px">' + esc(title) + '</div><small>GAME STARTING</small></div>';
+      d.innerHTML = '<div style="top:' + (-y) + 'px"></div>';
       wv.appendChild(d);
       strips.push(d);
     }
@@ -94,9 +76,8 @@
   }
 
   window.GLTCrt = {
-    start(name){
+    start(){
       if(!built) build();
-      title = cleanTitle(name);
       fill();
       root.style.display = 'block';
       // the whole 16:9 TV fills the screen, with a thin black margin around it

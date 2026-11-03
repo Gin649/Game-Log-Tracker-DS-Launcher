@@ -364,8 +364,8 @@ final class Launcher {
         return result(true, "Starting " + rom.name + " in " + started + "...");
     }
 
-    /** How long the start-up animation runs before the emulator opens over it. */
-    private static final long START_DELAY_MS = 2000;
+    /** When the emulator is started, so it opens over the end of the 2-second animation. */
+    private static final long START_DELAY_MS = 1300;
 
     /** Starts the first of the intents that works; null when one did, otherwise the last error. */
     private static Exception startIntents(Activity act, List<Intent> intents, int display) {
