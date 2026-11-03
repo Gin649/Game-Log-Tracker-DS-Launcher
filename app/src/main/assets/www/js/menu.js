@@ -52,7 +52,9 @@ const TEXTSIZE_KEY = 'app-text-size-pct';
 let textSizePct = TEXTSIZE_DEFAULT;
 
 function applyTextSize(){
-  document.documentElement.style.fontSize = (TEXTSIZE_BASE_PX * textSizePct / 100) + 'px';
+  // NES's pixel font is very wide, so its text is scaled down to sit like the others.
+  const themeScale = document.documentElement.getAttribute('data-theme') === 'nes' ? 0.7 : 1;
+  document.documentElement.style.fontSize = (TEXTSIZE_BASE_PX * textSizePct / 100 * themeScale) + 'px';
   $('#textsize-label').textContent = textSizePct + '%';
   $('#textsize-dec').disabled = textSizePct <= TEXTSIZE_MIN;
   $('#textsize-inc').disabled = textSizePct >= TEXTSIZE_MAX;
@@ -149,9 +151,26 @@ document.querySelectorAll('.cols-btn').forEach(b => b.addEventListener('click', 
     else document.documentElement.setAttribute('data-theme', id);
     try{ localStorage.setItem('glt-theme', id); }catch(e){}
     mark(id);
+    applyTextSize();
   }
   let cur = 'retro';
   try{ cur = localStorage.getItem('glt-theme') || 'retro'; }catch(e){}
   mark(cur);
   buttons.forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); apply(b.dataset.themeId); }));
+})();
+
+
+// Where the Game Details write-up comes from first (the other one is the fallback).
+(function(){
+  const buttons = document.querySelectorAll('.desc-btn');
+  let cur = 'rawg';
+  try{ cur = localStorage.getItem('glt-desc-source') === 'igdb' ? 'igdb' : 'rawg'; }catch(e){}
+  const mark = () => buttons.forEach(b => b.classList.toggle('on', b.dataset.desc === cur));
+  mark();
+  buttons.forEach(b => b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    cur = b.dataset.desc;
+    try{ localStorage.setItem('glt-desc-source', cur); }catch(e2){}
+    mark();
+  }));
 })();

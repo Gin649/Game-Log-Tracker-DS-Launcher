@@ -130,7 +130,7 @@ async function getRawgRating(title, forceRefresh){
 async function getIgdbInfo(title){
   const clean = String(title).replace(/^(?:~[^~]*~\s*)+/, '').trim();
   if(!clean) return null;
-  const cacheKey = `igdb-info:${clean.toLowerCase()}`;
+  const cacheKey = `igdb-info2:${clean.toLowerCase()}`;
   try{
     const r = await window.storage.get(cacheKey, false);
     if(r && r.value){
@@ -144,7 +144,7 @@ async function getIgdbInfo(title){
     const res = await fetchWithTimeout(`https://ra-proxy.gin649.workers.dev/igdb/info?name=${encodeURIComponent(clean)}`, 12000);
     if(!res.ok) return null;
     const j = await res.json();
-    data = (j && j.id) ? { name: j.name, id: j.id, alts: Array.isArray(j.alts) ? j.alts : [], beat: j.beat || null } : null;
+    data = (j && j.id) ? { name: j.name, id: j.id, alts: Array.isArray(j.alts) ? j.alts : [], beat: j.beat || null, summary: typeof j.summary === 'string' ? j.summary : '' } : null;
   }catch(e){ return null; }
   try{ await window.storage.set(cacheKey, JSON.stringify({ data, ts: Date.now() }), false); }catch(e){}
   return data;

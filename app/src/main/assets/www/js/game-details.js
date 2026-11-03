@@ -249,8 +249,18 @@ function setupGameDetailsUI(gameId, title, card, opts){
 
   // Loads in the background just after the profile opens, so it's usually ready when tapped.
   let pending = null;
-  const descP = () => isHackTitle(title) ? Promise.resolve(null)
-    : getRawgDescription(title).catch(() => null).then(d => d || getLaunchBoxDescription(title, opts && opts.consoleName)).catch(() => null);
+  const igdbText = () => getIgdbInfo(title).then(i => {
+    const t = i && i.summary ? tidyDescription(i.summary) : '';
+    return t.length >= 40 ? t : null;
+  }).catch(() => null);
+  const rawgText = () => getRawgDescription(title).catch(() => null);
+  // The source picked in Display Options goes first; the other one and LaunchBox are the fallbacks.
+  const descP = () => {
+    if(isHackTitle(title)) return Promise.resolve(null);
+    let first = rawgText, second = igdbText;
+    try{ if(localStorage.getItem('glt-desc-source') === 'igdb'){ first = igdbText; second = rawgText; } }catch(e){}
+    return first().then(d => d || second()).then(d => d || getLaunchBoxDescription(title, opts && opts.consoleName)).catch(() => null);
+  };
   let descPromise = null;
   const load = () => pending || (pending = (descPromise = descP(), Promise.allSettled([
     aboutOnly ? Promise.resolve(null) : getPlaytimeStats(gameId),
