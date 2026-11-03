@@ -168,6 +168,12 @@ final class Matcher {
         for (RomIndex.Rom r : candidates) {
             int s = 0;
             for (String n : names) s = Math.max(s, score(n, r.norm));
+            // DS sets often number the files ("5587 - Chrono Trigger (USA)"): try the name without the number too
+            String bare = r.name.replaceFirst("^\\s*\\d{1,5}\\s*[-_.]\\s*", "");
+            if (!bare.equals(r.name)) {
+                String bn = norm(bare);
+                for (String n : names) s = Math.max(s, score(n, bn));
+            }
             if (s == 0) continue;
             s += (r.sys.hack == hack) ? 15 : -15;
             s += regionBonus(r.name);
