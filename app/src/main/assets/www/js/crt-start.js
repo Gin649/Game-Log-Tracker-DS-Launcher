@@ -1,4 +1,4 @@
-// The old-TV start-up animation on the top screen: a 4:3 CRT picture, full height, that turns on
+// The old-TV start-up animation on the top screen: a wood-grain TV (16:9 overall, 4:3 picture) that turns on
 // as static and tunes in to the game's name. ArtActivity calls GLTCrt.start(title) when Play is pressed
 // and GLTCrt.stop() when the emulator takes over the screen.
 (function(){
@@ -12,9 +12,18 @@
   function build(){
     root = document.createElement('div');
     root.id = 'crt-root';
-    root.innerHTML = '<div id="crt-scr"><div id="crt-s"><div id="crt-c"></div><div id="crt-wv"></div>' +
+    root.innerHTML = '<div id="crt-tv"><div id="crt-case"></div>' +
+      '<div id="crt-grain"><svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><filter id="crt-w" x="0" y="0" width="100%" height="100%">' +
+      '<feTurbulence type="fractalNoise" baseFrequency="0.004 0.22" numOctaves="4" seed="7"/>' +
+      '<feColorMatrix type="matrix" values="0 0 0 0 0.12  0 0 0 0 0.06  0 0 0 0 0.02  0 0 0 -2.2 1.35"/></filter>' +
+      '<rect width="100%" height="100%" filter="url(#crt-w)"/></svg></div>' +
+      '<div id="crt-bez"><div id="crt-scr"><div id="crt-s"><div id="crt-c"></div><div id="crt-wv"></div>' +
       '<canvas id="crt-n" width="147" height="110"></canvas><div id="crt-b"></div><div id="crt-sl"></div></div>' +
-      '<div id="crt-vg"></div><div id="crt-gl"></div></div>';
+      '<div id="crt-vg"></div><div id="crt-gl"></div></div></div>' +
+      '<div id="crt-side"><div class="crt-knob" id="crt-k1"></div><div class="crt-knob" id="crt-k2"></div>' +
+      '<i class="crt-gr" style="top:132px"></i><i class="crt-gr" style="top:148px"></i><i class="crt-gr" style="top:164px"></i>' +
+      '<i class="crt-gr" style="top:180px"></i><i class="crt-gr" style="top:196px"></i><i class="crt-gr" style="top:212px"></i>' +
+      '<i class="crt-btn" style="left:20px"></i><i class="crt-btn" style="left:68px"></i><i class="crt-btn" style="left:116px"></i><div id="crt-led"></div></div></div>';
     document.body.appendChild(root);
     flash = root.querySelector('#crt-c');
     noise = root.querySelector('#crt-n');
@@ -99,7 +108,8 @@
       title = cleanTitle(name);
       fill();
       root.style.display = 'block';
-      root.querySelector('#crt-scr').style.transform = 'scale(' + (window.innerHeight / H) + ')';
+      // the whole 16:9 TV fills the screen, with a thin black margin around it
+      root.querySelector('#crt-tv').style.transform = 'scale(' + Math.min(window.innerHeight * 0.98 / 410, window.innerWidth * 0.98 / 729) + ')';
       cancelAnimationFrame(raf);
       t0 = performance.now();
       draw(0);
