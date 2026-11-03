@@ -371,13 +371,6 @@ final class ThorBridge {
                             url = "https://" + Config.APP_HOST_BUILTIN + "/art/" + token;
                         }
                     }
-                    if (url.isEmpty() && SteamGridDbClient.enabled(act)) {
-                        try {
-                            String g = SteamGridDbClient.gridFor(act, title);
-                            if (g != null) url = g;
-                        } catch (java.io.IOException ignored) {
-                        }
-                    }
                     if (url.isEmpty() && Config.LAUNCHBOX_ART && !folder.isEmpty()) {
                         try {
                             String g = LaunchBoxArt.boxUrl(act, folder, title);

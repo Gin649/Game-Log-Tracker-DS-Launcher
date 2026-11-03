@@ -163,7 +163,7 @@ function nativeCustomArt(entry){
   });
 }
 
-// Game profile pictures: your frontend's media, then SteamGridDB, then LaunchBox. Resolves '' when none has
+// Game profile pictures: your frontend's media, then LaunchBox. Resolves '' when none has
 // one, so the caller keeps RetroAchievements' picture as the last fallback.
 function betterBoxArt(gameId, title, consoleName, romPath){
   if(!(typeof thorBridge !== 'undefined' && thorBridge && typeof thorBridge.customArt === 'function')) return Promise.resolve('');
@@ -173,11 +173,11 @@ function betterBoxArt(gameId, title, consoleName, romPath){
     if(r && r.found){ folder = r.folder || ''; path = path || r.path || ''; }
   }catch(e){}
   return nativeCustomArt({ GameID: 'modal-' + gameId, Title: title, folder, romPath: path }).then(url => {
-    try{ if(url) localStorage.setItem('betterArt:' + gameId, url); else localStorage.removeItem('betterArt:' + gameId); }catch(e){}
+    try{ if(url) localStorage.setItem('betterArt2:' + gameId, url); else localStorage.removeItem('betterArt2:' + gameId); }catch(e){}
     return url;
   });
 }
-window.cachedBoxArt = function(gameId){ try{ return localStorage.getItem('betterArt:' + gameId) || ''; }catch(e){ return ''; } };
+window.cachedBoxArt = function(gameId){ try{ return localStorage.getItem('betterArt2:' + gameId) || ''; }catch(e){ return ''; } };
 window.betterBoxArt = betterBoxArt;
 
 async function rawgArtFor(title){
