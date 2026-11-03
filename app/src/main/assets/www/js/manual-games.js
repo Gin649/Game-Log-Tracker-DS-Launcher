@@ -207,8 +207,9 @@ async function getGameHashListForConsole(consoleId){
   return slim;
 }
 
-async function getGameListForConsole(consoleId){
-  const cacheKey = `ra-gamelist:${consoleId}`;
+// all: true also lists games RetroAchievements has no achievements for (they still have a page and can be played).
+async function getGameListForConsole(consoleId, all){
+  const cacheKey = all ? `ra-gamelist-all:${consoleId}` : `ra-gamelist:${consoleId}`;
   try{
     const r = await window.storage.get(cacheKey, false);
     if(r && r.value){
@@ -217,7 +218,7 @@ async function getGameListForConsole(consoleId){
     }
   }catch(e){}
 
-  const data = await raFetch('API_GetGameList.php', { i: consoleId, f: 1 });
+  const data = await raFetch('API_GetGameList.php', all ? { i: consoleId } : { i: consoleId, f: 1 });
   try{ await window.storage.set(cacheKey, JSON.stringify({ data, ts: Date.now() }), false); }catch(e){}
   return data;
 }

@@ -86,15 +86,36 @@ async function addRomsToBacklog(items){
         (hl || []).forEach(g => (g.Hashes || []).forEach(h => byHash.set(String(h).toLowerCase(), g)));
       }catch(e){ byHash = null; }
     }
-    grp.items.forEach(it => {
+    // a game with no achievements isn't in that list but is still a RetroAchievements game (it shows in Recently
+    // played); the full list is only read when something wasn't found
+    let allByKey = null, allTried = false;
+    const inAllList = async (title) => {
+      if(!grp.console) return null;
+      if(!allTried){
+        allTried = true;
+        try{
+          const list = await getGameListForConsole(grp.console.id, true);
+          allByKey = new Map();
+          (list || []).forEach(g => {
+            const raw = String(g.Title ?? g.title ?? '');
+            const k = romMatchKey(raw);
+            if(k && !/~hack~/i.test(raw) && !allByKey.has(k)) allByKey.set(k, g);
+          });
+        }catch(e){ allByKey = null; }
+      }
+      const g = allByKey && allByKey.get(romMatchKey(title));
+      return g ? { g } : null;
+    };
+    for(const it of grp.items){
       const hashed = byHash && it.md5 && byHash.get(String(it.md5).toLowerCase());
-      const hit = hashed ? { g: hashed } : (byKey && byKey.get(romMatchKey(it.title)));
+      let hit = hashed ? { g: hashed } : (byKey && byKey.get(romMatchKey(it.title)));
+      if(!hit && !/~hack~/i.test(it.title || '')) hit = await inAllList(it.title);
       if(hit){
         additions.push({ ra: true, g: hit.g, consoleId: grp.console.id, consoleName: grp.console.name, romPath: it.path || '' });
       }else{
         additions.push({ ra: false, title: romDisplayTitle(it.title), consoleName: grp.console ? grp.console.name : grp.label, seq: customSeq++, folder: it.folder || '', romPath: it.path || '' });
       }
-    });
+    }
   }
 
   return enqueueTask(async () => {
@@ -187,7 +208,68 @@ async function rawgArtFor(title){
   }catch(e){ return ''; }
 }
 
+// Games added before this knew about RetroAchievements games without achievements: a plain entry that RA does have
+// becomes the RA game (its own profile, and it moves to the Library once played).
+async function relinkCustomGames(){
+  if(typeof creds === 'undefined' || !creds) return false;
+  const WEEK = 7 * 24 * 60 * 60 * 1000;
+  const cands = libraryData.filter(g => g.manual && g.customConsole && !(g.raChecked && Date.now() - g.raChecked < WEEK));
+  if(!cands.length) return false;
+  let consoles = [];
+  try{ consoles = (await getConsoleList()) || []; }catch(e){ return false; }
+  const lists = new Map();
+  const swaps = [];
+  for(const g of cands){
+    const c = romConsoleFor([g.ConsoleName], consoles);
+    let hit = null;
+    if(c && !/~hack~/i.test(g.Title || '')){
+      if(!lists.has(c.id)){
+        let m = null;
+        try{
+          const list = await getGameListForConsole(c.id, true);
+          m = new Map();
+          (list || []).forEach(x => {
+            const raw = String(x.Title ?? x.title ?? '');
+            const k = romMatchKey(raw);
+            if(k && !/~hack~/i.test(raw) && !m.has(k)) m.set(k, x);
+          });
+        }catch(e){ m = null; }
+        lists.set(c.id, m);
+      }
+      const m = lists.get(c.id);
+      hit = m ? m.get(romMatchKey(g.Title)) : null;
+      if(!m) continue; // the list couldn't be read: try again next time
+    }
+    swaps.push({ g, c, hit });
+  }
+  if(!swaps.length) return false;
+  let changed = false;
+  await enqueueTask(async () => {
+    const manual = await loadManualGames();
+    swaps.forEach(({ g, c, hit }) => {
+      const mi = manual.findIndex(x => x.GameID === g.GameID);
+      const li = libraryData.findIndex(x => x.GameID === g.GameID);
+      if(!hit){
+        if(mi >= 0) manual[mi].raChecked = Date.now();
+        if(li >= 0) libraryData[li].raChecked = Date.now();
+        return;
+      }
+      changed = true;
+      const e = buildManualRaEntry(hit, c.id, c.name);
+      if(g.romPath) e.romPath = g.romPath;
+      if(g.manualStarted) e.manualStarted = true;
+      const dup = libraryData.some(x => x.GameID === e.GameID);
+      if(mi >= 0){ if(dup) manual.splice(mi, 1); else manual[mi] = e; }
+      if(li >= 0){ if(dup) libraryData.splice(li, 1); else libraryData[li] = e; }
+    });
+    await saveManualGames(manual);
+  });
+  if(changed) renderLibraryViews();
+  return changed;
+}
+
 async function fillMissingCustomArt(){
+  try{ await relinkCustomGames(); }catch(e){}
   if(customArtRunning || typeof creds === 'undefined' || !creds) return;
   const WEEK = 7 * 24 * 60 * 60 * 1000;
   // a RAWG picture is a screenshot: look once more for a real cover for those
