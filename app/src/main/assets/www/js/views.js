@@ -94,6 +94,15 @@ function recentWithCustom(games){
   return [...(games || []), ...custom].sort((a, b) => t(b) - t(a));
 }
 
+// Time played on this device, from the app's own tracking (RetroAchievements has none for these games).
+function customPlaytimeHtml(g){
+  try{
+    const sec = (typeof thorBridge !== 'undefined' && thorBridge && thorBridge.playtime) ? Number(thorBridge.playtime(g.Title, g.ConsoleName)) : 0;
+    if(sec >= 30) return `<span class="val" style="color:var(--gold)">${formatDuration({ hours: sec / 3600 })}</span>`;
+  }catch(e){}
+  return '';
+}
+
 function renderRecentGames(games){
   const el = $('#recent-games');
   const shown = recentWithCustom(games).filter(g => !isSubsetGame(g)); // subsets live in their base game's profile
@@ -104,7 +113,7 @@ function renderRecentGames(games){
     const earned = statsMode === 'hardcore' ? Number(g.NumAchievedHardcore || 0) : Number(g.NumAchieved || 0);
     const pct = total ? Math.round((earned/total)*100) : 0;
     const est = estHoursCache[g.GameID];
-    const hoursHtml = g._custom ? '' : est
+    const hoursHtml = g._custom ? customPlaytimeHtml(g) : est
       ? `<span class="val" style="color:var(--gold)">${est.real ? '' : '≈ '}${formatDuration(est)}</span>`
       : '<span class="pt-pending" title="Loading playtime…"></span>';
     const artSrc = g._custom && typeof cachedBoxArt === 'function' && cachedBoxArt(g.GameID) || imgUrl(g.ImageIcon);
