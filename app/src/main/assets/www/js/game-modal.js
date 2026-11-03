@@ -90,7 +90,7 @@ function updateManualStartedStatus(gameId, started){
 
 function renderCustomGameModal(gameId, local, card){
   const boxArt = imgUrl(local.ImageBoxArt || local.ImageIcon || '');
-  card.querySelector('.modal-art').src = boxArt;
+  card.querySelector('.modal-art').src = (typeof cachedBoxArt === 'function' && cachedBoxArt(gameId)) || boxArt;
 
   let releasedLabel = '—';
   if(local.released){
@@ -402,7 +402,7 @@ async function openGameModal(gameId, opts){
   const raUrl = `https://retroachievements.org/game/${gameId}`;
   const hltbUrl = `https://howlongtobeat.com/?q=${encodeURIComponent(title)}`;
 
-  card.querySelector('.modal-art').src = boxArt;
+  card.querySelector('.modal-art').src = (typeof cachedBoxArt === 'function' && cachedBoxArt(gameId)) || boxArt;
   card.dataset.gameId = gameId;
   card.querySelector('.modal-body').innerHTML = `
       <h2>${title}</h2>

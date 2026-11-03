@@ -172,8 +172,12 @@ function betterBoxArt(gameId, title, consoleName, romPath){
     const r = JSON.parse(thorBridge.findRom(JSON.stringify({ title, console: consoleName })));
     if(r && r.found){ folder = r.folder || ''; path = path || r.path || ''; }
   }catch(e){}
-  return nativeCustomArt({ GameID: 'modal-' + gameId, Title: title, folder, romPath: path });
+  return nativeCustomArt({ GameID: 'modal-' + gameId, Title: title, folder, romPath: path }).then(url => {
+    try{ if(url) localStorage.setItem('betterArt:' + gameId, url); else localStorage.removeItem('betterArt:' + gameId); }catch(e){}
+    return url;
+  });
 }
+window.cachedBoxArt = function(gameId){ try{ return localStorage.getItem('betterArt:' + gameId) || ''; }catch(e){ return ''; } };
 window.betterBoxArt = betterBoxArt;
 
 async function rawgArtFor(title){
