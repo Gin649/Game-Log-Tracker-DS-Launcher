@@ -1215,7 +1215,6 @@ html[data-theme="nintendo"] .brand .mark{content:url("../logos/nintendo.png");}
 html[data-theme="playstation"] .brand .mark{content:url("../logos/playstation.png");}
 html[data-theme="xbox"] .brand .mark{content:url("../logos/xbox.png");}
 html[data-theme] .brand .mark{object-fit:contain;width:auto;max-width:150px;}
-/* theme picker: a logo and the name on each row */
-.theme-col .theme-btn{display:flex;align-items:center;gap:12px;height:46px;padding:4px 10px;}
-.theme-col .theme-btn img{height:34px;width:64px;object-fit:contain;flex:none;border-radius:4px;}
-.theme-col .theme-btn span{flex:1;}
+/* theme picker: one name per row, the whole row lights up when chosen */
+.theme-col .theme-btn{display:block;width:100%;text-align:left;height:auto;padding:9px 12px;}
+.theme-col .theme-btn.on{background:rgba(var(--gold-rgb),0.18);border-color:var(--gold);color:var(--gold);}
