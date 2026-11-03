@@ -338,10 +338,12 @@ final class Launcher {
 
         // The old-TV animation plays on the top screen first, then the emulator opens over it.
         boolean dual = standalone && plan.recipe.dual;
-        boolean wantAnim = !dual && !"0".equals(Prefs.get(act, "startupAnim", "1"));
-        // On a single screen the animation plays over the launcher itself, on the one screen there is.
-        boolean animOn = wantAnim && (ArtActivity.playStartup(rom.name)
-                || (!DisplayPicker.topScreenInUse(act) && MainActivity.playStartupHere()));
+        boolean wantAnim = !"0".equals(Prefs.get(act, "startupAnim", "1"));
+        // The top screen always gets it. The screen the launcher is on gets it too when the game uses both screens,
+        // or when there is only the one.
+        boolean onTop = wantAnim && ArtActivity.playStartup(rom.name);
+        boolean onHere = wantAnim && (dual || !DisplayPicker.topScreenInUse(act)) && MainActivity.playStartupHere();
+        boolean animOn = onTop || onHere;
         if (animOn) {
             new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                 @Override
