@@ -1223,3 +1223,8 @@ html[data-theme] .brand .mark{object-fit:contain;width:auto;max-width:150px;}
 .chip-row:not(.editing) > .chip[data-sys="All"]{position:sticky;left:0;z-index:3;box-shadow:8px 0 0 0 var(--bg);}
 .chip-row:not(.editing){scroll-snap-type:x proximity;}
 .chip-row:not(.editing) > .chip:not([data-sys="All"]){scroll-snap-align:start;}
+
+/* Roomier tabs, so the controller's square around a heading sits clear of the words. */
+.tab-btn{padding:10px 14px;margin-right:6px;}
+.tabs{margin-left:-6px;}
+body.pad-mode .tab-btn.pad-focus{outline-offset:-2px;}
