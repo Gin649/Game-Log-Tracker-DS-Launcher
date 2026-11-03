@@ -135,8 +135,7 @@
   "data": "saf",
   "extras": {
    "uri": "%ROMSAF%"
-  },
-  "dual": true
+  }
  },
  {
   "id": "azahar",
@@ -157,8 +156,7 @@
   "clearTask": true,
   "extras": {
    "SelectedGame": "%ROM%"
-  },
-  "dual": true
+  }
  },
  {
   "id": "eden",
