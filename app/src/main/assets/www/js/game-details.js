@@ -251,7 +251,7 @@ function setupGameDetailsUI(gameId, title, card, opts){
   let pending = null;
   const load = () => pending || (pending = Promise.allSettled([
     aboutOnly ? Promise.resolve(null) : getPlaytimeStats(gameId),
-    isHackTitle(title) ? Promise.resolve(null) : getRawgDescription(title).then(d => d || getLaunchBoxDescription(title, opts && opts.consoleName)),
+    isHackTitle(title) ? Promise.resolve(null) : getRawgDescription(title).catch(() => null).then(d => d || getLaunchBoxDescription(title, opts && opts.consoleName)),
     Promise.resolve(isHackTitle(title) ? { url: hackSearchUrl(title) } : null),
     aboutOnly ? Promise.resolve(null) : getMyTimes(gameId),
     aboutOnly && !isHackTitle(title) ? getIgdbInfo(title) : Promise.resolve(null),
