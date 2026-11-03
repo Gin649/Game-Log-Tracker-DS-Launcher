@@ -36,6 +36,11 @@ final class Shared {
         return systems;
     }
 
+    /** True once the ROM scan has finished (index() would wait up to a few seconds for it). */
+    static boolean indexReady() {
+        return INDEX.isReady();
+    }
+
     static RomIndex index() {
         INDEX.awaitReady(4000);
         return INDEX;

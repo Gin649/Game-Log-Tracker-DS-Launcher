@@ -339,6 +339,10 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     private void startStartup(String title) {
         if (!panelReady) return;
         startupOn = true;
+        // the panel normally stops above the title bar; a hidden bar never reports its size, so clear it here
+        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) panel.getLayoutParams();
+        lp.bottomMargin = 0;
+        panel.setLayoutParams(lp);
         panel.setVisibility(View.VISIBLE);
         caption.setVisibility(View.GONE);
         badge.setVisibility(View.GONE);

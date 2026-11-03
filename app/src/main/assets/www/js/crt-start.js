@@ -2,7 +2,7 @@
 // as static and tunes in to the game's name. ArtActivity calls GLTCrt.start(title) when Play is pressed
 // and GLTCrt.stop() when the emulator takes over the screen.
 (function(){
-  const W = 440, H = 330, DUR = 1.9;   // the picture is drawn at this size, then scaled to the screen's height
+  const W = 440, H = 330, DUR = 3.0, BASE = 1.9;   // BASE: the length the timings below were written for   // the picture is drawn at this size, then scaled to the screen's height
   let root, flash, strips = [], noise, nctx, nimg, bar, built = false;
   let raf = 0, t0 = 0, audio = null, failsafe = 0, title = '';
   const cl = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -24,12 +24,29 @@
     built = true;
   }
 
+  // The biggest font (up to 24px) that keeps the name on one line inside the picture.
+  function fitSize(text){
+    const probe = document.createElement('span');
+    probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font:bold 24px monospace;letter-spacing:2px;';
+    probe.textContent = text;
+    document.body.appendChild(probe);
+    const w = probe.getBoundingClientRect().width;
+    probe.remove();
+    return Math.max(9, Math.min(24, Math.floor(24 * 370 / Math.max(w, 1))));
+  }
+
+  // Just the name: no (USA), [!], disc tags or file extension.
+  function cleanTitle(name){
+    let t = String(name || '').replace(/\.[A-Za-z0-9]{2,4}$/, '');
+    t = t.replace(/\s*[\(\[][^\)\]]*[\)\]]/g, '').replace(/\s{2,}/g, ' ').trim();
+    return t || String(name || 'Game');
+  }
+
   function fill(){
     const wv = root.querySelector('#crt-wv');
     wv.innerHTML = '';
     strips = [];
-    const len = title.length;
-    const size = len > 34 ? 14 : len > 24 ? 18 : 24;
+    const size = fitSize(title);
     for(let y = 0; y < H; y += 8){
       const d = document.createElement('div');
       d.className = 'crt-st';
@@ -40,7 +57,8 @@
     }
   }
 
-  function draw(t){
+  function draw(real){
+    const t = real * BASE / DUR; // the whole animation, stretched to DUR seconds
     let wi, hi;
     if(t < 0.1){ wi = 6; hi = 6; }
     else if(t < 0.25){ wi = 6 + ease((t - 0.1) / 0.15) * (W - 6); hi = 3; }
@@ -78,7 +96,7 @@
   window.GLTCrt = {
     start(name){
       if(!built) build();
-      title = name || 'Game';
+      title = cleanTitle(name);
       fill();
       root.style.display = 'block';
       root.querySelector('#crt-scr').style.transform = 'scale(' + (window.innerHeight / H) + ')';

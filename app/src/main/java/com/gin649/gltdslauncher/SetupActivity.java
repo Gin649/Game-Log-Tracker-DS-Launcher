@@ -669,7 +669,7 @@ public class SetupActivity extends Activity {
 
     private void stepEmulators() {
         final int gen = ++emuGen;
-        text("Looking for your emulators...", 14, MUTED);
+        text(Shared.indexReady() ? "Looking for your emulators..." : "Scanning ROMs...", 14, MUTED);
         final String raPkgNow = raPackage;
         final Map<String, String> choices = new HashMap<String, String>(emuChoice);
         new Thread(new Runnable() {
@@ -693,6 +693,14 @@ public class SetupActivity extends Activity {
                     String raUse = d.found.isEmpty() ? "" : (raPkgNow.isEmpty() || !d.found.contains(raPkgNow) ? d.found.get(0) : raPkgNow);
                     d.coresRead = !raUse.isEmpty() && RaCores.installed(SetupActivity.this, raUse) != null;
                     // only systems you actually have ROMs for (ES-DE makes an empty folder for every system)
+                    // a fresh install may still be scanning: wait for it (up to a minute) so every system isn't listed
+                    for (int i = 0; i < 120 && !Shared.indexReady(); i++) {
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException ignored) {
+                            break;
+                        }
+                    }
                     java.util.Set<String> withRoms = new java.util.HashSet<String>();
                     try {
                         for (RomIndex.Rom rom : Shared.index().all()) withRoms.add(rom.sys.folder);
