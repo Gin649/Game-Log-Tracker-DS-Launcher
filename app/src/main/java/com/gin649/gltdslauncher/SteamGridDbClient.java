@@ -53,8 +53,9 @@ final class SteamGridDbClient {
         return Prefs.get(c, "sgdbKey", "").trim();
     }
 
+    /** Only used for top-screen fan art, so it is skipped when there is no top screen to show it on. */
     static boolean enabled(Context c) {
-        return !key(c).isEmpty();
+        return !key(c).isEmpty() && DisplayPicker.topScreenInUse(c);
     }
 
     /** Raw bytes of the best hero image for a game, or null when there is no good match or no hero. */
