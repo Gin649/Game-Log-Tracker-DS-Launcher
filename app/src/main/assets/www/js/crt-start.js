@@ -2,7 +2,7 @@
 // as static and tunes in to the game's name. ArtActivity calls GLTCrt.start(title) when Play is pressed
 // and GLTCrt.stop() when the emulator takes over the screen.
 (function(){
-  const W = 440, H = 330, DUR = 3.0, BASE = 1.9;   // BASE: the length the timings below were written for   // the picture is drawn at this size, then scaled to the screen's height
+  const W = 440, H = 330, DUR = 2.0;   // the picture is drawn at this size, then scaled to the screen's height
   let root, flash, strips = [], noise, nctx, nimg, bar, built = false;
   let raf = 0, t0 = 0, audio = null, failsafe = 0, title = '';
   const cl = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -26,6 +26,7 @@
       '<i class="crt-btn" style="left:20px"></i><i class="crt-btn" style="left:68px"></i><i class="crt-btn" style="left:116px"></i><div id="crt-led"></div></div></div>';
     document.body.appendChild(root);
     flash = root.querySelector('#crt-c');
+    flash.style.display = 'none'; // the turn-on flash is gone: it starts as static
     noise = root.querySelector('#crt-n');
     nctx = noise.getContext('2d');
     nimg = nctx.createImageData(147, 110);
@@ -66,34 +67,24 @@
     }
   }
 
-  function draw(real){
-    const t = real * BASE / DUR; // the whole animation, stretched to DUR seconds
-    let wi, hi;
-    if(t < 0.1){ wi = 6; hi = 6; }
-    else if(t < 0.25){ wi = 6 + ease((t - 0.1) / 0.15) * (W - 6); hi = 3; }
-    else if(t < 0.45){ wi = W; hi = 3 + ease((t - 0.25) / 0.2) * (H - 3); }
-    else { wi = W; hi = H; }
-    const nop = t < 0.45 ? 1 : 1 - cl((t - 0.55) / 0.8);
-    const vis = cl((t - 0.7) / 0.6);
-    const x = (W - wi) / 2, y = (H - hi) / 2;
-    const clip = 'inset(' + y + 'px ' + x + 'px ' + y + 'px ' + x + 'px)';
-    flash.style.clipPath = clip;
-    flash.style.opacity = t < 0.45 ? 1 : 0;
-    const u = cl((t - 0.7) / 0.8), amp = 26 * Math.pow(1 - u, 1.5);
+  // Full-screen static from the first frame; it thins out while the picture waves into place.
+  function draw(t){
+    const nop = 1 - cl((t - 0.5) / 0.9);
+    const vis = cl((t - 0.55) / 0.7);
+    const u = cl((t - 0.5) / 1.1), amp = 26 * Math.pow(1 - u, 1.5);
     for(let i = 0; i < strips.length; i++){
       const d = strips[i];
-      d.style.transform = 'translateX(' + (t < 0.7 ? 0 : amp * Math.sin(i * 0.55 + t * 16)).toFixed(2) + 'px)';
-      d.style.opacity = t < 0.45 ? 0 : vis;
+      d.style.transform = 'translateX(' + (amp * Math.sin(i * 0.55 + t * 16)).toFixed(2) + 'px)';
+      d.style.opacity = vis;
     }
     noise.style.opacity = nop;
-    noise.style.clipPath = clip;
     if(nop > 0.01){
       const u32 = new Uint32Array(nimg.data.buffer);
       for(let i = 0; i < u32.length; i++){ const v = (Math.random() * 255) | 0; u32[i] = 0xff000000 | (v << 16) | (v << 8) | v; }
       nctx.putImageData(nimg, 0, 0);
     }
     bar.style.top = (((t * 1.4) % 1) * 380 - 80) + 'px';
-    bar.style.opacity = (t > 0.3 && t < 1.2) ? nop * 0.8 : 0;
+    bar.style.opacity = t < 1.2 ? nop * 0.8 : 0;
   }
 
   function loop(now){

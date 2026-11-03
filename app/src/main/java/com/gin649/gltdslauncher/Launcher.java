@@ -365,7 +365,7 @@ final class Launcher {
     }
 
     /** How long the start-up animation runs before the emulator opens over it. */
-    private static final long START_DELAY_MS = 3000;
+    private static final long START_DELAY_MS = 2000;
 
     /** Starts the first of the intents that works; null when one did, otherwise the last error. */
     private static Exception startIntents(Activity act, List<Intent> intents, int display) {
