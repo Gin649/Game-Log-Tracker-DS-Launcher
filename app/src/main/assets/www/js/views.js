@@ -83,15 +83,30 @@ function awardPill(kind){
 
 // RetroAchievements' recent games plus the games added by hand (not on RA) that were played from here, newest first.
 function recentWithCustom(games){
-  const custom = libraryData.filter(g => g.manual && g.customConsole && g.lastPlayed).map(g => ({
-    GameID: g.GameID, Title: g.Title, ConsoleName: g.ConsoleName,
-    ImageIcon: g.ImageIcon || g.ImageBoxArt || '',
-    NumPossibleAchievements: 0, NumAchieved: 0, NumAchievedHardcore: 0,
-    LastPlayed: g.lastPlayed, _custom: true,
-  }));
-  if(!custom.length) return games || [];
+  const launched = (typeof thorLaunchTimes === 'function') ? thorLaunchTimes() : {};
   const t = g => { const d = parseRADate(g.LastPlayed); return d ? d.getTime() : 0; };
-  return [...(games || []), ...custom].sort((a, b) => t(b) - t(a));
+  const list = (games || []).map(g => {
+    const mine = launched[String(g.GameID)];
+    // started from here more recently than RetroAchievements has heard about: it goes first
+    if(mine && Date.parse(mine) > t(g)) return Object.assign({}, g, { LastPlayed: mine });
+    return g;
+  });
+  const have = new Set(list.map(g => String(g.GameID)));
+  libraryData.forEach(g => {
+    if(have.has(String(g.GameID))) return;
+    const when = launched[String(g.GameID)] || (g.manual && g.customConsole ? g.lastPlayed : '');
+    if(!when) return;
+    const custom = !!(g.manual && g.customConsole);
+    list.push({
+      GameID: g.GameID, Title: g.Title, ConsoleName: g.ConsoleName,
+      ImageIcon: g.ImageIcon || g.ImageBoxArt || '',
+      NumPossibleAchievements: custom ? 0 : Number(g.MaxPossible || 0),
+      NumAchieved: custom ? 0 : Number(g.NumAwarded || 0),
+      NumAchievedHardcore: custom ? 0 : Number(g.NumAwardedHardcore || 0),
+      LastPlayed: when, _custom: custom,
+    });
+  });
+  return list.sort((a, b) => t(b) - t(a));
 }
 
 // Time played on this device, from the app's own tracking (RetroAchievements has none for these games).

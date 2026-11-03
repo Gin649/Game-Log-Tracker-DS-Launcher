@@ -60,7 +60,22 @@ async function thorPromoteLaunched(){
 
 // A game has just started from here: move it out of the Backlog now, without waiting for it to close.
 // An RA game is looked up and moved to the Library; a game RA doesn't list gets "Now Playing" ticked.
+// When each game was last started from here (any game, RA or not), so Recently played can put it first at once.
+function thorLaunchTimes(){
+  try{ return JSON.parse(localStorage.getItem('glt-launch-times') || '{}') || {}; }catch(e){ return {}; }
+}
+function thorRecordLaunch(gameId){
+  try{
+    const t = thorLaunchTimes();
+    t[String(gameId)] = new Date().toISOString();
+    const keep = Object.entries(t).sort((a, b) => b[1].localeCompare(a[1])).slice(0, 40);
+    localStorage.setItem('glt-launch-times', JSON.stringify(Object.fromEntries(keep)));
+  }catch(e){}
+  try{ if(typeof recentGamesData !== 'undefined') renderRecentGames(recentGamesData); }catch(e){}
+}
+
 function thorStarted(card, gameId){
+  thorRecordLaunch(gameId);
   thorMarkLaunched(gameId);
   thorPromoteLaunched();
   const entry = libraryData.find(g => Number(g.GameID) === Number(gameId) || g.GameID === gameId);
