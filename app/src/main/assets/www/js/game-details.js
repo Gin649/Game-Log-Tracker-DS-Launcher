@@ -249,13 +249,16 @@ function setupGameDetailsUI(gameId, title, card, opts){
 
   // Loads in the background just after the profile opens, so it's usually ready when tapped.
   let pending = null;
-  const load = () => pending || (pending = Promise.allSettled([
+  const descP = () => isHackTitle(title) ? Promise.resolve(null)
+    : getRawgDescription(title).catch(() => null).then(d => d || getLaunchBoxDescription(title, opts && opts.consoleName)).catch(() => null);
+  let descPromise = null;
+  const load = () => pending || (pending = (descPromise = descP(), Promise.allSettled([
     aboutOnly ? Promise.resolve(null) : getPlaytimeStats(gameId),
-    isHackTitle(title) ? Promise.resolve(null) : getRawgDescription(title).catch(() => null).then(d => d || getLaunchBoxDescription(title, opts && opts.consoleName)),
+    Promise.resolve(null),
     Promise.resolve(isHackTitle(title) ? { url: hackSearchUrl(title) } : null),
     aboutOnly ? Promise.resolve(null) : getMyTimes(gameId),
     aboutOnly && !isHackTitle(title) ? getIgdbInfo(title) : Promise.resolve(null),
-  ]));
+  ])));
   setTimeout(load, 400);
 
   let loaded = false;
@@ -267,15 +270,22 @@ function setupGameDetailsUI(gameId, title, card, opts){
 
     loaded = true;
     wrap.innerHTML = '<div class="achievements-list-loading">Loading details…</div>';
-    const [statsRes, descRes, hackRes, mineRes, igdbRes] = await load();
+    const [statsRes, , hackRes, mineRes, igdbRes] = await load();
+    // The write-up can come late (RAWG is the slow one): wait a moment for it, then show the rest and fill it in after.
+    const early = await Promise.race([descPromise, new Promise(r => setTimeout(() => r(undefined), 2500))]);
     if(card.dataset.gameId !== String(gameId)) return; // another game was opened meanwhile
 
     const stats = statsRes.status === 'fulfilled' ? statsRes.value : null;
     const hack = hackRes.status === 'fulfilled' ? hackRes.value : null;
-    const description = isHackTitle(title) ? null : (descRes.status === 'fulfilled' ? descRes.value : null);
     const mine = mineRes.status === 'fulfilled' ? mineRes.value : null;
     const igdb = igdbRes && igdbRes.status === 'fulfilled' ? igdbRes.value : null;
-    renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine, hack, igdb);
-    if(!stats && !description && !hack){ loaded = false; pending = null; } // both failed: retry next time
+    const draw = (description) => renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine, hack, igdb);
+    draw(isHackTitle(title) ? null : (early || null));
+    if(early === undefined){
+      descPromise.then(text => {
+        if(text && card.dataset.gameId === String(gameId)) draw(text);
+        else if(!stats && !hack){ loaded = false; pending = null; }
+      });
+    }else if(!stats && !early && !hack){ loaded = false; pending = null; } // all failed: retry next time
   });
 }
