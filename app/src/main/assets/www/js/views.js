@@ -81,9 +81,22 @@ function awardPill(kind){
   return `<span class="pill ${info.cls}">${info.label}</span>`;
 }
 
+// RetroAchievements' recent games plus the games added by hand (not on RA) that were played from here, newest first.
+function recentWithCustom(games){
+  const custom = libraryData.filter(g => g.manual && g.customConsole && g.lastPlayed).map(g => ({
+    GameID: g.GameID, Title: g.Title, ConsoleName: g.ConsoleName,
+    ImageIcon: g.ImageIcon || g.ImageBoxArt || '',
+    NumPossibleAchievements: 0, NumAchieved: 0, NumAchievedHardcore: 0,
+    LastPlayed: g.lastPlayed, _custom: true,
+  }));
+  if(!custom.length) return games || [];
+  const t = g => { const d = parseRADate(g.LastPlayed); return d ? d.getTime() : 0; };
+  return [...(games || []), ...custom].sort((a, b) => t(b) - t(a));
+}
+
 function renderRecentGames(games){
   const el = $('#recent-games');
-  const shown = (games || []).filter(g => !isSubsetGame(g)); // subsets live in their base game's profile
+  const shown = recentWithCustom(games).filter(g => !isSubsetGame(g)); // subsets live in their base game's profile
   if(shown.length === 0){ el.innerHTML = '<div class="empty">No recently played games found.</div>'; return; }
   const libById = new Map(libraryData.map(x => [x.GameID, x]));
   el.innerHTML = shown.slice(0, 12).map(g => {
@@ -91,15 +104,16 @@ function renderRecentGames(games){
     const earned = statsMode === 'hardcore' ? Number(g.NumAchievedHardcore || 0) : Number(g.NumAchieved || 0);
     const pct = total ? Math.round((earned/total)*100) : 0;
     const est = estHoursCache[g.GameID];
-    const hoursHtml = est
+    const hoursHtml = g._custom ? '' : est
       ? `<span class="val" style="color:var(--gold)">${est.real ? '' : '≈ '}${formatDuration(est)}</span>`
       : '<span class="pt-pending" title="Loading playtime…"></span>';
+    const artSrc = g._custom && typeof cachedBoxArt === 'function' && cachedBoxArt(g.GameID) || imgUrl(g.ImageIcon);
     const lib = libById.get(g.GameID);
     const award = lib && isGameAwarded(lib) ? awardInfo(lib.HighestAwardKind) : null;
     const badge = award ? `<span class="pill pill-corner ${award.cls}">${award.label}</span>` : '';
     return `
         <div class="cart" data-game-id="${g.GameID}">
-          <div class="art-wrap"><img class="art" src="${imgUrl(g.ImageIcon)}" alt="${g.Title}">${badge}</div>
+          <div class="art-wrap"><img class="art" src="${artSrc}" alt="${g.Title}">${badge}</div>
           <div class="body">
             <p class="title">${g.Title}</p>
             <p class="console">${g.ConsoleName}</p>

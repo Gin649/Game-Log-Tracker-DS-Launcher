@@ -57,7 +57,7 @@ function renderLibraryViews(){
   safe(renderSystemChips);
   safe(renderBacklog, '#backlog-table-wrap', 'your backlog');
   safe(renderLibrary, '#lib-table-wrap', 'your library');
-  safe(() => { if(recentGamesData.length) renderRecentGames(recentGamesData); }); // award labels and hidden subsets
+  safe(() => { if(recentGamesData.length || libraryData.some(g => g.customConsole && g.lastPlayed)) renderRecentGames(recentGamesData); }); // award labels and hidden subsets
   safe(renderByYear, '#year-wrap', 'beaten by year');
   // games from systems RA doesn't have get their pictures filled in once they are on screen
   clearTimeout(renderLibraryViews.artTimer);

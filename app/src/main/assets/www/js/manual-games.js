@@ -98,6 +98,31 @@ async function promoteManualGameToReal(gameId, data){
   schedulePromotionFlush();
 }
 
+// An RA game played from here that was not in the library at all (RetroAchievements lists no achievements for it).
+function addLaunchedRealGame(gameId, data){
+  if(libraryData.some(g => g.GameID === gameId)) return;
+  const maxPossible = Number(data.NumAchievements ?? 0);
+  const numAwarded = Number(data.NumAwardedToUser ?? 0);
+  const entry = {
+    GameID: gameId,
+    Title: data.Title,
+    ConsoleID: data.ConsoleID ?? null,
+    ConsoleName: data.ConsoleName,
+    ImageIcon: data.ImageIcon,
+    MaxPossible: maxPossible,
+    NumAwarded: numAwarded,
+    NumAwardedHardcore: Number(data.NumAwardedToUserHardcore ?? 0),
+    HighestAwardKind: data.HighestAwardKind ?? null,
+    HighestAwardDate: data.HighestAwardDate ?? null,
+    MostRecentAwardedDate: null,
+    lastPlayed: new Date().toISOString(),
+    pct: maxPossible ? Math.round((numAwarded / maxPossible) * 100) : 0,
+  };
+  libraryData = [...libraryData, entry];
+  pendingPromotions.set(gameId, entry);
+  schedulePromotionFlush();
+}
+
 async function removeManualGame(gameId){
   return enqueueTask(async () => {
     libraryData = libraryData.filter(g => g.GameID !== gameId);

@@ -40,7 +40,17 @@ async function thorPromoteLaunched(){
   thorLaunched.clear();
   for(const id of ids){
     const entry = libraryData.find(g => Number(g.GameID) === id);
-    if(!entry || !entry.manual || entry.customConsole) continue;
+    if(!entry){
+      // an RA game that isn't in the library yet (one with no achievements, opened from Recently played): playing it adds it
+      if(id > 0 && typeof addLaunchedRealGame === 'function'){
+        try{
+          const data = await raFetch('API_GetGameInfoAndUserProgress.php', { g: id, a: 1 });
+          if(data && (data.Title || data.ID)) addLaunchedRealGame(id, data);
+        }catch(e){}
+      }
+      continue;
+    }
+    if(!entry.manual || entry.customConsole) continue;
     try{
       const data = await raFetch('API_GetGameInfoAndUserProgress.php', { g: id, a: 1 });
       if(data && (data.Title || data.ID)) await promoteManualGameToReal(id, data);
@@ -54,6 +64,8 @@ function thorStarted(card, gameId){
   thorMarkLaunched(gameId);
   thorPromoteLaunched();
   const entry = libraryData.find(g => Number(g.GameID) === Number(gameId) || g.GameID === gameId);
+  // a game added by hand: remember when it was played, so it moves to the top of Recently played
+  if(entry && entry.manual && typeof updateManualGame === 'function') updateManualGame(entry.GameID, { lastPlayed: new Date().toISOString() });
   if(entry && entry.manual && entry.customConsole && !entry.manualStarted && !entry.manualBeaten){
     const cb = card && card.querySelector('#manual-started-checkbox');
     if(cb && !cb.checked){
