@@ -19,6 +19,19 @@ let socialView = { mode: 'list', name: null };
 const socialUnlocksCache = {}; // lowercased name -> { at, list }
 
 // Only the fields the tab shows are kept, so the saved copy stays small.
+// Achievements earned in the last game they played, from the same summary call (no extra request).
+function socialProgress(s){
+  const gid = s.LastGameID != null ? s.LastGameID : (s.LastGame ? s.LastGame.ID : null);
+  const aw = gid != null && s.Awarded ? s.Awarded[gid] : null;
+  if(!aw) return undefined;
+  return { a: Number(aw.NumAchieved || 0), h: Number(aw.NumAchievedHardcore || 0), t: Number(aw.NumPossibleAchievements || 0) };
+}
+function socialProgressText(f){
+  const p = f.summary && f.summary.LastProgress;
+  if(!p || !p.t) return '';
+  return (statsMode === 'hardcore' ? p.h : p.a) + '/' + p.t + ' achievements';
+}
+
 function socialSlim(s){
   if(!s) return null;
   const recent = Array.isArray(s.RecentlyPlayed) && s.RecentlyPlayed[0] ? s.RecentlyPlayed[0] : null;
@@ -28,6 +41,7 @@ function socialSlim(s){
     RichPresenceMsg: s.RichPresenceMsg,
     RichPresenceMsgDate: s.RichPresenceMsgDate,
     LastActivity: s.LastActivity ? { lastupdate: s.LastActivity.lastupdate } : undefined,
+    LastProgress: socialProgress(s),
     TotalPoints: s.TotalPoints,
     TotalSoftcorePoints: s.TotalSoftcorePoints
   };
@@ -138,7 +152,7 @@ function renderSocialList(){
       const info = socialInfo(f);
       const sub = f.failed ? '<p class="soc-rp">Couldn\u2019t load activity</p>'
         : !f.summary ? '<p class="soc-rp">Loading…</p>'
-        : `<p class="soc-game">${esc(info.game || 'No recent games')}</p>${info.presence ? `<p class="soc-rp">${esc(info.presence)}</p>` : ''}`;
+        : `<p class="soc-game">${esc(info.game || 'No recent games')}${socialProgressText(f) ? ` <span class="soc-console">\u00b7 ${esc(socialProgressText(f))}</span>` : ''}</p>${info.presence ? `<p class="soc-rp">${esc(info.presence)}</p>` : ''}`;
       return `<button class="soc-row" type="button" data-name="${esc(f.name)}">
           ${socialAvatarHtml(f.name)}
           <span class="soc-main"><span class="soc-name">${esc(f.name)}</span>${sub}</span>
