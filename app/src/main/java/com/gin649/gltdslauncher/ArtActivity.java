@@ -42,7 +42,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     private static int[] themeColors(String t) {
         if ("nintendo".equals(t)) return new int[]{Color.rgb(13, 13, 13), Color.rgb(230, 0, 18), Color.rgb(232, 208, 160)};
         if ("playstation".equals(t)) return new int[]{Color.rgb(10, 14, 31), Color.rgb(74, 163, 255), Color.rgb(174, 187, 214)};
-        if ("xbox".equals(t)) return new int[]{Color.rgb(14, 20, 16), Color.rgb(155, 240, 11), Color.rgb(47, 191, 47)};
+        if ("xbox".equals(t)) return new int[]{Color.rgb(0, 0, 0), Color.rgb(136, 192, 80), Color.rgb(95, 168, 58)};
         return new int[]{BG, GOLD, TEAL};
     }
 

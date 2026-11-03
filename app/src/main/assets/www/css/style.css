@@ -1186,9 +1186,9 @@ html[data-theme="playstation"]{
   --radius:6px;--font-mono:'Exo 2',sans-serif;--font-ui:'Exo 2',sans-serif;--btn-shadow:0 0 12px rgba(74,163,255,.5);
 }
 html[data-theme="xbox"]{
-  --bg:#0e1410;--bg-alt:#142018;--panel:#1a2a1f;--panel-2:#223628;--border:#2d4a35;
-  --gold:#9bf00b;--gold-dim:#5f9a07;--teal:#2fbf2f;--text:#eaf5ea;--muted:#93ad98;--danger:#ff7060;
-  --gold-rgb:155,240,11;--teal-rgb:47,191,47;--bg-rgb:14,20,16;--on-gold:#06130a;
+  --bg:#000000;--bg-alt:#050805;--panel:#0b100b;--panel-2:#131a13;--border:#263326;
+  --gold:#88c050;--gold-dim:#5c8a34;--teal:#5fa83a;--text:#ecf3ec;--muted:#8fa08f;--danger:#ff7060;
+  --gold-rgb:136,192,80;--teal-rgb:95,168,58;--bg-rgb:0,0,0;--on-gold:#06130a;
   --radius:4px;--font-mono:'Open Sans',sans-serif;--font-ui:'Open Sans',sans-serif;--btn-shadow:none;
 }
 html[data-theme="nintendo"] body{line-height:1.7;}
