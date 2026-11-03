@@ -365,7 +365,7 @@ final class Launcher {
     }
 
     /** When the emulator is started, so it opens over the end of the 2-second animation. */
-    private static final long START_DELAY_MS = 1300;
+    private static final long START_DELAY_MS = 1000;
 
     /** Starts the first of the intents that works; null when one did, otherwise the last error. */
     private static Exception startIntents(Activity act, List<Intent> intents, int display) {

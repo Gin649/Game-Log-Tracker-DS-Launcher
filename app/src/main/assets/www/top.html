@@ -23,13 +23,7 @@
   /* Start-up animation (see crt-start.js): full-screen static that waves into a dark picture. */
   #crt-root{display:none;position:fixed;inset:0;z-index:99999;background:#000;overflow:hidden;}
   #crt-full{position:absolute;left:50%;top:50%;width:960px;height:540px;margin:-270px 0 0 -480px;transform-origin:50% 50%;overflow:hidden;background:#000;}
-  #crt-wv,#crt-n,#crt-sl{position:absolute;inset:0;}
-  #crt-wv{overflow:hidden;}
-  .crt-st{position:absolute;left:-120px;width:1200px;height:8px;overflow:hidden;}
-  .crt-st>div{position:absolute;left:0;width:1200px;height:540px;background:
-    repeating-linear-gradient(90deg,#0000 0 118px,#5fd3b01c 118px 120px),
-    repeating-linear-gradient(0deg,#0000 0 118px,#5fd3b014 118px 120px),
-    radial-gradient(ellipse at 50% 50%,#1b1830,#0b0a12 75%);}
+  #crt-n,#crt-sl{position:absolute;inset:0;}
   #crt-n{width:960px;height:540px;opacity:1;image-rendering:pixelated;filter:brightness(.55) contrast(.9);pointer-events:none;}
   #crt-b{position:absolute;left:0;right:0;height:100px;background:linear-gradient(#fff0,#fff3,#fff0);opacity:0;pointer-events:none;}
   #crt-sl{background:repeating-linear-gradient(#0000 0 2px,#0006 2px 3px);pointer-events:none;}
