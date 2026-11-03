@@ -79,12 +79,17 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     const key = active ? active.textContent : null;
     if(active && key !== lastActive && row.classList.contains('visible')){
       const max = Math.max(0, row.scrollWidth - row.clientWidth);
-      row.scrollLeft = Math.min(max, Math.max(0, active.offsetLeft - (row.clientWidth - active.offsetWidth) / 2));
+      const allChip = row.querySelector('.chip[data-sys="All"]');
+      const pin = allChip && !row.classList.contains('editing') ? allChip.offsetWidth + 8 : 0;
+      row.scrollLeft = active === allChip ? 0 : Math.min(max, Math.max(0, active.offsetLeft - pin - (row.clientWidth - pin - active.offsetWidth) / 2));
     }
     lastActive = key;
+    const allEl = row.classList.contains('editing') ? null : row.querySelector('.chip[data-sys="All"]');
+    const leftEdge = box.left + (allEl ? allEl.offsetWidth + 8 : 0); // the pinned All covers the left of the row
     row.querySelectorAll('.chip').forEach(c => {
+      if(c === allEl){ c.style.visibility = ''; return; }
       const r = c.getBoundingClientRect();
-      const cut = r.right > box.right + 3 || r.left < box.left - 3;
+      const cut = r.right > box.right + 3 || r.left < leftEdge - 3;
       const keep = c.classList.contains('active') || c.classList.contains('pad-focus') // never hide the one you are on
         || (c === row.querySelectorAll('.chip')[row.querySelectorAll('.chip').length - 1] && row.scrollLeft >= row.scrollWidth - row.clientWidth - 2); // the last one, once scrolled all the way
       c.style.visibility = cut && !keep ? 'hidden' : '';

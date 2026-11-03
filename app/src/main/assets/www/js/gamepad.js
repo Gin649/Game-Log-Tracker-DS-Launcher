@@ -375,10 +375,14 @@
   // instead of a cut-off piece.
   function revealChip(row, active){
     const max = Math.max(0, row.scrollWidth - row.clientWidth);
-    let target = active.offsetLeft - (row.clientWidth - active.offsetWidth) / 2;
+    const all = row.querySelector('.chip[data-sys="All"]');
+    const pin = all ? all.offsetWidth + 8 : 0; // "All" stays at the left edge, so the others scroll in the space beside it
+    let target = active.offsetLeft - pin - (row.clientWidth - pin - active.offsetWidth) / 2;
+    if(active === all) target = 0;
     target = Math.min(max, Math.max(0, target));
     row.querySelectorAll('.chip').forEach(c => {
-      if(c.offsetLeft < target && c.offsetLeft + c.offsetWidth > target + 1) target = Math.max(0, c.offsetLeft - 6);
+      if(c === all) return;
+      if(c.offsetLeft < target + pin && c.offsetLeft + c.offsetWidth > target + pin + 1) target = Math.max(0, c.offsetLeft - pin - 6);
     });
     row.scrollLeft = target;
   }
