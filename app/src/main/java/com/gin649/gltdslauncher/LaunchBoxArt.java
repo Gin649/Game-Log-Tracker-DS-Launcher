@@ -138,6 +138,12 @@ final class LaunchBoxArt {
         return file.isEmpty() ? null : IMAGE_URL + file;
     }
 
+    /** Like Matcher.norm, but a minus sign before a number counts: "Super Mario Bros. -2" is a hack, not "Super Mario Bros. 2". */
+    private static String lbNorm(String s) {
+        if (s == null) return "";
+        return Matcher.norm(s.replaceAll("(^|[\\s.:])-(?=\\d)", "$1 minus "));
+    }
+
     /** LaunchBox's write-up for a game, or null when the console or game isn't listed or has none. */
     static String description(Context ctx, String folder, String title) throws IOException {
         String platform = platformFor(ctx, folder);
@@ -145,7 +151,7 @@ final class LaunchBoxArt {
         String key = Matcher.compact(platform);
         Map<String, String> d = descs(ctx, key);
         if (d == null || d.isEmpty()) return null;
-        String hit = d.get(Matcher.norm(title));
+        String hit = d.get(lbNorm(title));
         if (hit != null) return hit;
         String best = null;
         int bestScore = 0;
@@ -196,7 +202,7 @@ final class LaunchBoxArt {
             JSONArray arr = new JSONObject(new String(data, "UTF-8")).getJSONArray("d");
             for (int i = 0; i < arr.length(); i++) {
                 JSONArray r = arr.getJSONArray(i);
-                String k = Matcher.norm(r.getString(0));
+                String k = lbNorm(r.getString(0));
                 String v = r.getString(1);
                 String cur = out.get(k);
                 if (cur == null || v.length() > cur.length()) out.put(k, v);
@@ -210,7 +216,7 @@ final class LaunchBoxArt {
     }
 
     private static String[] match(Index idx, String title) {
-        String[] hit = idx.exact.get(Matcher.norm(title));
+        String[] hit = idx.exact.get(lbNorm(title));
         if (hit != null) return hit;
         String[] best = null;
         int bestScore = 0;
@@ -264,7 +270,7 @@ final class LaunchBoxArt {
                 String[] row = new String[5];
                 for (int j = 0; j < 5; j++) row[j] = r.optString(j, "");
                 out.rows.add(row);
-                String k = Matcher.norm(row[0]);
+                String k = lbNorm(row[0]);
                 String[] cur = out.exact.get(k);
                 if (cur == null || score(row) > score(cur)) out.exact.put(k, row);
             }
