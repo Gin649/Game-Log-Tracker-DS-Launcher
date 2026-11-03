@@ -163,8 +163,8 @@ document.querySelectorAll('.cols-btn').forEach(b => b.addEventListener('click', 
 // Where the Game Details write-up comes from first (the other one is the fallback).
 (function(){
   const buttons = document.querySelectorAll('.desc-btn');
-  let cur = 'rawg';
-  try{ cur = localStorage.getItem('glt-desc-source') === 'igdb' ? 'igdb' : 'rawg'; }catch(e){}
+  let cur = 'igdb';
+  try{ cur = localStorage.getItem('glt-desc-source') === 'rawg' ? 'rawg' : 'igdb'; }catch(e){}
   const mark = () => buttons.forEach(b => b.classList.toggle('on', b.dataset.desc === cur));
   mark();
   buttons.forEach(b => b.addEventListener('click', (e) => {

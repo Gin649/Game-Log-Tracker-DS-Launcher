@@ -258,7 +258,7 @@ function setupGameDetailsUI(gameId, title, card, opts){
   const descP = () => {
     if(isHackTitle(title)) return Promise.resolve(null);
     let first = rawgText, second = igdbText;
-    try{ if(localStorage.getItem('glt-desc-source') === 'igdb'){ first = igdbText; second = rawgText; } }catch(e){}
+    try{ if(localStorage.getItem('glt-desc-source') !== 'rawg'){ first = igdbText; second = rawgText; } }catch(e){}
     return first().then(d => d || second()).then(d => d || getLaunchBoxDescription(title, opts && opts.consoleName)).catch(() => null);
   };
   let descPromise = null;
