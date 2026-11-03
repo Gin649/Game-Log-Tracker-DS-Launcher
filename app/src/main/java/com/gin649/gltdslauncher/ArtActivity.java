@@ -38,6 +38,36 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     private static final int GOLD = Color.rgb(228, 169, 63);
     private static final int TEAL = Color.rgb(89, 201, 165);
 
+    /** Colours for the app theme: page background, title colour, console line colour, and the label drawn as the mark. */
+    private static int[] themeColors(String t) {
+        if ("nes".equals(t)) return new int[]{Color.rgb(13, 13, 13), Color.rgb(230, 0, 18), Color.rgb(232, 208, 160)};
+        if ("snes".equals(t)) return new int[]{Color.rgb(182, 177, 226), Color.rgb(75, 47, 128), Color.rgb(90, 63, 142)};
+        if ("psx".equals(t)) return new int[]{Color.rgb(10, 14, 31), Color.rgb(74, 163, 255), Color.rgb(61, 220, 151)};
+        if ("xbox".equals(t)) return new int[]{Color.rgb(14, 20, 16), Color.rgb(155, 240, 11), Color.rgb(47, 191, 47)};
+        return new int[]{BG, GOLD, TEAL};
+    }
+
+    private FrameLayout rootView;
+
+    /** A rounded badge with the theme's name, shown in place of the Game Log Tracker logo on a themed screen. */
+    private static android.graphics.Bitmap markFor(String t, int accent, int bg) {
+        int n = 512;
+        android.graphics.Bitmap b = android.graphics.Bitmap.createBitmap(n, n, android.graphics.Bitmap.Config.ARGB_8888);
+        android.graphics.Canvas c = new android.graphics.Canvas(b);
+        android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        p.setColor(accent);
+        c.drawRoundRect(new android.graphics.RectF(16, 16, n - 16, n - 16), 56, 56, p);
+        p.setColor(bg);
+        c.drawRoundRect(new android.graphics.RectF(44, 44, n - 44, n - 44), 36, 36, p);
+        p.setColor(accent);
+        p.setTypeface(android.graphics.Typeface.create(android.graphics.Typeface.SANS_SERIF, android.graphics.Typeface.BOLD));
+        p.setTextAlign(android.graphics.Paint.Align.CENTER);
+        String label = t.toUpperCase(java.util.Locale.ROOT);
+        p.setTextSize(label.length() > 3 ? 120 : 160);
+        c.drawText(label, n / 2f, n / 2f + p.getTextSize() * 0.35f, p);
+        return b;
+    }
+
     private ImageView art;
     private ImageView logo;
     private WebView panel;
@@ -69,6 +99,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         FrameLayout root = new FrameLayout(this);
+        rootView = root;
         root.setBackgroundColor(BG);
 
         art = new ImageView(this);
@@ -134,6 +165,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         });
 
         setContentView(root);
+        applyThemeNow();
         TopPanel.setViewAlive(true);
     }
 
@@ -323,9 +355,20 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     }
 
     private void applyThemeNow() {
-        if (!panelReady || panel == null) return;
+        if (panel == null) return;
         String t = Prefs.get(this, "theme", "retro");
         if (!t.matches("[a-z]+")) t = "retro";
+        int[] c = themeColors(t);
+        if (rootView != null) rootView.setBackgroundColor(c[0]);
+        if (caption != null) caption.setBackgroundColor(Color.argb(200, Color.red(c[0]), Color.green(c[0]), Color.blue(c[0])));
+        if (titleView != null) titleView.setTextColor(c[1]);
+        if (consoleView != null) consoleView.setTextColor(c[2]);
+        if (badge != null) badge.setTextColor(c[1]);
+        if (logo != null) {
+            if ("retro".equals(t)) logo.setImageResource(R.drawable.logo);
+            else logo.setImageBitmap(markFor(t, c[1], c[0]));
+        }
+        if (!panelReady) return;
         String js = "(function(d){var t='" + t + "';if(t==='retro')d.removeAttribute('data-theme');else d.setAttribute('data-theme',t);"
                 + "d.style.fontSize=(t==='nes'?'11.2px':'');})(document.documentElement)";
         panel.evaluateJavascript(js, null);
