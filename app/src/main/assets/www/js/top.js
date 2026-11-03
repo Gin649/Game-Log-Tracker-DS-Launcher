@@ -55,6 +55,22 @@
   const sectionsOpen = (menu) => Array.prototype.filter.call(menu.querySelectorAll('.dropdown-heading'), h => h.textContent.indexOf('\u25be') >= 0)
     .map(h => h.id);
 
+  // Scrolls the menu until this heading is at its top. How far the list moves for a given scrollTop depends on how
+  // the screen reports zoom, so this measures what each step really did and corrects (a few steps at most).
+  function headToTop(menu, head){
+    let k = stageZoom * MENU_ZOOM; // screen pixels per scrollTop unit, to start with
+    for(let i = 0; i < 5; i++){
+      const diff = head.getBoundingClientRect().top - menu.getBoundingClientRect().top - 2;
+      if(Math.abs(diff) < 3) break;
+      const before = menu.scrollTop, y0 = head.getBoundingClientRect().top;
+      menu.scrollTop = before + diff / k;
+      const moved = y0 - head.getBoundingClientRect().top;
+      const used = menu.scrollTop - before;
+      if(Math.abs(used) < 0.5) break; // at the end of the list
+      if(Math.abs(moved) > 0.5) k = Math.abs(moved / used);
+    }
+  }
+
   window.GLTTop = {
     set(html, bodyClass){
       const before = openMenu();
@@ -72,8 +88,8 @@
         openSections = now.join(',');
         const head = fresh && menu.querySelector('#' + fresh);
         if(head){ // a section just opened: put its heading at the top so all of it shows
-          const k = stageZoom * MENU_ZOOM;
-          menu.scrollTop += (head.getBoundingClientRect().top - menu.getBoundingClientRect().top) / k - 2;
+          headToTop(menu, head);
+          lastFocusKey = ''; // and make sure the highlight (still on that heading) is in view
         }
       }
       keepFocusInMenu();
