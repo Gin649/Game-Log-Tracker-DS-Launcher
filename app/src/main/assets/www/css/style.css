@@ -1219,3 +1219,21 @@ html[data-theme="snes"] .brand .name{font-weight:800;}
   #crt-b{position:absolute;left:0;right:0;height:100px;background:linear-gradient(#fff0,#fff3,#fff0);opacity:0;pointer-events:none;}
   #crt-t{position:absolute;left:0;right:0;top:50%;margin-top:-76px;text-align:center;color:#fff;font:bold 68px/76px monospace;letter-spacing:22px;text-indent:22px;opacity:.3;pointer-events:none;text-shadow:0 0 6px #fff4;}
   #crt-sl{background:repeating-linear-gradient(#0000 0 2px,#0006 2px 3px);pointer-events:none;}
+/* SNES: text on the purple surfaces is white */
+html[data-theme="snes"] .dropdown-subitem,
+html[data-theme="snes"] .dropdown-subitem:hover,
+html[data-theme="snes"] .textsize-row,
+html[data-theme="snes"] .textsize-row .display-note,
+html[data-theme="snes"] .theme-col,
+html[data-theme="snes"] .theme-col .display-note,
+html[data-theme="snes"] .display-row,
+html[data-theme="snes"] .display-row .display-note,
+html[data-theme="snes"] .field input,
+html[data-theme="snes"] .modal-progress,
+html[data-theme="snes"] .gd-label,
+html[data-theme="snes"] .gd-mode,
+html[data-theme="snes"] .gd-empty,
+html[data-theme="snes"] .soc-now,
+html[data-theme="snes"] .soc-now *,
+html[data-theme="snes"] .yt-item{color:#fff;--text:#fff;--muted:#efeaff;}
+html[data-theme="snes"] .textsize-btn{background:var(--panel);color:var(--text);--text:#2a2a2c;}
