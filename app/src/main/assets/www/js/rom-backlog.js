@@ -163,6 +163,19 @@ function nativeCustomArt(entry){
   });
 }
 
+// Game profile pictures: your frontend's media, then SteamGridDB, then LaunchBox. Resolves '' when none has
+// one, so the caller keeps RetroAchievements' picture as the last fallback.
+function betterBoxArt(gameId, title, consoleName, romPath){
+  if(!(typeof thorBridge !== 'undefined' && thorBridge && typeof thorBridge.customArt === 'function')) return Promise.resolve('');
+  let folder = '', path = romPath || '';
+  try{
+    const r = JSON.parse(thorBridge.findRom(JSON.stringify({ title, console: consoleName })));
+    if(r && r.found){ folder = r.folder || ''; path = path || r.path || ''; }
+  }catch(e){}
+  return nativeCustomArt({ GameID: 'modal-' + gameId, Title: title, folder, romPath: path });
+}
+window.betterBoxArt = betterBoxArt;
+
 async function rawgArtFor(title){
   try{
     const results = await searchRawgForAddGame(title);

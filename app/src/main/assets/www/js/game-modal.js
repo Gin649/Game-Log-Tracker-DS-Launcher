@@ -208,6 +208,11 @@ function renderCustomGameModal(gameId, local, card){
   });
 
   thorWirePlay(card, gameId, local.Title, local.ConsoleName, boxArt, local.romPath);
+  if(typeof betterBoxArt === 'function' && !local.ImageIcon){
+    betterBoxArt(gameId, local.Title, local.ConsoleName, local.romPath).then(url => {
+      if(url && card.dataset.gameId === String(gameId)) card.querySelector('.modal-art').src = url;
+    }).catch(() => {});
+  }
   // Games RetroAchievements doesn't know: the time played on this device, counted while the game is on screen.
   thorFillPlaytime(card, local.Title, local.ConsoleName);
   attachRawgLookup(gameId, local.Title, card);
@@ -517,6 +522,11 @@ async function openGameModal(gameId, opts){
 
   const beatenAchBtn = card.querySelector('#modal-view-beaten-ach-btn');
   thorWirePlay(card, gameId, title, console_, boxArt, local && local.romPath);
+  if(typeof betterBoxArt === 'function'){
+    betterBoxArt(gameId, title, console_, local && local.romPath).then(url => {
+      if(url && card.dataset.gameId === String(gameId)) card.querySelector('.modal-art').src = url;
+    }).catch(() => {});
+  }
   const beatenAchWrap = card.querySelector('#modal-beaten-achievements');
   let beatenAchLoaded = false;
   beatenAchBtn.addEventListener('click', async () => {
