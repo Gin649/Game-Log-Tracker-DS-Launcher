@@ -9,7 +9,7 @@
     root = document.createElement('div');
     root.id = 'crt-root';
     root.innerHTML = '<div id="crt-full"><canvas id="crt-n" width="240" height="135"></canvas>' +
-      '<div id="crt-b"></div><div id="crt-t">STARTING</div><div id="crt-sl"></div></div>';
+      '<div id="crt-b"></div><div id="crt-t">GAME<br>STARTING</div><div id="crt-sl"></div></div>';
     document.body.appendChild(root);
     noise = root.querySelector('#crt-n');
     nctx = noise.getContext('2d');
