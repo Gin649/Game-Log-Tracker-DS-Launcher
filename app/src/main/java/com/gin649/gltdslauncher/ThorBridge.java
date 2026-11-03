@@ -376,8 +376,7 @@ final class ThorBridge {
                 String url = "";
                 try {
                     if (!folder.isEmpty() && Config.useEsdeMedia()) {
-                        MediaFinder.Found f = MediaFinder.lookup(folder, romPath);
-                        String p = f.box != null ? f.box : (f.fallback != null ? f.fallback : f.direct);
+                        String p = MediaFinder.boxArt(folder, romPath); // box art only, never the fan art
                         if (p != null && new File(p).isFile()) {
                             String token = Base64.encodeToString(p.getBytes("UTF-8"), Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
                             url = "https://" + Config.APP_HOST_BUILTIN + "/art/" + token;

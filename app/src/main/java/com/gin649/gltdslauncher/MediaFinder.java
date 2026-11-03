@@ -91,6 +91,19 @@ final class MediaFinder {
         return look(systemFolder, rel, name, fileName);
     }
 
+    /** Just the box art (ES-DE covers, 3D boxes and the like) for a ROM, even when it also has fan art. Null when none. */
+    static String boxArt(String systemFolder, String romPath) {
+        if (systemFolder == null || romPath == null || Config.ROMS_ROOT.isEmpty()) return null;
+        String root = Config.ROMS_ROOT + "/" + systemFolder + "/";
+        if (!romPath.startsWith(root)) return null;
+        String rel = romPath.substring(root.length());
+        String fileName = rel.substring(rel.lastIndexOf('/') + 1);
+        int dot = rel.lastIndexOf('.');
+        if (dot > rel.lastIndexOf('/')) rel = rel.substring(0, dot);
+        String name = rel.substring(rel.lastIndexOf('/') + 1);
+        return look(systemFolder, rel, name, fileName, true).box;
+    }
+
     /** Everything one lookup needs, worked out once. */
     private static final class Where {
         File esBase;
@@ -100,6 +113,10 @@ final class MediaFinder {
     }
 
     private static Found look(String systemFolder, String rel, String name, String fileName) {
+        return look(systemFolder, rel, name, fileName, false);
+    }
+
+    private static Found look(String systemFolder, String rel, String name, String fileName, boolean parts) {
         Where w = new Where();
         w.relParent = rel.contains("/") ? rel.substring(0, rel.lastIndexOf('/')) : "";
         w.name = name;
@@ -136,7 +153,7 @@ final class MediaFinder {
         Found f = new Found();
         String top = of(w, FANART);
         if (top == null) top = of(w, MIX);
-        if (top != null) {
+        if (top != null && !parts) {
             f.direct = top;
             return f;
         }

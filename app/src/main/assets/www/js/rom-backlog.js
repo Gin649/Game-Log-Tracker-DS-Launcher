@@ -173,11 +173,11 @@ function betterBoxArt(gameId, title, consoleName, romPath){
     if(r && r.found){ folder = r.folder || ''; path = path || r.path || ''; }
   }catch(e){}
   return nativeCustomArt({ GameID: 'modal-' + gameId, Title: title, folder, romPath: path }).then(url => {
-    try{ if(url) localStorage.setItem('betterArt2:' + gameId, url); else localStorage.removeItem('betterArt2:' + gameId); }catch(e){}
+    try{ if(url) localStorage.setItem('betterArt3:' + gameId, url); else localStorage.removeItem('betterArt3:' + gameId); }catch(e){}
     return url;
   });
 }
-window.cachedBoxArt = function(gameId){ try{ return localStorage.getItem('betterArt2:' + gameId) || ''; }catch(e){ return ''; } };
+window.cachedBoxArt = function(gameId){ try{ return localStorage.getItem('betterArt3:' + gameId) || ''; }catch(e){ return ''; } };
 window.betterBoxArt = betterBoxArt;
 
 async function rawgArtFor(title){
