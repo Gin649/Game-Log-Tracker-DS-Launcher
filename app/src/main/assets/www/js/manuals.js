@@ -269,7 +269,7 @@ function setupManualUI(body, ctx){
         <div class="gd-manual-actions">${btn('Try again', 'find')}<a class="gd-manual-btn" href="${MANUAL_LIST_URL}" target="_blank" rel="noopener">Browse site ↗</a></div>${extra || ''}`);
       return;
     }
-    set(`<div class="gd-manual-actions">${btn('Download manual', 'find', true)}</div>${note('From Games Database. Saved on this device so it works offline.')}${extra || ''}`);
+    set(`<div class="gd-manual-actions">${btn('Download manual', 'find', true)}</div>${extra || ''}`);
   }
 
   function showProgress(text, frac){
