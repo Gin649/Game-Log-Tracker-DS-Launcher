@@ -1180,9 +1180,9 @@ html[data-theme="nes"]{
   --radius:0px;--font-mono:'Press Start 2P',monospace;--font-ui:'Press Start 2P',monospace;--btn-shadow:3px 3px 0 #7a000a;
 }
 html[data-theme="snes"]{
-  --bg:#c1c1c2;--bg-alt:#9794a0;--panel:#d4d4d5;--panel-2:#b9b8bd;--border:#3b3b3b;
-  --gold:#5a3f8e;--gold-dim:#8968b8;--teal:#6a4fa3;--text:#2a2a2c;--muted:#5b5963;--danger:#b3362b;
-  --gold-rgb:90,63,142;--teal-rgb:106,79,163;--bg-rgb:193,193,194;--on-gold:#fff;
+  --bg:#b6b1e2;--bg-alt:#8968b8;--panel:#c1c1c2;--panel-2:#b0b0b3;--border:#3b3b3b;
+  --gold:#4b2f80;--gold-dim:#7a5cb0;--teal:#5a3f8e;--text:#2a2a2c;--muted:#4a4852;--danger:#b3362b;
+  --gold-rgb:75,47,128;--teal-rgb:90,63,142;--bg-rgb:182,177,226;--on-gold:#fff;
   --radius:8px;--font-mono:'Nunito',sans-serif;--font-ui:'Nunito',sans-serif;--btn-shadow:0 3px 0 #5a4380;
 }
 html[data-theme="psx"]{
