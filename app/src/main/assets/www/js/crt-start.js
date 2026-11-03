@@ -2,19 +2,20 @@
 // ArtActivity calls GLTCrt.start() when Play is pressed and GLTCrt.stop() when the emulator takes over.
 (function(){
   const W = 960, H = 540;   // drawn at this size, then scaled to cover the screen
-  let root, noise, nctx, nimg, bar, built = false;
+  let root, noise, nctx, nimg, bar, word, built = false;
   let raf = 0, t0 = 0, audio = null, failsafe = 0;
 
   function build(){
     root = document.createElement('div');
     root.id = 'crt-root';
     root.innerHTML = '<div id="crt-full"><canvas id="crt-n" width="240" height="135"></canvas>' +
-      '<div id="crt-b"></div><div id="crt-sl"></div></div>';
+      '<div id="crt-b"></div><div id="crt-t">STARTING</div><div id="crt-sl"></div></div>';
     document.body.appendChild(root);
     noise = root.querySelector('#crt-n');
     nctx = noise.getContext('2d');
     nimg = nctx.createImageData(240, 135);
     bar = root.querySelector('#crt-b');
+    word = root.querySelector('#crt-t');
     built = true;
   }
 
@@ -25,6 +26,7 @@
     nctx.putImageData(nimg, 0, 0);
     bar.style.top = (((t * 1.4) % 1) * 680 - 140) + 'px';
     bar.style.opacity = 0.7;
+    word.style.opacity = (0.3 + Math.random() * 0.15).toFixed(2); // faint, and it flickers a little like the static
   }
 
   function loop(now){
