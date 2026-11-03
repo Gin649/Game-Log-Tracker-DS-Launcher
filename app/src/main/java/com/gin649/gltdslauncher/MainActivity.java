@@ -289,6 +289,30 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** Starts the start-up animation over this screen (single-screen devices). False when the page isn't up. */
+    static boolean playStartupHere() {
+        final MainActivity a = current;
+        if (a == null || a.webView == null) return false;
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (a.webView != null) a.webView.evaluateJavascript("window.GLTCrt&&window.GLTCrt.start()", null);
+            }
+        });
+        return true;
+    }
+
+    static void stopStartupHere() {
+        final MainActivity a = current;
+        if (a == null) return;
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (a.webView != null) a.webView.evaluateJavascript("window.GLTCrt&&window.GLTCrt.stop()", null);
+            }
+        });
+    }
+
     /** Sends a found picture address to the page. */
     static void deliverCustomArt(final String id, final String url) {
         final MainActivity a = current;
@@ -449,6 +473,7 @@ public class MainActivity extends Activity {
         if (webView != null) {
             webView.onResume();
             webView.evaluateJavascript("window.thorResumed&&window.thorResumed()", null);
+            webView.evaluateJavascript("window.GLTCrt&&window.GLTCrt.stop()", null); // back from the game: drop the static
         }
 
         boolean granted = Environment.isExternalStorageManager();

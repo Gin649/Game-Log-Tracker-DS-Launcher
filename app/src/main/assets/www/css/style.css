@@ -1210,3 +1210,12 @@ html[data-theme="psx"] body,html[data-theme="xbox"] body{background-image:radial
 .desc-btn.on{border-color:var(--gold);color:var(--gold);}
 html[data-theme="snes"] .chip.active,html[data-theme="snes"] .btn-primary{background:#8968b8;border-color:#8968b8;color:#fff;}
 html[data-theme="snes"] .brand .name{font-weight:800;}
+
+/* start-up animation (also used over the launcher on a single screen) */
+  #crt-root{display:none;position:fixed;inset:0;z-index:99999;background:#000;overflow:hidden;}
+  #crt-full{position:absolute;left:50%;top:50%;width:960px;height:540px;margin:-270px 0 0 -480px;transform-origin:50% 50%;overflow:hidden;background:#000;}
+  #crt-n,#crt-sl{position:absolute;inset:0;}
+  #crt-n{width:960px;height:540px;opacity:1;image-rendering:pixelated;filter:brightness(.55) contrast(.9);pointer-events:none;}
+  #crt-b{position:absolute;left:0;right:0;height:100px;background:linear-gradient(#fff0,#fff3,#fff0);opacity:0;pointer-events:none;}
+  #crt-t{position:absolute;left:0;right:0;top:50%;margin-top:-76px;text-align:center;color:#fff;font:bold 68px/76px monospace;letter-spacing:22px;text-indent:22px;opacity:.3;pointer-events:none;text-shadow:0 0 6px #fff4;}
+  #crt-sl{background:repeating-linear-gradient(#0000 0 2px,#0006 2px 3px);pointer-events:none;}
