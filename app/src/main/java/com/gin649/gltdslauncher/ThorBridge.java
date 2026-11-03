@@ -383,16 +383,29 @@ final class ThorBridge {
             public void run() {
                 String url = "";
                 try {
-                    if (!folder.isEmpty() && Config.useEsdeMedia()) {
-                        String p = MediaFinder.boxArt(folder, romPath); // box art only, never the fan art
+                    String fold = folder;
+                    if (Config.useEsdeMedia()) {
+                        String p = fold.isEmpty() ? null : MediaFinder.boxArt(fold, romPath); // box art only, never the fan art
+                        if (p == null) {
+                            // no usable ROM path (added by name, or a picker address): find the ROM file by its title
+                            java.util.List<RomIndex.Rom> pool = new java.util.ArrayList<RomIndex.Rom>();
+                            for (RomIndex.Rom r : Shared.index().all()) {
+                                if (fold.isEmpty() || r.sys.folder.equals(fold)) pool.add(r);
+                            }
+                            RomIndex.Rom r = Matcher.best(pool, title);
+                            if (r != null) {
+                                fold = r.sys.folder;
+                                p = MediaFinder.boxArt(fold, r.file.getPath());
+                            }
+                        }
                         if (p != null && new File(p).isFile()) {
                             String token = Base64.encodeToString(p.getBytes("UTF-8"), Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
                             url = "https://" + Config.APP_HOST_BUILTIN + "/art/" + token;
                         }
                     }
-                    if (url.isEmpty() && Config.LAUNCHBOX_ART && !folder.isEmpty()) {
+                    if (url.isEmpty() && Config.LAUNCHBOX_ART && !fold.isEmpty()) {
                         try {
-                            String g = LaunchBoxArt.boxUrl(act, folder, title);
+                            String g = LaunchBoxArt.boxUrl(act, fold, title);
                             if (g != null) url = g;
                         } catch (java.io.IOException ignored) {
                         }
