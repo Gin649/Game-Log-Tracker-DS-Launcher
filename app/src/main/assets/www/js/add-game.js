@@ -110,7 +110,7 @@ async function searchAddGame(){
         });
       });
     }catch(e){
-      resultsEl.innerHTML = `<div class="error-box">Search failed: ${e.message}</div>`;
+      resultsEl.innerHTML = `<div class="error-box">Search failed: ${/abort/i.test(String(e && e.message)) ? 'RAWG took too long to answer. Try again in a moment.' : e.message}</div>`;
     }
     return;
   }
@@ -166,7 +166,7 @@ async function searchAddGame(){
       checkbox.addEventListener('change', applySelection);
     });
   }catch(e){
-    resultsEl.innerHTML = `<div class="error-box">Search failed: ${e.message}</div>`;
+    resultsEl.innerHTML = `<div class="error-box">Search failed: ${/abort/i.test(String(e && e.message)) ? 'RAWG took too long to answer. Try again in a moment.' : e.message}</div>`;
   }
 }
 
@@ -174,7 +174,13 @@ async function searchRawgForAddGame(title){
   if(!rawgCreds) rawgCreds = await loadRawgCreds();
   if(!rawgCreds || !rawgCreds.apiKey) throw new Error('RAWG isn\'t set up. Add a key under RAWG Ratings in the menu first.');
   const url = `https://api.rawg.io/api/games?key=${encodeURIComponent(rawgCreds.apiKey)}&search=${encodeURIComponent(title)}&page_size=10`;
-  const json = await rawgGet(url);
+  // RAWG is sometimes slow to answer: someone typing a title to add is waiting for it, so give it longer and try twice
+  let json;
+  try{ json = await rawgGet(url, 20000); }
+  catch(e){
+    if(/HTTP 4\d\d/.test(String(e && e.message))) throw e; // a refused key won't change on a retry
+    json = await rawgGet(url, 20000);
+  }
   return (json && json.results) || [];
 }
 

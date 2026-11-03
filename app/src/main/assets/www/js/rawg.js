@@ -26,8 +26,8 @@ async function removeRawgCreds(){
 }
 
 // RAWG allows cross-origin calls, so it is asked directly.
-async function rawgGet(url){
-  const res = await fetchWithTimeout(url, 8000);
+async function rawgGet(url, ms){
+  const res = await fetchWithTimeout(url, ms || 8000);
   if(!res.ok) throw new Error(`RAWG: HTTP ${res.status}`);
   try{ return await res.json(); }
   catch(e){ throw new Error("RAWG: response wasn't valid JSON"); }
