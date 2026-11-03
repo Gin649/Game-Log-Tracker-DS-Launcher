@@ -73,6 +73,17 @@ final class ThorBridge {
         Shared.showLogo();
     }
 
+    /** The start-up animation on the top screen when a game starts (on unless switched off). */
+    @JavascriptInterface
+    public boolean startupAnim() {
+        return !"0".equals(Prefs.get(act, "startupAnim", "1"));
+    }
+
+    @JavascriptInterface
+    public void setStartupAnim(boolean on) {
+        Prefs.put(act, "startupAnim", on ? "1" : "0");
+    }
+
     @JavascriptInterface
     public String launch(String json) {
         try {

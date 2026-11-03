@@ -5,6 +5,9 @@ import android.app.ActivityOptions;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
+import android.widget.Toast;
 
 import org.json.JSONObject;
 
@@ -326,6 +329,46 @@ final class Launcher {
         // screen on the other display; everything else runs on the top screen.
         int display = DisplayPicker.gameDisplayId(act, standalone && plan.recipe.dual);
 
+        final Activity fact = act;
+        final List<Intent> fintents = intents;
+        final int fdisplay = display;
+        final String fstarted = started;
+        final String pkg = standalone ? plan.pkg : plan.raPkg;
+        final RomIndex.Rom from = rom;
+
+        // The old-TV animation plays on the top screen first, then the emulator opens over it.
+        boolean dual = standalone && plan.recipe.dual;
+        boolean wantAnim = !dual && !"0".equals(Prefs.get(act, "startupAnim", "1"));
+        if (wantAnim && ArtActivity.playStartup(rom.name)) {
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    Exception e = startIntents(fact, fintents, fdisplay);
+                    if (e != null) {
+                        ArtActivity.stopStartup();
+                        Toast.makeText(fact, "Could not start " + fstarted + ": " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    ArtWatch.start(fact, pkg);
+                    LibrarySync.markPlayed(fact, from);
+                }
+            }, START_DELAY_MS);
+            return result(true, "Starting " + rom.name + " in " + started + "...");
+        }
+
+        Exception last = startIntents(act, intents, display);
+        if (last != null) return result(false, "Could not start " + started + ": " + last.getMessage());
+
+        ArtWatch.start(act, pkg);
+        LibrarySync.markPlayed(act, rom);
+        return result(true, "Starting " + rom.name + " in " + started + "...");
+    }
+
+    /** How long the start-up animation runs before the emulator opens over it. */
+    private static final long START_DELAY_MS = 1700;
+
+    /** Starts the first of the intents that works; null when one did, otherwise the last error. */
+    private static Exception startIntents(Activity act, List<Intent> intents, int display) {
         Exception last = null;
         for (Intent intent : intents) {
             try {
@@ -336,16 +379,11 @@ final class Launcher {
                 } else {
                     act.startActivity(intent);
                 }
-                last = null;
-                break;
+                return null;
             } catch (Exception e) {
                 last = e; // this activity is not in the installed version; the next one may be
             }
         }
-        if (last != null) return result(false, "Could not start " + started + ": " + last.getMessage());
-
-        ArtWatch.start(act, standalone ? plan.pkg : plan.raPkg);
-        LibrarySync.markPlayed(act, rom);
-        return result(true, "Starting " + rom.name + " in " + started + "...");
+        return last;
     }
 }

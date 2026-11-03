@@ -20,10 +20,27 @@
   #stage .about-top .modal-card{display:block;margin:10px auto;max-width:600px;}
   #stage .btn-hamburger{zoom:0.7;}
   #stage .dropdown-menu{zoom:0.7;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;}
+  /* Start-up animation (see crt-start.js): a 4:3 CRT picture, full height, black on both sides. */
+  #crt-root{display:none;position:fixed;inset:0;z-index:99999;background:#000;overflow:hidden;}
+  #crt-scr{position:absolute;left:50%;top:50%;width:440px;height:330px;margin:-165px 0 0 -220px;border-radius:44px/38px;overflow:hidden;background:#000;transform-origin:50% 50%;}
+  #crt-s,#crt-c,#crt-wv,#crt-n,#crt-sl,#crt-vg,#crt-gl{position:absolute;inset:0;}
+  #crt-s{overflow:hidden;background:#000;}
+  #crt-c{background:#b8b8c4;}
+  #crt-wv{overflow:hidden;}
+  .crt-st{position:absolute;left:-60px;width:560px;height:8px;overflow:hidden;}
+  .crt-st>div{position:absolute;left:0;width:560px;height:330px;background:#1d1a33;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#f2b84b;font:bold 24px monospace;letter-spacing:2px;text-align:center;}
+  .crt-st>div>div{max-width:420px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+  .crt-st small{color:#5fd3b0;font-size:14px;margin-top:10px;letter-spacing:3px;}
+  #crt-n{width:440px;height:330px;opacity:0;image-rendering:pixelated;filter:brightness(.55) contrast(.9);pointer-events:none;}
+  #crt-b{position:absolute;left:0;right:0;height:60px;background:linear-gradient(#fff0,#fff3,#fff0);opacity:0;pointer-events:none;}
+  #crt-sl{background:repeating-linear-gradient(#0000 0 2px,#0006 2px 3px);pointer-events:none;}
+  #crt-vg{background:radial-gradient(ellipse at 50% 50%,#0000 55%,#000a 100%);pointer-events:none;}
+  #crt-gl{background:linear-gradient(125deg,#fff3 0,#fff0 28%);pointer-events:none;}
 </style>
 </head>
 <body>
 <div id="stage" class="wrap"></div>
 <script src="js/top.js"></script>
+<script src="js/crt-start.js"></script>
 </body>
 </html>

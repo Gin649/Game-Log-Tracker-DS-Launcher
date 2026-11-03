@@ -315,3 +315,20 @@ document.addEventListener('selectionchange', () => {
   if(a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA')) return;
   sel.removeAllRanges();
 });
+
+// Display Options: the old-TV start-up animation on the top screen when a game starts.
+(function(){
+  const row = document.getElementById('startup-anim-row'), sw = document.getElementById('startup-anim-switch');
+  if(!row || !sw || typeof thorBridge === 'undefined' || !thorBridge || typeof thorBridge.startupAnim !== 'function') return;
+  row.style.display = '';
+  const show = on => { sw.classList.toggle('on', on); sw.setAttribute('aria-checked', String(on)); };
+  let on = true;
+  try{ on = !!thorBridge.startupAnim(); }catch(e){}
+  show(on);
+  sw.addEventListener('click', (e) => {
+    e.stopPropagation();
+    on = !on;
+    show(on);
+    try{ thorBridge.setStartupAnim(on); }catch(err){}
+  });
+})();

@@ -41,7 +41,9 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     private ImageView art;
     private ImageView logo;
     private WebView panel;
-    private boolean panelReady;
+    private volatile boolean panelReady;
+    private boolean startupOn;
+    private static volatile ArtActivity instance;
     private boolean artShown;
     private String panelHtml = "";
     private WebViewAssetLoader assetLoader;
@@ -63,6 +65,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         alive = true;
+        instance = this;
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         FrameLayout root = new FrameLayout(this);
@@ -155,6 +158,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         WebSettings ws = panel.getSettings();
         ws.setJavaScriptEnabled(true);
         ws.setAllowFileAccess(false);
+        ws.setMediaPlaybackRequiresUserGesture(false); // the start-up animation has a sound
 
         assetLoader = new WebViewAssetLoader.Builder()
                 .setDomain(Config.APP_HOST_BUILTIN)
@@ -195,6 +199,11 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
 
     /** With no game art showing, the header panel fills the screen if there is one, otherwise the logo. */
     private void syncFallback() {
+        if (startupOn) {
+            panel.setVisibility(View.VISIBLE);
+            logo.setVisibility(View.GONE);
+            return;
+        }
         boolean fallback = !artShown;
         boolean usePanel = fallback && panelReady && !panelHtml.isEmpty();
         panel.setVisibility(usePanel ? View.VISIBLE : View.INVISIBLE);
@@ -235,6 +244,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     @Override
     protected void onPause() {
         resumed = false;
+        endStartup();
         TopPanel.setViewShown(false);
         ArtBus.attach(null);
         TopPanel.attachView(null);
@@ -244,6 +254,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     @Override
     protected void onDestroy() {
         alive = false;
+        if (instance == this) instance = null;
         resumed = false;
         TopPanel.setViewAlive(false);
         if (panel != null) panel.destroy();
@@ -298,7 +309,52 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         render(s);
     }
 
+    /**
+     * Plays the old-TV start-up animation on this screen. False when this screen isn't showing, so the
+     * caller launches straight away instead of waiting for it.
+     */
+    static boolean playStartup(final String title) {
+        final ArtActivity a = instance;
+        if (a == null || !resumed || !a.panelReady) return false;
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                a.startStartup(title);
+            }
+        });
+        return true;
+    }
+
+    static void stopStartup() {
+        final ArtActivity a = instance;
+        if (a == null) return;
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                a.endStartup();
+            }
+        });
+    }
+
+    private void startStartup(String title) {
+        if (!panelReady) return;
+        startupOn = true;
+        panel.setVisibility(View.VISIBLE);
+        caption.setVisibility(View.GONE);
+        badge.setVisibility(View.GONE);
+        panel.evaluateJavascript("GLTCrt.start(" + JSONObject.quote(title == null ? "" : title) + ")", null);
+    }
+
+    private void endStartup() {
+        if (!startupOn) return;
+        startupOn = false;
+        if (panelReady) panel.evaluateJavascript("GLTCrt.stop()", null);
+        syncFallback();
+        render(ArtBus.get());
+    }
+
     private void render(final ArtBus.State s) {
+        if (startupOn) return; // endStartup() draws the latest state when the animation is done
         final int mine = ++token;
 
         if (!s.game) {
