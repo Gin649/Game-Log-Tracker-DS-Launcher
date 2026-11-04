@@ -2,6 +2,39 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
+## v1.2.0
+
+### Added
+- Themes: Display Options, Theme lets you switch the look of the whole app, and the top screen, between Retro (the current look and the default), Nintendo, Playstation and Xbox. Each changes the colours, the font and the shape of buttons and cards, and the header logo becomes the console's logo. Xbox uses a true black background with the green of the Xbox logo. The logos live in the new logos folder, with the app logo.
+- Start-up animation: when you press Play, old-TV static with a soft crackle and "GAME STARTING" plays for a second while the emulator opens, then goes straight into the game. On two screens it plays on the top screen, and on both screens for a game that uses both. On a single screen it covers the launcher. Turn it off in Display Options, Start-up animation.
+- Playtime for games RetroAchievements doesn't have: the launcher counts how long the game is on screen and shows it as Playtime in the game's profile. It needs Usage access, the same as the top-screen game watcher.
+- Games that aren't on RetroAchievements, or have no achievements, now move into the Game Library when you play them and show in Recently played, with their playtime.
+- Arcade games: the cryptic ROM names (like "sfa3") are matched to their real titles, so they show Play instead of "not on this device".
+- Time to beat and time to 100% for games RetroAchievements doesn't know, in Game Details, from IGDB.
+- Alternative names from IGDB help match ROM files, so a game with a regional or alternate title still finds its ROM for Play.
+- Social: each person in the list shows how many achievements they have in their last game. Their profile shows their points for the mode you are in (casual or hardcore) and a new "Recently beaten or mastered" list.
+
+### Changed
+- All emulators now open on the top screen, including Nintendo DS games (Watermelon DS, Azahar), so they no longer launch on the wrong screen.
+- In Game Library and Backlog, All stays pinned at the left of the console row while the other consoles scroll beside it, with the first console right next to it.
+- The tabs (Last Played, Game Library, Backlog, Beaten) have more room, so the controller's square no longer covers the words.
+- In a game profile, Up and Down on the controller follow the left edge (Play, then Play port, and so on) instead of the buttons beside them.
+- The Display menu now opens on the selected display, and you move down from there to the other settings.
+- Game profile box art now comes from your ES-DE media first, then LaunchBox, then RetroAchievements. For games RA doesn't list, SteamGridDB is used only as a last resort. The picture is remembered, so a game opens with its better art straight away.
+- Game Details description now comes from your ES-DE gamelist (the description ES-DE scraped), then LaunchBox, then IGDB.
+- RAWG is gone completely. Review scores, the Add a game search for games RA doesn't list, backlog art and descriptions now all use IGDB, and the RAWG key box in setup is removed. Games you added earlier are kept.
+- Add a game waits longer for a search and tries twice if it is slow.
+- Game Details opens faster: playtime and times show straight away, and the description fills in when it arrives.
+- On a single-screen device (or with the single-screen setting on), LaunchBox fan art and the miximages made from it are no longer downloaded, since only the top screen uses them.
+- Social opens a person's details only when you tap them, and the recent unlocks list is shorter (5).
+- Setup: the system list now shows "Scanning ROMs..." while the ROM scan is still running, instead of listing every system on a fresh install.
+- The note under Download manual ("From Games Database. Saved on this device...") is gone.
+
+### Fixed
+- A game whose name ends in a minus number, like "Super Mario Bros. -2", is no longer mixed up with the plain game ("Super Mario Bros. 2"), so each gets its own description and box art from LaunchBox.
+- Non-RA games with ES-DE box art showed a screenshot instead of the box art. They now use the ES-DE box art.
+- A rating lookup that failed is no longer remembered, so the badge tries again instead of staying empty.
+
 ## v1.1.2
 
 ### Added
