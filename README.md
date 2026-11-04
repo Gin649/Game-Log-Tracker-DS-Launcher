@@ -34,7 +34,7 @@ The web version has the full details: https://github.com/Gin649/Game-Log-Tracker
 
 - **Retro Achievements** list with points and unlock dates, missable achievements marked with a "!", and a Missable Only filter. Put achievements in your own order, and export or import an order as a file. Also included are Subsets, if the game has any, each with its own achievement list.
 - **Live achievements.** While a game you started from the app is running, the open profile checks RetroAchievements about once a minute. When you unlock something, the progress and the achievement lists update without reloading the page. It needs Usage access and only checks while the tracker is on screen.
-- **Game Details** More information about a game, including its time to beat and master (from RA, or from IGDB for games RA doesn't list), and a description. The description comes from your ES-DE gamelist, then LaunchBox, then IGDB. Box art comes from your ES-DE media, then LaunchBox, then RetroAchievements.
+- **Game Details** More information about a game, including its time to beat and master (from RA, or from IGDB for games RA doesn't list), and a description. The description comes from your ES-DE gamelist, then ScreenScraper, then LaunchBox, then IGDB. Box art comes from your ES-DE media, then ScreenScraper, then LaunchBox, then RetroAchievements. ScreenScraper is asked through the app's own service as you browse, so it works without ES-DE and nothing needs setting up; what it finds is saved on the device.
 - **Game manuals.** Find and download a manual for the game, then read it in the built-in viewer. It's saved on your device and works with the controller too.
 - **Guides and Walkthroughs.** Find a walkthrough opens a browser inside the app. Back, or a swipe from the edge, returns to the tracker, and Save video keeps the link in the game's profile.
 - **ROM Hacks.** The app finds your base ROM for you. The patched ROM is saved next to it, with a "Play patched ROM" button and an "Add to my backlog" option. Translations are listed in their own section. Hacks that were made for your exact ROM are found from a ready-made list that updates itself, so the search is quick. I don't host or supply any ROMs.
@@ -129,6 +129,7 @@ Other sites the app contacts, and why:
 
 - RetroAchievements and media.retroachievements.org, for your profile, achievements and images.
 - IGDB, for review scores, game search and details (through the app's service).
+- ScreenScraper, through the app's service, for descriptions, box art and fan art.
 - SteamGridDB, for fan art (only if you added a key).
 - LaunchBox's games database, for free fan art, box art, screenshots and logos. A small index per console is downloaded from this repo and the pictures from images.launchbox-app.com. This is on by default and can be switched off in Launcher settings.
 - YouTube, for walkthrough videos.
