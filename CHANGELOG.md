@@ -2,7 +2,7 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
-## v1.2.0
+## v1.1.3
 
 ### Added
 - Themes: Display Options, Theme lets you switch the look of the whole app, and the top screen, between Retro (the current look and the default), Nintendo, Playstation and Xbox. Each changes the colours, the font and the shape of buttons and cards, and the header logo becomes the console's logo. Xbox uses a true black background with the green of the Xbox logo. The logos live in the new logos folder, with the app logo.
