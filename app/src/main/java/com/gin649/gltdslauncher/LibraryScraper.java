@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Gets the top-screen picture for each game, one game at a time, slowly. In order:
  * 1. your frontend's own fan art or finished miximage
- * 2. fan art online: SteamGridDB (only with an API key), then LaunchBox
+ * 2. fan art online: ScreenScraper, then SteamGridDB (only with an API key), then LaunchBox
  * 3. a miximage built here from your frontend's screenshot, box art and marquee
  * 4. a miximage built here from LaunchBox's box art, screenshot and logo
  * 5. last of all, your frontend's marquee, then its box art (never stored, so a later run can still find better)
@@ -246,7 +246,25 @@ final class LibraryScraper {
         boolean offline = false;
         File target = new File(DataStore.root(ctx), "miximages/" + g.systemId + "/" + g.id + ".jpg");
 
-        // 2. fan art online: SteamGridDB (with a key), then LaunchBox
+        // 2. fan art online: ScreenScraper, then SteamGridDB (with a key), then LaunchBox
+        if (DisplayPicker.topScreenInUse(ctx)) {
+            try {
+                ScreenScraperClient.Info si = ScreenScraperClient.lookup(ctx, g.title, g.systemId);
+                if (si != null && si.fanart != null) {
+                    byte[] data = ScreenScraperClient.download(si.fanart);
+                    Bitmap b = data == null ? null : MiximageCompositor.decode(data, 1920);
+                    if (b != null) {
+                        try {
+                            if (keepFan(ctx, g, si.fanart, b)) return true;
+                        } finally {
+                            b.recycle();
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                offline = true;
+            }
+        }
         if (SteamGridDbClient.enabled(ctx) && System.currentTimeMillis() >= sgdbOffUntil) {
             try {
                 List<String> heroes = SteamGridDbClient.heroUrls(ctx, g.title, 1);

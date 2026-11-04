@@ -138,6 +138,17 @@ final class ThorBridge {
         }
     }
 
+    /** ScreenScraper's write-up for a game (asked through the app's Worker, no setup needed), or "". Blocks on the network. */
+    @JavascriptInterface
+    public String screenscraperDescription(String title, String console) {
+        try {
+            ScreenScraperClient.Info i = ScreenScraperClient.lookup(act, title, console);
+            return i == null ? "" : i.synopsis;
+        } catch (Exception ignored) {
+            return "";
+        }
+    }
+
     /** LaunchBox's description for a game (used when RetroAchievements has none), or "". Blocks on the network. */
     @JavascriptInterface
     public String launchboxDescription(String title, String console) {
@@ -366,7 +377,7 @@ final class ThorBridge {
 
     /**
      * Looks for a box-art style picture for a game the tracker has no art for: your frontend's media, then
-     * SteamGridDB (with a key), then LaunchBox. The page gets the address in window.thorCustomArt(id, url),
+     * ScreenScraper, then LaunchBox, then SteamGridDB (with a key). The page gets the address in window.thorCustomArt(id, url),
      * with an empty url when nothing was found .
      */
     @JavascriptInterface
@@ -394,6 +405,14 @@ final class ThorBridge {
                         if (p != null && new File(p).isFile()) {
                             String token = Base64.encodeToString(p.getBytes("UTF-8"), Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
                             url = "https://" + Config.APP_HOST_BUILTIN + "/art/" + token;
+                        }
+                    }
+                    // ScreenScraper next, so a phone with no ES-DE media still gets proper box art
+                    if (url.isEmpty() && !fold.isEmpty()) {
+                        try {
+                            ScreenScraperClient.Info si = ScreenScraperClient.lookup(act, title, fold);
+                            if (si != null && si.box != null) url = si.box;
+                        } catch (java.io.IOException ignored) {
                         }
                     }
                     if (url.isEmpty() && Config.LAUNCHBOX_ART && !fold.isEmpty()) {
