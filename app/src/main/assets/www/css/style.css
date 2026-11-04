@@ -1228,3 +1228,7 @@ html[data-theme] .brand .mark{object-fit:contain;width:auto;max-width:150px;}
 .tab-btn{padding:10px 14px;margin-right:6px;}
 .tabs{margin-left:-6px;}
 body.pad-mode .tab-btn.pad-focus{outline-offset:-2px;}
+
+/* The Game Log Tracker logo has empty space around its artwork, so it is drawn larger (without making the header taller)
+   to look as big as the console logos. */
+html:not([data-theme]) .brand .mark{width:130px;height:130px;margin:-20px;}
