@@ -2,6 +2,18 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
+## v1.1.4
+
+### Added
+- ScreenScraper: games are now looked up on ScreenScraper as you browse, with no ES-DE needed. It supplies the game's description, box art for games RetroAchievements doesn't list, and top-screen fan art. It comes after your own ES-DE media and before LaunchBox, and what it finds is saved on your device, so a game is only asked for once. It works through the app's own service, so there is nothing to set up. Fetch game art in the menu uses it too.
+
+### Changed
+- New Nintendo, Playstation and Xbox logos for the themes.
+- The Game Log Tracker logo in the Retro theme is bigger, so it looks as large as the console logos.
+- Game profile box art now comes from your ES-DE media first, then ScreenScraper, then LaunchBox, then RetroAchievements.
+- Game Details description now comes from your ES-DE gamelist, then ScreenScraper, then LaunchBox, then IGDB.
+- Top-screen fan art now comes from your ES-DE media first, then ScreenScraper, then SteamGridDB (with a key), then LaunchBox.
+
 ## v1.1.3
 
 ### Added
