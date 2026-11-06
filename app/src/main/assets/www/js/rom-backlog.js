@@ -179,7 +179,7 @@ function nativeCustomArt(entry){
     const id = String(entry.GameID);
     const timer = setTimeout(() => { customArtWaiting.delete(id); resolve(''); }, 30000);
     customArtWaiting.set(id, (url) => { clearTimeout(timer); resolve(url); });
-    try{ thorBridge.customArt(id, entry.Title, entry.folder || '', entry.romPath || ''); }
+    try{ thorBridge.customArt(id, entry.Title, entry.folder || '', entry.romPath || '', entry.ConsoleName || entry.console || ''); }
     catch(e){ clearTimeout(timer); customArtWaiting.delete(id); resolve(''); }
   });
 }
@@ -193,7 +193,7 @@ function betterBoxArt(gameId, title, consoleName, romPath){
     const r = JSON.parse(thorBridge.findRom(JSON.stringify({ title, console: consoleName })));
     if(r && r.found){ folder = r.folder || ''; path = path || r.path || ''; }
   }catch(e){}
-  return nativeCustomArt({ GameID: 'modal-' + gameId, Title: title, folder, romPath: path }).then(url => {
+  return nativeCustomArt({ GameID: 'modal-' + gameId, Title: title, folder, romPath: path, ConsoleName: consoleName }).then(url => {
     try{ if(url) localStorage.setItem('betterArt3:' + gameId, url); else localStorage.removeItem('betterArt3:' + gameId); }catch(e){}
     return url;
   });

@@ -402,20 +402,32 @@ final class ThorBridge {
      * with an empty url when nothing was found .
      */
     @JavascriptInterface
-    public void customArt(final String id, final String title, final String folder, final String romPath) {
+    public void customArt(final String id, final String title, final String folder, final String romPath, final String console) {
         ART_IO.execute(new Runnable() {
             @Override
             public void run() {
                 String url = "";
                 try {
                     String fold = folder;
+                    // No ROM for this exact system (a NES game when you only own the Game Boy one): use the game's own
+                    // system, so the art is never taken from the same title on another system.
+                    SystemMap.Sys own = null;
+                    if (fold.isEmpty() && console != null && !console.isEmpty()) {
+                        SystemMap map = Shared.systems();
+                        java.util.List<SystemMap.Sys> L = map == null ? null : map.forConsole(console);
+                        if (L != null && !L.isEmpty()) {
+                            own = L.get(0);
+                            fold = own.folder;
+                        }
+                    }
+                    final boolean systemKnown = !fold.isEmpty();
                     if (Config.useEsdeMedia()) {
                         String p = fold.isEmpty() ? null : MediaFinder.boxArt(fold, romPath); // box art only, never the fan art
                         if (p == null) {
                             // no usable ROM path (added by name, or a picker address): find the ROM file by its title
                             java.util.List<RomIndex.Rom> pool = new java.util.ArrayList<RomIndex.Rom>();
                             for (RomIndex.Rom r : Shared.index().all()) {
-                                if (fold.isEmpty() || r.sys.folder.equals(fold)) pool.add(r);
+                                if (systemKnown ? r.sys.folder.equals(fold) : console == null || console.isEmpty()) pool.add(r);
                             }
                             RomIndex.Rom r = Matcher.best(pool, title);
                             if (r != null) {
