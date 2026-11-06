@@ -138,6 +138,27 @@ final class ThorBridge {
         }
     }
 
+    private static final java.util.concurrent.ExecutorService DESC_IO = java.util.concurrent.Executors.newFixedThreadPool(2);
+
+    /**
+     * Asks for a description without holding the page up: kind is "ss" (ScreenScraper) or "lb" (LaunchBox). The answer
+     * comes back to window.thorDescription(reqId, text) when it is ready (empty when there is none).
+     */
+    @JavascriptInterface
+    public void describeAsync(final String reqId, final String kind, final String title, final String console) {
+        DESC_IO.execute(new Runnable() {
+            @Override
+            public void run() {
+                String text = "";
+                try {
+                    text = "lb".equals(kind) ? launchboxDescription(title, console) : screenscraperDescription(title, console);
+                } catch (Exception ignored) {
+                }
+                MainActivity.deliverDescription(reqId, text == null ? "" : text);
+            }
+        });
+    }
+
     /** ScreenScraper's write-up for a game (asked through the app's Worker, no setup needed), or "". Blocks on the network. */
     @JavascriptInterface
     public String screenscraperDescription(String title, String console) {

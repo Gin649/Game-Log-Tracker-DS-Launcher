@@ -313,6 +313,20 @@ public class MainActivity extends Activity {
         });
     }
 
+    /** Sends a description found in the background to the page. */
+    static void deliverDescription(final String reqId, final String text) {
+        final MainActivity a = current;
+        if (a == null) return;
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (a.webView == null) return;
+                a.webView.evaluateJavascript("window.thorDescription&&window.thorDescription("
+                        + JSONObject.quote(reqId) + "," + JSONObject.quote(text) + ")", null);
+            }
+        });
+    }
+
     /** Sends a found picture address to the page. */
     static void deliverCustomArt(final String id, final String url) {
         final MainActivity a = current;

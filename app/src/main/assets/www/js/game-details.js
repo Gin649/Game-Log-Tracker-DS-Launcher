@@ -47,6 +47,24 @@ function getEsdeDescription(title, consoleName){
   }, 0));
 }
 
+// Descriptions from the app's own lookups run in the background, so the page never waits on the network.
+const descWaiting = new Map();
+let descSeq = 0;
+window.thorDescription = function(id, text){
+  const f = descWaiting.get(id);
+  if(f){ descWaiting.delete(id); f(text || ''); }
+};
+function nativeDescribe(kind, title, consoleName){
+  return new Promise(resolve => {
+    if(typeof thorBridge.describeAsync !== 'function'){ resolve(''); return; }
+    const id = 'd' + (++descSeq);
+    const timer = setTimeout(() => { descWaiting.delete(id); resolve(''); }, 30000);
+    descWaiting.set(id, t => { clearTimeout(timer); resolve(t); });
+    try{ thorBridge.describeAsync(id, kind, title, consoleName); }
+    catch(e){ clearTimeout(timer); descWaiting.delete(id); resolve(''); }
+  });
+}
+
 // ScreenScraper's write-up, asked through the app's Worker (which holds the ScreenScraper login). Inside the launcher the
 // app asks and remembers it; in the browser the answer is kept in storage, a month for a game found and a day for a miss.
 const SS_WORKER = 'https://ra-proxy.gin649.workers.dev';
@@ -55,9 +73,7 @@ function getScreenScraperDescription(title, consoleName){
   const clean = String(title).replace(/^(?:~[^~]*~\s*)+/, '').trim();
   const done = text => { const t = tidyDescription(text || ''); return t.length >= 40 ? t : null; };
   if(typeof thorBridge !== 'undefined' && thorBridge && thorBridge.screenscraperDescription){
-    return new Promise(resolve => setTimeout(() => {
-      try{ resolve(done(thorBridge.screenscraperDescription(clean, consoleName))); }catch(e){ resolve(null); }
-    }, 0));
+    return nativeDescribe('ss', clean, consoleName).then(done);
   }
   return (async () => {
     const key = `ss-info:${String(consoleName).toLowerCase()}:${clean.toLowerCase()}`;
@@ -82,12 +98,7 @@ function getScreenScraperDescription(title, consoleName){
 function getLaunchBoxDescription(title, consoleName){
   if(typeof thorBridge === 'undefined' || !thorBridge || !thorBridge.launchboxDescription || !consoleName) return Promise.resolve(null);
   const clean = String(title).replace(/^(?:~[^~]*~\s*)+/, '').trim();
-  return new Promise(resolve => setTimeout(() => {
-    try{
-      const t = tidyDescription(thorBridge.launchboxDescription(clean, consoleName));
-      resolve(t.length >= 40 ? t : null);
-    }catch(e){ resolve(null); }
-  }, 0));
+  return nativeDescribe('lb', clean, consoleName).then(d => { const t = tidyDescription(d || ''); return t.length >= 40 ? t : null; });
 }
 
 // RA hacks are titled "~Hack~ Name". The original game's description would be wrong for them, so they show "Hack" and a
