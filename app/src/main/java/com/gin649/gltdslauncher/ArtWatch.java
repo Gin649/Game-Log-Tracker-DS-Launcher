@@ -72,6 +72,7 @@ final class ArtWatch {
         sawCovered = false;
         goneStreak = 0;
         active = true;
+        MainActivity.lockForGame(true);
         MAIN.postDelayed(TICK, POLL_MS);
     }
 
@@ -81,6 +82,7 @@ final class ArtWatch {
     }
 
     static synchronized void stop() {
+        if (active) MainActivity.lockForGame(false);
         active = false;
         MAIN.removeCallbacks(TICK);
     }

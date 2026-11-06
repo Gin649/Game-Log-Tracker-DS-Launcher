@@ -313,6 +313,27 @@ public class MainActivity extends Activity {
         });
     }
 
+    /**
+     * While a game runs on the top screen, the launcher window on the bottom screen ignores touches and can't take the
+     * keys, so tapping it never pulls the controller away from the game. It is let go again when the game closes.
+     */
+    static void lockForGame(final boolean lock) {
+        final MainActivity a = current;
+        if (a == null) return;
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (a.isFinishing() || a.isDestroyed()) return;
+                int f = WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+                try {
+                    if (lock) a.getWindow().addFlags(f);
+                    else a.getWindow().clearFlags(f);
+                } catch (Exception ignored) {
+                }
+            }
+        });
+    }
+
     /** Sends a description found in the background to the page. */
     static void deliverDescription(final String reqId, final String text) {
         final MainActivity a = current;
