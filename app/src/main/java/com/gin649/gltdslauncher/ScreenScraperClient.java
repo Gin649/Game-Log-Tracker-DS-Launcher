@@ -43,7 +43,7 @@ final class ScreenScraperClient {
     /** The game's ScreenScraper entry, or null when it has none. Blocks on the network the first time. */
     static Info lookup(Context ctx, String title, String system) throws IOException {
         if (title == null || title.trim().isEmpty() || system == null || system.trim().isEmpty()) return null;
-        String key = "ss-info:" + Matcher.compact(system) + ":" + Matcher.norm(title);
+        String key = "ss-info2:" + Matcher.compact(system) + ":" + Matcher.norm(title);
         CacheDb db = CacheDb.get(ctx);
         String saved = db.read(key);
         if (saved != null) {
