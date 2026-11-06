@@ -35,6 +35,7 @@ final class ArtWatch {
     private static boolean active;
     private static String playKey;      // where this session's time is added, or null
     private static long lastTickElapsed;
+    private static String lastForegroundPkg = "";
 
     private ArtWatch() {}
 
@@ -127,10 +128,31 @@ final class ArtWatch {
         }
         if (goneStreak >= 2) { // gone on two checks in a row
             stop();
-            TopPanel.bringArtFront();
+            // Another app in front (Chrome, Files...) means you moved on yourself: leave the screen alone. The art comes
+            // back only when the game closed to the home screen or to a frontend.
+            if (!otherAppInFront()) TopPanel.bringArtFront();
             return;
         }
         MAIN.postDelayed(TICK, POLL_MS);
+    }
+
+    /** True when the app that came to the front after the game is an ordinary app, not home, a frontend or us. */
+    private static boolean otherAppInFront() {
+        String f = lastForegroundPkg;
+        if (f == null || f.isEmpty() || app == null) return false;
+        if (f.equals(pkg) || f.equals(app.getPackageName())) return false;
+        String l = f.toLowerCase();
+        if (l.equals("android") || l.startsWith("com.android.systemui") || l.contains("launcher") || l.contains("home")
+                || l.contains("es_de") || l.contains("esde") || l.contains("emulationstation") || l.contains("daijisho")
+                || l.contains("beacon") || l.contains("frontend")) return false;
+        try {
+            android.content.Intent h = new android.content.Intent(android.content.Intent.ACTION_MAIN)
+                    .addCategory(android.content.Intent.CATEGORY_HOME);
+            android.content.pm.ResolveInfo r = app.getPackageManager().resolveActivity(h, 0);
+            if (r != null && r.activityInfo != null && f.equals(r.activityInfo.packageName)) return false;
+        } catch (Exception ignored) {
+        }
+        return true;
     }
 
     private static void addPlay(long ms) {
@@ -149,6 +171,7 @@ final class ArtWatch {
             Map<String, Boolean> shown = new HashMap<String, Boolean>();
             boolean any = false;
             String lastForeground = "";
+            lastForegroundPkg = "";
             while (events.hasNextEvent()) {
                 events.getNextEvent(e);
                 if (e.getEventType() == 1 && e.getPackageName() != null) lastForeground = e.getPackageName();
@@ -162,6 +185,7 @@ final class ArtWatch {
                     shown.put(cls, Boolean.FALSE);
                 }
             }
+            lastForegroundPkg = lastForeground;
             if (!any) return true; // no sign of the emulator yet; keep waiting
             if (shown.containsValue(Boolean.TRUE)) return true;
             // The game is only covered, not closed, while Android's file picker (choosing a ROM inside a port) or a
