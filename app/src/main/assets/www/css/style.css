@@ -875,16 +875,16 @@
   .manual-remove:hover{color:var(--danger);}
 
   /* By year */
-  .year-group{margin-bottom:28px;}
+  .year-group{margin-bottom:20px;}
   .year-heading{
     font-family:var(--font-mono);font-size:0.9375rem;color:var(--text);font-weight:700;
     margin:0 0 12px;display:flex;align-items:baseline;gap:8px;
   }
   .year-heading .n{font-size:0.6875rem;color:var(--muted);font-weight:400;}
-  .year-icons{display:flex;flex-wrap:wrap;gap:12px;}
-  .year-item{width:60px;text-align:center;cursor:pointer;position:relative;}
+  .year-icons{display:flex;flex-wrap:wrap;gap:6px 2px;}
+  .year-item{width:72px;text-align:center;cursor:pointer;position:relative;}
   .year-item img{
-    width:48px;height:48px;border-radius:3px;image-rendering:pixelated;
+    width:64px;height:64px;border-radius:3px;image-rendering:pixelated;
     border:1px solid var(--border);display:block;margin:0 auto 5px;
   }
   .year-item{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
