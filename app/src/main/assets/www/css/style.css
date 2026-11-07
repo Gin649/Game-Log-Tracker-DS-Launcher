@@ -882,9 +882,9 @@
   }
   .year-heading .n{font-size:0.6875rem;color:var(--muted);font-weight:400;}
   .year-icons{display:flex;flex-wrap:wrap;gap:6px 2px;}
-  .year-item{width:72px;text-align:center;cursor:pointer;position:relative;}
+  .year-item{width:80px;text-align:center;cursor:pointer;position:relative;}
   .year-item img{
-    width:64px;height:64px;border-radius:3px;image-rendering:pixelated;
+    width:72px;height:72px;border-radius:3px;image-rendering:pixelated;
     border:1px solid var(--border);display:block;margin:0 auto 5px;
   }
   .year-item{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
