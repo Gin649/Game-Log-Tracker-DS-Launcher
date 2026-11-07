@@ -100,13 +100,17 @@ function chipScrollTarget(row, active){
       row.scrollLeft = chipScrollTarget(row, active);
     }
     lastActive = key;
+    // more consoles off to the right: show the arrow, and keep chips from hiding behind it
+    const more = !row.classList.contains('editing') && row.scrollLeft < row.scrollWidth - row.clientWidth - 2;
+    row.classList.toggle('can-scroll', more);
+    const rightEdge = box.right - (more ? 28 : 0);
     const allEl = row.classList.contains('editing') ? null : row.querySelector('.chip[data-sys="All"]');
     row.style.scrollPaddingLeft = (allEl ? allEl.offsetWidth + 8 : 0) + 'px'; // chips snap to sit right beside All
     const leftEdge = box.left + (allEl ? allEl.offsetWidth + 8 : 0); // the pinned All covers the left of the row
     row.querySelectorAll('.chip').forEach(c => {
       if(c === allEl){ c.style.visibility = ''; return; }
       const r = c.getBoundingClientRect();
-      const cut = r.right > box.right + 3 || r.left < leftEdge - 3;
+      const cut = r.right > rightEdge + 3 || r.left < leftEdge - 3;
       const keep = c.classList.contains('active') || c.classList.contains('pad-focus') // never hide the one you are on
         || (c === row.querySelectorAll('.chip')[row.querySelectorAll('.chip').length - 1] && row.scrollLeft >= row.scrollWidth - row.clientWidth - 2); // the last one, once scrolled all the way
       c.style.visibility = cut && !keep ? 'hidden' : '';
