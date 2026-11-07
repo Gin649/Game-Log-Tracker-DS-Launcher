@@ -2,6 +2,22 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
+## v1.1.5
+
+### Added
+- A small arrow appears at the right of the console row (Library, Beaten and Backlog) when there are more consoles to scroll to, and goes away once you reach the end.
+
+### Changed
+- Beaten: the game icons are bigger (72 instead of 48) and sit closer together, so more of your games are visible at once.
+- While a game is playing on the top screen, you can still use the bottom screen by touch (scroll a guide, tap around) and the controller stays with the game, so you no longer have to tap the top screen to get the controls back. It needs Usage access, like the top-screen game watcher, and lets go when the game closes.
+
+### Fixed
+- On the top screen, the larger Game Log Tracker logo in the Retro theme no longer overlaps the profile card.
+- Opening a game that isn't on RetroAchievements no longer freezes the screen, and going back is quick again. The description is now looked up in the background and fills in when it arrives.
+- A game on a system you have no ROM for (for example Dr. Mario on NES when you only have the Game Boy version) no longer takes the box art from the same title on another system. It looks only in that system's ES-DE media, then ScreenScraper, then LaunchBox.
+- ScreenScraper no longer returns the same title from another system (the Game Boy Dr. Mario for the NES one). It returns nothing instead, so the next source is used.
+- Opening another app such as Chrome or Files on the top screen after you start a game no longer brings the art screen back over it a few seconds later. The art still comes back when the game closes to the home screen or to your frontend.
+
 ## v1.1.4
 
 ### Added
