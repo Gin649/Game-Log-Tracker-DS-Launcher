@@ -94,6 +94,18 @@ function getScreenScraperDescription(title, consoleName){
   })();
 }
 
+// ScreenScraper's screenshot address for a game, asked only when See more is opened. Inside the launcher the app asks and
+// remembers it; in the browser the same lookup goes to the Worker.
+function getScreenScraperShot(title, consoleName){
+  if(!consoleName) return Promise.resolve(null);
+  const clean = String(title).replace(/^(?:~[^~]*~\s*)+/, '').trim();
+  if(typeof thorBridge !== 'undefined' && thorBridge && thorBridge.screenscraperScreenshot){
+    return nativeDescribe('shot', clean, consoleName).then(u => /^https:\/\//.test(u || '') ? u : null);
+  }
+  return fetchWithTimeout(`${SS_WORKER}/ss/info?title=${encodeURIComponent(clean)}&system=${encodeURIComponent(consoleName)}`, 15000)
+    .then(r => r.ok ? r.json() : null).then(j => (j && j.found && j.screenshot) || null).catch(() => null);
+}
+
 // LaunchBox's write-up, used to fill the gaps when ES-DE has none. Only inside the launcher app.
 function getLaunchBoxDescription(title, consoleName){
   if(typeof thorBridge === 'undefined' || !thorBridge || !thorBridge.launchboxDescription || !consoleName) return Promise.resolve(null);
@@ -209,6 +221,37 @@ function playtimeBox(label, seconds, players, mine){
   return `<div class="gd-box"><div class="gd-main"><div class="gd-k">${label}</div><div class="gd-v">${value}</div><div class="gd-n">${n}</div></div>${you}</div>`;
 }
 
+// The See more button: opens the rest of a long write-up and shows a ScreenScraper screenshot under the text. The
+// screenshot is only looked up the first time it is opened, never when the profile opens.
+function wireSeeMore(wrap, anchor, clampable, manualCtx){
+  const more = wrap.querySelector('.gd-more');
+  if(!more) return;
+  if(clampable) anchor.classList.add('clamp');
+  let shotEl = null, shotAsked = false, open = false;
+  more.addEventListener('click', () => {
+    open = !open;
+    if(clampable) anchor.classList.toggle('clamp', !open);
+    more.textContent = open ? 'See less' : 'See more';
+    if(shotEl) shotEl.style.display = open ? '' : 'none';
+    if(open && !shotAsked && manualCtx && manualCtx.consoleName && !isHackTitle(manualCtx.title)){
+      shotAsked = true;
+      getScreenScraperShot(manualCtx.title, manualCtx.consoleName).then(url => {
+        if(!url || !more.isConnected) return;
+        const img = new Image();
+        img.className = 'gd-shot';
+        img.alt = 'Screenshot';
+        img.onload = () => {
+          if(!more.isConnected) return;
+          shotEl = img;
+          if(!open) img.style.display = 'none'; // closed again while it loaded
+          more.insertAdjacentElement('beforebegin', img);
+        };
+        img.src = url;
+      }).catch(() => {});
+    }
+  });
+}
+
 // aboutOnly: non-RA games have no playtime data, so only the write-up shows.
 function renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine, hack, igdb){
   if(description) description = tidyDescription(description); // fixes write-ups cached before tidying existed
@@ -220,7 +263,8 @@ function renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine,
   const hasTimes = !!(m && (m.beat || m.master)) || !!(my && (my.beat || my.master));
 
   if(!hasTimes && !ib && !description && !hack){
-    wrap.innerHTML = `<div class="gd-empty">${aboutOnly ? 'No write-up available for this game yet.' : 'No details available for this game yet.'}</div>`;
+    wrap.innerHTML = `<div class="gd-empty">${aboutOnly ? 'No write-up available for this game yet.' : 'No details available for this game yet.'}</div><button class="gd-more">See more</button>`;
+    wireSeeMore(wrap, wrap.querySelector('.gd-empty'), false, manualCtx);
     addManualSection(wrap, manualCtx);
     return;
   }
@@ -242,22 +286,14 @@ function renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine,
   }
   if(description){
     html += `<div class="gd-label${aboutOnly && !ib ? '' : ' gd-about-label'}">ABOUT</div><div class="gd-about"></div>`;
-    if(description.length > 280) html += '<button class="gd-more">Read more</button>';
   }
+  html += '<button class="gd-more">See more</button>';
   wrap.innerHTML = html;
 
   const aboutEl = wrap.querySelector('.gd-about');
-  if(aboutEl){
-    aboutEl.textContent = description;
-    const more = wrap.querySelector('.gd-more');
-    if(more){
-      aboutEl.classList.add('clamp');
-      more.addEventListener('click', () => {
-        const collapsed = aboutEl.classList.toggle('clamp');
-        more.textContent = collapsed ? 'Read more' : 'Show less';
-      });
-    }
-  }
+  if(aboutEl) aboutEl.textContent = description;
+  // long write-ups are cut short until See more; short ones (or none) only gain the screenshot
+  wireSeeMore(wrap, aboutEl || null, !!(aboutEl && description.length > 280), manualCtx);
   addManualSection(wrap, manualCtx);
 }
 

@@ -506,6 +506,7 @@
   .gd-about-label{margin:14px 0 6px;}
   .gd-about{font-size:0.8125rem;line-height:1.55;white-space:pre-line;}
   .gd-about.clamp{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;}
+  .gd-shot{display:block;width:100%;max-width:100%;height:auto;margin-top:10px;border-radius:8px;border:1px solid var(--border,rgba(255,255,255,0.12));}
   .gd-more{background:none;border:0;padding:0;cursor:pointer;font-size:0.75rem;color:var(--gold);margin-top:6px;}
   .cheats-spinner{
     display:inline-block;width:0.9em;height:0.9em;margin-right:6px;vertical-align:-0.12em;

@@ -151,7 +151,9 @@ final class ThorBridge {
             public void run() {
                 String text = "";
                 try {
-                    text = "lb".equals(kind) ? launchboxDescription(title, console) : screenscraperDescription(title, console);
+                    if ("lb".equals(kind)) text = launchboxDescription(title, console);
+                    else if ("shot".equals(kind)) text = screenscraperScreenshot(title, console);
+                    else text = screenscraperDescription(title, console);
                 } catch (Exception ignored) {
                 }
                 MainActivity.deliverDescription(reqId, text == null ? "" : text);
@@ -165,6 +167,17 @@ final class ThorBridge {
         try {
             ScreenScraperClient.Info i = ScreenScraperClient.lookup(act, title, console);
             return i == null ? "" : i.synopsis;
+        } catch (Exception ignored) {
+            return "";
+        }
+    }
+
+    /** The address of ScreenScraper's screenshot for a game (through the app's Worker), or "". Blocks on the network. */
+    @JavascriptInterface
+    public String screenscraperScreenshot(String title, String console) {
+        try {
+            ScreenScraperClient.Info i = ScreenScraperClient.lookup(act, title, console);
+            return i == null || i.screenshot == null ? "" : i.screenshot;
         } catch (Exception ignored) {
             return "";
         }
