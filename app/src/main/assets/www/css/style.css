@@ -481,12 +481,13 @@
   .pl-form{background:var(--bg-alt);border-radius:6px;padding:12px;margin-bottom:6px}
   .pl-form .pl-label{margin-bottom:8px}
   .pl-fields{display:flex;gap:10px;align-items:flex-end;margin-bottom:10px}
-  .pl-fields .field{margin:0;flex:1}
-  .pl-fields .field.sm{flex:0 0 74px}
+  .pl-fields .field{margin:0;flex:1 1 0;min-width:0}
+  .pl-fields .field.sm{flex:0 0 66px}
   .pl-fields input{width:100%;box-sizing:border-box}
   .pl-btns{display:flex;gap:8px}
-  .pl-btns .btn-primary,.pl-btns .btn-ghost{padding:8px 14px;font-size:0.8rem}
-  .pl-del{margin-left:auto;color:#e5736b !important}
+  .pl-btns .btn-primary,.pl-btns .btn-ghost{flex:1 1 0;width:auto;min-width:0;padding:9px 4px;font-size:0.78rem;white-space:nowrap;text-align:center}
+  .pl-btns .btn-primary{flex-grow:1.7}
+  .pl-del{color:#e5736b !important}
   .pl-error{color:#e5736b;font-size:0.75rem;margin-bottom:8px}
 
   /* Game Details section: average playtime and the RAWG write-up */

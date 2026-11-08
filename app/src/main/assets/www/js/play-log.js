@@ -1,10 +1,10 @@
-// Play log: for games on consoles with no emulator to count time on (PlayStation 5, Xbox Series X|S, Nintendo Switch 2),
+// Play log: for games on consoles with no emulator to count time on (PlayStation 5, Xbox Series X|S, Nintendo Switch 2, PC),
 // you log each session by hand: the date played and the time in hours and minutes. Sessions are saved with the game.
 // The total is the game's Playtime, and the newest session date decides where it sits in Last Played.
 
-// Only these consoles for now.
+// Only these systems for now (a PC game is "PC (Microsoft Windows)"; PC Engine and the like are emulated, so they are not here).
 function usesPlayLog(consoleName){
-  return /playstation\s*5|\bps5\b|xbox\s*series|switch\s*2/i.test(String(consoleName || ''));
+  return /playstation\s*5|\bps5\b|xbox\s*series|switch\s*2|microsoft windows|^\s*(pc|windows)\s*$/i.test(String(consoleName || ''));
 }
 
 function playLogSessions(g){
