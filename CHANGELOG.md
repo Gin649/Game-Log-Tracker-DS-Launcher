@@ -2,6 +2,14 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
+## v1.1.6
+
+### Added
+- Play log for games on PlayStation 5, Xbox Series X|S, Nintendo Switch 2 and PC, which have no emulator to count your time. In the game's profile, open Play log and add each session with the date you played and the time in hours and minutes. Edit or delete a session at any time. The total becomes the game's Playtime, and the newest session date puts the game in Last Played, so an older session doesn't push it above games you played more recently. Logging your first session ticks Now Playing for you, which moves the game from the Backlog to the Library.
+
+### Fixed
+- A game that is the next number in a series (for example Grand Theft Auto VI) no longer gets the box art or review score of the earlier game (Grand Theft Auto V). If nothing matches exactly, the app keeps the cover it already has. This fix is in the app's online service, so it applies as soon as the service is updated.
+
 ## v1.1.5
 
 ### Added
