@@ -111,6 +111,10 @@ function recentWithCustom(games){
 
 // Time played on this device, from the app's own tracking (RetroAchievements has none for these games).
 function customPlaytimeHtml(g){
+  if(typeof usesPlayLog === 'function' && usesPlayLog(g.ConsoleName)){ // PS5, Xbox Series X|S, Switch 2: the hand-kept play log
+    const mins = playLogMinutes(libraryData.find(x => x.GameID === g.GameID));
+    return mins ? `<span class="val" style="color:var(--gold)">${playLogTime(mins)}</span>` : '';
+  }
   try{
     const sec = (typeof thorBridge !== 'undefined' && thorBridge && thorBridge.playtime) ? Number(thorBridge.playtime(g.Title, g.ConsoleName)) : 0;
     if(sec >= 30) return `<span class="val" style="color:var(--gold)">${formatDuration({ hours: sec / 3600 })}</span>`;

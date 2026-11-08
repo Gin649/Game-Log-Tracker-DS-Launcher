@@ -104,8 +104,14 @@ function renderCustomGameModal(gameId, local, card){
       <div class="modal-progress">
         <div class="row"><span>Progress</span><span style="color:var(--muted)">—</span></div>
         <div class="row"><span>Playtime</span><span id="manual-playtime-val" style="color:var(--muted)">—</span></div>
+        <div class="row" id="manual-last-row" style="display:none;"><span>Last played</span><span id="manual-last-val"></span></div>
         <div class="row"><span>Status</span><span class="status-val" id="manual-status-val">${manualStatusHtml(local)}</span></div>
       </div>
+
+      ${usesPlayLog(local.ConsoleName) ? `
+      <button class="btn-view-achievements" id="modal-playlog-btn" style="margin-top:0;margin-bottom:14px;"><span class="arrow">▸</span> Play log</button>
+      <div class="guide-panel" id="modal-playlog-panel" style="display:none;margin-bottom:14px;"></div>
+      ` : ''}
 
       <div class="field" style="text-align:left;margin-bottom:14px;">
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-family:inherit; font-size:0.8125rem; color:var(--text);">
@@ -164,6 +170,31 @@ function renderCustomGameModal(gameId, local, card){
   };
 
   // Unticking Now Playing also clears Beaten, moving the game back to the Backlog.
+  // Play log (PS5, Xbox Series X|S, Switch 2): the total is the game's Playtime and the newest session is when it was last played.
+  const showPlayLog = () => {
+    if(!usesPlayLog(local.ConsoleName)) return;
+    const fresh = libraryData.find(g => g.GameID === gameId) || local;
+    const mins = playLogMinutes(fresh);
+    const ptEl = card.querySelector('#manual-playtime-val');
+    if(ptEl){ ptEl.textContent = mins ? playLogTime(mins) : '—'; ptEl.style.color = mins ? 'var(--gold)' : 'var(--muted)'; }
+    const lastRow = card.querySelector('#manual-last-row');
+    const sessions = playLogSessions(fresh);
+    if(lastRow){
+      lastRow.style.display = sessions.length ? '' : 'none';
+      if(sessions.length) card.querySelector('#manual-last-val').textContent = playLogDateLabel(sessions.map(s => s.date).sort().pop());
+    }
+    // the first logged session ticks Now Playing
+    if(fresh.manualStarted && !local.manualStarted){
+      local.manualStarted = true;
+      startedCheckbox.checked = true;
+      refreshManualStatus();
+    }
+  };
+  if(usesPlayLog(local.ConsoleName)){
+    showPlayLog();
+    setupPlayLogUI(gameId, card, showPlayLog);
+  }
+
   startedCheckbox.addEventListener('change', async () => {
     const nowStarted = startedCheckbox.checked;
     if(!nowStarted && checkbox.checked){
@@ -207,7 +238,7 @@ function renderCustomGameModal(gameId, local, card){
     }).catch(() => {});
   }
   // Games RetroAchievements doesn't know: the time played on this device, counted while the game is on screen.
-  thorFillPlaytime(card, local.Title, local.ConsoleName);
+  if(!usesPlayLog(local.ConsoleName)) thorFillPlaytime(card, local.Title, local.ConsoleName);
   attachRatingLookup(gameId, local.Title, card);
   setupGameDetailsUI(gameId, local.Title, card, { aboutOnly: true, consoleName: local.ConsoleName });
   setupGameGuideUI(gameId, local.Title, card, local.ConsoleID);

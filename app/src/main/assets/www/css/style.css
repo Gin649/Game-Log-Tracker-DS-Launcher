@@ -467,6 +467,28 @@
   .btn-view-achievements.open .arrow{transform:rotate(90deg);}
   .btn-view-achievements:disabled{opacity:0.8;cursor:default;}
 
+  /* Play log (consoles with no emulator): see play-log.js */
+  .pl-head{display:flex;justify-content:space-between;align-items:baseline;margin:2px 0 8px}
+  .pl-label{font-size:0.725rem;color:var(--muted);font-family:var(--font-mono);letter-spacing:0.04em}
+  .pl-total{font-family:var(--font-mono);color:var(--gold);font-size:0.9rem}
+  .pl-list{background:var(--bg-alt);border-radius:6px;padding:4px 12px;margin-bottom:10px}
+  .pl-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:0.8125rem}
+  .pl-row:last-child{border-bottom:0}
+  .pl-date{flex:1;color:var(--text)}
+  .pl-time{font-family:var(--font-mono);color:var(--gold)}
+  .pl-edit{background:none;border:1px solid var(--border);color:var(--muted);border-radius:4px;font:inherit;font-size:0.72rem;padding:3px 9px;cursor:pointer}
+  .pl-edit:hover{border-color:var(--gold);color:var(--text)}
+  .pl-form{background:var(--bg-alt);border-radius:6px;padding:12px;margin-bottom:6px}
+  .pl-form .pl-label{margin-bottom:8px}
+  .pl-fields{display:flex;gap:10px;align-items:flex-end;margin-bottom:10px}
+  .pl-fields .field{margin:0;flex:1}
+  .pl-fields .field.sm{flex:0 0 74px}
+  .pl-fields input{width:100%;box-sizing:border-box}
+  .pl-btns{display:flex;gap:8px}
+  .pl-btns .btn-primary,.pl-btns .btn-ghost{padding:8px 14px;font-size:0.8rem}
+  .pl-del{margin-left:auto;color:#e5736b !important}
+  .pl-error{color:#e5736b;font-size:0.75rem;margin-bottom:8px}
+
   /* Game Details section: average playtime and the RAWG write-up */
   .gd-wrap{margin-top:10px;background:var(--bg-alt);border:1px solid var(--border);border-radius:6px;padding:12px;}
   .gd-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
