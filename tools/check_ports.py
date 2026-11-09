@@ -83,36 +83,72 @@ def fetch_json(url):
         return None
 
 
+def slug(text):
+    return re.sub(r"[^a-z0-9]+", "-", str(text).lower()).strip("-")
+
+
+def recompa_entry(p, f):
+    """One fork of a Recompa port, as a ports.json entry (same fields the app reads)."""
+    base = f.get("name") or p.get("name", "")
+    e = {"id": slug(f["repo"]), "name": "%s (%s)" % (base, f["repo"].split("/")[0]) if len(p.get("forks", [])) > 1 else base,
+         "repo": f["repo"], "games": [p.get("name", "")], "consoles": [p.get("original_platform") or "other"]}
+    if f.get("package"):
+        e["package"] = f["package"]
+    pat = f.get("asset_pattern")
+    if pat and pat != "(?i)\\.apk$":
+        e["pattern"] = pat
+    if f.get("zip_entry"):
+        e["zip"] = f["zip_entry"]
+    if p.get("requirements"):
+        e["requirements"] = p["requirements"]
+    return e
+
+
+def joey_entry(p):
+    games = [g for g in (p.get("games") or []) if g]
+    return {"id": slug(p["repository"]), "name": p.get("name", "") or games[0], "repo": p["repository"], "games": games,
+            "consoles": [c for c in (p.get("consoles") or [])][:3] or ["other"]}
+
+
 def source_candidates(known):
-    """Ports in Recompa's catalog and Joey's list (the sources the list was built from) that ports.json lacks.
-    Returns (recompa_new, joey_new, readable): lists of dicts with game, platform, repos, released."""
-    rec_new, joey_new, ok = [], [], {"recompa": False, "joey": False}
+    """Ports in Recompa's catalog and Joey's list (the sources ports.json was built from) that ports.json lacks.
+    Returns (recompa_new, joey_new, ok, fill): items with game, platform, repos, released and the ready-made ports.json
+    `entry`; ok says which lists could be read; fill maps repo -> fields Recompa knows for entries already listed."""
+    rec_new, joey_new, ok, fill = [], [], {"recompa": False, "joey": False}, {}
     seen = set(known)
     rc = fetch_json(RECOMPA_URL)
     if rc and isinstance(rc.get("ports"), list):
         ok["recompa"] = True
         for p in rc["ports"]:
-            forks = [f for f in p.get("forks", []) if f.get("repo")]
-            if not forks or any(f["repo"].lower() in known for f in forks):
+            if p.get("type") == "emulator":
                 continue
-            built = [f for f in forks if (f.get("release") or {}).get("asset")]
-            rec_new.append({"game": p.get("game", ""), "name": p.get("name", ""), "platform": p.get("original_platform", ""),
-                            "type": p.get("type", ""), "repos": [f["repo"] for f in forks][:3], "apk": bool(built),
-                            "released": max([(f.get("release") or {}).get("published_at", "") for f in forks] or [""])[:10],
-                            "added": (p.get("added_at") or "")[:10]})
-            seen.update(f["repo"].lower() for f in forks)
+            for f in p.get("forks", []):
+                if not f.get("repo"):
+                    continue
+                e = recompa_entry(p, f)
+                if f["repo"].lower() in known:
+                    fill[f["repo"].lower()] = e
+                    continue
+                if f["repo"].lower() in seen or not (f.get("release") or {}).get("asset"):
+                    continue
+                seen.add(f["repo"].lower())
+                rec_new.append({"game": p.get("name", ""), "name": e["name"], "platform": p.get("original_platform", ""),
+                                "type": p.get("type", ""), "repos": [f["repo"]], "apk": True,
+                                "released": (f.get("release") or {}).get("published_at", "")[:10],
+                                "added": (p.get("added_at") or "")[:10], "entry": e})
     jy = fetch_json(JOEY_URL)
     if jy and isinstance(jy.get("ports"), list):
         ok["joey"] = True
         for p in jy["ports"]:
             repo = p.get("repository")
-            if not repo or repo.lower() in seen:
+            # only real game ports with a build: his list also holds emulators, tools and plain open-source games
+            if not repo or repo.lower() in seen or p.get("type") != "port" or not p.get("games") or not p.get("apkUrl"):
                 continue
             seen.add(repo.lower())
             joey_new.append({"game": "; ".join(p.get("games") or [])[:60], "name": p.get("name", ""), "platform": ", ".join(p.get("consoles") or []),
-                             "type": p.get("type") or "", "repos": [repo], "apk": bool(p.get("apkUrl")), "released": "", "added": ""})
+                             "type": "port", "repos": [repo], "apk": True, "released": "", "added": "", "entry": joey_entry(p)})
     rec_new.sort(key=lambda x: x["added"], reverse=True)
-    return rec_new, joey_new, ok
+    return rec_new, joey_new, ok, fill
 
 
 def gone_set(gone):
@@ -169,6 +205,18 @@ def main():
         if not has_android_build(rels, pattern):
             nobuild.append((repo, meta.get("pushed_at", "")[:10]))
 
+
+    ignored = set()  # repos you decided not to list: data/ports-ignored.txt, one owner/repo per line, # for notes
+    try:
+        for line in open("data/ports-ignored.txt", encoding="utf-8"):
+            line = line.split("#")[0].strip().lower()
+            if line:
+                ignored.add(line)
+    except OSError:
+        pass
+    rec_new, joey_new, src_ok, fill = source_candidates(known | ignored)
+
+    added = []
     if args.update_ports:
         # a run where GitHub mostly failed to answer must not mark everything gone
         if len(gone) > max(10, len(repos) // 10):
@@ -186,21 +234,30 @@ def main():
                 elif p.get("gone") and p["repo"] in alive:
                     del p["gone"]
                     changed += 1
+            # new ports from Recompa's catalog and Joey's list; ids stay unique, nothing is ever removed
+            ids = {p["id"] for p in ports}
+            for x in rec_new + joey_new:
+                e = dict(x["entry"])
+                if e["id"] in ids or not e.get("games") or not e["games"][0]:
+                    continue
+                ids.add(e["id"])
+                ports.append(e)
+                added.append(x)
+                changed += 1
+            # entries that lack a package, pattern, zip or requirements get them from Recompa when it has them
+            for p in ports:
+                src = fill.get(p["repo"].lower())
+                if not src:
+                    continue
+                for k in ("package", "pattern", "zip", "requirements"):
+                    if k not in p and k in src:
+                        p[k] = src[k]
+                        changed += 1
             if changed:
                 with open(args.ports, "w", encoding="utf-8") as f:
                     json.dump({"ports": ports}, f, indent=1, ensure_ascii=False)
                     f.write("\n")
                 print("ports.json updated (%d changes)." % changed)
-
-    ignored = set()  # repos you decided not to list: data/ports-ignored.txt, one owner/repo per line, # for notes
-    try:
-        for line in open("data/ports-ignored.txt", encoding="utf-8"):
-            line = line.split("#")[0].strip().lower()
-            if line:
-                ignored.add(line)
-    except OSError:
-        pass
-    rec_new, joey_new, src_ok = source_candidates(known | ignored)
 
     # new candidates
     seen, cands = set(), []
@@ -224,7 +281,12 @@ def main():
 
     out = ["# Android ports check", "", "Run on %s. Checked %d listed repos." % (datetime.now(timezone.utc).strftime("%Y-%m-%d"), len(repos)), ""]
     problems = bool(moved or archived or gone or nobuild or listed)
-    out[3:3] = ["**New in Recompa: %d** · **New in Joey's list: %d** · **Other new on GitHub: %d** · " % (len(rec_new), len(joey_new), len(listed)) + "**Gone (404): %d** · **No Android build any more: %d** · **Archived: %d** · **Moved: %d**" % (
+    if args.update_ports:
+        head = "**Added to ports.json: %d** (Recompa %d, Joey's list %d) · **Other new on GitHub: %d** · " % (
+            len(added), sum(1 for x in added if x in rec_new), sum(1 for x in added if x in joey_new), len(listed))
+    else:
+        head = "**New in Recompa: %d** · **New in Joey's list: %d** · **Other new on GitHub: %d** · " % (len(rec_new), len(joey_new), len(listed))
+    out[3:3] = [head + "**Gone (404): %d** · **No Android build any more: %d** · **Archived: %d** · **Moved: %d**" % (
         len(gone), len(nobuild), len(archived), len(moved)), ""]
     if moved:
         out += [("## Moved (repo name fixed in ports.json)" if args.update_ports else "## Moved (update `repo` in data/ports.json)"), ""] + ["- %s → **%s**" % m for m in moved] + [""]
@@ -243,11 +305,16 @@ def main():
         out += ["_Recompa's list could not be read this time._", ""]
     if not src_ok["joey"]:
         out += ["_Joey's list could not be read this time._", ""]
-    if rec_new:
-        out += ["## New in Recompa's list (not in ports.json)", ""] + [line(x) for x in rec_new] + [""]
-    if joey_new:
-        out += ["## New in Joey's list only (not in ports.json or Recompa)", ""] + [line(x) for x in joey_new] + [""]
-    problems = problems or bool(rec_new or joey_new)
+    if args.update_ports:
+        if added:
+            out += ["## Added to ports.json this run", ""] + [line(x) for x in added] + [""]
+        problems = problems or bool(added)
+    else:
+        if rec_new:
+            out += ["## New in Recompa's list (not in ports.json)", ""] + [line(x) for x in rec_new] + [""]
+        if joey_new:
+            out += ["## New in Joey's list only (not in ports.json or Recompa)", ""] + [line(x) for x in joey_new] + [""]
+        problems = problems or bool(rec_new or joey_new)
     if listed:
         out += ["## Other new ports found by searching GitHub", "",
                 "Each has an Android build in its releases and is not in the list. Check the game and system, then add it.", ""]
