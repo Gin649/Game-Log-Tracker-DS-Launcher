@@ -125,11 +125,14 @@ function wirePort(card, host, p, several, first, title, consoleName, last){
   box.className = 'gd-port';
   const romBtnHtml = first ? `<button class="btn-emu gd-port-rom-btn" aria-label="Get this game's ROM ready for the port" title="Get this game's ROM ready for the port (unzips it and saves it to Downloads/Roms for Ports)"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-1 3h2v4h2.5L13 19.5 8.5 16H11v-4z"/></svg></button>` : '<span class="btn-emu-spacer"></span>'; // other ports get an empty space so their buttons are the same width
   box.innerHTML = `<div class="play-row"><button class="btn-view-achievements btn-play-thor gd-port-btn"></button>${romBtnHtml}</div>
+    <button class="btn-view-achievements gd-port-update" style="display:none;"></button>
     <div class="thor-play-msg gd-port-msg" style="display:none;"></div>
     ${last ? '<div class="gd-port-note">A native Android version of this game. It needs your own copy of the game.</div>' : ''}`;
   host.appendChild(box);
   const btn = box.querySelector('.gd-port-btn');
   const msg = box.querySelector('.gd-port-msg');
+  const updBtn = box.querySelector('.gd-port-update');
+  let updChecked = false;
   let timer = null;
   let waited = 0;
 
@@ -143,20 +146,48 @@ function wirePort(card, host, p, several, first, title, consoleName, last){
     try{ return JSON.parse(b.portState(p.id, p.name, p.package || '')); }catch(e){ return { installed: false, state: 'idle' }; }
   };
 
+  // An installed port is checked once for a newer build (looked up in the background, remembered for six hours).
+  const checkUpdate = async () => {
+    if(updChecked || typeof b.portUpdate !== 'function' || !p.repo) return;
+    updChecked = true;
+    for(let i = 0; i < 25; i++){
+      if(!card.isConnected) return;
+      let r = { status: 'unknown' };
+      try{ r = JSON.parse(b.portUpdate(p.id, p.name, p.package || '', p.repo, p.pattern || '')); }catch(e){}
+      if(r.status === 'yes'){
+        updBtn.textContent = 'Update available' + (r.tag ? ' (' + r.tag + ')' : '') + '. Tap to update';
+        updBtn.style.display = '';
+        return;
+      }
+      if(r.status !== 'checking') return;
+      await new Promise(res => setTimeout(res, 700));
+    }
+  };
+  updBtn.addEventListener('click', () => {
+    try{ b.portGet(p.id, p.repo, p.pattern || '', p.zip || ''); }catch(e){ say('Could not start the download.', true); return; }
+    updBtn.style.display = 'none';
+    updChecked = false; // checked again once this finishes
+    render();
+    start();
+  });
+
   const render = () => {
     const s = read();
+    if(s.state === 'working'){
+      btn.disabled = true;
+      btn.innerHTML = s.installed ? 'Updating the port…' : 'Getting the port…';
+      updBtn.style.display = 'none';
+      say((s.message || 'Working…') + (s.percent >= 0 && s.percent < 100 ? ' ' + s.percent + '%' : ''), false);
+      return;
+    }
     if(s.installed){
       btn.disabled = false;
       btn.innerHTML = '<span class="arrow">▶</span> Play installed Android port' + tag;
       btn.dataset.mode = 'play';
       if(s.state === 'ready') say('');
+      else if(s.state === 'error') say(s.message || 'Could not update the port.', true);
       stop();
-      return;
-    }
-    if(s.state === 'working'){
-      btn.disabled = true;
-      btn.innerHTML = 'Getting the port…';
-      say((s.message || 'Working…') + (s.percent >= 0 && s.percent < 100 ? ' ' + s.percent + '%' : ''), false);
+      checkUpdate();
       return;
     }
     btn.disabled = false;

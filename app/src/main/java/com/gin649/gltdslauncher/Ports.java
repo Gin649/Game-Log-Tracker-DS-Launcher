@@ -379,6 +379,100 @@ final class Ports {
         return "checking";
     }
 
+    private static final Map<String, String> UPDATE_MEM = new HashMap<String, String>(); // repo -> "checking" / "unknown"
+    private static final long UPDATE_TTL = 6L * 60 * 60 * 1000;
+
+    private static long isoMillis(String iso) {
+        try {
+            java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+            f.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+            return f.parse(iso).getTime();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Is there a newer build of an installed port than the one on the device? Answers {"status": "yes" | "no" |
+     * "checking" | "unknown", "tag": newest release}. A build is newer when its file was published after the port was
+     * last installed or updated on this device. The newest release is looked up in the background (at most every six
+     * hours per port) and remembered, so asking again is cheap.
+     */
+    static String update(final Context ctx, String slug, String name, String known, final String repo, final String pattern) {
+        JSONObject o = new JSONObject();
+        try {
+            String status = "no", tag = "";
+            String pkg = installedPackage(ctx, slug, name, known);
+            if (!pkg.isEmpty() && repo != null && repo.matches("[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")) {
+                long installedAt = ctx.getPackageManager().getPackageInfo(pkg, 0).lastUpdateTime;
+                final android.content.SharedPreferences sp = ctx.getSharedPreferences("ports-update", Context.MODE_PRIVATE);
+                String[] f = sp.getString(repo, "").split("\\|", 3); // fetchedAt|tag|publishedAt
+                long when = 0, published = 0;
+                boolean have = false;
+                if (f.length == 3) {
+                    try {
+                        when = Long.parseLong(f[0]);
+                        published = Long.parseLong(f[2]);
+                        tag = f[1];
+                        have = true; // published 0 = looked up, nothing to update to
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+                boolean fresh = have && System.currentTimeMillis() - when < UPDATE_TTL;
+                if (have) status = published > 0 && published > installedAt + 10L * 60 * 1000 ? "yes" : "no";
+                if (!fresh) {
+                    boolean start = false;
+                    synchronized (UPDATE_MEM) {
+                        String mem = UPDATE_MEM.get(repo);
+                        if ("checking".equals(mem)) {
+                            if (!have) status = "checking";
+                        } else if ("unknown".equals(mem) && !have) {
+                            UPDATE_MEM.remove(repo); // reported once; the next profile opened tries again
+                            status = "unknown";
+                        } else {
+                            UPDATE_MEM.put(repo, "checking");
+                            start = true;
+                            if (!have) status = "checking";
+                        }
+                    }
+                    if (start) {
+                        final boolean hadOld = have;
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                String result = "unknown";
+                                try {
+                                    JSONObject[] found = findBuild(repo, pattern);
+                                    if (found != null && found[1] != null) {
+                                        JSONObject a = found[1], r = found[0];
+                                        long t = isoMillis(a.optString("updated_at", ""));
+                                        if (t <= 0) t = isoMillis(r.optString("published_at", ""));
+                                        if (t > 0) {
+                                            sp.edit().putString(repo, System.currentTimeMillis() + "|" + r.optString("tag_name", "").replace("|", "") + "|" + t).apply();
+                                            result = "done";
+                                        }
+                                    } else if (found != null) {
+                                        sp.edit().putString(repo, System.currentTimeMillis() + "||0").apply();
+                                        result = "done"; // no Android build: nothing to update to
+                                    }
+                                } catch (Exception ignored) {
+                                }
+                                synchronized (UPDATE_MEM) {
+                                    if ("done".equals(result) || hadOld) UPDATE_MEM.remove(repo);
+                                    else UPDATE_MEM.put(repo, "unknown");
+                                }
+                            }
+                        }, "port-update").start();
+                    }
+                }
+            }
+            o.put("status", status);
+            o.put("tag", tag);
+        } catch (Exception ignored) {
+        }
+        return o.toString();
+    }
+
     private static JSONObject fetchJson(String address) {
         HttpURLConnection c = null;
         try {

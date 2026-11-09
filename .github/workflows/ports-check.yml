@@ -1,0 +1,41 @@
+# Once a week, checks the Android ports list (data/ports.json) against GitHub and keeps ONE open issue,
+# "Android ports check", up to date with what needs a look: ports whose repo moved, is archived, is gone or has no
+# Android build any more, and new ports that are not listed yet. It never changes data/ports.json itself.
+name: Ports check
+
+on:
+  schedule:
+    - cron: "17 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the ports
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/check_ports.py --out ports-report.md
+
+      - name: Update the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Android ports check"
+          num=$(gh issue list --state open --search "\"$title\" in:title" --json number,title --jq "map(select(.title==\"$title\"))[0].number // empty")
+          if grep -q "Nothing needs attention" ports-report.md; then
+            if [ -n "$num" ]; then
+              gh issue comment "$num" --body-file ports-report.md
+              gh issue close "$num"
+            fi
+          elif [ -n "$num" ]; then
+            gh issue edit "$num" --body-file ports-report.md
+          else
+            gh issue create --title "$title" --body-file ports-report.md
+          fi

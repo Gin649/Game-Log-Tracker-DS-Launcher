@@ -1147,6 +1147,12 @@ final class ThorBridge {
         return Ports.available(act, repo, pattern);
     }
 
+    /** For an installed port: {status: yes | no | checking | unknown, tag}. "yes" means a newer build is out. */
+    @JavascriptInterface
+    public String portUpdate(String slug, String name, String pkg, String repo, String pattern) {
+        return Ports.update(act, slug, name, pkg, repo, pattern);
+    }
+
     /** What this device can run: {abis, sdk, vulkan}. */
     @JavascriptInterface
     public String portDevice() {

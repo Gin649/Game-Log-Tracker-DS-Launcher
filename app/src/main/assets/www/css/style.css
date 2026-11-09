@@ -1196,6 +1196,7 @@ body.pad-mode .tab-btn.pad-focus{outline-offset:-3px;}
 .chip-row.can-scroll::after{content:'\203A';position:sticky;right:0;flex:0 0 34px;margin-left:-6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-family:var(--font-mono);font-weight:700;font-size:1.375rem;line-height:1;color:var(--gold);background:linear-gradient(to right,transparent,var(--bg) 60%);pointer-events:none;}
 
 .gd-port .play-row{margin-top:0;}
+.gd-port-update{margin-top:8px;width:100%;}
 .btn-emu-spacer{flex:0 0 54px;}
 
 
