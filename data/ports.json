@@ -1085,7 +1085,7 @@
   {
    "id": "new-super-mario-bros-wii-nsmb-wii-multiplayer-decompilation",
    "name": "New Super Mario Bros. Wii",
-   "repo": "WitherBlitz/NSMB-Wii-Multiplayer-Recompilation",
+   "repo": "WitherBlitz/NSMB-Wii-Recompilation",
    "games": [
     "New Super Mario Bros. Wii"
    ],
@@ -1610,7 +1610,8 @@
      "arm64-v8a"
     ],
     "min_sdk": 24
-   }
+   },
+   "gone": true
   },
   {
    "id": "super-mario-strikers-strikers-android",
@@ -2348,7 +2349,7 @@
   {
    "id": "am2r-android-am2r-autopatcher-android",
    "name": "AM2R Autopatcher",
-   "repo": "am2r-android/AM2R-Autopatcher-Android",
+   "repo": "PatchDev-AM2ARM/AM2R-Autopatcher-Android",
    "games": [
     "AM2R: Another Metroid 2 Remake"
    ],
@@ -3447,7 +3448,8 @@
      "arm64-v8a"
     ],
     "min_sdk": 24
-   }
+   },
+   "gone": true
   },
   {
    "id": "opencommunityedition-opence",
@@ -3565,7 +3567,7 @@
   {
    "id": "vasysik-horizon-android",
    "name": "Horizon",
-   "repo": "Vasysik/horizon-android",
+   "repo": "starling-client/starling",
    "games": [
     "Minecraft Java rust rewrite"
    ],
@@ -3905,7 +3907,8 @@
      "arm64-v8a"
     ],
     "min_sdk": 24
-   }
+   },
+   "gone": true
   },
   {
    "id": "randomityguy-mbhaxe",
@@ -3941,7 +3944,8 @@
      "arm64-v8a"
     ],
     "min_sdk": 24
-   }
+   },
+   "gone": true
   },
   {
    "id": "luisxl15-metal-gear-solid-2-sons-of-liberty-for-android",
@@ -5329,7 +5333,7 @@
   {
    "id": "linkzenic-shipwright-android",
    "name": "Ship of Harkinian (linkzenic)",
-   "repo": "linkzenic/Shipwright-Android",
+   "repo": "linkzenic/Shipwright-Ports",
    "games": [
     "The Legend of Zelda: Ocarina of Time"
    ],

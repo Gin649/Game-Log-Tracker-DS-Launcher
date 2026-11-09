@@ -7,8 +7,10 @@
   New ports:
     - repos that look like a recompiled, decompiled or reimplemented game with an Android build, and are not listed
 
-Nothing is changed in ports.json: a new port needs the game's name(s) and its system, so the report is the list to
-go through. Uses the GitHub CLI (`gh api`), which is authenticated on GitHub Actions through GH_TOKEN.
+With --update-ports, ports.json is kept current for the two things that need no judgement: a repo that moved gets its
+new name (the port's id stays, so installed ports are still recognised), and a repo that is gone gets "gone": true (and
+loses it if the repo comes back). Entries are never deleted, so a port you installed stays in its game's profile and
+keeps working. New ports are only reported: a new port needs the game's name(s) and its system added by hand. Uses the GitHub CLI (`gh api`), which is authenticated on GitHub Actions through GH_TOKEN.
 
     python tools/check_ports.py --out report.md
 """
@@ -68,6 +70,10 @@ def has_android_build(releases, pattern=None):
     return None
 
 
+def gone_set(gone):
+    return set(gone)
+
+
 def age_days(iso):
     try:
         d = datetime.fromisoformat(iso.replace("Z", "+00:00"))
@@ -80,6 +86,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ports", default="data/ports.json")
     ap.add_argument("--out", default="ports-report.md")
+    ap.add_argument("--update-ports", action="store_true", help="write moved repos and gone flags back to ports.json")
     ap.add_argument("--limit", type=int, default=0, help="only check this many listed repos (for a quick test)")
     args = ap.parse_args()
 
@@ -92,6 +99,7 @@ def main():
         repos = repos[:args.limit]
 
     moved, archived, gone, nobuild, errors = [], [], [], [], []
+    alive = set()  # repos GitHub answered for, whatever they hold
     known = {r.lower() for r in by_repo}
     for repo in repos:
         meta = gh("repos/" + repo)
@@ -102,6 +110,7 @@ def main():
             gone.append(repo)
             continue
         full = meta.get("full_name", repo)
+        alive.add(repo)
         if full.lower() != repo.lower():
             moved.append((repo, full))
             known.add(full.lower())
@@ -114,6 +123,29 @@ def main():
         pattern = next((p.get("pattern") for p in by_repo[repo] if p.get("pattern")), None)
         if not has_android_build(rels, pattern):
             nobuild.append((repo, meta.get("pushed_at", "")[:10]))
+
+    if args.update_ports:
+        # a run where GitHub mostly failed to answer must not mark everything gone
+        if len(gone) > max(10, len(repos) // 10):
+            print("Too many repos look gone (%d): not touching ports.json." % len(gone))
+        else:
+            ren = dict(moved)
+            changed = 0
+            for p in ports:
+                if p["repo"] in ren:
+                    p["repo"] = ren[p["repo"]]
+                    changed += 1
+                if p["repo"] in gone_set(gone) and not p.get("gone"):
+                    p["gone"] = True
+                    changed += 1
+                elif p.get("gone") and p["repo"] in alive:
+                    del p["gone"]
+                    changed += 1
+            if changed:
+                with open(args.ports, "w", encoding="utf-8") as f:
+                    json.dump({"ports": ports}, f, indent=1, ensure_ascii=False)
+                    f.write("\n")
+                print("ports.json updated (%d changes)." % changed)
 
     # new candidates
     seen, cands = set(), []
@@ -140,9 +172,9 @@ def main():
     out[3:3] = ["**New ports found: %d** · **Gone (404): %d** · **No Android build any more: %d** · **Archived: %d** · **Moved: %d**" % (
         len(listed), len(gone), len(nobuild), len(archived), len(moved)), ""]
     if moved:
-        out += ["## Moved (update `repo` in data/ports.json)", ""] + ["- %s → **%s**" % m for m in moved] + [""]
+        out += [("## Moved (repo name fixed in ports.json)" if args.update_ports else "## Moved (update `repo` in data/ports.json)"), ""] + ["- %s → **%s**" % m for m in moved] + [""]
     if gone:
-        out += ["## Gone (404)", ""] + ["- %s (%s)" % (r, ", ".join(p["name"] for p in by_repo[r])) for r in gone] + [""]
+        out += [("## Gone (404, flagged in ports.json; kept for anyone who installed it)" if args.update_ports else "## Gone (404)"), ""] + ["- %s (%s)" % (r, ", ".join(p["name"] for p in by_repo[r])) for r in gone] + [""]
     if archived:
         out += ["## Archived (no more updates)", ""] + ["- %s" % r for r in archived] + [""]
     if nobuild:

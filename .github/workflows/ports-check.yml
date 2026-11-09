@@ -1,6 +1,7 @@
 # Once a week, checks the Android ports list (data/ports.json) against GitHub and keeps ONE open issue,
 # "Android ports check", up to date with what needs a look: ports whose repo moved, is archived, is gone or has no
-# Android build any more, and new ports that are not listed yet. It never changes data/ports.json itself.
+# Android build any more, and new ports that are not listed yet. It fixes data/ports.json for renamed repos and flags
+# removed ones ("gone": true) but never deletes an entry, so an installed port stays in its game's profile.
 name: Ports check
 
 on:
@@ -9,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   issues: write
 
 jobs:
@@ -22,8 +23,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          python3 tools/check_ports.py --out ports-report.md
+          python3 tools/check_ports.py --update-ports --out ports-report.md
           cat ports-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save fixes to ports.json
+        run: |
+          if ! git diff --quiet data/ports.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data/ports.json
+            git commit -q -m "Ports list: fix renamed repos, flag removed ones [automated]"
+            git pull -q --rebase origin main
+            git push -q origin HEAD:main
+          fi
 
       - name: Update the issue
         env:

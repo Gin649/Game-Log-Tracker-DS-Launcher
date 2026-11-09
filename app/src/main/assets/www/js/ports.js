@@ -99,6 +99,7 @@ function thorWirePorts(card, title, consoleName){
     if(typeof window.ThorBridge.portAvailable === 'function'){
       const verdict = await Promise.all(ports.map(async q => {
         if(isInstalled(q)) return true;
+        if(q.gone) return false; // its repo was removed: only someone who installed it still sees it
         for(let i = 0; i < 20; i++){
           if(!card.isConnected) return false;
           let a = 'unknown';
