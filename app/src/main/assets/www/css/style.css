@@ -827,6 +827,31 @@
   }
   .img-zoom-hint.hidden{opacity:0;}
 
+  /* Cover picker controls (shown only when the profile can offer other covers) */
+  .zoom-nav{
+    position:absolute;top:50%;transform:translateY(-50%);width:44px;height:64px;border:none;border-radius:10px;
+    background:rgba(0,0,0,0.45);color:#fff;font-size:2rem;line-height:1;display:none;align-items:center;
+    justify-content:center;cursor:pointer;z-index:2;
+  }
+  .zoom-prev{left:calc(6px + env(safe-area-inset-left));}
+  .zoom-next{right:calc(6px + env(safe-area-inset-right));}
+  .img-zoom-overlay.can-pick .zoom-nav{display:flex;}
+  .img-zoom-overlay.can-pick.zoomed .zoom-nav{display:none;}
+  .zoom-pick{
+    position:absolute;left:0;right:0;bottom:0;display:none;flex-direction:column;align-items:center;gap:8px;
+    padding:12px 16px calc(14px + env(safe-area-inset-bottom));
+    background:linear-gradient(to top,rgba(8,6,14,0.92) 60%,rgba(8,6,14,0));z-index:2;
+  }
+  .img-zoom-overlay.can-pick .zoom-pick{display:flex;}
+  .img-zoom-overlay.can-pick .img-zoom-hint{display:none;}
+  .zoom-pick-label{font-family:var(--font-mono);font-size:0.75rem;color:var(--text,#fff);text-align:center;}
+  .zoom-pick-dots{display:flex;gap:6px;min-height:8px;}
+  .zoom-pick-dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.3);display:block;}
+  .zoom-pick-dots i.on{background:var(--accent,#fff);}
+  .zoom-pick-row{display:flex;gap:8px;width:100%;max-width:360px;}
+  .zoom-pick-row button{flex:1;white-space:nowrap;min-width:0;}
+  .zoom-pick-row button[disabled]{opacity:0.5;}
+
   /* Library search row + add game */
   .lib-search-row{display:flex;gap:8px;margin-bottom:12px;}
   .lib-search-row .lib-search{margin-bottom:0;flex:1;}

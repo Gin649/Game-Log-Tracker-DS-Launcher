@@ -455,11 +455,30 @@
     return false;
   }
 
+  // The box art viewer: left/right browse covers, the confirm button keeps the one on screen, the back button closes it.
+  function zoomKey(name, confirmKey){
+    const zoom = $('#img-zoom-overlay');
+    if(!zoom.classList.contains('open')) return false;
+    const pick = zoom.classList.contains('can-pick');
+    if(name === 'left' || name === 'right'){
+      if(pick && !zoom.classList.contains('zoomed')) $(name === 'left' ? '#zoom-prev' : '#zoom-next').click();
+      return true;
+    }
+    if(name === 'up' || name === 'down') return true;
+    if(name === confirmKey){
+      const use = $('#zoom-use');
+      if(pick && use && !use.disabled) use.click();
+      return true;
+    }
+    return false;
+  }
+
   function press(name){
     const wasShowing = padMode;
     if(!padMode){ padMode = true; document.body.classList.add('pad-mode'); }
     const confirmKey = swapAB ? 'b' : 'a';
     if(!menuOpen() && guideKey(name)) return;
+    if(zoomKey(name, confirmKey)) return;
     if(DIRS.includes(name)){
       if(!wasShowing) ensureFocus(); // first press just shows where the highlight is
       else move(name);

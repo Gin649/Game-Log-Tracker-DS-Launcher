@@ -138,6 +138,17 @@ final class LaunchBoxArt {
         return file.isEmpty() ? null : IMAGE_URL + file;
     }
 
+    /** Address of the game's front cover on LaunchBox's image server (never a screenshot), or null. */
+    static String frontUrl(Context ctx, String folder, String title) throws IOException {
+        String platform = platformFor(ctx, folder);
+        if (platform == null) return null;
+        Index idx = index(ctx, Matcher.compact(platform));
+        if (idx == null) return null;
+        String[] row = match(idx, title);
+        if (row == null || row[2].isEmpty()) return null;
+        return IMAGE_URL + row[2];
+    }
+
     /** Like Matcher.norm, but a minus sign before a number counts: "Super Mario Bros. -2" is a hack, not "Super Mario Bros. 2". */
     private static String lbNorm(String s) {
         if (s == null) return "";

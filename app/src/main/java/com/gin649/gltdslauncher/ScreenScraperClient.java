@@ -36,6 +36,8 @@ final class ScreenScraperClient {
 
     static final class Info {
         String name = "", synopsis = "", box, screenshot, wheel, fanart;
+        /** Every regional cover the Worker listed, as {region label, address}; empty on an older cached answer. */
+        java.util.List<String[]> boxes = new java.util.ArrayList<String[]>();
     }
 
     private ScreenScraperClient() {}
@@ -88,6 +90,15 @@ final class ScreenScraperClient {
         i.screenshot = addr(o, "screenshot");
         i.wheel = addr(o, "wheel");
         i.fanart = addr(o, "fanart");
+        org.json.JSONArray bs = o.optJSONArray("boxes");
+        if (bs != null) {
+            for (int k = 0; k < bs.length(); k++) {
+                JSONObject b = bs.optJSONObject(k);
+                if (b == null) continue;
+                String u = b.optString("url"), l = b.optString("label");
+                if (!u.isEmpty()) i.boxes.add(new String[]{l, u});
+            }
+        }
         return i;
     }
 

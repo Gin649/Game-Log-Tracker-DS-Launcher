@@ -232,9 +232,10 @@ function renderCustomGameModal(gameId, local, card){
   });
 
   thorWirePlay(card, gameId, local.Title, local.ConsoleName, boxArt, local.romPath);
+  applyBoxPick(card, gameId, local.Title, local.ConsoleName, boxArt, local.romPath);
   if(typeof betterBoxArt === 'function' && !local.ImageIcon){
     betterBoxArt(gameId, local.Title, local.ConsoleName, local.romPath).then(url => {
-      if(url && card.dataset.gameId === String(gameId)) card.querySelector('.modal-art').src = url;
+      if(url && card.dataset.gameId === String(gameId) && !card.dataset.boxPicked) card.querySelector('.modal-art').src = url;
     }).catch(() => {});
   }
   // Games RetroAchievements doesn't know: the time played on this device, counted while the game is on screen.
@@ -546,9 +547,10 @@ async function openGameModal(gameId, opts){
 
   const beatenAchBtn = card.querySelector('#modal-view-beaten-ach-btn');
   thorWirePlay(card, gameId, title, console_, boxArt, local && local.romPath);
+  applyBoxPick(card, gameId, title, console_, boxArt, local && local.romPath);
   if(typeof betterBoxArt === 'function'){
     betterBoxArt(gameId, title, console_, local && local.romPath).then(url => {
-      if(url && card.dataset.gameId === String(gameId)) card.querySelector('.modal-art').src = url;
+      if(url && card.dataset.gameId === String(gameId) && !card.dataset.boxPicked) card.querySelector('.modal-art').src = url;
     }).catch(() => {});
   }
   const beatenAchWrap = card.querySelector('#modal-beaten-achievements');
@@ -610,12 +612,15 @@ function closeGameModal(opts){
   }
 }
 
-// Box art viewer with pinch zoom and pan. Tap the box art to open it.
+// Box art viewer with pinch zoom and pan, and the cover picker (see box-art-pick.js). Tap the box art to open it.
 (function(){
   const overlay = $('#img-zoom-overlay');
   const img = $('#img-zoom-target');
   const closeBtn = $('#img-zoom-close');
   const hint = $('#img-zoom-hint');
+  const prevBtn = $('#zoom-prev'), nextBtn = $('#zoom-next');
+  const useBtn = $('#zoom-use'), autoBtn = $('#zoom-auto');
+  const pickLabel = $('#zoom-pick-label'), pickDots = $('#zoom-pick-dots');
   if(!overlay || !img || !closeBtn) return;
 
   const MIN_SCALE = 1, MAX_SCALE = 5;
@@ -623,28 +628,122 @@ function closeGameModal(opts){
   const pointers = new Map();
   let lastDist = null, lastMid = null, dragStart = null, lastTapTime = 0;
 
+  // Cover picker state: the covers for the game whose profile opened the viewer. Nothing is fetched until you move.
+  let pick = null; // { ctx, list: [{label,url}], idx, loaded, loading, chosen }
+  let swipe = null, multi = false;
+
+  function renderPick(){
+    if(!pick) return;
+    const n = pick.list.length;
+    const cur = pick.list[pick.idx];
+    pickLabel.textContent = pick.loading ? 'Looking for covers…'
+      : (n > 1 ? `${cur.label}  (${pick.idx + 1}/${n})` : (pick.loaded ? 'No other covers found' : 'Swipe to look for other covers'));
+    pickDots.innerHTML = n > 1 ? pick.list.map((_, i) => `<i class="${i === pick.idx ? 'on' : ''}"></i>`).join('') : '';
+    const isChosen = !!pick.chosen && cur && pick.chosen === cur.url;
+    useBtn.textContent = isChosen ? 'Saved ✓' : 'Use this one';
+    useBtn.disabled = !cur || isChosen;
+    autoBtn.style.display = pick.chosen ? '' : 'none';
+  }
+  async function ensureCovers(){
+    if(!pick || pick.loaded || pick.loading) return;
+    pick.loading = true; renderPick();
+    const mine = pick;
+    let list = [];
+    try{ list = await loadBoxCandidates(pick.ctx); }catch(e){}
+    if(pick !== mine) return; // the viewer was closed or reopened meanwhile
+    const shown = mine.list[mine.idx] && mine.list[mine.idx].url;
+    // keep what is on screen first, then the others
+    const same = list.find(c => c.url === shown);
+    const rest = list.filter(c => c.url !== shown);
+    mine.list = [same ? { label: same.label, url: shown } : mine.list[mine.idx]].concat(rest);
+    mine.idx = 0;
+    mine.loading = false; mine.loaded = true;
+    renderPick();
+  }
+  async function step(dir){
+    if(!pick) return;
+    if(!pick.loaded){ await ensureCovers(); if(!pick || pick.list.length < 2) return; }
+    const n = pick.list.length;
+    if(n < 2) return;
+    pick.idx = (pick.idx + dir + n) % n;
+    img.src = pick.list[pick.idx].url;
+    resetTransform();
+    renderPick();
+  }
+  function setZoomedClass(){ overlay.classList.toggle('zoomed', scale > MIN_SCALE + 0.02); }
+
   function applyTransform(){
     img.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
   }
   function resetTransform(){
-    scale = 1; panX = 0; panY = 0; applyTransform();
+    scale = 1; panX = 0; panY = 0; applyTransform(); setZoomedClass();
   }
-  function openZoom(src){
+  async function openZoom(src, ctx){
     if(!src) return;
     img.src = src;
     resetTransform();
+    pick = null;
+    overlay.classList.remove('can-pick');
+    if(ctx && ctx.gameId){
+      const chosen = await getBoxPick(ctx.gameId).catch(() => null);
+      pick = { ctx, list: [{ label: chosen && chosen === src ? 'Your choice' : 'Current', url: src }], idx: 0, loaded: false, loading: false, chosen };
+      overlay.classList.add('can-pick');
+      renderPick();
+    }
     overlay.classList.add('open');
     if(hint) hint.classList.remove('hidden');
   }
   function closeZoom(){
-    overlay.classList.remove('open');
+    pick = null; swipe = null;
+    overlay.classList.remove('open', 'can-pick', 'zoomed');
     pointers.clear();
     lastDist = null; lastMid = null; dragStart = null;
   }
 
+  // Any box art image in the game profile opens the zoom viewer.
   document.addEventListener('click', (e) => {
     const art = e.target.closest('.modal-art');
-    if(art && art.src) openZoom(art.src);
+    if(!art || !art.src) return;
+    const card = art.closest('.modal-card, [data-game-id]') || art.parentElement;
+    const host = art.closest('[data-game-id]');
+    const ctx = host && host.dataset.boxTitle !== undefined ? {
+      gameId: host.dataset.gameId,
+      title: host.dataset.boxTitle,
+      consoleName: host.dataset.boxConsole,
+      original: host.dataset.boxOriginal,
+      romPath: host.dataset.boxRom,
+    } : null;
+    openZoom(art.src, ctx);
+  });
+
+  prevBtn.addEventListener('click', (e) => { e.stopPropagation(); step(-1); });
+  nextBtn.addEventListener('click', (e) => { e.stopPropagation(); step(1); });
+  useBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    if(!pick) return;
+    const cur = pick.list[pick.idx]; if(!cur) return;
+    await setBoxPick(pick.ctx.gameId, cur.url);
+    pick.chosen = cur.url;
+    // the profile behind shows the new cover straight away
+    const host = document.querySelector(`[data-game-id="${pick.ctx.gameId}"] .modal-art`);
+    if(host){ host.src = cur.url; const c = host.closest('[data-game-id]'); if(c) c.dataset.boxPicked = '1'; }
+    renderPick();
+    if(typeof showToast === 'function') showToast('Cover saved');
+  });
+  autoBtn.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    if(!pick) return;
+    await setBoxPick(pick.ctx.gameId, null);
+    pick.chosen = null;
+    const host = document.querySelector(`[data-game-id="${pick.ctx.gameId}"]`);
+    if(host){ // go back to the automatic order
+      delete host.dataset.boxPicked;
+      const art = host.querySelector('.modal-art');
+      const auto = (typeof cachedBoxArt === 'function' && cachedBoxArt(pick.ctx.gameId)) || host.dataset.boxOriginal;
+      if(art && auto) art.src = auto;
+    }
+    renderPick();
+    if(typeof showToast === 'function') showToast('Cover back to automatic');
   });
 
   closeBtn.addEventListener('click', closeZoom);
@@ -656,12 +755,15 @@ function closeGameModal(opts){
   img.addEventListener('pointerdown', (e) => {
     img.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if(pointers.size === 1){ swipe = { x: e.clientX, y: e.clientY }; multi = false; }
+    else multi = true;
 
     if(pointers.size === 1){
       const now = Date.now();
       if(now - lastTapTime < 320){ // double-tap: toggle zoom
         if(scale > MIN_SCALE){ resetTransform(); }
         else { scale = 2.5; applyTransform(); }
+        setZoomedClass();
         lastTapTime = 0;
       } else {
         lastTapTime = now;
@@ -689,7 +791,7 @@ function closeGameModal(opts){
         scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * factor));
         panX += newMid.x - lastMid.x;
         panY += newMid.y - lastMid.y;
-        applyTransform();
+        applyTransform(); setZoomedClass();
       }
       lastDist = newDist; lastMid = newMid;
     } else if(pointers.size === 1 && dragStart && scale > MIN_SCALE){
@@ -700,6 +802,12 @@ function closeGameModal(opts){
   });
 
   function endPointer(e){
+    // a clear sideways swipe on an unzoomed cover moves to the next or previous one
+    if(e.type === 'pointerup' && swipe && !multi && pointers.size === 1 && scale <= MIN_SCALE + 0.02 && pick){
+      const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
+      if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) step(dx < 0 ? 1 : -1);
+    }
+    if(pointers.size <= 1) swipe = null;
     pointers.delete(e.pointerId);
     if(pointers.size < 2){ lastDist = null; lastMid = null; }
     if(pointers.size === 1){
@@ -708,13 +816,17 @@ function closeGameModal(opts){
     } else if(pointers.size === 0){
       dragStart = null;
       if(scale <= MIN_SCALE + 0.02) resetTransform();
+      setZoomedClass();
     }
   }
   img.addEventListener('pointerup', endPointer);
   img.addEventListener('pointercancel', endPointer);
 
   document.addEventListener('keydown', (e) => {
-    if(e.key === 'Escape' && overlay.classList.contains('open')) closeZoom();
+    if(!overlay.classList.contains('open')) return;
+    if(e.key === 'Escape') closeZoom();
+    else if(e.key === 'ArrowLeft') step(-1);
+    else if(e.key === 'ArrowRight') step(1);
   });
 })();
 

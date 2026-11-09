@@ -161,6 +161,72 @@ final class ThorBridge {
         });
     }
 
+    /**
+     * Every cover the app can find for a game, for the cover picker: your frontend's box art, LaunchBox's front and
+     * ScreenScraper's regional covers. Only asked for when you start browsing covers in a game's profile. The answer
+     * comes back to window.thorDescription(reqId, json) as [{"label":..,"url":..}] ("[]" when there are none).
+     */
+    @JavascriptInterface
+    public void boxCandidatesAsync(final String reqId, final String title, final String folder, final String romPath, final String console) {
+        DESC_IO.execute(new Runnable() {
+            @Override
+            public void run() {
+                org.json.JSONArray out = new org.json.JSONArray();
+                java.util.HashSet<String> seen = new java.util.HashSet<String>();
+                try {
+                    String fold = folder == null ? "" : folder;
+                    if (fold.isEmpty() && console != null && !console.isEmpty()) {
+                        SystemMap map = Shared.systems();
+                        java.util.List<SystemMap.Sys> L = map == null ? null : map.forConsole(console);
+                        if (L != null && !L.isEmpty()) fold = L.get(0).folder;
+                    }
+                    if (Config.useEsdeMedia() && !fold.isEmpty()) {
+                        try {
+                            String p = romPath == null || romPath.isEmpty() ? null : MediaFinder.boxArt(fold, romPath);
+                            if (p == null) {
+                                java.util.List<RomIndex.Rom> pool = new java.util.ArrayList<RomIndex.Rom>();
+                                for (RomIndex.Rom r : Shared.index().all()) if (r.sys.folder.equals(fold)) pool.add(r);
+                                RomIndex.Rom r = Matcher.best(pool, title);
+                                if (r != null) p = MediaFinder.boxArt(r.sys.folder, r.file.getPath());
+                            }
+                            if (p != null && new File(p).isFile()) {
+                                String token = Base64.encodeToString(p.getBytes("UTF-8"), Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
+                                addCandidate(out, seen, "ES-DE", "https://" + Config.APP_HOST_BUILTIN + "/art/" + token);
+                            }
+                        } catch (Exception ignored) {
+                        }
+                    }
+                    if (Config.LAUNCHBOX_ART && !fold.isEmpty()) {
+                        try {
+                            addCandidate(out, seen, "LaunchBox", LaunchBoxArt.frontUrl(act, fold, title));
+                        } catch (Exception ignored) {
+                        }
+                    }
+                    if (!fold.isEmpty()) {
+                        try {
+                            ScreenScraperClient.Info si = ScreenScraperClient.lookup(act, title, fold);
+                            if (si != null) {
+                                if (si.boxes.isEmpty()) addCandidate(out, seen, "ScreenScraper", si.box);
+                                for (String[] b : si.boxes) addCandidate(out, seen, "ScreenScraper \u00b7 " + b[0], b[1]);
+                            }
+                        } catch (Exception ignored) {
+                        }
+                    }
+                } catch (Exception ignored) {
+                }
+                MainActivity.deliverDescription(reqId, out.toString());
+            }
+        });
+    }
+
+    private static void addCandidate(org.json.JSONArray out, java.util.HashSet<String> seen, String label, String url) {
+        if (url == null || url.isEmpty() || !seen.add(url)) return;
+        try {
+            out.put(new org.json.JSONObject().put("label", label).put("url", url));
+        } catch (org.json.JSONException ignored) {
+        }
+    }
+
     /** ScreenScraper's write-up for a game (asked through the app's Worker, no setup needed), or "". Blocks on the network. */
     @JavascriptInterface
     public String screenscraperDescription(String title, String console) {

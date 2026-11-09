@@ -20,7 +20,7 @@ function closeAboutModal(){
 }
 
 // Cached RA data is fetched again when needed, so backups leave it out.
-const REBUILDABLE_CACHE_PREFIXES = ['ra-hours:', 'ra-gameinfo:', 'ra-ach:', 'ra-dash:'];
+const REBUILDABLE_CACHE_PREFIXES = ['ra-hours:', 'ra-gameinfo:', 'ra-ach:', 'ra-dash:', 'boxcand:'];
 function isRebuildableCache(rawKey){
   return REBUILDABLE_CACHE_PREFIXES.some(p => rawKey.startsWith('priv:' + p) || rawKey.startsWith('shared:' + p));
 }

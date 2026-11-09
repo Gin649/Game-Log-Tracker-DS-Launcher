@@ -172,6 +172,16 @@
   <button class="modal-close" id="img-zoom-close">✕</button>
   <div class="img-zoom-hint" id="img-zoom-hint">Pinch or double-tap to zoom</div>
   <img id="img-zoom-target" src="" alt="">
+  <button class="zoom-nav zoom-prev" id="zoom-prev" aria-label="Previous cover">‹</button>
+  <button class="zoom-nav zoom-next" id="zoom-next" aria-label="Next cover">›</button>
+  <div class="zoom-pick" id="zoom-pick">
+    <div class="zoom-pick-label" id="zoom-pick-label"></div>
+    <div class="zoom-pick-dots" id="zoom-pick-dots"></div>
+    <div class="zoom-pick-row">
+      <button class="btn-primary" id="zoom-use">Use this one</button>
+      <button class="btn-ghost" id="zoom-auto">Automatic</button>
+    </div>
+  </div>
 </div>
 
 <div id="guide-reader-overlay" class="guide-reader-overlay">
@@ -349,6 +359,7 @@
 <script src="js/views.js"></script>
 <script src="js/manuals.js"></script>
 <script src="js/game-details.js"></script>
+<script src="js/box-art-pick.js"></script>
 <script src="js/play-log.js"></script>
 <script src="js/game-modal.js"></script>
 <script src="js/add-game.js"></script>
