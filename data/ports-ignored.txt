@@ -1,0 +1,2 @@
+# Repos the weekly Ports check should not suggest again (one owner/repo per line).
+# Add a line here for a port from Recompa's or Joey's list that you decided not to add.
