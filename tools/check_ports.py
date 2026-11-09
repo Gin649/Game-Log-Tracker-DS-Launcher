@@ -45,9 +45,11 @@ def gh(path, *params):
         err = (r.stderr or "") + (r.stdout or "")
         if "404" in err or "Not Found" in err or "451" in err:
             return {"_missing": True}
-        if "rate limit" in err.lower() or "403" in err:
+        if "rate limit" in err.lower():
             time.sleep(20 * (attempt + 1))
             continue
+        if "403" in err:
+            return None  # not allowed to read this repo: reported as "could not be checked", no point retrying
         time.sleep(2)
     return None
 
