@@ -21,7 +21,9 @@ jobs:
       - name: Check the ports
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 tools/check_ports.py --out ports-report.md
+        run: |
+          python3 tools/check_ports.py --out ports-report.md
+          cat ports-report.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Update the issue
         env:

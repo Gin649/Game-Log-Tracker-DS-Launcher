@@ -137,6 +137,8 @@ def main():
 
     out = ["# Android ports check", "", "Run on %s. Checked %d listed repos." % (datetime.now(timezone.utc).strftime("%Y-%m-%d"), len(repos)), ""]
     problems = bool(moved or archived or gone or nobuild or listed)
+    out[3:3] = ["**New ports found: %d** · **Gone (404): %d** · **No Android build any more: %d** · **Archived: %d** · **Moved: %d**" % (
+        len(listed), len(gone), len(nobuild), len(archived), len(moved)), ""]
     if moved:
         out += ["## Moved (update `repo` in data/ports.json)", ""] + ["- %s → **%s**" % m for m in moved] + [""]
     if gone:
