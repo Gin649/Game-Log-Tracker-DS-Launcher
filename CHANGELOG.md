@@ -2,6 +2,17 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
+## v1.1.7
+
+### Added
+- In a game's profile, the About section now always has a See more button (it was Read more, and only on long write-ups). It opens the rest of a long write-up and shows a ScreenScraper screenshot of the game under the text. Games with a short write-up, or none, get the button too. The screenshot is only looked up the first time you tap See more, never when the profile opens.
+- Android ports you have installed now tell you when a newer build is out: an Update button appears in the ports section, and it downloads and installs the new version the same way as the first install. The app looks up the newest release in the background (at most every six hours per port) and counts a build as newer when it was published after you last installed or updated the port.
+- About 130 more Android ports, and the list now keeps itself up to date: new ports are added, renamed projects are followed, and projects that disappear are hidden unless you installed them, so an installed port stays in its game's profile.
+- Choose your own box art. Tap the cover in a game's profile to see it full screen, then swipe left or right (or use the arrows, or left and right on the controller) to browse other covers: the one you have now, your frontend's box art, LaunchBox's front cover, ScreenScraper's covers for each region, and IGDB's cover. Press Use this one (the confirm button on the controller) to keep it; Automatic goes back to the app's own choice. It works for every game, not only RetroAchievements ones, and your choice is saved in your backup. The covers are only looked up the first time you swipe, never when a profile opens, and swiping is off while the picture is zoomed in.
+
+### Changed
+- In a game's profile, Android ports now have their own section, Android Ports Available, closed until you open it. Download, Play and Update are inside it, so they can't be tapped by mistake under the game's own Play button. The section's name shows how many ports there are and how many you have installed.
+
 ## v1.1.6
 
 ### Added
