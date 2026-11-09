@@ -8104,7 +8104,7 @@
   {
    "id": "simipob-pkshield-android",
    "name": "PKShield Android",
-   "repo": "simipoB/PKShield-Android",
+   "repo": "simipoB/Galar-Native-Android",
    "games": [
     "PKShield Android"
    ],
@@ -8560,7 +8560,7 @@
   {
    "id": "witherblitz-nsmb-wii-multiplayer-recompilation",
    "name": "NSMBW Recompiled",
-   "repo": "WitherBlitz/NSMB-Wii-Multiplayer-Recompilation",
+   "repo": "WitherBlitz/NSMB-Wii-Recompilation",
    "games": [
     "NSMBW Recompiled"
    ],
