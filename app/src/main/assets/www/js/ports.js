@@ -113,8 +113,21 @@ function thorWirePorts(card, title, consoleName){
       ports = ports.filter((q, i) => verdict[i]);
     }
     if(!ports.length || !card.isConnected) return;
-    host.innerHTML = ports.length > 1 ? '<div class="gd-port-multi">Multiple Android ports available</div>' : '';
-    ports.forEach((p, i) => wirePort(card, host, p, ports.length > 1, i === 0, title, consoleName, i === ports.length - 1));
+    // The ports sit in their own section, closed until you open it, so the Download and Play port buttons are never
+    // right under the game's own Play button where they could be tapped by mistake.
+    const installedCount = ports.filter(isInstalled).length;
+    const working = ports.some(q => { try{ return JSON.parse(window.ThorBridge.portState(q.id, q.name, q.package || '')).state === 'working'; }catch(e){ return false; } });
+    host.innerHTML = `<button class="btn-view-achievements gd-ports-toggle" type="button"><span class="arrow">▸</span> Android Ports Available${ports.length > 1 ? ' (' + ports.length + ')' : ''}${installedCount ? ' · ' + installedCount + ' installed' : ''}</button><div class="gd-ports-body" style="display:none;"></div>`;
+    const toggle = host.querySelector('.gd-ports-toggle');
+    const body = host.querySelector('.gd-ports-body');
+    toggle.addEventListener('click', () => {
+      const open = body.style.display === 'none';
+      body.style.display = open ? 'block' : 'none';
+      toggle.classList.toggle('open', open);
+    });
+    if(ports.length > 1) body.innerHTML = '<div class="gd-port-multi">Multiple Android ports available</div>';
+    ports.forEach((p, i) => wirePort(card, body, p, ports.length > 1, i === 0, title, consoleName, i === ports.length - 1));
+    if(working) toggle.click(); // a download is running: show it
   });
 }
 
