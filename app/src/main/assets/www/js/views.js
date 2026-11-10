@@ -355,12 +355,13 @@ function renderSystemChips(){
   const systems = yearTab ? Object.keys(counts).sort((a, b) => counts[b] - counts[a]) : orderedSystems(counts);
   const label = consoleLabel; // your tab names are used here too
 
-  if(systems.length === 0){ chipRow.innerHTML = ''; chipRow.classList.remove('editing'); dropChipDragTouch(chipRow); return; }
+  if(systems.length === 0){ chipRow.innerHTML = ''; chipRow.classList.remove('editing', 'blades'); dropChipDragTouch(chipRow); return; }
   const attr = t => String(t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
   if(chipEdit){
     // Reorder / rename mode: drag a tab to move it, tap its name to rename it, OK finishes.
     chipRow.classList.add('editing');
+    chipRow.classList.remove('blades');
     chipRow.innerHTML = `<button class="chip chip-ok" id="chip-ok">OK</button>
       <span class="chip chip-all-off">All</span>` + systems.map(sys => `
       <button class="chip edit" data-sys="${attr(sys)}">${consoleLabel(sys)}</button>`).join('');
@@ -371,30 +372,136 @@ function renderSystemChips(){
   chipRow.classList.remove('editing');
   dropChipDragTouch(chipRow);
 
+  // The consoles are a ring of blades. The one you are on sits in the middle with its whole name, the two on
+  // each side show a short name, and the rest are thin slivers.
   const chips = ['All', ...systems];
-  chipRow.innerHTML = chips.map(sys => `
-      <button class="chip ${sys === systemFilter ? 'active' : ''}" data-sys="${attr(sys)}">
-        ${sys === 'All' ? 'All' : label(sys)}${sys === 'All' || !yearTab ? '' : ` (${counts[sys]})`}
-      </button>
-    `).join('');
+  const at = chips.indexOf(systemFilter);
+  chipRow.classList.add('blades');
+  chipRow._blades = {
+    chips, attr, yearTab,
+    at: Math.max(0, at),
+    known: at !== -1,
+    full: sys => sys === 'All' ? 'All' : attr(label(sys)) + (yearTab ? ` (${counts[sys]})` : '')
+  };
+  wireBlades(chipRow);
+  drawBlades(chipRow, chipRow._blades.at);
+}
 
-  chipRow.querySelectorAll('.chip').forEach(chip => {
-    let timer = null, startX = 0, startY = 0, held = false;
-    const cancel = () => { clearTimeout(timer); timer = null; };
-    chip.addEventListener('pointerdown', (e) => {
-      held = false;
-      if(chip.getAttribute('data-sys') === 'All' || yearTab) return;
-      startX = e.clientX; startY = e.clientY;
-      timer = setTimeout(() => { held = true; chipEdit = true; chipEditTab = activeTab; renderSystemChips(); }, 600);
-    });
-    chip.addEventListener('pointermove', (e) => { if(timer && Math.hypot(e.clientX - startX, e.clientY - startY) > 10) cancel(); });
-    ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => chip.addEventListener(ev, cancel));
-    chip.addEventListener('contextmenu', (e) => e.preventDefault());
-    chip.addEventListener('click', () => {
-      if(held){ held = false; return; } // the press that opened reorder mode isn't a tap
-      systemFilter = chip.getAttribute('data-sys');
-      renderLibraryViews();
-    });
+// Short names for the narrow blades beside the console you are on.
+const BLADE_CODES = {
+  nesfamicom:'NES', nes:'NES', famicomdisksystem:'FDS', snessuperfamicom:'SNES', snes:'SNES', supernintendo:'SNES',
+  nintendo64:'N64', gamecube:'GCN', wii:'WII', wiiu:'WIIU', gameboy:'GB', gameboycolor:'GBC', gameboyadvance:'GBA',
+  nintendods:'NDS', nintendodsi:'DSI', nintendo3ds:'3DS', virtualboy:'VB', pokemonmini:'PKMN', nintendoswitch:'NSW',
+  genesismegadrive:'GEN', genesis:'GEN', megadrive:'MD', mastersystem:'SMS', gamegear:'GG', segacd:'SCD', '32x':'32X',
+  saturn:'SAT', dreamcast:'DC', sg1000:'SG1K', playstation:'PS1', playstation2:'PS2', playstation3:'PS3',
+  playstationportable:'PSP', playstationvita:'VITA', pcengineturbografx16:'PCE', pcengine:'PCE', turbografx16:'TG16',
+  pcenginecdturbografxcd:'PCCD', pcfx:'PCFX', neogeopocket:'NGP', neogeocd:'NGCD', neogeo:'NEO', atari2600:'2600',
+  atari5200:'5200', atari7800:'7800', atarilynx:'LYNX', atarijaguar:'JAG', atarijaguarcd:'JCD', arcade:'ARC',
+  '3dointeractivemultiplayer':'3DO', colecovision:'CV', intellivision:'INTV', msx:'MSX', wonderswan:'WS',
+  magnavoxodyssey2:'ODY2', vectrex:'VEC', appleii:'APL2', pc80008800:'PC88', amstradcpc:'CPC', fairchildchannelf:'CHF',
+  arduboy:'ARDU', wasm4:'WASM', watarasupervision:'SV', megaduck:'DUCK', uzebox:'UZE', arcadia2001:'2001',
+  intertonvc4000:'VC4K', elektortvgamescomputer:'TVGC', standalone:'SOLO', xbox:'XBOX', xbox360:'X360', pc:'PC',
+  windows:'WIN', dos:'DOS', commodore64:'C64', amiga:'AMI', zxspectrum:'ZX', ports:'PORT', android:'AND'
+};
+const bladeNorm = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '');
+function bladeCode(sys){
+  if(sys === 'All') return 'ALL';
+  const yours = consoleNames[sys];
+  if(yours && yours.length <= 5) return yours.toUpperCase(); // a short name of your own is used as it is
+  const known = BLADE_CODES[bladeNorm(sys)] || (yours && BLADE_CODES[bladeNorm(yours)]);
+  if(known) return known;
+  const name = String(yours || sys);
+  if(name.length <= 5) return name.toUpperCase();
+  const words = name.split(/[^A-Za-z0-9]+/).filter(Boolean);
+  if(words.length > 1) return words.map(w => /^\d+$/.test(w) ? w : w[0]).join('').slice(0, 5).toUpperCase();
+  return name.slice(0, 4).toUpperCase();
+}
+
+// Draws the ring with the console at place `at` in the middle. The blades run in the consoles' own order from
+// left to right, wrapping past the last one back to All.
+function drawBlades(chipRow, at){
+  const b = chipRow._blades;
+  const n = b.chips.length;
+  const right = Math.ceil((n - 1) / 2), left = n - 1 - right;
+  const blade = (off) => {
+    const sys = b.chips[((at + off) % n + n) % n];
+    const d = Math.abs(off);
+    const cls = d === 0 ? 'centre' + (b.known ? ' active' : '') : d === 1 ? 'near' : d === 2 ? 'near far' : 'sliver';
+    const name = b.full(sys);
+    // All keeps an outline wherever it is, so you can see where the list starts
+    return `<button class="chip ${cls}${sys === 'All' && d ? ' first' : ''}" data-sys="${b.attr(sys)}" aria-label="${name}">${d === 0 ? name : d <= 2 ? b.attr(bladeCode(sys)) : ''}</button>`;
+  };
+  let l = '', r = '';
+  for(let off = -left; off < 0; off++) l += blade(off);
+  for(let off = 1; off <= right; off++) r += blade(off);
+  chipRow.innerHTML = `<div class="blade-side left">${l}</div>${blade(0)}<div class="blade-side">${r}</div>`;
+}
+
+function pickSystem(sys){
+  systemFilter = sys;
+  renderLibraryViews();
+}
+
+// Touch on the blades: a tap picks that console, a sideways drag turns the ring a console at a time, and holding
+// one opens reorder mode. The row is redrawn while you drag, so the row itself follows your finger, not the blades.
+let bladeTouchAt = 0;
+function wireBlades(chipRow){
+  if(chipRow._bladesWired) return;
+  chipRow._bladesWired = true;
+  const STEP = 34; // how far a finger moves to turn the ring by one console
+  let drag = null;
+  const finish = (e, cancelled) => {
+    if(!drag || e.pointerId !== drag.id) return;
+    const d = drag;
+    drag = null;
+    clearTimeout(d.timer);
+    try{ chipRow.releasePointerCapture(d.id); }catch(_){}
+    if(!chipRow.classList.contains('blades')) return;
+    bladeTouchAt = Date.now();
+    if(d.moved){
+      const sys = chipRow._blades.chips[d.at];
+      if(sys !== systemFilter) pickSystem(sys); else renderSystemChips();
+      return;
+    }
+    if(cancelled || d.held) return;
+    const hit = document.elementFromPoint(e.clientX, e.clientY);
+    const chip = hit && hit.closest ? hit.closest('#system-chips .chip') : null;
+    if(chip && chip.getAttribute('data-sys') !== systemFilter) pickSystem(chip.getAttribute('data-sys'));
+  };
+  chipRow.addEventListener('pointerdown', (e) => {
+    if(!chipRow.classList.contains('blades') || drag) return;
+    if(e.pointerType === 'mouse' && e.button !== 0) return;
+    const b = chipRow._blades;
+    const chip = e.target.closest ? e.target.closest('.chip') : null;
+    drag = { id: e.pointerId, x: e.clientX, x0: e.clientX, y0: e.clientY, at: b.at, moved: false, held: false, timer: null };
+    try{ chipRow.setPointerCapture(e.pointerId); }catch(_){}
+    if(chip && chip.getAttribute('data-sys') !== 'All' && !b.yearTab){
+      const d = drag;
+      d.timer = setTimeout(() => {
+        if(drag !== d || d.moved) return;
+        d.held = true; chipEdit = true; chipEditTab = activeTab; renderSystemChips();
+      }, 600);
+    }
+  });
+  chipRow.addEventListener('pointermove', (e) => {
+    if(!drag || e.pointerId !== drag.id || drag.held) return;
+    if(Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 10) clearTimeout(drag.timer);
+    const steps = Math.trunc((e.clientX - drag.x) / STEP);
+    if(!steps) return;
+    const n = chipRow._blades.chips.length;
+    drag.x += steps * STEP;
+    drag.moved = true;
+    drag.at = ((drag.at - steps) % n + n) % n; // dragging left brings the next console in
+    drawBlades(chipRow, drag.at);
+  });
+  chipRow.addEventListener('pointerup', (e) => finish(e, false));
+  chipRow.addEventListener('pointercancel', (e) => finish(e, true));
+  chipRow.addEventListener('contextmenu', (e) => { if(chipRow.classList.contains('blades')) e.preventDefault(); });
+  // The controller (and a mouse) picks a blade with a plain click. A touch was already dealt with above.
+  chipRow.addEventListener('click', (e) => {
+    if(!chipRow.classList.contains('blades') || Date.now() - bladeTouchAt < 500) return;
+    const chip = e.target.closest ? e.target.closest('.chip') : null;
+    if(chip) pickSystem(chip.getAttribute('data-sys'));
   });
 }
 

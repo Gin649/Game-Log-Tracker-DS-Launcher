@@ -409,6 +409,7 @@
   // Centres the chosen console in the row, then makes sure the chip at the left edge shows its whole name
   // instead of a cut-off piece.
   function revealChip(row, active){
+    if(row.classList.contains('blades')) return; // the blades turn to put the chosen console in the middle, nothing scrolls
     row.scrollLeft = chipScrollTarget(row, active); // "All" stays pinned; the others scroll in whole chips beside it
   }
 

@@ -97,6 +97,8 @@ function chipScrollTarget(row, active){
     queued = false;
     const box = row.getBoundingClientRect();
     if(!box.width) return;
+    // The blades never scroll or hide anything. Only reorder mode is still a scrolling row.
+    if(row.classList.contains('blades')){ row.classList.remove('can-scroll'); lastActive = null; return; }
     // The console you are on is always kept in view: when it changes, the row scrolls to centre it.
     const active = row.querySelector('.chip.active');
     const key = active ? active.textContent : null;

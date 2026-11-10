@@ -1287,6 +1287,19 @@ body.pad-mode .chip.pad-focus:not([data-sys="All"]){position:relative;z-index:4;
 .chip-row:not(.editing){scroll-snap-type:x proximity;}
 .chip-row:not(.editing) > .chip:not([data-sys="All"]){scroll-snap-align:start;}
 
+/* The console row as a ring of blades (views.js drawBlades). The console you are on is in the middle with its
+   whole name, the two on each side carry a short name and the rest are slivers. Reorder mode keeps the old chips. */
+.chip-row.blades{overflow:hidden;gap:3px;align-items:center;touch-action:pan-y;scroll-snap-type:none;user-select:none;-webkit-user-select:none;padding-right:6px;}
+.chip-row.blades::after{content:none;}
+.blade-side{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:3px;overflow:hidden;}
+.blade-side.left{justify-content:flex-end;}
+.chip-row.blades .chip{padding:0;height:1.5rem;border-radius:min(var(--radius),5px);font-weight:700;overflow:hidden;text-align:center;}
+.chip-row.blades .chip.centre{flex:0 1 auto;max-width:62%;height:2.5rem;padding:0 16px;font-size:0.875rem;text-overflow:ellipsis;}
+.chip-row.blades .chip.near{flex:0 1 3.2rem;height:2.125rem;font-size:0.75rem;color:var(--text);background:var(--panel-2);}
+.chip-row.blades .chip.near.far{flex:0 1 2.6rem;height:1.875rem;font-size:0.625rem;color:var(--muted);background:var(--panel);}
+.chip-row.blades .chip.sliver{flex:1 1 0;min-width:3px;max-width:14px;background:var(--border);}
+.chip-row.blades .chip.first{border-color:var(--gold);}
+
 /* Roomier tabs, so the controller's square around a heading sits clear of the words. */
 .tab-btn{padding:10px 14px;margin-right:6px;}
 .tabs{margin-left:-6px;}
