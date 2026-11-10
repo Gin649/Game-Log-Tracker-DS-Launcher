@@ -4,6 +4,12 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 
 ## v1.1.8
 
+### Added
+- Play on this device always opens the original game, even when a patched copy with the same name sits beside it. Hold Play (by touch or with the confirm button) to choose a patched copy made in ROM Hacks. Copies made before this version are recognised once you apply their patch again, which no longer makes a new file.
+- Backlog table: the Game and Achievements headings now sort (Achievements is most points first, then least). Achievements shows the set's points as well, as in 37 / 450 pts. The System column only shows under All.
+- Game details for a hack now show the hack's own write-up and screenshot when there is one: what your frontend has for the hack's ROM, or an entry under the hack's exact name on ScreenScraper or LaunchBox. The original game's are never used, and a hack with neither shows the Hack note and link as before.
+- Game details: when ScreenScraper has no screenshot for a game, See more now shows the one your frontend has for it, or else LaunchBox's.
+
 ### Changed
 - The Library and Backlog open and scroll faster. Covers load as they come into view, not all at once, and a list that is already on screen is no longer rebuilt after every sync.
 - Searching the Library or Backlog redraws the list a moment after you stop typing, not on every letter.
@@ -14,14 +20,14 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - The app looks for a new version once a day, not only when it starts, so a launcher left open still hears about updates. It never asks while a game is running.
 - Coming back to the launcher and long play sessions use less of the device: rescanning your ROM folders and watching for a game closing both do less work.
 - Saved data is written more safely, so a crash or power loss in the middle of a save can't leave a value missing.
-- Opening an app from the Apps tab while a game is running now puts the app on the bottom screen, so it never covers the game. With no game running it opens on the screen you set for it. (Knowing a game is running needs Usage access.)
-- ROM Hacks: applying a patch you have already applied no longer saves a second copy. The file from last time is used, a note says so, and Play patched game starts it.
 - Game Library table: the headings now sort in a set order. Game goes A to Z, then Z to A, then back to the usual order with recently played on top. Award goes mastered, beaten, in progress, then the reverse. Playtime goes shortest first, then longest. Last played goes newest first, then oldest. Games with nothing to sort by (never played, no playtime yet) stay at the bottom.
-- Backlog table: the Game and Achievements headings now sort (Achievements is most points first, then least). Achievements shows the set's points as well, as in 37 / 450 pts. The System column only shows under All.
 - Game Library table: dates are shorter (Nov 7/26), only a game's name runs onto a second line, and the Award column is left out while Hide Beaten is on.
-- Play on this device always opens the original game, even when a patched copy with the same name sits beside it. Hold Play (by touch or with the confirm button) to choose a patched copy made in ROM Hacks. Copies made before this version are recognised once you apply their patch again, which no longer makes a new file.
-- Game details: when ScreenScraper has no screenshot for a game, See more now shows the one your frontend has for it, or else LaunchBox's.
-- Game details for a hack now show the hack's own write-up and screenshot when there is one: what your frontend has for the hack's ROM, or an entry under the hack's exact name on ScreenScraper or LaunchBox. The original game's are never used, and a hack with neither shows the Hack note and link as before.
+- ROM Hacks: applying a patch you have already applied no longer saves a second copy. The file from last time is used, a note says so, and Play patched game starts it.
+- Opening an app from the Apps tab while a game is running now puts the app on the bottom screen, so it never covers the game. With no game running it opens on the screen you set for it. (Knowing a game is running needs Usage access.)
+- Controller: moving up and down through your games no longer lands on a game's ✕ (remove) button, so pressing confirm opens the game. In a list, press right on a game to reach its ✕ and left to go back. In tile view the ✕, and in Apps the star, are now for touch only.
+- The row of console names is easier to scroll by touch. A swipe on it now always scrolls the row, not the page, and it no longer gets slower after you have reordered the consoles.
+- Setup: the Cancel button on the first page is now "Finish later", since folders you have already chosen stay chosen.
+- Manual viewer: the "Open in browser viewer" button is gone. It did nothing on the device. The message now says to check your connection and open the manual again.
 
 ### Fixed
 - Games RetroAchievements doesn't track (3DS, for example) now show their playtime and when they were last played in the Game Library, in both the table and tile views. They showed a dash and Never before, even after you played them from the launcher. The time is brought up to date when you come back from the game.
@@ -37,11 +43,10 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - When a game you track by hand turns out to be on RetroAchievements and becomes a RetroAchievements entry, it keeps what it had: its profile shows Playtime before RetroAchievements, and a game you had already beaten gets an asterisk beside its name with the date you beat it. This was lost before.
 - Moving the app's data folder can no longer put an older copy over something saved while the move was running.
 - A disc patch that was cut short (the app closed in the middle of it) no longer leaves its hidden working folder, which could be several gigabytes, next to the game for good. Leftovers are removed the next time your folders are scanned.
-- An IPS patch for a disc game that changes the byte at one particular spot (offset 0x454F46) is now applied in full. The rest of the patch was skipped before.
+- An IPS patch that changes the byte at one particular spot (offset 0x454F46) is now applied in full, for disc and cartridge games alike. The rest of the patch was skipped before. An IPS patch for a cartridge game whose download was cut short is refused, not applied in part.
 - Getting a ROM ready for an Android port can no longer overwrite or delete the game's own file when the port's folder is also where you keep that ROM.
 - The Social tab shows all of a friend's beaten games, not only those among their first 500.
 - The backup file is named with today's date. In the evening it could carry tomorrow's.
-- An IPS patch for a cartridge game that changes the byte at offset 0x454F46 is now applied in full, the same as for disc games. An IPS patch whose download was cut short is refused, not applied in part.
 - Opening ROM Hacks on a very large game (a 3DS game, for example) no longer stalls or closes the tracker. A file over 1 GB is not read in, and a message says so.
 - A patched ROM is no longer reported as not matching RetroAchievements when it does. SNES ROMs with a copier header, and Famicom Disk System, Nintendo DS, Atari Lynx, Atari 7800 and PC Engine games, are now checked the way RetroAchievements checks them.
 - A UPS patch that makes a disc image smaller is now applied. It was refused as damaged.
@@ -58,10 +63,6 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - Box art picker: when IGDB can't be reached, the covers are looked up again next time. The shorter list was kept for a month.
 - A TV or cast display is no longer counted as a second screen when deciding whether to fetch top-screen fan art.
 - A patch zip you imported that can't be opened no longer offers a Download button that goes nowhere.
-- Manual viewer: the "Open in browser viewer" button is gone. It did nothing on the device. The message now says to check your connection and open the manual again.
-- Setup: the Cancel button on the first page is now "Finish later", since folders you have already chosen stay chosen.
-- Controller: moving up and down through your games no longer lands on a game's ✕ (remove) button, so pressing confirm opens the game. In a list, press right on a game to reach its ✕ and left to go back. In tile view the ✕, and in Apps the star, are now for touch only.
-- The row of console names is easier to scroll by touch. A swipe on it now always scrolls the row, not the page, and it no longer gets slower after you have reordered the consoles.
 - Controller: sorting by a heading keeps the highlight on that heading. It jumped back to the tab.
 - Controller: switching to Apps with L2 or R2 lands on the first app, and moving down into any grid of tiles (Last Played, tile view, Beaten, Apps) lands on the first tile at the left.
 - Controller: the highlight round All and the first console is no longer cut off at the left.
