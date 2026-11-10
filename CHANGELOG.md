@@ -2,7 +2,7 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
-## Unreleased
+## v1.1.9
 
 ### Changed
 - The console row in the Library, Backlog and Beaten by Year is now a ring of blades. The console you are on sits in the middle with its full name, the two on each side show a short name, and the rest are slivers, so every console fits without scrolling. Tap a blade, drag the row sideways or use L1 and R1, and it wraps from the last console back to All. Holding a console still opens reorder and rename.
