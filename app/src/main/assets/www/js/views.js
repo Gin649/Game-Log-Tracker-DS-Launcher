@@ -496,7 +496,7 @@ function renderLibrary(){
             : (g.lastPlayed ? timeAgo(g.lastPlayed) : 'Never');
           return label + `
             <tr data-game-id="${g.GameID}">
-              <td><div class="g-title"><img src="${imgUrl(g.ImageIcon)}" alt="" loading="lazy" decoding="async"><span>${esc(g.Title)}</span>${g.manual ? `<button class="manual-remove" data-remove-id="${g.GameID}" title="Remove">✕</button>` : ''}</div></td>
+              <td><div class="g-title"><img src="${imgUrl(g.ImageIcon)}" alt="" loading="lazy" decoding="async"><span>${esc(g.Title)}${preRaStar(g.GameID)}</span>${g.manual ? `<button class="manual-remove" data-remove-id="${g.GameID}" title="Remove">✕</button>` : ''}</div></td>
               <td>${awardCell}</td>
               <td>${progressCell}</td>
               <td style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--gold)">${hoursLabel}</td>
@@ -540,7 +540,7 @@ function tileHtml(g, backlog){
   }
   return `<div class="cart" data-game-id="${g.GameID}">
       <div class="art-wrap"><img class="art" src="${imgUrl(g.ImageIcon)}" alt="${esc(g.Title)}" loading="lazy" decoding="async">${badge}${remove}</div>
-      <div class="body"><p class="title">${esc(g.Title)}</p><p class="console">${esc(g.ConsoleName || '')}</p>${foot}</div>
+      <div class="body"><p class="title">${esc(g.Title)}${preRaStar(g.GameID)}</p><p class="console">${esc(g.ConsoleName || '')}</p>${foot}</div>
     </div>`;
 }
 
@@ -626,7 +626,7 @@ function renderBacklog(){
         <tbody>
           ${rows.map(g => `
             <tr data-game-id="${g.GameID}">
-              <td><div class="g-title"><img src="${imgUrl(g.ImageIcon)}" alt="" loading="lazy" decoding="async"><span>${esc(g.Title)}</span>${g.manual ? `<button class="manual-remove" data-remove-id="${g.GameID}" title="Remove">✕</button>` : ''}</div></td>
+              <td><div class="g-title"><img src="${imgUrl(g.ImageIcon)}" alt="" loading="lazy" decoding="async"><span>${esc(g.Title)}${preRaStar(g.GameID)}</span>${g.manual ? `<button class="manual-remove" data-remove-id="${g.GameID}" title="Remove">✕</button>` : ''}</div></td>
               <td style="color:var(--muted);font-size:0.75rem;">${esc(g.ConsoleName || '—')}</td>
               <td style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--muted)">${g.customConsole ? 'Not on RA' : (Number(g.MaxPossible) || 0)}</td>
             </tr>

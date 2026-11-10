@@ -70,6 +70,7 @@ async function loadAll(opts){
   if(forcePlaytimeRefresh && thorBridge && typeof thorBridge.rescanRoms === 'function'){ try{ thorBridge.rescanRoms(); }catch(e){} }
   await enqueueTask(async () => {
     // Show the last saved copy while fresh data loads (not on an explicit refresh).
+    await loadPreRaInfo();
     const cached = forcePlaytimeRefresh ? null : await loadDashCache();
     const dash = cached ? { ...cached } : {};
     const fromCache = {};

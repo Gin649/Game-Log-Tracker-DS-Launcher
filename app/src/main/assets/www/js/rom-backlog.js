@@ -206,11 +206,7 @@ window.betterBoxArt = betterBoxArt;
 async function relinkCustomGames(){
   if(typeof creds === 'undefined' || !creds) return false;
   const WEEK = 7 * 24 * 60 * 60 * 1000;
-  // A game you have marked Now Playing or Beaten, or logged time on, is left as it is: turning it into a
-  // RetroAchievements entry would send it back to the Backlog without that. Link to RetroAchievements in its profile
-  // still does it when you choose to.
-  const tracked = g => g.manualStarted || g.manualBeaten || (Array.isArray(g.playLog) && g.playLog.length > 0);
-  const cands = libraryData.filter(g => g.manual && g.customConsole && !tracked(g) && !(g.raChecked && Date.now() - g.raChecked < WEEK));
+  const cands = libraryData.filter(g => g.manual && g.customConsole && !(g.raChecked && Date.now() - g.raChecked < WEEK));
   if(!cands.length) return false;
   let consoles = [];
   try{ consoles = (await getConsoleList()) || []; }catch(e){ return false; }
@@ -243,22 +239,24 @@ async function relinkCustomGames(){
   let changed = false;
   await enqueueTask(async () => {
     const manual = await loadManualGames();
-    swaps.forEach(({ g, c, hit }) => {
+    for(const { g, c, hit } of swaps){
       const mi = manual.findIndex(x => x.GameID === g.GameID);
       const li = libraryData.findIndex(x => x.GameID === g.GameID);
       if(!hit){
         if(mi >= 0) manual[mi].raChecked = Date.now();
         if(li >= 0) libraryData[li].raChecked = Date.now();
-        return;
+        continue;
       }
       changed = true;
       const e = buildManualRaEntry(hit, c.id, c.name);
+      // the time played and the beaten date from before stay with the game, shown in its profile
+      await rememberPreRa(e.GameID, li >= 0 ? libraryData[li] : g);
       if(g.romPath) e.romPath = g.romPath;
       if(g.manualStarted) e.manualStarted = true;
       const dup = libraryData.some(x => x.GameID === e.GameID);
       if(mi >= 0){ if(dup) manual.splice(mi, 1); else manual[mi] = e; }
       if(li >= 0){ if(dup) libraryData.splice(li, 1); else libraryData[li] = e; }
-    });
+    }
     await saveManualGames(manual);
   });
   if(changed) renderLibraryViews();

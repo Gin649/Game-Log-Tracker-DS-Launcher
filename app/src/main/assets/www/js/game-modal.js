@@ -424,6 +424,7 @@ async function openGameModal(gameId, opts){
   const raBeatenDateLabel = (local && local.HighestAwardDate && awardCountsInMode(awardKind))
     ? formatBeatenDate(parseRADate(local.HighestAwardDate)) : '';
 
+  const preRa = preRaFor(gameId); // what it had while it was tracked by hand, if it ever was
   const raUrl = `https://retroachievements.org/game/${gameId}`;
   const hltbUrl = `https://howlongtobeat.com/?q=${encodeURIComponent(title)}`;
 
@@ -442,7 +443,9 @@ async function openGameModal(gameId, opts){
 
       <div class="modal-progress">
         <div class="row"><span>Your progress</span><span style="color:var(--gold)">${earned}/${totalAch || '?'} · ${pct}%</span></div>
-        <div class="row"><span>Status</span><span class="status-val">${awardPill(awardKind)}${beatenDateHtml(raBeatenDateLabel)}</span></div>
+        <div class="row"><span>Status</span><span class="status-val">${awardPill(awardKind)}${beatenDateHtml(raBeatenDateLabel)}${preRaStar(gameId)}</span></div>
+        ${preRa && preRa.minutes ? `<div class="row"><span>Playtime before RetroAchievements</span><span style="color:var(--gold)">${playLogTime(preRa.minutes)}</span></div>` : ''}
+        ${preRa && preRa.beaten ? `<div class="row pre-ra-note"><span>* Beaten${formatManualBeatenDate(preRa.beatenDate) ? ' on ' + formatManualBeatenDate(preRa.beatenDate) : ''}, before it was tracked on RetroAchievements.</span></div>` : ''}
         <div class="row">
           <span id="modal-playtime-label">${est && est.real ? 'Playtime' : (est && est.beaten ? 'Time to beat' : 'Est. playtime')}</span>
           <span style="display:flex;align-items:center;gap:8px;">

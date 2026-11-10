@@ -365,6 +365,8 @@ final class DataStore {
             if (kids == null) return;
             for (File k : kids) copyTree(k, new File(dst, k.getName()));
         } else {
+            // something saved to the new folder while the move was running is newer than the copy being brought over
+            if (dst.isFile() && dst.lastModified() > src.lastModified()) return;
             InputStream in = new FileInputStream(src);
             try {
                 OutputStream out = new FileOutputStream(dst);

@@ -1286,3 +1286,7 @@ body.pad-mode .tab-btn.pad-focus{outline-offset:-2px;}
 /* The Game Log Tracker logo has empty space around its artwork, so it is drawn larger (without making the header taller)
    to look as big as the console logos. */
 html:not([data-theme]) .brand .mark{width:130px;height:130px;margin:-20px;}
+
+/* a game beaten before it was tracked on RetroAchievements */
+.pre-ra-star{color:var(--gold);font-weight:700;margin-left:3px;}
+.modal-progress .row.pre-ra-note span{color:var(--muted);font-size:0.75rem;}

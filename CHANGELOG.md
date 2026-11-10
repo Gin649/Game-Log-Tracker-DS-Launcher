@@ -26,7 +26,8 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - Putting the device to sleep in the middle of a game no longer stops its playtime being counted, or adds the time asleep.
 - A multi-disc game keeps one playtime total whether you start it from a disc or from its playlist.
 - Game and achievement names with characters such as quotes, & or < now show correctly in the lists and profiles.
-- A game you track by hand that you have marked Now Playing or Beaten, or logged time on, is no longer turned into a RetroAchievements entry on its own (which sent it back to the Backlog and dropped its beaten date). Link to RetroAchievements in its profile still does it when you choose to.
+- When a game you track by hand turns out to be on RetroAchievements and becomes a RetroAchievements entry, it keeps what it had: its profile shows Playtime before RetroAchievements, and a game you had already beaten gets an asterisk beside its name with the date you beat it. This was lost before.
+- Moving the app's data folder can no longer put an older copy over something saved while the move was running.
 - Getting a ROM ready for an Android port can no longer overwrite or delete the game's own file when the port's folder is also where you keep that ROM.
 - The Social tab shows all of a friend's beaten games, not only those among their first 500.
 - The backup file is named with today's date. In the evening it could carry tomorrow's.

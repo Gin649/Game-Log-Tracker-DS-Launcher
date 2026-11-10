@@ -30,6 +30,53 @@ async function saveManualGames(list){
   try{ await window.storage.set(manualGamesKey(), JSON.stringify(list), false); }catch(e){}
 }
 
+// What a game you tracked by hand had before it became a RetroAchievements entry: the time played, and whether it was
+// beaten. Kept on its own, by RetroAchievements GameID, because the entry itself is replaced by RetroAchievements' own
+// once it shows progress there. Shown in the game's profile, and as an asterisk beside a game beaten beforehand.
+let preRaInfo = {}; // GameID -> { minutes, beaten, beatenDate }
+function preRaKey(){
+  return `pre-ra:${creds.username.trim().toLowerCase()}`;
+}
+async function loadPreRaInfo(){
+  try{
+    const r = await window.storage.get(preRaKey(), false);
+    const parsed = r && r.value ? JSON.parse(r.value) : null;
+    preRaInfo = parsed && typeof parsed === 'object' ? parsed : {};
+  }catch(e){ preRaInfo = {}; }
+  return preRaInfo;
+}
+function preRaFor(gameId){
+  return preRaInfo[String(gameId)] || null;
+}
+// Minutes played so far on a game tracked by hand: its play log, or the time counted on this device.
+function customMinutesPlayed(g){
+  if(typeof usesPlayLog === 'function' && usesPlayLog(g.ConsoleName)) return playLogMinutes(g);
+  try{
+    const sec = (typeof thorBridge !== 'undefined' && thorBridge && thorBridge.playtime) ? Number(thorBridge.playtime(g.Title, g.ConsoleName)) : 0;
+    return Math.round((sec || 0) / 60);
+  }catch(e){ return 0; }
+}
+// Call before the hand-tracked entry g is replaced by the RetroAchievements game raGameId.
+async function rememberPreRa(raGameId, g){
+  if(!g) return;
+  const minutes = customMinutesPlayed(g);
+  const beaten = !!g.manualBeaten;
+  if(!minutes && !beaten) return;
+  await loadPreRaInfo();
+  const old = preRaInfo[String(raGameId)] || {};
+  preRaInfo[String(raGameId)] = {
+    minutes: Math.max(minutes, Number(old.minutes) || 0),
+    beaten: beaten || !!old.beaten,
+    beatenDate: g.manualBeatenDate || old.beatenDate || null,
+  };
+  try{ await window.storage.set(preRaKey(), JSON.stringify(preRaInfo), false); }catch(e){}
+}
+// The asterisk shown beside a game that was beaten before it was tracked on RetroAchievements.
+function preRaStar(gameId){
+  const p = preRaFor(gameId);
+  return p && p.beaten ? '<span class="pre-ra-star" title="Beaten before it was tracked on RetroAchievements">*</span>' : '';
+}
+
 // Games the per-game call shows progress on that the bulk progress list hasn't caught up with.
 // Keeps them out of the Backlog across restarts; loadAll() drops them once the list agrees.
 function pendingRealGamesKey(){
