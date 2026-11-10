@@ -655,12 +655,14 @@ final class DiscPatcher {
             boolean eof = false;
             long truncate = -1;
             while (off < p.length) {
-                if (!ips32 && off + 3 <= p.length && p[off] == 'E' && p[off + 1] == 'O' && p[off + 2] == 'F') {
+                // "EOF" ends the patch only where the patch itself ends (with or without the new length after it). The same
+                // three bytes in the middle are a change at offset 0x454F46, and stopping there dropped the rest.
+                if (!ips32 && (off + 3 == p.length || off + 6 == p.length) && p[off] == 'E' && p[off + 1] == 'O' && p[off + 2] == 'F') {
                     eof = true;
                     if (off + 6 == p.length) truncate = ((p[off + 3] & 0xFFL) << 16) | ((p[off + 4] & 0xFFL) << 8) | (p[off + 5] & 0xFFL);
                     break;
                 }
-                if (ips32 && off + 4 <= p.length && p[off] == 'E' && p[off + 1] == 'E' && p[off + 2] == 'O' && p[off + 3] == 'F') {
+                if (ips32 && (off + 4 == p.length || off + 8 == p.length) && p[off] == 'E' && p[off + 1] == 'E' && p[off + 2] == 'O' && p[off + 3] == 'F') {
                     eof = true;
                     if (off + 8 == p.length) truncate = u32be(p, off + 4);
                     break;
