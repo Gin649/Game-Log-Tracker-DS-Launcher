@@ -71,8 +71,7 @@ final class Shared {
         INDEX.awaitReady(4000);
         SystemMap map = systems();
         if (map == null) return null;
-        List<SystemMap.Sys> sys = map.forConsole(console);
-        return Matcher.best(INDEX.forSystems(sys), title);
+        return MatchCache.find(INDEX, map, title, console);
     }
 
     /** The ROM in the list at exactly this path, or null. */
