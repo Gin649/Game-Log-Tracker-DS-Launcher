@@ -253,7 +253,24 @@
       switchSystem(dir === 'right' ? 1 : -1, true); // on the console row, left and right change console at once, like L1 / R1
       return;
     }
-    let next = pick(cur, dir, candidates(getRoot()));
+    // The small ✕ that removes a game is only reached on purpose. In a list that is right from its game (left
+    // goes back to the game). Up and down pass it by in lists and tiles alike, so browsing never lands on it.
+    let from = cur;
+    const vertical = dir === 'up' || dir === 'down';
+    if(cur.matches('.manual-remove')){
+      const game = cur.closest('.lib-table tbody tr, .cart');
+      if(game && cur.closest('.lib-table')){
+        if(dir === 'left'){ setFocus(game); return; }
+        if(dir === 'right') return;
+      }
+      if(game && vertical) from = game; // step to the next game as if the highlight were on this one
+    }else if(dir === 'right' && cur.matches('.lib-table tbody tr')){
+      const x = cur.querySelector('.manual-remove');
+      if(x && isVisible(x)){ setFocus(x); return; }
+    }
+    const list = candidates(getRoot()).filter(i =>
+      !i.el.matches('.manual-remove') || (!vertical && !i.el.closest('.lib-table')));
+    let next = pick(from, dir, list);
     if(next && (dir === 'up' || dir === 'down')){
       // Entering a row of headings or filters lands on the one you are on: the Game heading, the current
       // console, the current tab.
