@@ -236,10 +236,18 @@ function applyConsoleOrder(arrangement){
 // Drag a tab to a new place: hold it for a moment to pick it up (moving sooner scrolls the row), slide it, let go.
 // A quick tap renames it instead.
 let chipClickBlockedUntil = 0;
+function dropChipDragTouch(chipRow){
+  if(chipRow._dragTouchMove) chipRow.removeEventListener('touchmove', chipRow._dragTouchMove);
+  chipRow._dragTouchMove = null;
+}
 function wireChipDrag(chipRow, systems){
   const chips = Array.from(chipRow.querySelectorAll('.chip.edit'));
   let drag = null;
-  chipRow.addEventListener('touchmove', (e) => { if(drag && drag.lifted) e.preventDefault(); }, { passive: false });
+  // This listener makes the browser check with the page before it scrolls the row, so there is only ever one
+  // and it is taken off again when reorder mode ends (see dropChipDragTouch).
+  dropChipDragTouch(chipRow);
+  chipRow._dragTouchMove = (e) => { if(drag && drag.lifted) e.preventDefault(); };
+  chipRow.addEventListener('touchmove', chipRow._dragTouchMove, { passive: false });
   chips.forEach((chip, idx) => {
     chip.addEventListener('pointerdown', (e) => {
       if(drag) return;
@@ -340,7 +348,7 @@ function renderSystemChips(){
   const systems = yearTab ? Object.keys(counts).sort((a, b) => counts[b] - counts[a]) : orderedSystems(counts);
   const label = consoleLabel; // your tab names are used here too
 
-  if(systems.length === 0){ chipRow.innerHTML = ''; chipRow.classList.remove('editing'); return; }
+  if(systems.length === 0){ chipRow.innerHTML = ''; chipRow.classList.remove('editing'); dropChipDragTouch(chipRow); return; }
   const attr = t => String(t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
   if(chipEdit){
@@ -354,6 +362,7 @@ function renderSystemChips(){
     return;
   }
   chipRow.classList.remove('editing');
+  dropChipDragTouch(chipRow);
 
   const chips = ['All', ...systems];
   chipRow.innerHTML = chips.map(sys => `

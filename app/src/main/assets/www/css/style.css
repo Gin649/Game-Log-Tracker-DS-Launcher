@@ -1216,6 +1216,8 @@ html.top-panel body,html.top-panel body.show-status{padding-top:calc(var(--statu
 body.pad-mode .tab-btn.pad-focus{outline-offset:-3px;}
 
 .chip-row::after{content:'';flex:0 0 14px;} /* room after the last console so it can scroll fully into view */
+/* A swipe on the console row always scrolls the row. Without this, one that isn't perfectly level scrolls the page. */
+.chip-row{touch-action:pan-x;}
 
 /* A small arrow at the right of the console row while more consoles are off to the right of it (startup.js sets .can-scroll). */
 .chip-row.can-scroll::after{content:'\203A';position:sticky;right:0;flex:0 0 34px;margin-left:-6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-family:var(--font-mono);font-weight:700;font-size:1.375rem;line-height:1;color:var(--gold);background:linear-gradient(to right,transparent,var(--bg) 60%);pointer-events:none;}
