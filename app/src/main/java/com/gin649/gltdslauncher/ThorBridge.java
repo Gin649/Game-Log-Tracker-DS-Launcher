@@ -918,6 +918,70 @@ final class ThorBridge {
     }
 
     /**
+     * Looks beside the ROM for a patched copy saved earlier that holds exactly these bytes (same length and CRC-32), so
+     * applying the same patch again doesn't save a second file. Only the name the patch is saved under, and the
+     * numbered copies of it, are looked at. Returns {found, name, path}.
+     */
+    @JavascriptInterface
+    public String romSaveFindSame(String basePath, String fileName, String size, String crcHex) {
+        JSONObject o = new JSONObject();
+        try {
+            o.put("found", false);
+            File base = new File(basePath);
+            File dir = base.getParentFile();
+            if (dir == null || !insideRoms(base)) return o.toString();
+            long wantSize = Long.parseLong(size);
+            long wantCrc = Long.parseLong(crcHex, 16);
+            String safe = fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
+            int dot = safe.lastIndexOf('.');
+            String stem = dot > 0 ? safe.substring(0, dot) : safe;
+            String ext = dot > 0 ? safe.substring(dot) : "";
+            File f = new File(dir, safe);
+            // the numbering has no gaps unless a copy was deleted by hand, so a few misses in a row end the search
+            for (int n = 1, missing = 0; missing < 3 && n < 200; n++) {
+                if (f.isFile()) {
+                    missing = 0;
+                    if (f.length() == wantSize && crcOf(f) == wantCrc) {
+                        o.put("found", true);
+                        o.put("name", f.getName());
+                        o.put("path", f.getPath());
+                        return o.toString();
+                    }
+                } else {
+                    missing++;
+                }
+                f = new File(dir, stem + " (" + n + ")" + ext);
+            }
+        } catch (Exception ignored) {
+        }
+        return o.toString();
+    }
+
+    private static long crcOf(File f) throws java.io.IOException {
+        java.util.zip.CRC32 crc = new java.util.zip.CRC32();
+        byte[] buf = new byte[1 << 16];
+        java.io.FileInputStream in = new java.io.FileInputStream(f);
+        try {
+            int n;
+            while ((n = in.read(buf)) > 0) crc.update(buf, 0, n);
+        } finally {
+            in.close();
+        }
+        return crc.getValue();
+    }
+
+    /** True when this file is still there, inside the ROMs folder. Used to check a patched disc made earlier. */
+    @JavascriptInterface
+    public boolean romFileExists(String path) {
+        try {
+            File f = new File(path);
+            return insideRoms(f) && f.isFile();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
      * Starts saving a patched ROM in the same folder as the ROM it was made from. Returns {ok, id, name, path}.
      * Send the bytes with romSaveChunk, then call romSaveEnd.
      */

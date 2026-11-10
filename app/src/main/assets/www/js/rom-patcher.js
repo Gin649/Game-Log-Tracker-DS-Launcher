@@ -955,6 +955,34 @@ function setupRomPatchUI(gameId, title, card, consoleName){
     return end && end.ok ? { ok: true, name: end.name, path: end.path } : { ok: false, message: (end && end.message) || 'Could not finish the file.' };
   }
 
+  // A patched copy saved earlier that holds exactly these bytes, or null. Applying the same patch again uses that
+  // file, so the folder doesn't fill with copies.
+  function findSavedCopy(outName, bytes){
+    if(typeof deviceBridge.romSaveFindSame !== 'function') return null;
+    try{
+      const r = JSON.parse(deviceBridge.romSaveFindSame(romOnDevice.path, outName, String(bytes.length), crc32Hex(bytes)));
+      return r && r.found ? r : null;
+    }catch(e){ return null; }
+  }
+
+  // A disc is only known once it has been patched, so the app keeps a note of each patch applied here: which
+  // image, which patch (its size and checksum), and the file that came out.
+  const DISC_DONE_KEY = 'patched-discs';
+  async function loadDiscDone(){
+    try{
+      const r = await window.storage.get(DISC_DONE_KEY, false);
+      const v = r && r.value ? JSON.parse(r.value) : null;
+      return v && typeof v === 'object' ? v : {};
+    }catch(e){ return {}; }
+  }
+  async function noteDiscDone(key, name, path, notes){
+    try{
+      const all = await loadDiscDone();
+      all[key] = { name, path, notes: notes || '' };
+      await window.storage.set(DISC_DONE_KEY, JSON.stringify(all), false);
+    }catch(e){}
+  }
+
   // RAPatches files start with the hack's own RA game ID.
   let chosenLabel = ''; // the RAPatches file picked (the patch inside a zip may not carry the number)
   function patchGameIdFrom(label, verifyGameId){
@@ -989,11 +1017,14 @@ function setupRomPatchUI(gameId, title, card, consoleName){
   }
 
   // The result after a patch: notes, Play, Add to backlog, Back.
-  function showPatched(lines, savedName, folder, playPath, hackId){
+  // already: the same patch was applied before and its file is still there, so nothing new was written.
+  function showPatched(lines, savedName, folder, playPath, hackId, already){
     let backlogId = null; // the game the Backlog button added, so Play can mark that one as played
     patchWrap.innerHTML = `
       ${lines.map(n => `<div class="hash-status ${n.cls || 'ok'}" style="margin-top:8px;">${esc(n.text)}</div>`).join('')}
-      <div class="hash-status ok" style="margin-top:8px;">Patched and saved as <strong>${esc(savedName)}</strong> in your ${esc(folder)} folder.</div>
+      <div class="hash-status ok" style="margin-top:8px;">${already
+        ? `This patch was already applied and saved as <strong>${esc(savedName)}</strong> in your ${esc(folder)} folder, so no second copy was made.`
+        : `Patched and saved as <strong>${esc(savedName)}</strong> in your ${esc(folder)} folder.`}</div>
       <button class="guide-btn guide-btn-primary" id="patch-play-btn" style="margin-top:10px;width:100%;">▶ Play patched game</button>
       <button class="guide-btn guide-btn-outline" id="patch-backlog-btn" style="margin-top:8px;width:100%;">＋ Add to my backlog</button>
       <div id="patch-after-msg" style="font-size:0.7188rem;color:var(--muted);margin-top:6px;min-height:1em;"></div>
@@ -1492,10 +1523,16 @@ function setupRomPatchUI(gameId, title, card, consoleName){
       if(raCheck) lines.push({ cls: raCheck.cls, text: raCheck.text });
 
       if(romOnDevice && deviceBridge){
+        const hackId = patchGameIdFrom(label, verifyGameId);
+        const same = findSavedCopy(outName, target);
+        if(same){
+          showPatched(lines, same.name, romOnDevice.folder, same.path, hackId, true);
+          return;
+        }
         patchWrap.innerHTML = loadingHtml('Saving the patched ROM…');
         const saved = await saveBesideRom(outName, target);
         if(saved.ok){
-          showPatched(lines, saved.name, romOnDevice.folder, saved.path, patchGameIdFrom(label, verifyGameId));
+          showPatched(lines, saved.name, romOnDevice.folder, saved.path, hackId);
           return;
         }
         lines.push({ text: "Couldn't save it next to your ROM (" + saved.message + '), so it is offered as a download instead.' });
@@ -1528,6 +1565,18 @@ function setupRomPatchUI(gameId, title, card, consoleName){
     if(!['ips', 'bps', 'ups', 'ppf', 'vcdiff'].includes(kind)){
       showFailure('Disc games can be patched with IPS, PPF, BPS, UPS and xdelta patches. This one is a .' + kind + ' patch.');
       return;
+    }
+    const hackId = patchGameIdFrom(label, verifyGameId);
+    const doneKey = [discInfo.path, discInfo.size, patchBytes.length, crc32Hex(patchBytes)].join('|');
+    if(typeof deviceBridge.romFileExists === 'function'){
+      const done = (await loadDiscDone())[doneKey];
+      let there = false;
+      try{ there = !!(done && done.path && deviceBridge.romFileExists(done.path)); }catch(e){}
+      if(there){
+        const lines = String(done.notes || '').split('\n').filter(Boolean).map(text => ({ text }));
+        showPatched(lines, done.name, discInfo.folder, done.path, hackId, true);
+        return;
+      }
     }
     patchWrap.innerHTML = loadingHtml('Sending the patch to the launcher…');
     let jobId;
@@ -1567,7 +1616,8 @@ function setupRomPatchUI(gameId, title, card, consoleName){
       }
       if(st.state !== 'done'){ showFailure(st.message || 'Patching failed.'); return; }
       const lines = String(st.notes || '').split('\n').filter(Boolean).map(text => ({ text }));
-      showPatched(lines, st.name, discInfo.folder, st.path, patchGameIdFrom(label, verifyGameId));
+      await noteDiscDone(doneKey, st.name, st.path, st.notes);
+      showPatched(lines, st.name, discInfo.folder, st.path, hackId);
       return;
     }
   }
