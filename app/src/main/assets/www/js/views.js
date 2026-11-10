@@ -476,7 +476,7 @@ function renderLibrary(){
             : '';
           const isCustom = g.customConsole === true;
           const est = estHoursCache[g.GameID];
-          const hoursLabel = isCustom ? '—' : (est ? formatDuration(est, true) : '<span class="pt-pending" title="Loading playtime…"></span>');
+          const hoursLabel = isCustom ? (customPlaytimeHtml(g) || '—') : (est ? formatDuration(est, true) : '<span class="pt-pending" title="Loading playtime…"></span>');
           const awardCell = isCustom
             ? (g.manualBeaten ? '<span class="pill pill-teal">Beaten</span>' : '<span class="pill pill-muted">In progress</span>')
             : awardPill(g.HighestAwardKind);
@@ -492,7 +492,7 @@ function renderLibrary(){
                 <span style="font-family:'Space Mono',monospace;font-size:0.6875rem;color:var(--muted)">${awardedForMode}/${g.MaxPossible} · ${pctForMode}%</span>
               `;
           const lastPlayedLabel = isCustom
-            ? (g.manualBeatenDate ? new Date(g.manualBeatenDate).toLocaleDateString() : 'Never')
+            ? (g.lastPlayed ? timeAgo(g.lastPlayed) : (g.manualBeatenDate ? new Date(g.manualBeatenDate).toLocaleDateString() : 'Never'))
             : (g.lastPlayed ? timeAgo(g.lastPlayed) : 'Never');
           return label + `
             <tr data-game-id="${g.GameID}">
@@ -518,7 +518,9 @@ function tileHtml(g, backlog){
     const n = isCustom ? 'Not on RA' : (Number(g.MaxPossible) || 0) + ' achievements';
     foot = `<div class="cart-progress-group"><div class="prog-lbl"><span>${n}</span></div></div>`;
   }else if(isCustom){
-    foot = `<div class="cart-progress-group"><div class="prog-lbl"><span>${g.manualBeaten ? 'Beaten' : 'In progress'}</span></div></div>`;
+    // a game RetroAchievements doesn't track: the time counted on this device (or its play log), when there is any
+    const played = customPlaytimeHtml(g);
+    foot = `<div class="cart-progress-group"><div class="prog-lbl"><span>${g.manualBeaten ? 'Beaten' : 'In progress'}</span></div>${played ? `<div class="hours">${played}</div>` : ''}</div>`;
   }else{
     const hard = statsMode === 'hardcore';
     const total = Number(g.MaxPossible) || 0;
