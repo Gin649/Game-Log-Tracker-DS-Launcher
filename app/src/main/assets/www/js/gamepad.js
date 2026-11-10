@@ -118,9 +118,13 @@
     return out;
   }
 
+  const TILE = '.cart, .app-launch, .year-item';
+
   // The highlight
   const cls = (el) => el.className.replace(/\bpad-focus\b/, '').trim();
-  const signature = (el) => ({ id: el.id, gid: el.getAttribute('data-game-id'), tag: el.tagName, cls: cls(el) });
+  // key: what else names an element that is drawn again in place. A column heading has its column, an app its package.
+  const keyOf = (el) => el.getAttribute('data-key') || el.getAttribute('data-pkg') || '';
+  const signature = (el) => ({ id: el.id, gid: el.getAttribute('data-game-id'), key: keyOf(el), tag: el.tagName, cls: cls(el) });
 
   function refind(list, sig){
     if(sig.id){
@@ -129,6 +133,11 @@
     }
     if(sig.gid){
       const hit = list.find(i => i.el.tagName === sig.tag && i.el.getAttribute('data-game-id') === sig.gid && cls(i.el) === sig.cls);
+      if(hit) return hit.el;
+    }
+    if(sig.key){
+      // sorting by a heading draws the table again, and opening Apps draws its list again: stay where you were
+      const hit = list.find(i => i.el.tagName === sig.tag && keyOf(i.el) === sig.key);
       if(hit) return hit.el;
     }
     return null;
@@ -273,13 +282,15 @@
     if(next && (dir === 'up' || dir === 'down')){
       // Entering a row of headings or filters lands on the one you are on: the Game heading, the current
       // console, the current tab.
-      if(next.closest('.tile-grid') && next.matches('.cart')){
-        // In tile view, up and down step through the rows on the leftmost tile of each.
+      const grid = next.matches(TILE) ? next.closest('.tile-grid, .cart-grid, .apps-grid, .year-icons') : null;
+      if(grid && (grid.matches('.tile-grid') || !grid.contains(cur))){
+        // Coming into any grid of tiles lands on the first tile of the row, at the left. In the Library and Backlog
+        // tile view, up and down then keep to the leftmost tile of each row.
         const top = next.getBoundingClientRect().top;
         let left = next, l = next.getBoundingClientRect().left;
-        next.closest('.tile-grid').querySelectorAll('.cart').forEach(t => {
+        grid.querySelectorAll(TILE).forEach(t => {
           const r = t.getBoundingClientRect();
-          if(Math.abs(r.top - top) <= 12 && r.left < l){ l = r.left; left = t; }
+          if(r.width > 0 && Math.abs(r.top - top) <= 12 && r.left < l){ l = r.left; left = t; }
         });
         next = left;
       }else if(next.matches('.lib-table th') && !cur.matches('.lib-table th')){

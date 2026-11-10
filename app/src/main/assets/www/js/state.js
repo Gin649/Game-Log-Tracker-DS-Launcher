@@ -7,7 +7,8 @@ let recentGamesData = [];
 let lastProfile = null; // kept to recompute profile stats once the library loads
 let userPoints = null; // { Points (hardcore), SoftcorePoints }: separate totals, not one inside the other
 let statsMode = 'casual'; // 'casual' | 'hardcore'
-let librarySort = { key: 'Title', dir: 'asc' };
+let librarySort = { key: '', dir: 'asc' }; // no key: the usual order, recently played first and then A to Z
+let backlogSort = { key: 'Title', dir: 'asc' };
 const estHoursCache = {}; // GameID -> { hours, beaten }, this session only
 const achievementsListCache = {}; // GameID -> achievement list with earn dates, filled by getEstimatedHours()
 let systemFilter = 'All';
@@ -73,6 +74,17 @@ function manualStatusHtml(local){
     return '<span class="pill pill-teal">Beaten</span>' + beatenDateHtml(formatManualBeatenDate(local.manualBeatenDate));
   }
   return local.manualStarted ? '<span class="pill pill-muted">In progress</span>' : '<span class="pill pill-muted">Not started</span>';
+}
+
+// A day as short as it goes, for table columns: "Nov 7/26".
+function shortDay(d){
+  return d.toLocaleDateString(undefined, { month: 'short' }) + ' ' + d.getDate() + '/' + String(d.getFullYear()).slice(-2);
+}
+// timeAgo for a narrow column: the same for today, a short day after that.
+function timeAgoShort(dateStr){
+  const d = parseRADate(dateStr);
+  if(!d) return '—';
+  return (Date.now() - d.getTime()) / 1000 < 86400 ? timeAgo(dateStr) : shortDay(d);
 }
 
 function timeAgo(dateStr){

@@ -16,6 +16,9 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - Saved data is written more safely, so a crash or power loss in the middle of a save can't leave a value missing.
 - Opening an app from the Apps tab while a game is running now puts the app on the bottom screen, so it never covers the game. With no game running it opens on the screen you set for it. (Knowing a game is running needs Usage access.)
 - ROM Hacks: applying a patch you have already applied no longer saves a second copy. The file from last time is used, a note says so, and Play patched game starts it.
+- Game Library table: the headings now sort in a set order. Game goes A to Z, then Z to A, then back to the usual order with recently played on top. Award goes mastered, beaten, in progress, then the reverse. Playtime goes shortest first, then longest. Last played goes newest first, then oldest. Games with nothing to sort by (never played, no playtime yet) stay at the bottom.
+- Backlog table: the Game and Achievements headings now sort (Achievements is most points first, then least). Achievements shows the set's points as well, as in 37 / 450 pts. The System column only shows under All.
+- Game Library table: dates are shorter (Nov 7/26), only a game's name runs onto a second line, and the Award column is left out while Hide Beaten is on.
 
 ### Fixed
 - Games RetroAchievements doesn't track (3DS, for example) now show their playtime and when they were last played in the Game Library, in both the table and tile views. They showed a dash and Never before, even after you played them from the launcher. The time is brought up to date when you come back from the game.
@@ -56,6 +59,9 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - Setup: the Cancel button on the first page is now "Finish later", since folders you have already chosen stay chosen.
 - Controller: moving up and down through your games no longer lands on a game's ✕ (remove) button, so pressing confirm opens the game. In a list, press right on a game to reach its ✕ and left to go back. In tile view the ✕, and in Apps the star, are now for touch only.
 - The row of console names is easier to scroll by touch. A swipe on it now always scrolls the row, not the page, and it no longer gets slower after you have reordered the consoles.
+- Controller: sorting by a heading keeps the highlight on that heading. It jumped back to the tab.
+- Controller: switching to Apps with L2 or R2 lands on the first app, and moving down into any grid of tiles (Last Played, tile view, Beaten, Apps) lands on the first tile at the left.
+- Controller: the highlight round All and the first console is no longer cut off at the left.
 
 ### Security
 - Your RetroAchievements login is only ever sent to RetroAchievements or to the app's own service. The public proxies that were tried as a last resort have been removed.

@@ -1276,7 +1276,14 @@ html[data-theme] .brand .mark{object-fit:contain;width:auto;max-width:150px;}
 .theme-col .theme-btn.on{background:rgba(var(--gold-rgb),0.18);border-color:var(--gold);color:var(--gold);}
 
 /* "All" stays pinned at the left of the console row while the other consoles scroll under it. */
-.chip-row:not(.editing) > .chip[data-sys="All"]{position:sticky;left:0;z-index:3;box-shadow:8px 0 0 0 var(--bg);}
+.chip-row:not(.editing) > .chip[data-sys="All"]{position:sticky;left:6px;z-index:3;box-shadow:8px 0 0 0 var(--bg),-6px 0 0 0 var(--bg);}
+/* Room at the left for the controller's ring round "All" (the row cuts off anything outside itself), taken back
+   with the margin so nothing moves. The ring round the console beside "All" is drawn over All's cover, not under it. */
+.chip-row{padding-left:6px;margin-left:-6px;}
+body.pad-mode .chip.pad-focus:not([data-sys="All"]){position:relative;z-index:4;}
+/* Library and Backlog tables: only the game's name may run onto a second line. */
+.lib-table th,.lib-table td:not(:first-child){white-space:nowrap;}
+.lib-table th:not(:first-child),.lib-table td:not(:first-child){padding-left:6px;padding-right:6px;}
 .chip-row:not(.editing){scroll-snap-type:x proximity;}
 .chip-row:not(.editing) > .chip:not([data-sys="All"]){scroll-snap-align:start;}
 

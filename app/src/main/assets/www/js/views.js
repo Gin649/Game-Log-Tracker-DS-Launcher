@@ -110,6 +110,13 @@ function recentWithCustom(games){
 }
 
 // Time played on this device, from the app's own tracking (RetroAchievements has none for these games).
+// Seconds counted on this device for a game RetroAchievements doesn't track (0 when none, or outside the launcher).
+function customPlaySeconds(g){
+  try{
+    return (typeof thorBridge !== 'undefined' && thorBridge && thorBridge.playtime) ? Number(thorBridge.playtime(g.Title, g.ConsoleName)) || 0 : 0;
+  }catch(e){ return 0; }
+}
+
 function customPlaytimeHtml(g){
   if(typeof usesPlayLog === 'function' && usesPlayLog(g.ConsoleName)){ // PS5, Xbox Series X|S, Switch 2: the hand-kept play log
     const mins = playLogMinutes(libraryData.find(x => x.GameID === g.GameID));
@@ -401,6 +408,34 @@ function sortableTitle(title){
   return foldText(String(title || '').replace(/^(?:~[^~]*~\s*)+/, ''));
 }
 
+// Where a game falls in the Award column: 0 mastered, 1 beaten, 2 in progress.
+function awardRank(g){
+  if(g.customConsole) return g.manualBeaten ? 1 : 2;
+  const info = awardInfo(g.HighestAwardKind);
+  return !info ? 2 : (info.label === 'Mastered' ? 0 : 1);
+}
+
+// The first press on a Library heading sorts this way, the next press the other way. Game has a third press
+// that goes back to the usual order.
+const LIBRARY_SORT_FIRST = { Title: 'asc', HighestAwardKind: 'asc', pct: 'desc', estHours: 'asc', lastPlayed: 'desc' };
+function pressLibrarySort(k){
+  if(k === 'Title'){
+    if(librarySort.key !== 'Title'){ librarySort.key = 'Title'; librarySort.dir = 'asc'; }
+    else if(librarySort.dir === 'asc') librarySort.dir = 'desc';
+    else{ librarySort.key = ''; librarySort.dir = 'asc'; }
+  }else if(librarySort.key === k){
+    librarySort.dir = librarySort.dir === 'asc' ? 'desc' : 'asc';
+  }else{
+    librarySort.key = k;
+    librarySort.dir = LIBRARY_SORT_FIRST[k] || 'desc';
+  }
+}
+// The Backlog starts A to Z, so the first press on Game turns it round. Achievements is most points first.
+function pressBacklogSort(k){
+  if(backlogSort.key === k) backlogSort.dir = backlogSort.dir === 'asc' ? 'desc' : 'asc';
+  else{ backlogSort.key = k; backlogSort.dir = k === 'Title' ? 'asc' : 'desc'; }
+}
+
 // Whether a game shows as done in the current mode (the same rule awardPill() uses).
 function isGameAwarded(g){
   if(g.customConsole) return !!g.manualBeaten;
@@ -429,25 +464,32 @@ function renderLibrary(){
   );
 
   const { key, dir } = librarySort;
-  rows = rows.slice().sort((a,b) => {
-    if(key === 'HighestAwardKind'){
-      const aRank = isGameAwarded(a) ? 0 : 1;
-      const bRank = isGameAwarded(b) ? 0 : 1;
-      const rankDiff = dir === 'desc' ? (aRank - bRank) : (bRank - aRank);
-      if(rankDiff !== 0) return rankDiff;
-      return sortableTitle(a.Title).localeCompare(sortableTitle(b.Title));
-    }
-    let av = a[key], bv = b[key];
-    if(key === 'Title'){ av = sortableTitle(av); bv = sortableTitle(bv); }
-    else if(typeof av === 'string'){ av = av.toLowerCase(); bv = bv.toLowerCase(); }
-    if(av < bv) return dir === 'asc' ? -1 : 1;
-    if(av > bv) return dir === 'asc' ? 1 : -1;
-    return 0;
-  });
+  const byTitle = (a, b) => sortableTitle(a.Title).localeCompare(sortableTitle(b.Title));
+  if(!key || key === 'Title'){
+    rows = rows.slice().sort((a, b) => (key && dir === 'desc' ? -1 : 1) * byTitle(a, b));
+  }else{
+    // What a game is sorted by in this column, or null when it has nothing (never played, no playtime yet).
+    // Those stay at the bottom whichever way the column is sorted.
+    const value = (g) => {
+      if(key === 'HighestAwardKind') return awardRank(g);
+      if(key === 'lastPlayed'){ const d = parseRADate(g.lastPlayed); return d ? d.getTime() : null; }
+      if(key === 'estHours'){
+        if(g.customConsole){ const sec = customPlaySeconds(g); return sec >= 30 ? sec / 3600 : null; }
+        return g.estHours >= 0 ? g.estHours : null;
+      }
+      return Number(g[key]) || 0;
+    };
+    const sign = dir === 'asc' ? 1 : -1;
+    rows = rows.map(g => ({ g, v: value(g) })).sort((a, b) => {
+      if((a.v === null) !== (b.v === null)) return a.v === null ? 1 : -1;
+      if(a.v !== b.v) return (a.v < b.v ? -1 : 1) * sign;
+      return byTitle(a.g, b.g);
+    }).map(x => x.g);
+  }
 
   // Default order: the three most recently played (on the picked console, if any), then by name.
   let recentSet = null; // the games shown first, with a label over them
-  if(key === 'Title' && dir === 'asc' && !searchVal){
+  if(!key && !searchVal){
     const recent = rows
       .filter(g => parseRADate(g.lastPlayed))
       .sort((a, b) => parseRADate(b.lastPlayed) - parseRADate(a.lastPlayed))
@@ -468,11 +510,13 @@ function renderLibrary(){
 
   if(gameView === 'tile'){ renderTiles(wrap, rows, recentSet, false); return; }
 
+  const showAward = !libraryHideDone; // with beaten games hidden, every game left is in progress
+  const cols = showAward ? 5 : 4;
   setGamesHtml(wrap, `
       <table class="lib-table">
         <thead><tr>
           <th data-key="Title">Game</th>
-          <th data-key="HighestAwardKind">Award</th>
+          ${showAward ? '<th data-key="HighestAwardKind">Award</th>' : ''}
           <th data-key="pct">Progress</th>
           <th data-key="estHours" title="In-progress games: estimated active playtime. Beaten/completed games: time from first unlock to the award.">Playtime</th>
           <th data-key="lastPlayed">Last played</th>
@@ -480,8 +524,8 @@ function renderLibrary(){
         <tbody>
           ${rows.map((g, i) => {
           const label = recentSet
-            ? (i === 0 ? '<tr class="lib-sec"><td colspan="5">RECENTLY PLAYED</td></tr>'
-              : (i === recentSet.size ? '<tr class="lib-sec alt"><td colspan="5">ALL GAMES A\u2013Z</td></tr>' : ''))
+            ? (i === 0 ? `<tr class="lib-sec"><td colspan="${cols}">RECENTLY PLAYED</td></tr>`
+              : (i === recentSet.size ? `<tr class="lib-sec alt"><td colspan="${cols}">ALL GAMES A\u2013Z</td></tr>` : ''))
             : '';
           const isCustom = g.customConsole === true;
           const est = estHoursCache[g.GameID];
@@ -501,12 +545,12 @@ function renderLibrary(){
                 <span style="font-family:'Space Mono',monospace;font-size:0.6875rem;color:var(--muted)">${awardedForMode}/${g.MaxPossible} · ${pctForMode}%</span>
               `;
           const lastPlayedLabel = isCustom
-            ? (g.lastPlayed ? timeAgo(g.lastPlayed) : (parseLocalDay(g.manualBeatenDate) ? parseLocalDay(g.manualBeatenDate).toLocaleDateString() : 'Never'))
-            : (g.lastPlayed ? timeAgo(g.lastPlayed) : 'Never');
+            ? (g.lastPlayed ? timeAgoShort(g.lastPlayed) : (parseLocalDay(g.manualBeatenDate) ? shortDay(parseLocalDay(g.manualBeatenDate)) : 'Never'))
+            : (g.lastPlayed ? timeAgoShort(g.lastPlayed) : 'Never');
           return label + `
             <tr data-game-id="${g.GameID}">
               <td><div class="g-title"><img src="${imgUrl(g.ImageIcon)}" alt="" loading="lazy" decoding="async"><span>${esc(g.Title)}${preRaStar(g.GameID)}</span>${g.manual ? `<button class="manual-remove" data-remove-id="${g.GameID}" title="Remove">✕</button>` : ''}</div></td>
-              <td>${awardCell}</td>
+              ${showAward ? `<td>${awardCell}</td>` : ''}
               <td>${progressCell}</td>
               <td style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--gold)">${hoursLabel}</td>
               <td style="color:var(--muted);font-size:0.75rem;">${lastPlayedLabel}</td>
@@ -592,14 +636,50 @@ function wireGames(wrap){
     const th = hit('th[data-key]');
     if(th){
       const k = th.getAttribute('data-key');
-      librarySort.dir = (librarySort.key === k && librarySort.dir === 'desc') ? 'asc' : 'desc';
-      librarySort.key = k;
-      renderLibrary();
+      if(wrap.id === 'backlog-table-wrap'){ pressBacklogSort(k); renderBacklog(); }
+      else{ pressLibrarySort(k); renderLibrary(); }
       return;
     }
     const game = hit('.cart, .lib-table tbody tr:not(.lib-sec)');
     if(game) openGameModal(Number(game.getAttribute('data-game-id')));
   });
+}
+
+// A backlog game's total points aren't known when it was added before points were kept, or from a place that
+// doesn't give them. They come from RetroAchievements' list for its console (kept for a week, so this is one
+// request per console at most), are saved with the game, and the Backlog is drawn again.
+const backlogPointsAsked = new Set();
+function fillBacklogPoints(rows){
+  const need = rows.filter(g => !g.customConsole && g.ConsoleID && g.Points == null && !backlogPointsAsked.has(g.GameID));
+  if(!need.length || typeof getGameListForConsole !== 'function') return;
+  need.forEach(g => backlogPointsAsked.add(g.GameID));
+  const consoles = [...new Set(need.map(g => Number(g.ConsoleID)))];
+  (async () => {
+    const found = new Map();
+    for(const cid of consoles){
+      try{
+        const list = await getGameListForConsole(cid);
+        const byId = new Map((list || []).map(x => [Number(x.ID ?? x.id), x]));
+        need.forEach(g => {
+          const hit = Number(g.ConsoleID) === cid ? byId.get(Number(g.GameID)) : null;
+          if(hit && hit.Points != null) found.set(Number(g.GameID), Number(hit.Points));
+        });
+      }catch(e){
+        need.forEach(g => { if(Number(g.ConsoleID) === cid) backlogPointsAsked.delete(g.GameID); }); // offline: ask again later
+      }
+    }
+    if(!found.size) return;
+    libraryData.forEach(g => { if(found.has(Number(g.GameID)) && g.Points == null) g.Points = found.get(Number(g.GameID)); });
+    try{
+      await enqueueTask(async () => {
+        const saved = await loadManualGames();
+        let changed = false;
+        saved.forEach(m => { if(found.has(Number(m.GameID)) && m.Points == null){ m.Points = found.get(Number(m.GameID)); changed = true; } });
+        if(changed) await saveManualGames(saved);
+      });
+    }catch(e){}
+    renderBacklog();
+  })();
 }
 
 // Games added but not played yet.
@@ -613,7 +693,21 @@ function renderBacklog(){
     foldText(g.Title).includes(searchVal) &&
     (systemFilter === 'All' || g.ConsoleName === systemFilter)
   );
-  rows = rows.slice().sort((a, b) => sortableTitle(a.Title).localeCompare(sortableTitle(b.Title)));
+  const byTitle = (a, b) => sortableTitle(a.Title).localeCompare(sortableTitle(b.Title));
+  const sign = backlogSort.dir === 'asc' ? 1 : -1;
+  if(backlogSort.key === 'points'){
+    // games with no points to show (not on RetroAchievements, or not looked up yet) stay at the bottom either way
+    const pts = (g) => (!g.customConsole && g.Points != null) ? Number(g.Points) : null;
+    rows = rows.slice().sort((a, b) => {
+      const av = pts(a), bv = pts(b);
+      if((av === null) !== (bv === null)) return av === null ? 1 : -1;
+      if(av !== bv) return (av < bv ? -1 : 1) * sign;
+      return byTitle(a, b);
+    });
+  }else{
+    rows = rows.slice().sort((a, b) => sign * byTitle(a, b));
+  }
+  fillBacklogPoints(rows);
 
   const countEl = $('#backlog-count');
   if(countEl) countEl.textContent = rows.length ? `(${rows.length} ${rows.length === 1 ? 'game' : 'games'})` : '';
@@ -625,19 +719,20 @@ function renderBacklog(){
 
   if(gameView === 'tile'){ renderTiles(wrap, rows, null, true); return; }
 
+  const showSystem = systemFilter === 'All'; // on one console's list every row would say the same thing
   setGamesHtml(wrap, `
       <table class="lib-table">
         <thead><tr>
-          <th>Game</th>
-          <th>System</th>
-          <th>Achievements</th>
+          <th data-key="Title">Game</th>
+          ${showSystem ? '<th>System</th>' : ''}
+          <th data-key="points">Achievements</th>
         </tr></thead>
         <tbody>
           ${rows.map(g => `
             <tr data-game-id="${g.GameID}">
               <td><div class="g-title"><img src="${imgUrl(g.ImageIcon)}" alt="" loading="lazy" decoding="async"><span>${esc(g.Title)}${preRaStar(g.GameID)}</span>${g.manual ? `<button class="manual-remove" data-remove-id="${g.GameID}" title="Remove">✕</button>` : ''}</div></td>
-              <td style="color:var(--muted);font-size:0.75rem;">${esc(g.ConsoleName || '—')}</td>
-              <td style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--muted)">${g.customConsole ? 'Not on RA' : (Number(g.MaxPossible) || 0)}</td>
+              ${showSystem ? `<td style="color:var(--muted);font-size:0.75rem;">${esc(g.ConsoleName || '—')}</td>` : ''}
+              <td style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--muted)">${g.customConsole ? 'Not on RA' : (Number(g.MaxPossible) || 0) + (g.Points != null ? ' / ' + Number(g.Points) + ' pts' : '')}</td>
             </tr>
           `).join('')}
         </tbody>

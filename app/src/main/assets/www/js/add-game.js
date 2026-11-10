@@ -177,6 +177,7 @@ function buildManualRaEntry(g, consoleId, consoleName){
     ConsoleName: g.ConsoleName ?? g.consoleName ?? consoleName,
     ImageIcon: g.ImageIcon ?? g.imageIcon,
     MaxPossible: g.NumAchievements ?? g.numAchievements ?? 0,
+    Points: g.Points ?? g.points ?? null, // the set's total points, for the Backlog (filled in later when not known here)
     NumAwarded: 0,
     NumAwardedHardcore: 0,
     HighestAwardKind: null,

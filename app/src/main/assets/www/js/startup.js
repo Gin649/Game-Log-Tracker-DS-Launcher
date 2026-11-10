@@ -67,11 +67,16 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 // A console chip that runs off the edge of the row is hidden until you scroll to it, so no name is ever cut in half.
 // Where to scroll the console row so the chosen console is fully in view with no gap after the pinned "All":
 // it scrolls only when it has to, and then in whole chips, so the first console always sits right beside All.
+// How far in from the row's left edge the first console sits when it is right beside the pinned "All".
+function chipPin(row, all){
+  return (parseFloat(getComputedStyle(row).paddingLeft) || 0) + all.offsetWidth + 8;
+}
+
 function chipScrollTarget(row, active){
   const max = Math.max(0, row.scrollWidth - row.clientWidth);
   const all = row.classList.contains('editing') ? null : row.querySelector('.chip[data-sys="All"]');
   if(!all || active === all) return 0;
-  const pin = all.offsetWidth + 8;
+  const pin = chipPin(row, all);
   const sl = row.scrollLeft;
   let t = sl;
   if(active.offsetLeft - pin < sl) t = active.offsetLeft - pin;
@@ -105,8 +110,9 @@ function chipScrollTarget(row, active){
     row.classList.toggle('can-scroll', more);
     const rightEdge = box.right - (more ? 28 : 0);
     const allEl = row.classList.contains('editing') ? null : row.querySelector('.chip[data-sys="All"]');
-    row.style.scrollPaddingLeft = (allEl ? allEl.offsetWidth + 8 : 0) + 'px'; // chips snap to sit right beside All
-    const leftEdge = box.left + (allEl ? allEl.offsetWidth + 8 : 0); // the pinned All covers the left of the row
+    const pin = allEl ? chipPin(row, allEl) : 0;
+    row.style.scrollPaddingLeft = pin + 'px'; // chips snap to sit right beside All
+    const leftEdge = box.left + pin; // the pinned All covers the left of the row
     row.querySelectorAll('.chip').forEach(c => {
       if(c === allEl){ c.style.visibility = ''; return; }
       const r = c.getBoundingClientRect();
