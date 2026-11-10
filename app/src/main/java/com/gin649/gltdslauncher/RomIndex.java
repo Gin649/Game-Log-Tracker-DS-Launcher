@@ -17,6 +17,7 @@ final class RomIndex {
         final String name;   // file name without extension
         final String rel;    // path inside the system folder, without extension
         final String norm;   // normalized name used for matching
+        final String bareNorm; // the same for "5587 - Chrono Trigger" without its number, or null when there is none
         /** For a multi-disc game with no .m3u: every disc in order (the entry itself is disc 1). Otherwise null. */
         List<File> discs;
 
@@ -27,6 +28,7 @@ final class RomIndex {
             this.rel = rel;
             String t = ArcadeNames.applies(sys.folder) ? ArcadeNames.title(name) : null;
             this.norm = Matcher.norm(t != null ? t : name);
+            this.bareNorm = Matcher.bareNorm(name);
         }
     }
 
@@ -37,6 +39,8 @@ final class RomIndex {
             "media", "images", "manuals", "saves", "states", "downloaded_media"));
 
     private volatile List<Rom> roms = new ArrayList<Rom>();
+    // the same ROMs split up by system, in the order they were scanned, so a lookup needn't walk the whole list
+    private volatile java.util.Map<SystemMap.Sys, List<Rom>> bySys = new java.util.LinkedHashMap<SystemMap.Sys, List<Rom>>();
     private volatile boolean ready;
 
     boolean isReady() {
@@ -62,6 +66,16 @@ final class RomIndex {
             File d = s.dir();
             if (d.isDirectory()) scan(s, d, d, 0, out);
         }
+        java.util.Map<SystemMap.Sys, List<Rom>> split = new java.util.LinkedHashMap<SystemMap.Sys, List<Rom>>();
+        for (Rom r : out) {
+            List<Rom> list = split.get(r.sys);
+            if (list == null) {
+                list = new ArrayList<Rom>();
+                split.put(r.sys, list);
+            }
+            list.add(r);
+        }
+        bySys = split;
         roms = out;
         ready = true;
     }
@@ -73,9 +87,25 @@ final class RomIndex {
 
     List<Rom> forSystems(List<SystemMap.Sys> systems) {
         List<Rom> out = new ArrayList<Rom>();
-        for (Rom r : roms) {
-            if (systems.contains(r.sys)) out.add(r);
+        for (java.util.Map.Entry<SystemMap.Sys, List<Rom>> e : bySys.entrySet()) {
+            if (systems.contains(e.getKey())) out.addAll(e.getValue());
         }
+        return out;
+    }
+
+    /** Every ROM in one system folder. */
+    List<Rom> inFolder(String folder) {
+        List<Rom> out = new ArrayList<Rom>();
+        for (java.util.Map.Entry<SystemMap.Sys, List<Rom>> e : bySys.entrySet()) {
+            if (e.getKey().folder.equals(folder)) out.addAll(e.getValue());
+        }
+        return out;
+    }
+
+    /** The systems that have ROMs, with how many each has. */
+    java.util.Map<SystemMap.Sys, Integer> systemCounts() {
+        java.util.Map<SystemMap.Sys, Integer> out = new java.util.LinkedHashMap<SystemMap.Sys, Integer>();
+        for (java.util.Map.Entry<SystemMap.Sys, List<Rom>> e : bySys.entrySet()) out.put(e.getKey(), e.getValue().size());
         return out;
     }
 

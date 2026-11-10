@@ -7,16 +7,30 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /** Matches a RetroAchievements game title to a ROM file name. */
 final class Matcher {
 
     private Matcher() {}
 
+    // compiled once: these run for every ROM on every scan and every title looked up
+    private static final Pattern TAG_AND_SPACE = Pattern.compile("~[^~]*~\\s*");
+    private static final Pattern TAG = Pattern.compile("~[^~]*~");
+    private static final Pattern NOT_ALNUM = Pattern.compile("[^a-z0-9]");
+    private static final Pattern NOT_ALNUM_SPACE = Pattern.compile("[^a-z0-9 ]");
+    private static final Pattern MARKS = Pattern.compile("\\p{M}+");
+    private static final Pattern BRACKETS = Pattern.compile("\\([^)]*\\)|\\[[^\\]]*\\]");
+    private static final Pattern SPACES = Pattern.compile("\\s+");
+    private static final Pattern VERSION = Pattern.compile("v\\d+[a-z]?");
+    private static final Pattern SHORT_NUMBER = Pattern.compile("\\d{1,3}");
+    private static final Pattern NUMBER = Pattern.compile("\\d+");
+    private static final Pattern FILE_NUMBER = Pattern.compile("^\\s*\\d{1,5}\\s*[-_.]\\s*");
+
     /** Title for display: RA tags like ~Hack~ removed. */
     static String display(String title) {
         if (title == null) return "";
-        return title.replaceAll("~[^~]*~\\s*", "").trim();
+        return TAG_AND_SPACE.matcher(title).replaceAll("").trim();
     }
 
     static boolean wantsHack(String title) {
@@ -26,19 +40,19 @@ final class Matcher {
     /** Lowercase letters and digits only, for comparing console names. */
     static String compact(String s) {
         if (s == null) return "";
-        return s.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
+        return NOT_ALNUM.matcher(s.toLowerCase(Locale.ROOT)).replaceAll("");
     }
 
     /** Normalized name: no tags, no brackets, no accents or punctuation, single spaces. */
     static String norm(String s) {
         if (s == null) return "";
-        s = Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}+", "");
+        s = MARKS.matcher(Normalizer.normalize(s, Normalizer.Form.NFD)).replaceAll("");
         s = s.toLowerCase(Locale.ROOT);
-        s = s.replaceAll("~[^~]*~", " ");
-        s = s.replaceAll("\\([^)]*\\)|\\[[^\\]]*\\]", " ");
+        s = TAG.matcher(s).replaceAll(" ");
+        s = BRACKETS.matcher(s).replaceAll(" ");
         s = s.replace("&", " and ");
-        s = s.replaceAll("[^a-z0-9 ]", " ");
-        s = s.trim().replaceAll("\\s+", " ");
+        s = NOT_ALNUM_SPACE.matcher(s).replaceAll(" ");
+        s = SPACES.matcher(s.trim()).replaceAll(" ");
         if (s.startsWith("the ")) s = s.substring(4);
         if (s.endsWith(" the")) s = s.substring(0, s.length() - 4);
         return s;
@@ -57,7 +71,7 @@ final class Matcher {
 
     private static boolean isVersionWord(String w) {
         return w.equals("version") || w.equals("ver") || w.equals("rev") || w.equals("revision")
-                || w.equals("disc") || w.equals("disk") || w.equals("cd") || w.matches("v\\d+[a-z]?");
+                || w.equals("disc") || w.equals("disk") || w.equals("cd") || VERSION.matcher(w).matches();
     }
 
     /**
@@ -72,7 +86,7 @@ final class Matcher {
                 inVersion = true;
                 continue;
             }
-            if (inVersion && w.matches("\\d{1,3}")) continue; // the 1 in "disc 1"
+            if (inVersion && SHORT_NUMBER.matcher(w).matches()) continue; // the 1 in "disc 1"
             inVersion = false;
             if (!NOISE.contains(w)) return false;
         }
@@ -82,7 +96,7 @@ final class Matcher {
     private static Set<String> digitWords(String s) {
         Set<String> out = new HashSet<String>();
         for (String w : words(s)) {
-            if (w.matches("\\d+")) out.add(w);
+            if (NUMBER.matcher(w).matches()) out.add(w);
         }
         return out;
     }
@@ -152,6 +166,12 @@ final class Matcher {
         return 0;
     }
 
+    /** The normalized name of a numbered file without its number, or null when the name has no number in front. */
+    static String bareNorm(String name) {
+        String bare = FILE_NUMBER.matcher(name).replaceFirst("");
+        return bare.equals(name) ? null : norm(bare);
+    }
+
     /** Best ROM for a title among candidates, or null when nothing is close enough. */
     static RomIndex.Rom best(List<RomIndex.Rom> candidates, String title) {
         // RetroAchievements sometimes lists two names in one title ("Resident Evil | Biohazard"); either can match
@@ -169,9 +189,8 @@ final class Matcher {
             int s = 0;
             for (String n : names) s = Math.max(s, score(n, r.norm));
             // DS sets often number the files ("5587 - Chrono Trigger (USA)"): try the name without the number too
-            String bare = r.name.replaceFirst("^\\s*\\d{1,5}\\s*[-_.]\\s*", "");
-            if (!bare.equals(r.name)) {
-                String bn = norm(bare);
+            String bn = r.bareNorm;
+            if (bn != null) {
                 for (String n : names) s = Math.max(s, score(n, bn));
             }
             if (s == 0) continue;

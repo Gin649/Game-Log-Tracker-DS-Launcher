@@ -459,7 +459,7 @@ function renderLibrary(){
 
   if(gameView === 'tile'){ renderTiles(wrap, rows, recentSet, false); return; }
 
-  wrap.innerHTML = `
+  setGamesHtml(wrap, `
       <table class="lib-table">
         <thead><tr>
           <th data-key="Title">Game</th>
@@ -496,7 +496,7 @@ function renderLibrary(){
             : (g.lastPlayed ? timeAgo(g.lastPlayed) : 'Never');
           return label + `
             <tr data-game-id="${g.GameID}">
-              <td><div class="g-title"><img src="${imgUrl(g.ImageIcon)}" alt=""><span>${g.Title}</span>${g.manual ? `<button class="manual-remove" data-remove-id="${g.GameID}" title="Remove">✕</button>` : ''}</div></td>
+              <td><div class="g-title"><img src="${imgUrl(g.ImageIcon)}" alt="" loading="lazy" decoding="async"><span>${g.Title}</span>${g.manual ? `<button class="manual-remove" data-remove-id="${g.GameID}" title="Remove">✕</button>` : ''}</div></td>
               <td>${awardCell}</td>
               <td>${progressCell}</td>
               <td style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--gold)">${hoursLabel}</td>
@@ -506,17 +506,7 @@ function renderLibrary(){
         }).join('')}
         </tbody>
       </table>
-    `;
-
-  wrap.querySelectorAll('th[data-key]').forEach(th => {
-    th.addEventListener('click', () => {
-      const k = th.getAttribute('data-key');
-      librarySort.dir = (librarySort.key === k && librarySort.dir === 'desc') ? 'asc' : 'desc';
-      librarySort.key = k;
-      renderLibrary();
-    });
-  });
-  wireGameRows(wrap);
+    `);
 }
 
 // Tile view (Display Options): the Last Played cards, in a grid with 3 to 5 tiles per row.
@@ -547,7 +537,7 @@ function tileHtml(g, backlog){
             </div>`;
   }
   return `<div class="cart" data-game-id="${g.GameID}">
-      <div class="art-wrap"><img class="art" src="${imgUrl(g.ImageIcon)}" alt="${g.Title}">${badge}${remove}</div>
+      <div class="art-wrap"><img class="art" src="${imgUrl(g.ImageIcon)}" alt="${g.Title}" loading="lazy" decoding="async">${badge}${remove}</div>
       <div class="body"><p class="title">${g.Title}</p><p class="console">${g.ConsoleName || ''}</p>${foot}</div>
     </div>`;
 }
@@ -563,23 +553,41 @@ function renderTiles(wrap, rows, recentSet, backlog){
     html += '<div class="tile-sec alt">ALL GAMES A\u2013Z</div>';
   }
   html += `<div class="tile-grid cols-${cols}" style="--tile-cols:${cols}">${rest.map(g => tileHtml(g, backlog)).join('')}</div>`;
-  wrap.innerHTML = html;
-  wrap.querySelectorAll('.cart').forEach(card => {
-    card.addEventListener('click', () => openGameModal(Number(card.getAttribute('data-game-id'))));
-  });
-  wireGameRows(wrap);
+  setGamesHtml(wrap, html);
 }
 
-// Opens a game from a table row; ✕ removes a manually added game.
-function wireGameRows(wrap){
-  wrap.querySelectorAll('tbody tr:not(.lib-sec)').forEach(row => {
-    row.addEventListener('click', () => openGameModal(Number(row.getAttribute('data-game-id'))));
-  });
-  wrap.querySelectorAll('.manual-remove').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+// Puts a game list (tiles or table) on the page. A sync or a tab switch often asks for the list that is already
+// showing, and building hundreds of tiles again for nothing is the slow part, so that case is skipped.
+function setGamesHtml(wrap, html){
+  wireGames(wrap);
+  if(wrap.gamesHtml === html && wrap.querySelector('.tile-grid, .lib-table')) return;
+  wrap.gamesHtml = html;
+  wrap.innerHTML = html;
+}
+
+// One click handler for the whole list, set up once: a tile or table row opens the game, ✕ removes a manually
+// added game, and a column heading in the Library table sorts by it.
+function wireGames(wrap){
+  if(wrap.gamesWired) return;
+  wrap.gamesWired = true;
+  wrap.addEventListener('click', (e) => {
+    const hit = (sel) => { const el = e.target.closest(sel); return el && wrap.contains(el) ? el : null; };
+    const remove = hit('.manual-remove');
+    if(remove){
       e.stopPropagation();
-      removeManualGame(Number(btn.getAttribute('data-remove-id')));
-    });
+      removeManualGame(Number(remove.getAttribute('data-remove-id')));
+      return;
+    }
+    const th = hit('th[data-key]');
+    if(th){
+      const k = th.getAttribute('data-key');
+      librarySort.dir = (librarySort.key === k && librarySort.dir === 'desc') ? 'asc' : 'desc';
+      librarySort.key = k;
+      renderLibrary();
+      return;
+    }
+    const game = hit('.cart, .lib-table tbody tr:not(.lib-sec)');
+    if(game) openGameModal(Number(game.getAttribute('data-game-id')));
   });
 }
 
@@ -606,7 +614,7 @@ function renderBacklog(){
 
   if(gameView === 'tile'){ renderTiles(wrap, rows, null, true); return; }
 
-  wrap.innerHTML = `
+  setGamesHtml(wrap, `
       <table class="lib-table">
         <thead><tr>
           <th>Game</th>
@@ -616,16 +624,14 @@ function renderBacklog(){
         <tbody>
           ${rows.map(g => `
             <tr data-game-id="${g.GameID}">
-              <td><div class="g-title"><img src="${imgUrl(g.ImageIcon)}" alt=""><span>${g.Title}</span>${g.manual ? `<button class="manual-remove" data-remove-id="${g.GameID}" title="Remove">✕</button>` : ''}</div></td>
+              <td><div class="g-title"><img src="${imgUrl(g.ImageIcon)}" alt="" loading="lazy" decoding="async"><span>${g.Title}</span>${g.manual ? `<button class="manual-remove" data-remove-id="${g.GameID}" title="Remove">✕</button>` : ''}</div></td>
               <td style="color:var(--muted);font-size:0.75rem;">${g.ConsoleName || '—'}</td>
               <td style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--muted)">${g.customConsole ? 'Not on RA' : (Number(g.MaxPossible) || 0)}</td>
             </tr>
           `).join('')}
         </tbody>
       </table>
-    `;
-
-  wireGameRows(wrap);
+    `);
 }
 
 // Small floating label with a game's title, used when a Beaten by Year tile is held.

@@ -117,22 +117,20 @@ final class DataStore {
 
     /** Keys that start with prefix. */
     static List<String> list(Context ctx, String prefix) {
-        List<String> out = new ArrayList<String>();
-        for (String n : CacheDb.get(ctx).names(prefix)) {
-            if (!out.contains(n)) out.add(n);
-        }
+        // a set that keeps its order: checking a list for each name got slow with thousands of saved values
+        java.util.Set<String> out = new java.util.LinkedHashSet<String>(CacheDb.get(ctx).names(prefix));
         File[] files = dataDir(ctx).listFiles();
-        if (files == null) return out;
+        if (files == null) return new ArrayList<String>(out);
         for (File f : files) {
             String n = f.getName();
             if (!n.endsWith(".txt")) continue;
             try {
                 String key = decode(n.substring(0, n.length() - 4));
-                if (key.startsWith(prefix) && !out.contains(key)) out.add(key);
+                if (key.startsWith(prefix)) out.add(key);
             } catch (Exception ignored) {
             }
         }
-        return out;
+        return new ArrayList<String>(out);
     }
 
     /** The value for a name in one call, or null when there is none. Large values are returned whole. */

@@ -1,5 +1,6 @@
 package com.gin649.gltdslauncher;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -35,6 +36,7 @@ final class ThorBridge {
 
     ThorBridge(MainActivity act) {
         this.act = act;
+        warmApps(act);
     }
 
     /** The file behind a /rom/<token> address, or null. Only files under the ROMs folder are ever served. */
@@ -313,25 +315,57 @@ final class ThorBridge {
     /** The apps on this device that have a launcher icon (not this app), sorted by name: [{pkg, label}]. */
     @JavascriptInterface
     public String appsList() {
+        return appsJson(act);
+    }
+
+    // Reading an app's name means opening its resources, which is slow across a hundred apps. The names are kept
+    // per install (the path changes when an app is updated) and language, and read once in the background at
+    // start-up, so opening the Apps tab doesn't hold up the page.
+    private static final Map<String, String[]> APP_LABELS = new java.util.concurrent.ConcurrentHashMap<String, String[]>();
+
+    static void warmApps(Context ctx) {
+        final Context app = ctx.getApplicationContext();
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                appsJson(app);
+            }
+        }, "apps-warm");
+        t.setPriority(Thread.MIN_PRIORITY);
+        t.start();
+    }
+
+    private static String appsJson(Context ctx) {
         JSONArray arr = new JSONArray();
         try {
-            PackageManager pm = act.getPackageManager();
+            PackageManager pm = ctx.getPackageManager();
             Intent main = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
+            String lang = java.util.Locale.getDefault().toString();
             Map<String, String> found = new java.util.TreeMap<String, String>();
+            Map<String, String> names = new HashMap<String, String>();
+            java.util.Set<String> seen = new java.util.HashSet<String>();
             for (ResolveInfo ri : pm.queryIntentActivities(main, 0)) {
                 String pkg = ri.activityInfo.packageName;
-                if (pkg.equals(act.getPackageName()) || found.containsValue(pkg)) continue;
-                CharSequence label = ri.loadLabel(pm);
-                found.put((label == null ? pkg : label.toString()).toLowerCase(java.util.Locale.ROOT) + "\u0000" + pkg, pkg);
+                if (pkg.equals(ctx.getPackageName()) || !seen.add(pkg)) continue;
+                String src = ri.activityInfo.applicationInfo == null ? "" : String.valueOf(ri.activityInfo.applicationInfo.sourceDir);
+                String key = pkg + "\u0000" + src + "\u0000" + lang;
+                String[] l = APP_LABELS.get(key);
+                if (l == null) {
+                    CharSequence label = ri.loadLabel(pm);
+                    String sortBy = (label == null ? pkg : label.toString()).toLowerCase(java.util.Locale.ROOT);
+                    String shown = sortBy;
+                    try {
+                        shown = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString();
+                    } catch (Exception ignored) {
+                    }
+                    l = new String[]{sortBy, shown};
+                    APP_LABELS.put(key, l);
+                }
+                found.put(l[0] + "\u0000" + pkg, pkg);
+                names.put(pkg, l[1]);
             }
             for (Map.Entry<String, String> e : found.entrySet()) {
-                String pkg = e.getValue();
-                String label = e.getKey().substring(0, e.getKey().indexOf('\u0000'));
-                try {
-                    label = pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString();
-                } catch (Exception ignored) {
-                }
-                arr.put(new JSONObject().put("pkg", pkg).put("label", label));
+                arr.put(new JSONObject().put("pkg", e.getValue()).put("label", names.get(e.getValue())));
             }
         } catch (Exception ignored) {
         }
@@ -565,10 +599,11 @@ final class ThorBridge {
         try {
             Map<String, SystemMap.Sys> sysOf = new java.util.TreeMap<String, SystemMap.Sys>();
             Map<String, Integer> counts = new HashMap<String, Integer>();
-            for (RomIndex.Rom r : Shared.index().all()) {
-                sysOf.put(r.sys.folder, r.sys);
-                Integer n = counts.get(r.sys.folder);
-                counts.put(r.sys.folder, n == null ? 1 : n + 1);
+            for (Map.Entry<SystemMap.Sys, Integer> e : Shared.index().systemCounts().entrySet()) {
+                String folder = e.getKey().folder;
+                sysOf.put(folder, e.getKey());
+                Integer n = counts.get(folder);
+                counts.put(folder, n == null ? e.getValue() : n + e.getValue());
             }
             for (Map.Entry<String, SystemMap.Sys> e : sysOf.entrySet()) {
                 JSONObject o = new JSONObject();
@@ -587,8 +622,8 @@ final class ThorBridge {
     public String romsIn(String folder) {
         JSONArray out = new JSONArray();
         try {
-            for (RomIndex.Rom r : Shared.index().all()) {
-                if (r.sys.folder.equals(folder)) out.put(romJson(r.name, r.sys, r.file.getPath()));
+            for (RomIndex.Rom r : Shared.index().inFolder(folder)) {
+                out.put(romJson(r.name, r.sys, r.file.getPath()));
             }
         } catch (Exception ignored) {
         }

@@ -283,7 +283,12 @@ $('#btn-hardcore-toggle').addEventListener('click', () => {
   }
   refreshOpenSubsetPanels();
 });
-$('#lib-search').addEventListener('input', renderLibrary);
+// Searching redraws the list a moment after the last key, not once for every letter typed.
+function afterTyping(fn){
+  let timer = 0;
+  return () => { clearTimeout(timer); timer = setTimeout(fn, 120); };
+}
+$('#lib-search').addEventListener('input', afterTyping(renderLibrary));
 
 // Game Library: Hide beaten / Show beaten. Remembered between visits.
 function syncHideDoneButton(){
@@ -311,4 +316,4 @@ $('#btn-hide-done').addEventListener('click', async () => {
     }
   }catch(e){}
 })();
-$('#backlog-search').addEventListener('input', renderBacklog);
+$('#backlog-search').addEventListener('input', afterTyping(renderBacklog));
