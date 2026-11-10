@@ -19,8 +19,15 @@
     if(hit) return hit.GameID;
     return /^\d+$/.test(idText) ? Number(idText) : idText;
   };
+  // A game tracked by hand has an id of its own that RetroAchievements has never heard of, so there is nothing to ask.
+  const onRa = (gameId) => {
+    const g = libraryData.find(x => x.GameID === gameId);
+    return typeof gameId === 'number' && gameId > 0 && !(g && g.customConsole);
+  };
+
   async function refreshOpenGameProfile(idText){
     const gameId = resolveGameId(idText);
+    if(!onRa(gameId)) return;
     let fresh;
     try{
       // One call for this game: progress, award, achievements and playtime.
@@ -97,6 +104,7 @@
     const idText = card.dataset.gameId;
     if(!idText) return;
     const gameId = resolveGameId(idText);
+    if(!onRa(gameId)) return;
     let fresh;
     try{ fresh = await raFetch('API_GetGameInfoAndUserProgress.php', { g: gameId, a: 1 }); }catch(e){ return; }
     if(!fresh || fresh.NumAwardedToUser === undefined) return;
