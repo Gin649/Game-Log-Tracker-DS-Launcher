@@ -2,6 +2,17 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
+## v1.1.8
+
+### Changed
+- The Library and Backlog open and scroll faster. Covers load as they come into view, not all at once, and a list that is already on screen is no longer rebuilt after every sync.
+- Searching the Library or Backlog redraws the list a moment after you stop typing, not on every letter.
+- The Apps tab opens faster. App names are read in the background when the launcher starts.
+- Finding a game's ROM is quicker, which speeds up the Play button, the Add from ROMs list and playtime for games RetroAchievements doesn't track. The app remembers which ROM each game matched until the next time it scans your folders.
+
+### Fixed
+- Games RetroAchievements doesn't track (3DS, for example) now show their playtime and when they were last played in the Game Library, in both the table and tile views. They showed a dash and Never before, even after you played them from the launcher. The time is brought up to date when you come back from the game.
+
 ## v1.1.7
 
 ### Added
