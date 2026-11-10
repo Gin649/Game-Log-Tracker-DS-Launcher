@@ -10,8 +10,24 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - The Apps tab opens faster. App names are read in the background when the launcher starts.
 - Finding a game's ROM is quicker, which speeds up the Play button, the Add from ROMs list and playtime for games RetroAchievements doesn't track. The app remembers which ROM each game matched until the next time it scans your folders.
 
+- Backups now include the playtime counted on this device for games RetroAchievements doesn't track. Restoring one keeps whichever time is longer.
+- Backups are smaller: lists that can be downloaded again are left out, and so are base ROMs remembered for the ROM patcher (pick the ROM again after restoring). Older backups still restore.
+- Saved data is written more safely, so a crash or power loss in the middle of a save can't leave a value missing.
+
 ### Fixed
 - Games RetroAchievements doesn't track (3DS, for example) now show their playtime and when they were last played in the Game Library, in both the table and tile views. They showed a dash and Never before, even after you played them from the launcher. The time is brought up to date when you come back from the game.
+- Beaten games with no playtime from RetroAchievements now show Time to beat (first unlock to last), as intended. They were being estimated as if still in progress.
+- Libraries with more than 500 games on RetroAchievements now load in full. Games past the first 500 were missing from the Game Library and Beaten.
+- Mark as beaten fills in today's date. In the evening it could fill in tomorrow's.
+- Beaten dates and release dates no longer show a day early, and a game beaten on January 1 no longer lands in the year before on Beaten.
+- The Backlog no longer stays on Loading when the library can't be reached.
+- ROMs added while the launcher is open are found when you come back to it, or when you refresh, without restarting the app.
+- Putting the device to sleep in the middle of a game no longer stops its playtime being counted, or adds the time asleep.
+- A multi-disc game keeps one playtime total whether you start it from a disc or from its playlist.
+- Game and achievement names with characters such as quotes, & or < now show correctly in the lists and profiles.
+
+### Security
+- Your RetroAchievements login is only ever sent to RetroAchievements or to the app's own service. The public proxies that were tried as a last resort have been removed.
 
 ## v1.1.7
 

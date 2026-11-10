@@ -60,7 +60,8 @@ function formatManualBeatenDate(str){
 }
 // A saved day ("YYYY-MM-DD", or a longer date that starts that way) as that day here, not the day it is in UTC.
 function parseLocalDay(str){
-  const m = String(str || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(!str) return null;
+  const m =String(str || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
   const d = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(str);
   return isNaN(d.getTime()) ? null : d;
 }
