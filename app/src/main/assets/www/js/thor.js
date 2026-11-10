@@ -178,7 +178,46 @@ function thorWirePlay(card, gameId, title, consoleName, artUrl, romPath){
     msg.classList.toggle('error', !res.ok);
     msg.textContent = res.message || (res.ok ? 'Starting the game…' : 'Could not start the game.');
   };
-  btn.addEventListener('click', () => play(''));
+  // Play opens the original game. Patched copies made in ROM Hacks are a choice: hold Play (by touch, or the
+  // confirm button) to pick one.
+  const patchedCopies = () => {
+    try{ return typeof thorBridge.patchedList === 'function' ? (JSON.parse(thorBridge.patchedList(JSON.stringify(info))) || []) : []; }
+    catch(e){ return []; }
+  };
+  const playFile = (path) => {
+    let res;
+    try{ res = JSON.parse(thorBridge.launchFile(path)); }catch(e){ res = { ok: false, message: 'Could not reach the launcher.' }; }
+    if(res.ok) thorStarted(card, gameId);
+    msg.style.display = 'block';
+    msg.classList.toggle('error', !res.ok);
+    msg.textContent = res.message || (res.ok ? 'Starting the game…' : 'Could not start the game.');
+  };
+  const chooseCopy = () => {
+    const copies = patchedCopies();
+    if(!copies.length || btn.disabled) return false;
+    thorChoice('Which one?', 'Play opens the original game. These are the patched copies made from it in ROM Hacks.',
+      [['Original game', () => play('')]].concat(copies.map(c => [c.name, () => playFile(c.path)])));
+    return true;
+  };
+  let holdTimer = null, held = false;
+  const stopHold = () => { clearTimeout(holdTimer); holdTimer = null; };
+  btn.addEventListener('pointerdown', () => {
+    held = false; // a new press: an earlier hold whose tap never arrived must not swallow this one
+    stopHold();
+    holdTimer = setTimeout(() => { holdTimer = null; held = chooseCopy(); }, 550);
+  });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => btn.addEventListener(t, stopHold));
+  btn.addEventListener('contextmenu', (e) => e.preventDefault());
+  btn.addEventListener('padhold', chooseCopy); // the controller's confirm button held down (see gamepad.js)
+  btn.addEventListener('click', () => {
+    if(held){ held = false; return; } // the tap that ends a hold
+    play('');
+  });
+  setTimeout(() => {
+    if(!card.isConnected || !patchedCopies().length) return;
+    btn.setAttribute('data-hold', '1');
+    if(msg.style.display === 'none'){ msg.style.display = 'block'; msg.textContent = 'Hold Play to choose a patched copy.'; }
+  }, 0);
 
   // No ROM for this game on the device: say so instead of offering Play.
   const emuBtn0 = card.querySelector('#modal-emu-btn');

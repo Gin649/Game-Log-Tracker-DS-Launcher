@@ -21,6 +21,7 @@ final class Shared {
     static synchronized void init(Context ctx) {
         if (systems != null) return;
         appCtx = ctx.getApplicationContext();
+        PatchedRoms.load(appCtx); // before the first match, so a patched copy is never taken for the original
         systems = SystemMap.load(ctx.getApplicationContext());
         rescan();
     }

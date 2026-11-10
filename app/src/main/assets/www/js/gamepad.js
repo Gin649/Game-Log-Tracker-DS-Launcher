@@ -518,7 +518,18 @@
       if(!wasShowing) ensureFocus(); // first press just shows where the highlight is
       else move(name);
     }else if(name === confirmKey){
-      if(!wasShowing) ensureFocus(); else confirm();
+      if(!wasShowing) ensureFocus();
+      else{
+        const el = ensureFocus();
+        if(el && el.hasAttribute('data-hold')){
+          // A button with something behind a long press: a short press is the usual click, sent when the button
+          // is let go, and holding it sends "padhold" to the button.
+          holdKey = name;
+          holdEl = el;
+          clearTimeout(holdTimer);
+          holdTimer = setTimeout(() => { holdTimer = null; el.dispatchEvent(new CustomEvent('padhold')); }, HOLD_MS);
+        }else confirm();
+      }
     }else if(name === 'a' || name === 'b'){
       goBack();
     }else if(name === 'select'){
@@ -538,6 +549,9 @@
     }
   }
 
+  const HOLD_MS = 550;
+  let holdKey = null, holdEl = null, holdTimer = null;
+
   // Called by the app for every button change. Directions repeat while held.
   function b(name, down){
     if(down){
@@ -555,6 +569,15 @@
     }else{
       held[name] = false;
       clearTimeout(timers[name]);
+      if(name === holdKey){
+        holdKey = null;
+        if(holdTimer){ // let go before it counted as a hold
+          clearTimeout(holdTimer);
+          holdTimer = null;
+          if(holdEl && holdEl.isConnected && !holdEl.disabled) holdEl.click();
+        }
+        holdEl = null;
+      }
     }
   }
 
@@ -575,6 +598,7 @@
 
   function reset(){
     Object.keys(held).forEach(k => { held[k] = false; clearTimeout(timers[k]); });
+    clearTimeout(holdTimer); holdTimer = null; holdKey = null; holdEl = null;
     setRightStick(0);
   }
 

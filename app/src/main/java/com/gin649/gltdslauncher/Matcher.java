@@ -185,6 +185,10 @@ final class Matcher {
         boolean hack = wantsHack(title);
         RomIndex.Rom best = null;
         int bestScore = 0;
+        // A patched copy made in ROM Hacks often has the game's own name. For the game itself it is only a fallback:
+        // the original wins whenever one matches. A hack's own entry is matched as usual.
+        RomIndex.Rom bestPatched = null;
+        int bestPatchedScore = 0;
         for (RomIndex.Rom r : candidates) {
             int s = 0;
             for (String n : names) s = Math.max(s, score(n, r.norm));
@@ -196,12 +200,20 @@ final class Matcher {
             if (s == 0) continue;
             s += (r.sys.hack == hack) ? 15 : -15;
             s += regionBonus(r.name);
+            if (!hack && PatchedRoms.is(r.file)) {
+                if (s > bestPatchedScore) {
+                    bestPatchedScore = s;
+                    bestPatched = r;
+                }
+                continue;
+            }
             if (s > bestScore) {
                 bestScore = s;
                 best = r;
             }
         }
-        return bestScore >= 40 ? best : null;
+        if (bestScore >= 40) return best;
+        return bestPatchedScore >= 40 ? bestPatched : null;
     }
 
     // title similarity for online art lookups

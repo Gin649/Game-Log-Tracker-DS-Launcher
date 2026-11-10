@@ -1019,6 +1019,11 @@ function setupRomPatchUI(gameId, title, card, consoleName){
   // The result after a patch: notes, Play, Add to backlog, Back.
   // already: the same patch was applied before and its file is still there, so nothing new was written.
   function showPatched(lines, savedName, folder, playPath, hackId, already){
+    // The app keeps a list of patched copies, so Play on the original game goes on opening the original.
+    try{
+      const basePath = discMode ? (discInfo && discInfo.path) : (romOnDevice && romOnDevice.path);
+      if(basePath && typeof deviceBridge.patchedNote === 'function') deviceBridge.patchedNote(playPath, basePath);
+    }catch(e){}
     let backlogId = null; // the game the Backlog button added, so Play can mark that one as played
     patchWrap.innerHTML = `
       ${lines.map(n => `<div class="hash-status ${n.cls || 'ok'}" style="margin-top:8px;">${esc(n.text)}</div>`).join('')}

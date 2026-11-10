@@ -27,6 +27,11 @@ final class MatchCache {
 
     private static volatile Answers answers;
 
+    /** Forgets every answer, for a change the ROM list itself doesn't show (a file newly known as a patched copy). */
+    static void reset() {
+        answers = null;
+    }
+
     static RomIndex.Rom find(RomIndex index, SystemMap map, String title, String console) {
         // the scan swaps in a new list when it finishes, so a different list means the old answers are out of date
         List<RomIndex.Rom> roms = index.all();

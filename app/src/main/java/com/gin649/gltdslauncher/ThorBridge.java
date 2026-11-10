@@ -970,6 +970,39 @@ final class ThorBridge {
         return crc.getValue();
     }
 
+    /** ROM Hacks tells the app each patched copy it saved or found again, and the ROM it came from. */
+    @JavascriptInterface
+    public void patchedNote(String patchedPath, String basePath) {
+        try {
+            File patched = new File(patchedPath);
+            File base = new File(basePath);
+            if (insideRoms(patched) && insideRoms(base) && patched.isFile()) PatchedRoms.note(act, patched, base);
+        } catch (Exception ignored) {
+        }
+    }
+
+    /** The patched copies of this game's ROM that Play can offer: [{name, path}], empty when there are none. */
+    @JavascriptInterface
+    public String patchedList(String json) {
+        org.json.JSONArray out = new org.json.JSONArray();
+        try {
+            JSONObject o = new JSONObject(json);
+            PatchedRoms.load(act);
+            RomIndex.Rom rom = Shared.findRom(matchTitle(o), o.optString("console"));
+            if (rom == null) return out.toString();
+            for (File f : PatchedRoms.of(rom.file)) {
+                JSONObject e = new JSONObject();
+                String n = f.getName();
+                int dot = n.lastIndexOf('.');
+                e.put("name", dot > 0 ? n.substring(0, dot) : n);
+                e.put("path", f.getPath());
+                out.put(e);
+            }
+        } catch (Exception ignored) {
+        }
+        return out.toString();
+    }
+
     /** True when this file is still there, inside the ROMs folder. Used to check a patched disc made earlier. */
     @JavascriptInterface
     public boolean romFileExists(String path) {
