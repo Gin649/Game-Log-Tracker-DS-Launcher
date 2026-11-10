@@ -52,7 +52,7 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - A patch zip you imported that can't be opened no longer offers a Download button that goes nowhere.
 - Manual viewer: the "Open in browser viewer" button is gone. It did nothing on the device. The message now says to check your connection and open the manual again.
 - Setup: the Cancel button on the first page is now "Finish later", since folders you have already chosen stay chosen.
-- Controller: moving up and down through your games no longer lands on a game's ✕ (remove) button, so pressing confirm opens the game. In a list, press right on a game to reach its ✕ and left to go back.
+- Controller: moving up and down through your games no longer lands on a game's ✕ (remove) button, so pressing confirm opens the game. In a list, press right on a game to reach its ✕ and left to go back. In tile view the ✕, and in Apps the star, are now for touch only.
 
 ### Security
 - Your RetroAchievements login is only ever sent to RetroAchievements or to the app's own service. The public proxies that were tried as a last resort have been removed.

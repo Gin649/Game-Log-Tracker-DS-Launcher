@@ -110,6 +110,7 @@
       if(el.disabled || el.getAttribute('aria-disabled') === 'true') return;
       if(el.getAttribute('tabindex') === '-1') return;
       if(el.tagName === 'INPUT' && /^(hidden|file)$/.test(el.type)) return;
+      if(el.matches('.tile-remove, .app-star')) return; // a tile's ✕ and an app's star are for touch only
       const r = el.getBoundingClientRect();
       if(r.width <= 0 || r.height <= 0) return;
       out.push({ el, r });
@@ -254,22 +255,20 @@
       return;
     }
     // The small ✕ that removes a game is only reached on purpose. In a list that is right from its game (left
-    // goes back to the game). Up and down pass it by in lists and tiles alike, so browsing never lands on it.
+    // goes back to the game), and nothing else lands on it. On a tile it is for touch only (see candidates).
     let from = cur;
-    const vertical = dir === 'up' || dir === 'down';
     if(cur.matches('.manual-remove')){
-      const game = cur.closest('.lib-table tbody tr, .cart');
-      if(game && cur.closest('.lib-table')){
+      const game = cur.closest('.lib-table tbody tr');
+      if(game){
         if(dir === 'left'){ setFocus(game); return; }
         if(dir === 'right') return;
+        from = game; // up and down step to the next game as if the highlight were on this one
       }
-      if(game && vertical) from = game; // step to the next game as if the highlight were on this one
     }else if(dir === 'right' && cur.matches('.lib-table tbody tr')){
       const x = cur.querySelector('.manual-remove');
       if(x && isVisible(x)){ setFocus(x); return; }
     }
-    const list = candidates(getRoot()).filter(i =>
-      !i.el.matches('.manual-remove') || (!vertical && !i.el.closest('.lib-table')));
+    const list = candidates(getRoot()).filter(i => !i.el.matches('.manual-remove'));
     let next = pick(from, dir, list);
     if(next && (dir === 'up' || dir === 'down')){
       // Entering a row of headings or filters lands on the one you are on: the Game heading, the current
