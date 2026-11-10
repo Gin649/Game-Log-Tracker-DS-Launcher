@@ -224,9 +224,11 @@ final class ThorBridge {
                         } catch (Exception ignored) {
                         }
                     }
-                    if (!fold.isEmpty()) {
+                    // a console with no ROM folder here is asked for by its name, so its regional covers still show
+                    String ssSystem = !fold.isEmpty() ? fold : (console == null ? "" : console);
+                    if (!ssSystem.isEmpty()) {
                         try {
-                            ScreenScraperClient.Info si = ScreenScraperClient.lookup(act, title, fold);
+                            ScreenScraperClient.Info si = ScreenScraperClient.lookup(act, title, ssSystem);
                             if (si != null) {
                                 if (si.boxes.isEmpty()) addCandidate(out, seen, "ScreenScraper", si.box);
                                 for (String[] b : si.boxes) addCandidate(out, seen, "ScreenScraper \u00b7 " + b[0], b[1]);

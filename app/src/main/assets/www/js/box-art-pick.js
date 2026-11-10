@@ -2,7 +2,7 @@
 // the controller's left/right) to browse other covers for the game and press "Use this one" to keep it.
 // The list of covers is only looked up when you first move away from the current picture, never when a profile opens.
 //   boxpick:<gameId>  the cover you chose (a picture address). Part of the backup, so it follows you.
-//   boxcand:<gameId>  the covers found for the game, kept 30 days (rebuilt on demand, left out of the backup).
+//   boxcand2:<gameId> the covers found for the game, kept 30 days (rebuilt on demand, left out of the backup).
 const BOXPICK_PREFIX = 'boxpick:';
 const BOXCAND_TTL = 30 * 24 * 60 * 60 * 1000;
 const boxPickMem = new Map(); // gameId -> url | null
@@ -62,7 +62,7 @@ function nativeBoxCandidates(title, consoleName, romPath){
 // Every cover we can find for a game: [{ label, url }]. The first entry is the picture the profile shows now.
 async function loadBoxCandidates(ctx){
   const id = String(ctx.gameId);
-  const ckey = 'boxcand:' + id;
+  const ckey = 'boxcand2:' + id; // "2": lists saved before regional covers were found are built again
   try{
     const r = await window.storage.get(ckey, false);
     if(r && r.value){

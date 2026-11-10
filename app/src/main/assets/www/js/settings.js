@@ -21,8 +21,8 @@ function closeAboutModal(){
 
 // Cached RA data is fetched again when needed, so backups leave it out.
 // (ra-snap: is not one of them: the playtime at the moment a game was beaten can't be fetched again.)
-const REBUILDABLE_CACHE_PREFIXES = ['ra-hours:', 'ra-gameinfo:', 'ra-ach:', 'ra-dash:', 'boxcand:',
-  'ra-gamelist:', 'ra-gamelist-h:', 'ra-gamelist-all:', 'ra-consoles-supported', 'ss-info2:', 'rawg-desc:', 'rating-avg:',
+const REBUILDABLE_CACHE_PREFIXES = ['ra-hours:', 'ra-gameinfo:', 'ra-ach:', 'ra-dash:', 'boxcand:', 'boxcand2:',
+  'ra-gamelist:', 'ra-gamelist-h:', 'ra-gamelist-all:', 'ra-consoles-supported', 'ss-info2:', 'ss-info3:', 'rawg-desc:', 'rating-avg:',
   'rating-igdb:', 'guide-archive-index:', 'rapatches-tree-cache-v4', 'social-cache:', 'ports-catalog:', 'backlog-points'];
 // A base ROM remembered for the ROM patcher is raw bytes, which a JSON file can't hold. It is left out of backups and
 // picked again when needed.
