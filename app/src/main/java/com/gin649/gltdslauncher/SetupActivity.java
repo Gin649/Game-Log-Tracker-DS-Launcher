@@ -47,6 +47,29 @@ public class SetupActivity extends Activity {
         listener = l;
     }
 
+    // How the wizard last closed, kept until the main screen picks it up: 0 nothing waiting, 1 left unfinished,
+    // 2 finished. The main screen is told as the wizard closes and also looks here when it comes back to the front,
+    // because Android can take a long time to destroy a closed screen, and on some devices that was the only moment
+    // the main screen heard about it.
+    private static int closedResult;
+    private boolean toldClosed;
+
+    /** True or false for a wizard that finished or was left, once. Null when there is nothing new to hear. */
+    static synchronized Boolean takeClosed() {
+        int r = closedResult;
+        closedResult = 0;
+        return r == 0 ? null : Boolean.valueOf(r == 2);
+    }
+
+    private void tellClosed() {
+        synchronized (SetupActivity.class) {
+            if (toldClosed) return;
+            toldClosed = true;
+            closedResult = finished ? 2 : 1;
+        }
+        if (listener != null) listener.onClosed(finished);
+    }
+
     private static final int REQ_ROMS = 10;
     private static final int REQ_ES = 11;
     private static final int REQ_DATA = 13;
@@ -101,6 +124,7 @@ public class SetupActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         running = true;
+        takeClosed(); // an earlier close nobody picked up says nothing about this visit
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
@@ -273,7 +297,7 @@ public class SetupActivity extends Activity {
     @Override
     protected void onDestroy() {
         running = false;
-        if (listener != null) listener.onClosed(finished);
+        tellClosed();
         super.onDestroy();
     }
 
@@ -1012,6 +1036,7 @@ public class SetupActivity extends Activity {
         closing = true;
         running = false; // so the main screen, resuming as this closes, does not bring the wizard back
         put("wizardDraft", "");
+        tellClosed();
         finishAndRemoveTask();
     }
 }

@@ -138,7 +138,8 @@ public class MainActivity extends Activity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        onSetupClosed(completed);
+                        Boolean closed = SetupActivity.takeClosed(); // null when onResume got there first
+                        if (closed != null) onSetupClosed(closed);
                     }
                 });
             }
@@ -521,6 +522,12 @@ public class MainActivity extends Activity {
         if (SetupActivity.running && splash != null && splash.getVisibility() == View.VISIBLE) {
             bringSetupToFront();
             return;
+        }
+        // The wizard closed while this screen was behind it: act on that now, whether or not the message got through.
+        Boolean closed = SetupActivity.running ? null : SetupActivity.takeClosed();
+        if (closed != null) {
+            onSetupClosed(closed);
+            if (closed) return; // the screen is being rebuilt with the new settings
         }
         if (Prefs.setupDone(this)) ensureArtScreen();
     }

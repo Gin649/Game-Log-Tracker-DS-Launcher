@@ -66,6 +66,7 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - Controller: sorting by a heading keeps the highlight on that heading. It jumped back to the tab.
 - Controller: switching to Apps with L2 or R2 lands on the first app, and moving down into any grid of tiles (Last Played, tile view, Beaten, Apps) lands on the first tile at the left.
 - Controller: the highlight round All and the first console is no longer cut off at the left.
+- Setup: pressing Finish now always brings you back to the launcher. On some devices the screen behind stayed on "Setup is open".
 
 ### Security
 - Your RetroAchievements login is only ever sent to RetroAchievements or to the app's own service. The public proxies that were tried as a last resort have been removed.
