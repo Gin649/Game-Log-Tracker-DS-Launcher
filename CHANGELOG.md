@@ -50,6 +50,8 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - Box art picker: when IGDB can't be reached, the covers are looked up again next time. The shorter list was kept for a month.
 - A TV or cast display is no longer counted as a second screen when deciding whether to fetch top-screen fan art.
 - A patch zip you imported that can't be opened no longer offers a Download button that goes nowhere.
+- Manual viewer: the "Open in browser viewer" button is gone. It did nothing on the device. The message now says to check your connection and open the manual again.
+- Setup: the Cancel button on the first page is now "Finish later", since folders you have already chosen stay chosen.
 
 ### Security
 - Your RetroAchievements login is only ever sent to RetroAchievements or to the app's own service. The public proxies that were tried as a last resort have been removed.

@@ -374,7 +374,7 @@ public class SetupActivity extends Activity {
         emuSpinners.clear();
 
         titleView.setText((step + 1) + " of " + (LAST_STEP + 1) + "   " + STEP_TITLES[step]);
-        backBtn.setText(step == 0 ? "Cancel" : "Back");
+        backBtn.setText(step == 0 ? "Finish later" : "Back");
         nextBtn.setText(step == LAST_STEP ? "Finish" : "Next");
 
         switch (step) {

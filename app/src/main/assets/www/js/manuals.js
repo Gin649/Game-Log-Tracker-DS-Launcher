@@ -426,7 +426,6 @@ function buildManualReader(){
     if(act.dataset.act === 'close') closeManualReader();
     else if(act.dataset.act === 'zin') setManualZoom(manualReader.zoom + 0.25);
     else if(act.dataset.act === 'zout') setManualZoom(manualReader.zoom - 0.25);
-    else if(act.dataset.act === 'external') openManualExternally();
   });
   document.addEventListener('keydown', ev => {
     if(ev.key === 'Escape' && el.classList.contains('open')) closeManualReader();
@@ -435,10 +434,6 @@ function buildManualReader(){
   window.addEventListener('popstate', () => { if(el.classList.contains('open')) closeManualReader(); });
   manualReader.el = el;
   return el;
-}
-
-function openManualExternally(){
-  if(manualReader.file) window.open(URL.createObjectURL(manualReader.file.blob), '_blank');
 }
 
 function closeManualReader(){
@@ -477,8 +472,7 @@ async function openManualReader(gameId, title){
     await layoutManualPages(token);
   }catch(e){
     if(token !== manualReader.token) return;
-    body.innerHTML = `<div class="manual-reader-msg">The built-in viewer could not start (it needs a connection the first time).<br><br>
-      <button class="gd-manual-btn primary" data-act="external">Open in browser viewer</button></div>`;
+    body.innerHTML = '<div class="manual-reader-msg">The manual could not be opened. The viewer needs a connection the first time it is used, so check your connection and open the manual again.</div>';
   }
 }
 
