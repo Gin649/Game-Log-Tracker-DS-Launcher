@@ -62,6 +62,7 @@ public class SetupActivity extends Activity {
     private static final String[] RA_PACKAGES = {"com.retroarch.aarch64", "com.retroarch", "com.retroarch.ra32"};
     private static final String[] STEP_TITLES = {"Welcome", "Your accounts", "Your folders", "Your Emulators", "Your screens", "Finish"};
     private static final int LAST_STEP = 5;
+    private static final long DRAFT_MAX_AGE_MS = 24L * 60 * 60 * 1000;
 
     private LinearLayout content;
     private TextView titleView;
@@ -76,12 +77,10 @@ public class SetupActivity extends Activity {
     private String frontend;
     /** Folder chosen for the app's own files; empty means the default. */
     private String dataRoot = "";
-    private CheckBox cbLaunchBox;
     private boolean launchBoxArt;
     private String origUser, origKey;
     private String sgdbKey;
     private EditText etSgdb;
-    private CheckBox cbEsdeMedia;
     private boolean useEsdeMedia;
     private int cssWidth;
     private int topDisplay;
@@ -187,6 +186,7 @@ public class SetupActivity extends Activity {
     private void saveDraft() {
         try {
             JSONObject d = new JSONObject();
+            d.put("at", System.currentTimeMillis());
             d.put("step", step);
             d.put("raUser", raUser);
             d.put("raKey", raKey);
@@ -217,6 +217,12 @@ public class SetupActivity extends Activity {
         if (raw.isEmpty()) return;
         try {
             JSONObject d = new JSONObject(raw);
+            // A draft is for coming straight back. An old one (the app was closed with the wizard still open) would put
+            // back whatever was typed then, over anything changed since.
+            if (System.currentTimeMillis() - d.optLong("at", 0) > DRAFT_MAX_AGE_MS) {
+                put("wizardDraft", "");
+                return;
+            }
             step = Math.max(0, Math.min(LAST_STEP, d.optInt("step", 0)));
             raUser = d.optString("raUser", raUser);
             raKey = d.optString("raKey", raKey);
@@ -360,8 +366,6 @@ public class SetupActivity extends Activity {
         etUser = null;
         etKey = null;
         etSgdb = null;
-        cbEsdeMedia = null;
-        cbLaunchBox = null;
         spRa = null;
         spDisplay = null;
         spSingle = null;
@@ -907,8 +911,6 @@ public class SetupActivity extends Activity {
         if (etUser != null) raUser = etUser.getText().toString().trim();
         if (etKey != null) raKey = etKey.getText().toString().trim();
         if (etSgdb != null) sgdbKey = etSgdb.getText().toString().trim();
-        if (cbEsdeMedia != null) useEsdeMedia = cbEsdeMedia.isChecked();
-        if (cbLaunchBox != null) launchBoxArt = cbLaunchBox.isChecked();
         if (spRa != null && spRa.getSelectedItem() != null) raPackage = (String) spRa.getSelectedItem();
         for (Map.Entry<String, Spinner> e : emuSpinners.entrySet()) {
             List<String> values = emuValues.get(e.getKey());
@@ -967,7 +969,19 @@ public class SetupActivity extends Activity {
         put("esRoot", esRoot);
         put("frontend", frontend);
         Prefs.putInt(this, "launchboxArt", launchBoxArt ? 1 : 0);
-        put("raPackage", raPackage.isEmpty() ? "com.retroarch.aarch64" : raPackage);
+        String ra = raPackage;
+        if (ra.isEmpty()) {
+            // Next was pressed on the emulator step before it had finished looking: use the RetroArch that is installed
+            for (String pkg : RA_PACKAGES) {
+                try {
+                    getPackageManager().getPackageInfo(pkg, 0);
+                    ra = pkg;
+                    break;
+                } catch (Exception ignored) {
+                }
+            }
+        }
+        put("raPackage", ra.isEmpty() ? "com.retroarch.aarch64" : ra);
         put("siteUrl", siteUrl.startsWith("http") ? siteUrl : Config.DEFAULT_URL);
         put("sgdbKey", sgdbKey);
         Prefs.putInt(this, "useEsdeMedia", useEsdeMedia ? 1 : 0);

@@ -210,7 +210,11 @@ async function downloadManualPdf(path, onProgress){
   const timer = setTimeout(() => ctrl.abort(), 120000);
   try{
     const res = await fetch(`${MANUAL_WORKER}/manual/pdf?path=${encodeURIComponent(path)}`, { signal: ctrl.signal });
-    if(!res.ok) throw new Error(res.status === 404 ? 'The manual is no longer on the site.' : 'Download failed (HTTP ' + res.status + ')');
+    if(!res.ok){
+      const err = new Error(res.status === 404 ? 'The manual is no longer on the site.' : 'Download failed (HTTP ' + res.status + ')');
+      err.gone = res.status === 404;
+      throw err;
+    }
     const total = Number(res.headers.get('Content-Length')) || 0;
     const chunks = [];
     let got = 0;
@@ -302,16 +306,27 @@ function setupManualUI(body, ctx){
     if(busy) return;
     busy = true;
     try{
-      let meta = await loadManualMeta(gameId);
-      if(!meta || !meta.found){
+      const lookUp = async () => {
         showProgress('Looking for the manual…', null);
         const found = await findManual(gameId, title, consoleName);
-        meta = found && found.found ? { found: true, path: found.path } : { found: false };
-        await saveManualMeta(gameId, meta);
-      }
+        const m = found && found.found ? { found: true, path: found.path } : { found: false };
+        await saveManualMeta(gameId, m);
+        return m;
+      };
+      let meta = await loadManualMeta(gameId);
+      const remembered = !!(meta && meta.found);
+      if(!remembered) meta = await lookUp();
       if(!meta.found){ busy = false; return showIdle(); }
 
-      const kept = await fetchAndKeep(meta.path);
+      let kept;
+      try{ kept = await fetchAndKeep(meta.path); }
+      catch(e){
+        // the address remembered from last time is gone from the site: look the manual up again
+        if(!(remembered && e && e.gone)) throw e;
+        meta = await lookUp();
+        if(!meta.found){ busy = false; return showIdle(); }
+        kept = await fetchAndKeep(meta.path);
+      }
       busy = false;
       if(!kept) return showIdle(note(NO_ROOM));
       await showIdle();
@@ -485,11 +500,15 @@ async function layoutManualPages(token){
     box.style.height = Math.floor(vp.height * scale) + 'px';
     box.dataset.index = String(i);
     body.appendChild(box);
-    return { box, page, scale, rendered: false, rendering: false };
+    return { box, page, scale, rendered: false, rendering: false, wanted: false };
   });
 
   manualReader.observer = new IntersectionObserver(entries => {
-    entries.forEach(en => { if(en.isIntersecting) renderManualPage(Number(en.target.dataset.index), token); });
+    entries.forEach(en => {
+      const index = Number(en.target.dataset.index);
+      if(en.isIntersecting) renderManualPage(index, token);
+      else dropManualPage(index);
+    });
   }, { root: body, rootMargin: '600px 0px' });
   manualReader.pages.forEach(p => manualReader.observer.observe(p.box));
 
@@ -504,20 +523,36 @@ async function layoutManualPages(token){
   updateLabel();
 }
 
+// A page that has scrolled well away gives its picture back, so a long manual doesn't fill the device's memory.
+// It is drawn again when it comes back.
+function dropManualPage(index){
+  const p = manualReader.pages[index];
+  if(!p) return;
+  p.wanted = false;
+  if(p.rendered){ p.box.innerHTML = ''; p.rendered = false; }
+}
+
+const MANUAL_PAGE_MAX_PIXELS = 12000000; // zoomed right in, a page is drawn a little softer instead of past what a canvas can hold
+
 async function renderManualPage(index, token){
   const p = manualReader.pages[index];
-  if(!p || p.rendered || p.rendering || token !== manualReader.token) return;
+  if(!p || token !== manualReader.token) return;
+  p.wanted = true;
+  if(p.rendered || p.rendering) return;
   p.rendering = true;
   try{
     const ratio = Math.min(window.devicePixelRatio || 1, 2);
-    const vp = p.page.getViewport({ scale: p.scale * ratio });
+    let vp = p.page.getViewport({ scale: p.scale * ratio });
+    if(vp.width * vp.height > MANUAL_PAGE_MAX_PIXELS){
+      vp = p.page.getViewport({ scale: p.scale * ratio * Math.sqrt(MANUAL_PAGE_MAX_PIXELS / (vp.width * vp.height)) });
+    }
     const canvas = document.createElement('canvas');
     canvas.width = Math.floor(vp.width);
     canvas.height = Math.floor(vp.height);
     canvas.style.width = '100%';
     canvas.style.height = '100%';
     await p.page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-    if(token !== manualReader.token) return;
+    if(token !== manualReader.token || !p.wanted) return;
     p.box.innerHTML = '';
     p.box.appendChild(canvas);
     p.rendered = true;

@@ -316,13 +316,18 @@ final class LaunchBoxArt {
         }
     }
 
-    /** The body, or null when the file doesn't exist or is too big. */
+    /**
+     * The body, or null when the file doesn't exist or is too big. Any other refusal (the server is busy or having a
+     * bad moment) throws like a lost connection does, so it isn't taken for "not there".
+     */
     private static byte[] download(String url, long max) throws IOException {
         Request req = new Request.Builder().url(url).header("User-Agent", "GLTThor/1").build();
         Response res = HTTP.newCall(req).execute();
         try {
             ResponseBody body = res.body();
-            if (!res.isSuccessful() || body == null || body.contentLength() > max) return null;
+            if (res.code() == 404 || res.code() == 410) return null;
+            if (!res.isSuccessful()) throw new IOException("The server answered " + res.code());
+            if (body == null || body.contentLength() > max) return null;
             byte[] data = body.bytes();
             return data.length > max ? null : data;
         } finally {

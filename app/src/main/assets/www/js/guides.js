@@ -172,7 +172,7 @@ function openInExternalBrowser(url){
 function renderGuideSearchStep(title){
   return `
     <p style="font-size:0.7688rem;color:var(--muted);margin:0;line-height:1.55;">Find your own guide on GameFAQs: click the link, choose your guide, select and copy all text, hit that Paste Guide Text button, then Paste and Save.</p>
-    <a href="https://gamefaqs.gamespot.com/search?game=${encodeURIComponent(title)}" id="guide-gf-link" target="_blank" rel="noopener" style="font-size:0.7063rem;color:var(--teal);text-decoration:none;align-self:flex-start;">Search GameFAQs for "${title}" ↗</a>
+    <a href="https://gamefaqs.gamespot.com/search?game=${encodeURIComponent(title)}" id="guide-gf-link" target="_blank" rel="noopener" style="font-size:0.7063rem;color:var(--teal);text-decoration:none;align-self:flex-start;">Search GameFAQs for "${esc(title)}" ↗</a>
   `;
 }
 function renderGuideNoGuidePanel(gameId, title, consoleId, isAdding){
@@ -342,7 +342,7 @@ function setupGameGuideUI(gameId, title, card, consoleId){
       }catch(e){
         triggerBtn.textContent = prevLabel;
         triggerBtn.disabled = false;
-        if(errorEl) errorEl.innerHTML = `<p style="font-size:0.725rem;color:var(--danger);margin:6px 0 0;">Could not import that file: ${e.message}</p>`;
+        if(errorEl) errorEl.innerHTML = `<p style="font-size:0.725rem;color:var(--danger);margin:6px 0 0;">Could not import that file: ${esc(e.message)}</p>`;
       }
     });
 
@@ -408,17 +408,30 @@ function setupGameGuideUI(gameId, title, card, consoleId){
 
 let guideReaderScrollGameId = null; // which game's guide the reader is currently showing, for the debounced scroll-position save below
 let guideReaderScrollTimer = null;
+let guideScrollPending = null; // saves the reading position that is still waiting on the timer
 
 function setupGuideScrollTracking(body, gameId, guide){
+  const save = () => {
+    const max = body.scrollHeight - body.clientHeight;
+    guide.scrollFrac = max > 0 ? body.scrollTop / max : 0;
+    return updateGuide(gameId, guide);
+  };
   body.onscroll = () => {
     clearTimeout(guideReaderScrollTimer);
-    guideReaderScrollTimer = setTimeout(async () => {
+    guideScrollPending = save;
+    guideReaderScrollTimer = setTimeout(() => {
+      guideScrollPending = null;
       if(guideReaderScrollGameId !== gameId) return; // reader moved on since this fired
-      const max = body.scrollHeight - body.clientHeight;
-      guide.scrollFrac = max > 0 ? body.scrollTop / max : 0;
-      await updateGuide(gameId, guide);
+      save();
     }, 600);
   };
+}
+// Closing (or opening another guide) right after scrolling saves the position now, while the text is still on screen.
+function flushGuideScroll(){
+  clearTimeout(guideReaderScrollTimer);
+  const save = guideScrollPending;
+  guideScrollPending = null;
+  if(save){ try{ Promise.resolve(save()).catch(() => {}); }catch(e){} }
 }
 
 // Search and bookmarks work on text and HTML guides. Positions are character offsets into the text,
@@ -883,6 +896,7 @@ function openGuideReader(gameId, title, guide){
   const overlay = $('#guide-reader-overlay');
   const body = $('#guide-reader-body');
   $('#guide-reader-fn').textContent = guide.filename;
+  flushGuideScroll();
   body.onscroll = null;
   body.onclick = null;
   body.className = 'guide-reader-body';
@@ -934,6 +948,7 @@ function openGuideReader(gameId, title, guide){
 }
 
 function closeGuideReader(){
+  flushGuideScroll();
   closeToolPanels();
   if(hasHighlightAPI) CSS.highlights.delete('guide-bookmark');
   readerGuide = null; readerGameId = null; readerIndex = null;

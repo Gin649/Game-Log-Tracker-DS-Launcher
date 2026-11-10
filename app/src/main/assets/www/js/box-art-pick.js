@@ -75,6 +75,7 @@ async function loadBoxCandidates(ctx){
   const list = [];
   const seen = new Set();
   const add = (label, url) => { if(url && !seen.has(url)){ seen.add(url); list.push({ label, url }); } };
+  let complete = true;
   if(ctx.original) add('Original', ctx.original);
   if(clean && !hack){
     const native = nativeBoxCandidates(clean, ctx.consoleName, ctx.romPath);
@@ -83,8 +84,9 @@ async function loadBoxCandidates(ctx){
     const [nat, g] = await Promise.all([native, ig]);
     nat.forEach(c => add(c.label, c.url));
     if(g && g.cover) add('IGDB', g.cover);
+    if(!g) complete = false; // IGDB couldn't be reached: this list isn't kept, so the next look asks again
   }
-  if(list.length > 1){
+  if(list.length > 1 && complete){
     try{ await window.storage.set(ckey, JSON.stringify({ list, ts: Date.now() }), false); }catch(e){}
   }
   return list;

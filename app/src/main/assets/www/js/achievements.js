@@ -45,17 +45,17 @@ function achRowHtml(a, isLocked, isHardcoreMode, reorderMode){
          </div>`
     : '';
   return `
-      <div class="ach-row ${isLocked ? 'locked' : ''}" data-id="${a.ID ?? a.id}">
+      <div class="ach-row ${isLocked ? 'locked' : ''}" data-id="${esc(a.ID ?? a.id)}">
         ${reorderControls}
-        <img src="${badge}" alt="">
+        <img src="${esc(badge)}" alt="">
         <div class="info">
-          <p class="t">${a.Title || 'Untitled'}</p>
-          <p class="d">${a.Description || ''}</p>
+          <p class="t">${esc(a.Title || 'Untitled')}</p>
+          <p class="d">${esc(a.Description || '')}</p>
           ${!isLocked ? `<p class="when">Unlocked ${timeAgo(earnedDate)}</p>` : ''}
         </div>
         ${isMissable(a) ? '<span class="ach-missable-badge" title="Missable: can be missed for good during a playthrough">!</span>' : ''}
-        ${(!reorderMode && (a.ID ?? a.id)) ? `<a class="ach-ra-link" href="https://retroachievements.org/achievement/${encodeURIComponent(a.ID ?? a.id)}" target="_blank" rel="noopener" title="Open this achievement on RetroAchievements (comments &amp; discussion)" aria-label="Open ${String(a.Title || 'achievement').replace(/"/g,'&quot;')} on RetroAchievements">RA</a>` : ''}
-        <div class="pts">${a.Points ?? ''}</div>
+        ${(!reorderMode && (a.ID ?? a.id)) ? `<a class="ach-ra-link" href="https://retroachievements.org/achievement/${encodeURIComponent(a.ID ?? a.id)}" target="_blank" rel="noopener" title="Open this achievement on RetroAchievements (comments &amp; discussion)" aria-label="Open ${esc(a.Title || 'achievement')} on RetroAchievements">RA</a>` : ''}
+        <div class="pts">${esc(a.Points ?? '')}</div>
       </div>
     `;
 }

@@ -339,9 +339,11 @@ function setupWalkthroughUI(gameId, title, card, consoleName){
     };
     els.wrap.addEventListener('fullscreenchange', onFsChange);
     els.wrap.addEventListener('webkitfullscreenchange', onFsChange);
-    document.addEventListener('keydown', (ev) => {
-      if(ev.key === 'Escape' && els.wrap.isConnected && els.wrap.classList.contains('yt-max')) setMax(false);
-    });
+    const onKey = (ev) => {
+      if(!els.wrap.isConnected){ document.removeEventListener('keydown', onKey); return; } // this profile is gone
+      if(ev.key === 'Escape' && els.wrap.classList.contains('yt-max')) setMax(false);
+    };
+    document.addEventListener('keydown', onKey);
     loadedP = loadWalkthroughs(gameId).then(list => { items = list; renderList(); });
     if(inApp()){
       // These open in the in-app viewer, so swiping back returns here.

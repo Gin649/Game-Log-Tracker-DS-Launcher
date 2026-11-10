@@ -24,7 +24,7 @@ import java.util.Set;
  * The fan art pictures found online for one game, kept side by side so the top screen can swipe between them.
  * They live in fanart/&lt;system&gt;/&lt;game id&gt;/1.jpg, 2.jpg and so on. The game's miximage path points at the one
  * in use, so the choice is remembered without anything else being stored. src.txt lists where each picture came
- * from (so nothing is downloaded twice) and .done means the search for more has finished.
+ * from (so nothing is downloaded twice) and .done lists the places the search for more has been through.
  */
 final class FanArt {
 
@@ -210,10 +210,14 @@ final class FanArt {
      */
     static void fillMore(Context ctx, GameEntity g, boolean useSgdb) {
         File d = dir(ctx, g);
-        if (new File(d, ".done").exists()) return;
-        boolean complete = true;
+        Set<String> did = searched(d);
+        boolean wantSgdb = useSgdb && !did.contains(FROM_SGDB);
+        // fan art is for the top screen
+        boolean wantLaunchBox = Config.LAUNCHBOX_ART && DisplayPicker.topScreenInUse(ctx) && !did.contains(FROM_LAUNCHBOX);
+        if (!wantSgdb && !wantLaunchBox) return;
+        int before = did.size();
         try {
-            if (useSgdb) {
+            if (wantSgdb) {
                 try {
                     for (String url : SteamGridDbClient.heroUrls(ctx, g.title, MAX)) {
                         if (files(ctx, g).size() >= MAX) break;
@@ -229,13 +233,15 @@ final class FanArt {
                         }
                         pause(400);
                     }
+                    did.add(FROM_SGDB);
                 } catch (SteamGridDbClient.AuthException e) {
-                    // the key is wrong; LaunchBox below may still have some
+                    // the key is wrong, so this isn't counted as searched and a corrected key gets its turn; LaunchBox
+                    // below may still have some
                 } catch (SteamGridDbClient.LimitException e) {
-                    complete = false;
+                    // too many requests for now: try again next time the game is opened
                 }
             }
-            if (Config.LAUNCHBOX_ART && DisplayPicker.topScreenInUse(ctx)) { // fan art is for the top screen
+            if (wantLaunchBox) {
                 for (String file : LaunchBoxArt.fanFiles(ctx, g.systemId, g.title)) {
                     if (files(ctx, g).size() >= MAX) break;
                     if (has(ctx, g, file)) continue;
@@ -248,16 +254,52 @@ final class FanArt {
                         }
                     }
                 }
+                did.add(FROM_LAUNCHBOX);
             }
         } catch (IOException e) {
-            complete = false; // offline: try again next time the game is opened
+            // offline: try again next time the game is opened
         }
-        if (complete) {
+        if (did.size() == before) return;
+        try {
+            d.mkdirs(); // a game nothing was found for has no folder yet, and still needs its marker
+            FileOutputStream fos = new FileOutputStream(new File(d, ".done"));
             try {
-                new File(d, ".done").createNewFile();
-            } catch (IOException ignored) {
+                StringBuilder sb = new StringBuilder();
+                for (String s : did) sb.append(s).append('\n');
+                fos.write(sb.toString().getBytes("UTF-8"));
+            } finally {
+                fos.close();
             }
+        } catch (IOException ignored) {
         }
+    }
+
+    private static final String FROM_SGDB = "sgdb", FROM_LAUNCHBOX = "launchbox";
+
+    /**
+     * The places already searched for a game's other fan art, from its .done marker. A source is written down only once
+     * it has answered, so one that was switched off, or whose key was refused, is tried when it becomes available.
+     * An empty marker is from before sources were written down and counts as both.
+     */
+    private static Set<String> searched(File dir) {
+        Set<String> s = new HashSet<String>();
+        File f = new File(dir, ".done");
+        if (!f.isFile()) return s;
+        try {
+            BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF-8"));
+            try {
+                String line;
+                while ((line = r.readLine()) != null) if (!line.trim().isEmpty()) s.add(line.trim());
+            } finally {
+                r.close();
+            }
+        } catch (IOException ignored) {
+        }
+        if (s.isEmpty()) {
+            s.add(FROM_SGDB);
+            s.add(FROM_LAUNCHBOX);
+        }
+        return s;
     }
 
     private static void pause(long ms) {

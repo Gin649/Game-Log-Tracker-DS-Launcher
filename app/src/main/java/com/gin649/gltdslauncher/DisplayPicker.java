@@ -40,16 +40,8 @@ final class DisplayPicker {
      */
     @SuppressWarnings("deprecation")
     private static int[] pair(Activity a) {
-        DisplayManager dm = (DisplayManager) a.getSystemService(Context.DISPLAY_SERVICE);
-        List<Display> real = new ArrayList<Display>();
-        for (Display d : dm.getDisplays()) {
-            if ((d.getFlags() & Display.FLAG_PRIVATE) != 0) continue;
-            String name = d.getName() == null ? "" : d.getName().toLowerCase(Locale.ROOT);
-            if (name.contains("hdmi") || name.contains("overlay") || name.contains("virtual")
-                    || name.contains("wifi") || name.contains("cast")) continue;
-            real.add(d);
-        }
-        if (real.size() < 2) return null;
+        List<Display> real = builtIn(a);
+        if (real == null || real.size() < 2) return null;
 
         int saved = prefs(a).getInt("topDisplay", -1);
         if (saved >= 0) {
@@ -69,6 +61,21 @@ final class DisplayPicker {
         long secondArea = (long) p.x * p.y;
         if (secondArea > firstArea) return new int[]{second.getDisplayId(), first.getDisplayId()};
         return new int[]{first.getDisplayId(), second.getDisplayId()};
+    }
+
+    /** The device's own screens: HDMI, cast and overlay displays are left out. Null when the displays can't be asked for. */
+    private static List<Display> builtIn(Context c) {
+        DisplayManager dm = (DisplayManager) c.getSystemService(Context.DISPLAY_SERVICE);
+        if (dm == null) return null;
+        List<Display> real = new ArrayList<Display>();
+        for (Display d : dm.getDisplays()) {
+            if ((d.getFlags() & Display.FLAG_PRIVATE) != 0) continue;
+            String name = d.getName() == null ? "" : d.getName().toLowerCase(Locale.ROOT);
+            if (name.contains("hdmi") || name.contains("overlay") || name.contains("virtual")
+                    || name.contains("wifi") || name.contains("cast")) continue;
+            real.add(d);
+        }
+        return real;
     }
 
     /** The two screens as {top, bottom}, or null with one screen or when "use one screen only" is on. */
@@ -93,8 +100,8 @@ final class DisplayPicker {
     /** False on a single-screen device or when the app is set to one screen: there is no top screen to show fan art on. */
     static boolean topScreenInUse(Context c) {
         if (singleScreen(c)) return false;
-        android.hardware.display.DisplayManager dm = (android.hardware.display.DisplayManager) c.getSystemService(Context.DISPLAY_SERVICE);
-        return dm == null || dm.getDisplays().length >= 2;
+        List<Display> real = builtIn(c); // a TV or a cast is not a top screen
+        return real == null || real.size() >= 2;
     }
 
     /** True when this device has two screens, whatever the single-screen setting says. */

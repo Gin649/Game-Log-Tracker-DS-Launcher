@@ -33,9 +33,27 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - Getting a ROM ready for an Android port can no longer overwrite or delete the game's own file when the port's folder is also where you keep that ROM.
 - The Social tab shows all of a friend's beaten games, not only those among their first 500.
 - The backup file is named with today's date. In the evening it could carry tomorrow's.
+- An IPS patch for a cartridge game that changes the byte at offset 0x454F46 is now applied in full, the same as for disc games. An IPS patch whose download was cut short is refused, not applied in part.
+- Opening ROM Hacks on a very large game (a 3DS game, for example) no longer stalls or closes the tracker. A file over 1 GB is not read in, and a message says so.
+- A patched ROM is no longer reported as not matching RetroAchievements when it does. SNES ROMs with a copier header, and Famicom Disk System, Nintendo DS, Atari Lynx, Atari 7800 and PC Engine games, are now checked the way RetroAchievements checks them.
+- A UPS patch that makes a disc image smaller is now applied. It was refused as damaged.
+- A damaged xdelta or PPF patch for a disc game now says the patch is damaged. It could show a line of program text.
+- Reading a long manual no longer uses more memory with every page. Pages you have scrolled well past are let go and drawn again when you come back.
+- A manual that has moved on Games Database is looked up again. Download manual kept failing with a message about your connection.
+- Fan art: adding or correcting a SteamGridDB key later now brings in more fan art for games you had already opened. A game with no fan art online is no longer asked about every time you open it.
+- LaunchBox art for a console no longer disappears until the app is restarted after a brief problem on the server.
+- Apps tab: after holding an app to choose its screen, the next tap on an app works. It was ignored.
+- The guide reader keeps your place when you close it right after scrolling.
+- A game title with & or < now shows correctly in the Game Guide panel's GameFAQs link.
+- Setup: pressing Next on the emulator step before it has finished looking now saves the RetroArch you have installed. Opening Setup a day or more after it was left half done starts from your saved settings, not from what was typed back then.
+- Social: a person's page no longer jumps back to the top when the rest of it loads.
+- Box art picker: when IGDB can't be reached, the covers are looked up again next time. The shorter list was kept for a month.
+- A TV or cast display is no longer counted as a second screen when deciding whether to fetch top-screen fan art.
+- A patch zip you imported that can't be opened no longer offers a Download button that goes nowhere.
 
 ### Security
 - Your RetroAchievements login is only ever sent to RetroAchievements or to the app's own service. The public proxies that were tried as a last resort have been removed.
+- Achievement names and descriptions are shown as plain text, so nothing written into one can run inside the app. Ones with & or < also show correctly now.
 
 ## v1.1.7
 

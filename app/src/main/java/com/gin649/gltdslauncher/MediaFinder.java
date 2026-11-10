@@ -133,15 +133,7 @@ final class MediaFinder {
             }
         }
 
-        List<File> roots = new ArrayList<File>();
         List<File> gamelistDirs = new ArrayList<File>();
-        for (File r : roots) {
-            File d = child(r, systemFolder);
-            if (d != null) {
-                w.sysDirs.add(d);
-                gamelistDirs.add(d);
-            }
-        }
         File romDir = new File(Config.ROMS_ROOT, systemFolder);
         gamelistDirs.add(romDir);
         w.sysDirs.add(romDir);

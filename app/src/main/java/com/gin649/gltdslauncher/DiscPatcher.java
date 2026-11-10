@@ -395,6 +395,9 @@ final class DiscPatcher {
             }
         } catch (java.io.EOFException e) {
             throw new PatchException("This patch is for a different disc image than yours (it reads past the end of it).");
+        } catch (IndexOutOfBoundsException | NegativeArraySizeException | IllegalArgumentException e) {
+            // a patch cut short or scrambled in a spot the format itself has no check for
+            throw damaged();
         }
     }
 
@@ -778,7 +781,7 @@ final class DiscPatcher {
                     pos += 4;
                 }
                 int len = p[pos++] & 0xFF;
-                if (pos + len > end) throw damaged();
+                if (pos + len > end || at < 0) throw damaged();
                 f.seek(at);
                 f.write(p, pos, len);
                 pos += len;
@@ -887,14 +890,18 @@ final class DiscPatcher {
                 while (end < footer && p[end] != 0) end++;
                 if (end >= footer) throw damaged();
                 long len = end - c.pos;
-                if (at + len > outSize) throw damaged();
                 while (len > 0) {
                     int k = (int) Math.min(len, tmp.length);
-                    f.seek(at);
-                    f.readFully(tmp, 0, k);
-                    for (int i = 0; i < k; i++) tmp[i] ^= p[c.pos + i];
-                    f.seek(at);
-                    f.write(tmp, 0, k);
+                    // A patch that makes the image smaller still lists the bytes past the new end. There is nothing to
+                    // write for those.
+                    int w = at >= outSize ? 0 : (int) Math.min(k, outSize - at);
+                    if (w > 0) {
+                        f.seek(at);
+                        f.readFully(tmp, 0, w);
+                        for (int i = 0; i < w; i++) tmp[i] ^= p[c.pos + i];
+                        f.seek(at);
+                        f.write(tmp, 0, w);
+                    }
                     at += k;
                     c.pos += k;
                     len -= k;

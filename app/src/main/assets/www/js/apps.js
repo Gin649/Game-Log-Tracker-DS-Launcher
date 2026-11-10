@@ -118,6 +118,7 @@ async function renderApps(){
   const wrap = $('#apps-wrap');
   const cancelHold = () => { clearTimeout(holdTimer); holdTimer = 0; };
   wrap.addEventListener('pointerdown', (ev) => {
+    appsLongPressed = false; // a new press: an earlier hold whose tap never arrived must not swallow this one
     const b = ev.target.closest('.app-launch');
     if(!b) return;
     cancelHold();
