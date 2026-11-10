@@ -2,7 +2,7 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
-## Unreleased
+## Unreleased (next update)
 
 ### Fixed
 - Box art picker: games you had opened before regional covers were added now show ScreenScraper's regional covers (USA, Europe, Japan and so on). They were stuck on a single ScreenScraper cover for up to a month. A game on a console with no ROM folder on the device gets them too.
