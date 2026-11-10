@@ -48,9 +48,17 @@ final class Shared {
 
     private static final java.util.concurrent.atomic.AtomicBoolean RESCAN_QUEUED = new java.util.concurrent.atomic.AtomicBoolean();
 
+    private static volatile long lastScanAsked;
+
+    /** Scans again when the last scan was asked for longer ago than this, so ROMs added while the app was open turn up. */
+    static void rescanIfOlderThan(long millis) {
+        if (android.os.SystemClock.elapsedRealtime() - lastScanAsked > millis) rescan();
+    }
+
     static void rescan() {
         final SystemMap map = systems();
         if (map == null) return;
+        lastScanAsked = android.os.SystemClock.elapsedRealtime();
         // a scan already waiting for its turn will read the folders when it starts, so asking again adds nothing
         if (RESCAN_QUEUED.getAndSet(true)) return;
         IO.execute(new Runnable() {

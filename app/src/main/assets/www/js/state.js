@@ -7,7 +7,6 @@ let recentGamesData = [];
 let lastProfile = null; // kept to recompute profile stats once the library loads
 let userPoints = null; // { Points (hardcore), SoftcorePoints }: separate totals, not one inside the other
 let statsMode = 'casual'; // 'casual' | 'hardcore'
-let libraryIndex = {}; // GameID -> library entry
 let librarySort = { key: 'Title', dir: 'asc' };
 const estHoursCache = {}; // GameID -> { hours, beaten }, this session only
 const achievementsListCache = {}; // GameID -> achievement list with earn dates, filled by getEstimatedHours()
@@ -58,6 +57,12 @@ function formatManualBeatenDate(str){
   const m = String(str || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
   if(!m) return '';
   return formatBeatenDate(new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+}
+// A saved day ("YYYY-MM-DD", or a longer date that starts that way) as that day here, not the day it is in UTC.
+function parseLocalDay(str){
+  const m = String(str || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const d = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(str);
+  return isNaN(d.getTime()) ? null : d;
 }
 function beatenDateHtml(text){
   return text ? `<span class="beaten-date">${text}</span>` : '';

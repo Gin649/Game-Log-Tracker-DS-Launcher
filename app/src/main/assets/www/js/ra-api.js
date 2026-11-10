@@ -72,9 +72,7 @@ async function raFetchOnce(endpoint, params, background){
     try{ res = await fetchWithTimeout(url, ms); }
     catch(e){ throw new Error(`${label}: blocked (${e.message})`); }
     if(res.status === 401 || res.status === 403 || res.status === 422){
-      // Only our own routes speak for RetroAchievements; a public proxy's 401/403 is its own wall.
       // RetroAchievements answers 422 when the username itself isn't valid, 401 for a wrong key.
-      if(!['app', 'worker', 'direct'].includes(label)) throw new Error(`${label}: HTTP ${res.status}`);
       const err = new Error('RetroAchievements did not accept your login (HTTP ' + res.status + '). Check your RetroAchievements username and Web API key in Launcher Settings.');
       err.authFailure = true;
       throw err;
@@ -111,27 +109,9 @@ async function raFetchOnce(endpoint, params, background){
     workerErr = e;
   }
 
-  // The app and the Worker both failed (a 429 from either lands here too): try the public CORS
-  // proxies, then RetroAchievements directly. A 429 is only reported once all of them fail.
+  // The app and the Worker both failed (a 429 from either lands here too): try RetroAchievements directly.
+  // The login only ever goes to RetroAchievements or to the app's own Worker, never to a public proxy.
   const target = `https://retroachievements.org/API/${endpoint}?${qs}`;
-  const routes = [
-    ['allorigins', 'https://api.allorigins.win/raw?url=' + encodeURIComponent(target)],
-    ['codetabs', 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(target)],
-    ['corsproxy', 'https://corsproxy.io/?url=' + encodeURIComponent(target)],
-    ['thingproxy', 'https://thingproxy.freeboard.io/fetch/' + target],
-    ['corseu', 'https://cors.eu.org/' + target],
-  ];
-  const proxyErrors = [];
-  const viaProxy = await new Promise(resolve => {
-    let left = routes.length;
-    routes.forEach(([label, url]) => {
-      attempt(label, url, 12000).then(resolve, err => {
-        proxyErrors.push(err.message);
-        if(--left === 0) resolve(null);
-      });
-    });
-  });
-  if(viaProxy) return viaProxy;
 
   try{
     return await attempt('direct', target, 12000);
@@ -139,7 +119,7 @@ async function raFetchOnce(endpoint, params, background){
     if(e.authFailure) throw e;
     const limited = [nativeErr, workerErr, e].find(x => x && x.rateLimited);
     if(limited) throw limited;
-    throw new Error('Could not reach RetroAchievements (' + [nativeErr && nativeErr.message, workerErr.message, ...proxyErrors, e.message].filter(Boolean).join('; ') + ')');
+    throw new Error('Could not reach RetroAchievements (' + [nativeErr && nativeErr.message, workerErr.message, e.message].filter(Boolean).join('; ') + ')');
   }
 }
 
@@ -327,7 +307,7 @@ async function saveSnap(gameId, existing, slots, hours){
 async function getEstimatedHours(gameId, force, background){
   if(!force && estHoursCache[gameId] !== undefined) return estHoursCache[gameId];
 
-  const localGame = libraryIndex[gameId];
+  const localGame = findLibraryGame(gameId);
   const officialAward = !!(localGame && localGame.HighestAwardKind);
   // Many sets have no "beaten" award at all, so a 100% game counts as beaten for the estimate.
   const fullyCompleted = !!(localGame && Number(localGame.MaxPossible) > 0 &&
@@ -344,7 +324,9 @@ async function getEstimatedHours(gameId, force, background){
         const parsed = JSON.parse(r.value);
         // A cached miss (hours: null) is only trusted for 5 minutes: RA may just not have the playtime yet.
         const ttl = parsed.hours == null ? 5 * 60 * 1000 : cachedDataTtl(gameId);
-        if(Date.now() - parsed.ts < ttl && !awardedCountChanged(parsed, gameId) && missingSlots.length === 0){
+        // An estimate saved while the game counted as unbeaten (or the other way round) was worked out the other way.
+        const sameMethod = !!parsed.real || (parsed.beaten === undefined ? !beaten : parsed.beaten === beaten);
+        if(Date.now() - parsed.ts < ttl && !awardedCountChanged(parsed, gameId) && missingSlots.length === 0 && sameMethod){
           estHoursCache[gameId] = { hours: parsed.hours, beaten, real: !!parsed.real };
           if(!achievementsListCache[gameId]){
             const stored = await readStoredAchList(gameId);
@@ -395,7 +377,7 @@ async function getEstimatedHours(gameId, force, background){
   }catch(e){ hours = null; }
 
   estHoursCache[gameId] = { hours, beaten, real };
-  try{ await window.storage.set(cacheKey, JSON.stringify({ hours, real, ts: Date.now(), libAwarded: libraryAwardedFor(gameId) }), false); }catch(e){}
+  try{ await window.storage.set(cacheKey, JSON.stringify({ hours, real, beaten, ts: Date.now(), libAwarded: libraryAwardedFor(gameId) }), false); }catch(e){}
   return estHoursCache[gameId];
 }
 

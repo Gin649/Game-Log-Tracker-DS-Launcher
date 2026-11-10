@@ -80,10 +80,28 @@ final class ThorBridge {
     public long playtime(String title, String console) {
         try {
             RomIndex.Rom rom = Shared.findRom(title, console);
-            return rom == null ? 0 : Playtime.seconds(act, Playtime.key(rom));
+            return rom == null ? 0 : Playtime.seconds(act, Playtime.key(act, rom));
         } catch (Exception e) {
             return 0;
         }
+    }
+
+    /** The time counted on this device for every game, for the tracker's backup file. */
+    @JavascriptInterface
+    public String playtimeExport() {
+        return Playtime.exportJson(act);
+    }
+
+    /** Puts the times from a backup file back (a game keeps the longer of the two). */
+    @JavascriptInterface
+    public boolean playtimeImport(String json) {
+        return Playtime.importJson(act, json == null ? "{}" : json);
+    }
+
+    /** Looks in the ROM folders again, for games added while the app was open. */
+    @JavascriptInterface
+    public void rescanRoms() {
+        Shared.rescan();
     }
 
     /** The game's title followed by the other names given for it (" | " separated), which the ROM matcher tries too. */

@@ -513,6 +513,7 @@ public class MainActivity extends Activity {
 
         boolean granted = Environment.isExternalStorageManager();
         if (granted && !hadStorage) Shared.rescan();
+        else if (granted) Shared.rescanIfOlderThan(60000); // ROMs copied over while the app was in the background
         hadStorage = granted;
 
         UpdateChecker.resumePendingInstall(this);

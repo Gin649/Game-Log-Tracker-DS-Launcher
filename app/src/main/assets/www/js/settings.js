@@ -20,7 +20,13 @@ function closeAboutModal(){
 }
 
 // Cached RA data is fetched again when needed, so backups leave it out.
-const REBUILDABLE_CACHE_PREFIXES = ['ra-hours:', 'ra-gameinfo:', 'ra-ach:', 'ra-dash:', 'boxcand:'];
+// (ra-snap: is not one of them: the playtime at the moment a game was beaten can't be fetched again.)
+const REBUILDABLE_CACHE_PREFIXES = ['ra-hours:', 'ra-gameinfo:', 'ra-ach:', 'ra-dash:', 'boxcand:',
+  'ra-gamelist:', 'ra-gamelist-h:', 'ra-gamelist-all:', 'ra-consoles-supported', 'ss-info2:', 'rawg-desc:', 'rating-avg:',
+  'rating-igdb:', 'guide-archive-index:', 'rapatches-tree-cache-v4', 'social-cache:', 'ports-catalog:'];
+// A base ROM remembered for the ROM patcher is raw bytes, which a JSON file can't hold. It is left out of backups and
+// picked again when needed.
+const isRememberedRom = (rawKey) => /^(priv|shared):rom:/.test(rawKey);
 function isRebuildableCache(rawKey){
   return REBUILDABLE_CACHE_PREFIXES.some(p => rawKey.startsWith('priv:' + p) || rawKey.startsWith('shared:' + p));
 }
@@ -32,8 +38,13 @@ async function exportLocalData(){
     exportedAt: new Date().toISOString(),
     version: 1,
     // the saved login (RetroAchievements) is never written into a backup file
-    entries: all.filter(e => !isRebuildableCache(String(e.key)) && !/^(priv|shared):(ra|rawg)-credentials$/.test(String(e.key))),
+    entries: all.filter(e => !isRebuildableCache(String(e.key)) && !isRememberedRom(String(e.key))
+      && !/^(priv|shared):(ra|rawg)-credentials$/.test(String(e.key))),
   };
+  // the time counted on this device for games RetroAchievements doesn't track lives in the app, not in storage
+  try{
+    if(thorBridge && typeof thorBridge.playtimeExport === 'function') payload.devicePlaytime = JSON.parse(thorBridge.playtimeExport());
+  }catch(e){}
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -50,11 +61,13 @@ async function importLocalData(file){
   try{ payload = JSON.parse(await file.text()); }
   catch(e){ throw new Error('That file isn\'t valid JSON.'); }
   if(!payload || !Array.isArray(payload.entries)) throw new Error('This doesn\'t look like a Game Log Tracker backup file.');
-  let entries = payload.entries;
+  // older backups wrote remembered ROMs out in a form that can't be read back; never put those over a working one
+  let entries = payload.entries.filter(e => e && !isRememberedRom(String(e.key)));
   if(keyBridge()){
     // inside the app the keys go to its private settings, not back into storage
+    const kept = entries;
     entries = [];
-    for(const e of payload.entries){
+    for(const e of kept){
       try{
         if(e.key === 'priv:ra-credentials'){ const o = JSON.parse(e.value); if(o.username && o.apiKey) await saveCreds(o.username, o.apiKey); continue; }
         if(e.key === 'priv:rawg-credentials') continue; // RAWG isn't used any more
@@ -63,6 +76,9 @@ async function importLocalData(file){
     }
   }
   await window.storage._putAllRaw(entries);
+  try{
+    if(payload.devicePlaytime && thorBridge && typeof thorBridge.playtimeImport === 'function') thorBridge.playtimeImport(JSON.stringify(payload.devicePlaytime));
+  }catch(e){}
 }
 
 // Opener button, close button, and a tap on the backdrop.

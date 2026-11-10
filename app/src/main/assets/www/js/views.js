@@ -141,10 +141,10 @@ function renderRecentGames(games){
     const badge = award ? `<span class="pill pill-corner ${award.cls}">${award.label}</span>` : '';
     return `
         <div class="cart" data-game-id="${g.GameID}">
-          <div class="art-wrap"><img class="art" src="${artSrc}" alt="${g.Title}">${badge}</div>
+          <div class="art-wrap"><img class="art" src="${artSrc}" alt="${esc(g.Title)}">${badge}</div>
           <div class="body">
-            <p class="title">${g.Title}</p>
-            <p class="console">${g.ConsoleName}</p>
+            <p class="title">${esc(g.Title)}</p>
+            <p class="console">${esc(g.ConsoleName)}</p>
             <div class="cart-progress-group">
               <div class="progress-track"><div class="progress-fill ${pct>=100?'complete':''} ${statsMode==='hardcore'?'hardcore':''}" style="width:${pct}%"></div></div>
               <div class="prog-lbl"><span>${earned}/${total}</span><span>${pct}%</span></div>
@@ -169,14 +169,14 @@ function renderUnlocks(list){
         <div class="unlock-row">
           <img src="${imgUrl('/Badge/' + a.BadgeName + '.png')}" alt="">
           <div class="info">
-            <p class="t">${a.Title}</p>
-            <p class="g">${a.GameTitle}</p>
+            <p class="t">${esc(a.Title)}</p>
+            <p class="g">${esc(a.GameTitle)}</p>
           </div>
           ${isHardcore ? '<span class="pill pill-muted">HC</span>' : ''}
           <div class="pts" style="color:${isHardcore ? 'var(--muted)' : 'var(--teal)'}">${a.Points}</div>
           <div class="when">${timeAgo(a.Date)}</div>
         </div>
-        <p class="unlock-desc">${a.Description || 'No description available.'}</p>
+        <p class="unlock-desc">${esc(a.Description || 'No description available.')}</p>
       </div>
     `;
   }).join('');
@@ -492,11 +492,11 @@ function renderLibrary(){
                 <span style="font-family:'Space Mono',monospace;font-size:0.6875rem;color:var(--muted)">${awardedForMode}/${g.MaxPossible} · ${pctForMode}%</span>
               `;
           const lastPlayedLabel = isCustom
-            ? (g.lastPlayed ? timeAgo(g.lastPlayed) : (g.manualBeatenDate ? new Date(g.manualBeatenDate).toLocaleDateString() : 'Never'))
+            ? (g.lastPlayed ? timeAgo(g.lastPlayed) : (parseLocalDay(g.manualBeatenDate) ? parseLocalDay(g.manualBeatenDate).toLocaleDateString() : 'Never'))
             : (g.lastPlayed ? timeAgo(g.lastPlayed) : 'Never');
           return label + `
             <tr data-game-id="${g.GameID}">
-              <td><div class="g-title"><img src="${imgUrl(g.ImageIcon)}" alt="" loading="lazy" decoding="async"><span>${g.Title}</span>${g.manual ? `<button class="manual-remove" data-remove-id="${g.GameID}" title="Remove">✕</button>` : ''}</div></td>
+              <td><div class="g-title"><img src="${imgUrl(g.ImageIcon)}" alt="" loading="lazy" decoding="async"><span>${esc(g.Title)}</span>${g.manual ? `<button class="manual-remove" data-remove-id="${g.GameID}" title="Remove">✕</button>` : ''}</div></td>
               <td>${awardCell}</td>
               <td>${progressCell}</td>
               <td style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--gold)">${hoursLabel}</td>
@@ -539,8 +539,8 @@ function tileHtml(g, backlog){
             </div>`;
   }
   return `<div class="cart" data-game-id="${g.GameID}">
-      <div class="art-wrap"><img class="art" src="${imgUrl(g.ImageIcon)}" alt="${g.Title}" loading="lazy" decoding="async">${badge}${remove}</div>
-      <div class="body"><p class="title">${g.Title}</p><p class="console">${g.ConsoleName || ''}</p>${foot}</div>
+      <div class="art-wrap"><img class="art" src="${imgUrl(g.ImageIcon)}" alt="${esc(g.Title)}" loading="lazy" decoding="async">${badge}${remove}</div>
+      <div class="body"><p class="title">${esc(g.Title)}</p><p class="console">${esc(g.ConsoleName || '')}</p>${foot}</div>
     </div>`;
 }
 
@@ -626,8 +626,8 @@ function renderBacklog(){
         <tbody>
           ${rows.map(g => `
             <tr data-game-id="${g.GameID}">
-              <td><div class="g-title"><img src="${imgUrl(g.ImageIcon)}" alt="" loading="lazy" decoding="async"><span>${g.Title}</span>${g.manual ? `<button class="manual-remove" data-remove-id="${g.GameID}" title="Remove">✕</button>` : ''}</div></td>
-              <td style="color:var(--muted);font-size:0.75rem;">${g.ConsoleName || '—'}</td>
+              <td><div class="g-title"><img src="${imgUrl(g.ImageIcon)}" alt="" loading="lazy" decoding="async"><span>${esc(g.Title)}</span>${g.manual ? `<button class="manual-remove" data-remove-id="${g.GameID}" title="Remove">✕</button>` : ''}</div></td>
+              <td style="color:var(--muted);font-size:0.75rem;">${esc(g.ConsoleName || '—')}</td>
               <td style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--muted)">${g.customConsole ? 'Not on RA' : (Number(g.MaxPossible) || 0)}</td>
             </tr>
           `).join('')}
@@ -682,8 +682,8 @@ function renderByYear(){
   done.forEach(g => {
     let year;
     if(g.customConsole){
-      const d = new Date(g.manualBeatenDate);
-      if(isNaN(d.getTime())) return;
+      const d = parseLocalDay(g.manualBeatenDate);
+      if(!d) return;
       year = d.getFullYear();
     }else{
       const parsed = parseRADate(g.HighestAwardDate);
@@ -709,8 +709,8 @@ function renderByYear(){
               const pill = award && award.label === 'Mastered'
                 ? `<span class="pill pill-year ${award.cls}">Mastered</span>` : '';
               return `
-              <div class="year-item" data-game-id="${g.GameID}" title="${g.Title}">
-                <img src="${imgUrl(g.ImageIcon)}" alt="${g.Title}">
+              <div class="year-item" data-game-id="${g.GameID}" title="${esc(g.Title)}">
+                <img src="${imgUrl(g.ImageIcon)}" alt="${esc(g.Title)}">
                 ${pill}
               </div>
             `;

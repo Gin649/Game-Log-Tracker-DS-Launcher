@@ -66,6 +66,8 @@ function renderLibraryViews(){
 
 async function loadAll(opts){
   const forcePlaytimeRefresh = !!(opts && opts.forceRecentPlaytime);
+  // a refresh you asked for also looks in your ROM folders again, for games added since the app started
+  if(forcePlaytimeRefresh && thorBridge && typeof thorBridge.rescanRoms === 'function'){ try{ thorBridge.rescanRoms(); }catch(e){} }
   await enqueueTask(async () => {
     // Show the last saved copy while fresh data loads (not on an explicit refresh).
     const cached = forcePlaytimeRefresh ? null : await loadDashCache();
@@ -135,8 +137,14 @@ async function loadAll(opts){
     }
 
     try{
-      const progress = await raFetch('API_GetUserCompletionProgress.php', { c: 500 });
-      const results = (progress && progress.Results) || [];
+      // RetroAchievements hands the list over 500 games at a time
+      const results = [];
+      for(let page = 0; page < 40; page++){
+        const progress = await raFetch('API_GetUserCompletionProgress.php', { c: 500, o: results.length });
+        const got = (progress && progress.Results) || [];
+        results.push(...got);
+        if(got.length < 500 || results.length >= Number((progress && progress.Total) || 0)) break;
+      }
       dash.progress = results; gotFresh = true;
       await buildLibraryFromProgress(results);
 
@@ -152,6 +160,7 @@ async function loadAll(opts){
         }
         if(libraryData.length === 0){
           $('#lib-table-wrap').innerHTML = `<div class="error-box">Could not load your library: ${e.message}</div>`;
+          $('#backlog-table-wrap').innerHTML = `<div class="error-box">Could not load your backlog: ${e.message}</div>`;
           $('#year-wrap').innerHTML = `<div class="error-box">Could not load completions: ${e.message}</div>`;
           return;
         }

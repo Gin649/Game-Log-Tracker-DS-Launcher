@@ -102,6 +102,12 @@ final class ArtWatch {
             return;
         }
 
+        // The screen is off: the game is neither being played nor closed. Wait, and count none of this as playtime.
+        if (!screenOn()) {
+            lastTickElapsed = SystemClock.elapsedRealtime();
+            MAIN.postDelayed(TICK, POLL_MS);
+            return;
+        }
         if (ArtActivity.resumed) {
             // Showing again: either it came back by itself, or the game never took the screen.
             if (sawCovered || age > NO_TAKEOVER_MS) {
@@ -116,6 +122,7 @@ final class ArtWatch {
         long nowE = SystemClock.elapsedRealtime();
         long delta = nowE - lastTickElapsed;
         lastTickElapsed = nowE;
+        if (delta > POLL_MS * 4) delta = POLL_MS; // a long gap means the device was asleep, not that you played
         if (age < GRACE_MS) {
             addPlay(delta);
             MAIN.postDelayed(TICK, POLL_MS);
@@ -155,6 +162,15 @@ final class ArtWatch {
         } catch (Exception ignored) {
         }
         return true;
+    }
+
+    private static boolean screenOn() {
+        try {
+            android.os.PowerManager pm = (android.os.PowerManager) app.getSystemService(Context.POWER_SERVICE);
+            return pm == null || pm.isInteractive();
+        } catch (Exception e) {
+            return true;
+        }
     }
 
     private static void addPlay(long ms) {

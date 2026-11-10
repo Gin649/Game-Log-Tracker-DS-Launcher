@@ -272,12 +272,22 @@ final class DataStore {
             FileOutputStream out = new FileOutputStream(tmp, true);
             try {
                 out.write(piece.getBytes("UTF-8"));
+                if (last) {
+                    try {
+                        out.getFD().sync(); // on the disk before it takes the old file's place
+                    } catch (Exception ignored) {
+                    }
+                }
             } finally {
                 out.close();
             }
             if (last) {
-                if (f.exists() && !f.delete()) return false;
-                if (!tmp.renameTo(f)) return false;
+                // Renaming over the old file swaps them in one step, so a crash leaves either the old value or the new
+                // one. Only where the storage won't do that is the old file removed first.
+                if (!tmp.renameTo(f)) {
+                    if (f.exists() && !f.delete()) return false;
+                    if (!tmp.renameTo(f)) return false;
+                }
                 if (key.equals(cachedKey)) cachedKey = null;
             }
             return true;
