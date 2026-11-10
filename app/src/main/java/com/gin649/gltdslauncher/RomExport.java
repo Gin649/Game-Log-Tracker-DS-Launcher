@@ -56,8 +56,10 @@ final class RomExport {
                 && out.equals(result.getParentFile())) {
             File named = new File(out, filename);
             if (!named.equals(result)) {
-                if (named.exists()) named.delete();
-                if (result.renameTo(named)) result = named;
+                if (!sameFile(named, rom)) { // never the game's own file
+                    if (named.exists()) named.delete();
+                    if (result.renameTo(named)) result = named;
+                }
             }
         }
         if (result == null || !result.isFile() || result.length() == 0) {
@@ -125,8 +127,7 @@ final class RomExport {
             if (files.size() > 1 && !mainExt.equals("chd") && !DiscPatcher.isDolphinFormat(mainExt)) {
                 // several files (a disc sheet and its tracks): keep them together in a folder, names unchanged
                 File dest = new File(out, stem);
-                if (dest.exists()) DiscPatcher.deleteTree(dest);
-                dest.mkdirs();
+                freshFolder(zip, dest);
                 for (File f : files) {
                     File t = new File(dest, f.getName());
                     if (!f.renameTo(t)) copy(f, t, p, "Saving");
@@ -208,8 +209,7 @@ final class RomExport {
             if (chd == null) throw new DiscPatcher.PatchException("CHD files can't be unpacked on this device.");
             DiscPatcher.requireSpace(out, src.length() * 4 + (64L << 20));
             File dest = new File(out, stem);
-            if (dest.exists()) DiscPatcher.deleteTree(dest);
-            dest.mkdirs();
+            freshFolder(src, dest);
             File cue = new File(dest, stem + ".cue");
             try {
                 DiscPatcher.exec(Arrays.asList(chd.getPath(), "extractcd", "-i", src.getPath(), "-o", cue.getPath(), "-ob", new File(dest, stem + ".bin").getPath()),
@@ -236,13 +236,13 @@ final class RomExport {
         if (ext.equals("z64") || ext.equals("v64") || ext.equals("n64")) {
             DiscPatcher.requireSpace(out, src.length() + (16L << 20));
             File z64 = new File(out, stem + ".z64");
+            if (sameFile(src, z64)) return src;
             n64ToZ64(src, z64, p);
             return z64;
         }
         if (ext.equals("cue")) {
             File dest = new File(out, stem);
-            if (dest.exists()) DiscPatcher.deleteTree(dest);
-            dest.mkdirs();
+            freshFolder(src, dest);
             File sheet = new File(dest, src.getName());
             DiscPatcher.Cue c = DiscPatcher.Cue.parse(src);
             long need = 0;
@@ -320,7 +320,30 @@ final class RomExport {
         return off;
     }
 
+    /** True when both names are the same file on disk. */
+    private static boolean sameFile(File a, File b) {
+        try {
+            return a.getCanonicalFile().equals(b.getCanonicalFile());
+        } catch (IOException e) {
+            return a.getAbsoluteFile().equals(b.getAbsoluteFile());
+        }
+    }
+
+    /**
+     * Clears the folder a game is about to be unpacked into. Never when the game's own file is inside it (a port whose
+     * folder is also where you keep that ROM): emptying it would delete the game.
+     */
+    private static void freshFolder(File src, File dest) throws IOException {
+        String inside = dest.getCanonicalPath() + File.separator;
+        if (src.getCanonicalPath().startsWith(inside)) {
+            throw new DiscPatcher.PatchException("This game is already in " + dest.getPath() + ", the folder it would be unpacked into. Move it somewhere else first.");
+        }
+        if (dest.exists()) DiscPatcher.deleteTree(dest);
+        dest.mkdirs();
+    }
+
     private static void copy(File src, File dest, DiscPatcher.Progress p, String phase) throws IOException {
+        if (sameFile(src, dest)) return; // already there: opening it to write would empty it
         long total = src.length(), done = 0;
         byte[] buf = new byte[1 << 20];
         InputStream in = new FileInputStream(src);

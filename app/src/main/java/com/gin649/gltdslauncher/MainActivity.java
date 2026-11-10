@@ -517,6 +517,7 @@ public class MainActivity extends Activity {
         hadStorage = granted;
 
         UpdateChecker.resumePendingInstall(this);
+        if (webView != null) UpdateChecker.check(this); // once a day at most; the first look is made at start-up
         if (SetupActivity.running && splash != null && splash.getVisibility() == View.VISIBLE) {
             bringSetupToFront();
             return;

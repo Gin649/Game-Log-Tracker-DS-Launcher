@@ -38,7 +38,10 @@ public final class UpdateChecker {
     private static final String APK_NAME = "update.apk";
     private static final Pattern TAG = Pattern.compile("^[vV]?(\\d+)\\.(\\d+)\\.(\\d+)");
 
-    private static boolean checked;
+    private static long lastTried;   // SystemClock.elapsedRealtime() of the last look, 0 for never
+    private static boolean lastWorked;
+    private static final long AGAIN_MS = 24L * 60 * 60 * 1000;
+    private static final long RETRY_MS = 15L * 60 * 1000;
     private static boolean pinged;
     private static long downloadId = -1;
     private static File pendingApk;
@@ -60,7 +63,13 @@ public final class UpdateChecker {
             pinged = true;
             UsageCount.ping(app);
         }
-        if (BuildConfig.DEBUG || checked) return;
+        if (BuildConfig.DEBUG) return;
+        // A launcher can stay open for weeks, so this looks again once a day (sooner if the last look failed).
+        long now = android.os.SystemClock.elapsedRealtime();
+        if (lastTried != 0 && now - lastTried < (lastWorked ? AGAIN_MS : RETRY_MS)) return;
+        if (ArtWatch.gameRunning()) return; // never over a game
+        lastTried = now;
+        lastWorked = false;
 
         new Thread(new Runnable() {
             @Override
@@ -71,7 +80,7 @@ public final class UpdateChecker {
 
                 final Release r = fetchLatest();
                 if (r == null) return;
-                checked = true;
+                lastWorked = true;
                 if (r.versionCode <= BuildConfig.VERSION_CODE) return;
 
                 activity.runOnUiThread(new Runnable() {

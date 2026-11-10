@@ -123,6 +123,18 @@ async function raFetchOnce(endpoint, params, background){
   }
 }
 
+// A user's completion progress. RetroAchievements hands the list over 500 games at a time.
+async function raCompletionProgress(params){
+  const results = [];
+  for(let page = 0; page < 40; page++){
+    const progress = await raFetch('API_GetUserCompletionProgress.php', { ...(params || {}), c: 500, o: results.length });
+    const got = (progress && progress.Results) || [];
+    results.push(...got);
+    if(got.length < 500 || results.length >= Number((progress && progress.Total) || 0)) break;
+  }
+  return results;
+}
+
 function imgUrl(path){
   if(!path) return '';
   return path.startsWith('http') ? path : MEDIA + path;

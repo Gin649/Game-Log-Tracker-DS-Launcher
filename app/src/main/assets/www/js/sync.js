@@ -137,14 +137,7 @@ async function loadAll(opts){
     }
 
     try{
-      // RetroAchievements hands the list over 500 games at a time
-      const results = [];
-      for(let page = 0; page < 40; page++){
-        const progress = await raFetch('API_GetUserCompletionProgress.php', { c: 500, o: results.length });
-        const got = (progress && progress.Results) || [];
-        results.push(...got);
-        if(got.length < 500 || results.length >= Number((progress && progress.Total) || 0)) break;
-      }
+      const results = await raCompletionProgress();
       dash.progress = results; gotFresh = true;
       await buildLibraryFromProgress(results);
 

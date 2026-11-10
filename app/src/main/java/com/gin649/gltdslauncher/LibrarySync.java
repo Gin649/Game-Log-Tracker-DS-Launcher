@@ -39,8 +39,8 @@ final class LibrarySync {
         for (SystemMap.Sys s : map.all) {
             if (!s.dir().isDirectory()) continue; // not there right now: leave its rows alone
             List<GameRepository.ScannedRom> found = new ArrayList<GameRepository.ScannedRom>();
-            for (RomIndex.Rom r : index.all()) {
-                if (r.sys == s) found.add(new GameRepository.ScannedRom(cleanTitle(r.name), r.file.getPath()));
+            for (RomIndex.Rom r : index.forSystem(s)) {
+                found.add(new GameRepository.ScannedRom(cleanTitle(r.name), r.file.getPath()));
             }
             repo.syncSystem(s.folder, found);
         }

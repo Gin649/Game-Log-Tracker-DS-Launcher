@@ -36,6 +36,10 @@ final class ArtWatch {
     private static String playKey;      // where this session's time is added, or null
     private static long lastTickElapsed;
     private static String lastForegroundPkg = "";
+    // What the emulator's screens were last seen doing, kept between checks so each one only reads recent events
+    private static final Map<String, Boolean> shown = new HashMap<String, Boolean>();
+    private static boolean sawEmulator;
+    private static final long LOOK_BACK_MS = 10L * 60 * 1000;
 
     private ArtWatch() {}
 
@@ -71,6 +75,9 @@ final class ArtWatch {
         startedAtWall = System.currentTimeMillis();
         sawCovered = false;
         goneStreak = 0;
+        shown.clear();
+        sawEmulator = false;
+        lastForegroundPkg = "";
         active = true;
         MainActivity.lockForGame(true);
         MAIN.postDelayed(TICK, POLL_MS);
@@ -183,13 +190,13 @@ final class ArtWatch {
             UsageStatsManager usm = (UsageStatsManager) app.getSystemService(Context.USAGE_STATS_SERVICE);
             if (usm == null) return true;
             long now = System.currentTimeMillis();
-            UsageEvents events = usm.queryEvents(startedAtWall - 2000, now + 2000);
+            // Events from the last ten minutes are read again each time and laid over what is already known. Reading
+            // everything since the game started got slower the longer you played.
+            UsageEvents events = usm.queryEvents(Math.max(startedAtWall - 2000, now - LOOK_BACK_MS), now + 2000);
             if (events == null) return true;
             UsageEvents.Event e = new UsageEvents.Event();
-            Map<String, Boolean> shown = new HashMap<String, Boolean>();
-            boolean any = false;
-            String lastForeground = "";
-            lastForegroundPkg = "";
+            boolean any = sawEmulator;
+            String lastForeground = lastForegroundPkg == null ? "" : lastForegroundPkg;
             while (events.hasNextEvent()) {
                 events.getNextEvent(e);
                 if (e.getEventType() == 1 && e.getPackageName() != null) lastForeground = e.getPackageName();
@@ -204,6 +211,7 @@ final class ArtWatch {
                 }
             }
             lastForegroundPkg = lastForeground;
+            sawEmulator = any;
             if (!any) return true; // no sign of the emulator yet; keep waiting
             if (shown.containsValue(Boolean.TRUE)) return true;
             // The game is only covered, not closed, while Android's file picker (choosing a ROM inside a port) or a

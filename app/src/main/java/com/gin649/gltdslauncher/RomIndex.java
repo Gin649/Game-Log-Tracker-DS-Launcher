@@ -93,6 +93,12 @@ final class RomIndex {
         return out;
     }
 
+    /** One system's ROMs. */
+    List<Rom> forSystem(SystemMap.Sys sys) {
+        List<Rom> list = bySys.get(sys);
+        return list == null ? new ArrayList<Rom>() : list;
+    }
+
     /** Every ROM in one system folder. */
     List<Rom> inFolder(String folder) {
         List<Rom> out = new ArrayList<Rom>();

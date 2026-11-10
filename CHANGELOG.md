@@ -11,6 +11,8 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - Finding a game's ROM is quicker, which speeds up the Play button, the Add from ROMs list and playtime for games RetroAchievements doesn't track. The app remembers which ROM each game matched until the next time it scans your folders.
 - Backups now include the playtime counted on this device for games RetroAchievements doesn't track. Restoring one keeps whichever time is longer.
 - Backups are smaller: lists that can be downloaded again are left out, and so are base ROMs remembered for the ROM patcher (pick the ROM again after restoring). Older backups still restore.
+- The app looks for a new version once a day, not only when it starts, so a launcher left open still hears about updates. It never asks while a game is running.
+- Coming back to the launcher and long play sessions use less of the device: rescanning your ROM folders and watching for a game closing both do less work.
 - Saved data is written more safely, so a crash or power loss in the middle of a save can't leave a value missing.
 
 ### Fixed
@@ -24,6 +26,10 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - Putting the device to sleep in the middle of a game no longer stops its playtime being counted, or adds the time asleep.
 - A multi-disc game keeps one playtime total whether you start it from a disc or from its playlist.
 - Game and achievement names with characters such as quotes, & or < now show correctly in the lists and profiles.
+- A game you track by hand that you have marked Now Playing or Beaten, or logged time on, is no longer turned into a RetroAchievements entry on its own (which sent it back to the Backlog and dropped its beaten date). Link to RetroAchievements in its profile still does it when you choose to.
+- Getting a ROM ready for an Android port can no longer overwrite or delete the game's own file when the port's folder is also where you keep that ROM.
+- The Social tab shows all of a friend's beaten games, not only those among their first 500.
+- The backup file is named with today's date. In the evening it could carry tomorrow's.
 
 ### Security
 - Your RetroAchievements login is only ever sent to RetroAchievements or to the app's own service. The public proxies that were tried as a last resort have been removed.

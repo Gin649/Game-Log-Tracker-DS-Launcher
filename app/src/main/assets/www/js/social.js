@@ -356,8 +356,7 @@ async function openSocialDetail(name){
     raFetch('API_GetUserRecentAchievements.php', { u: name, m: SOCIAL_UNLOCK_DAYS * 1440 }).then(data => {
       entry.list = (Array.isArray(data) ? data : []).slice().sort((a, b) => time(b.Date) - time(a.Date)).slice(0, SOCIAL_UNLOCK_SHOWN);
     }).catch(e => { entry.listErr = msg(e); entry.list = []; }).then(show),
-    raFetch('API_GetUserCompletionProgress.php', { u: name, c: 500 }).then(data => {
-      const results = (data && data.Results) || [];
+    raCompletionProgress({ u: name }).then(results => {
       entry.awards = results.filter(g => g.HighestAwardKind && g.HighestAwardDate && !isSubsetGame(g))
         .sort((a, b) => time(b.HighestAwardDate) - time(a.HighestAwardDate));
     }).catch(e => { entry.awardsErr = msg(e); entry.awards = []; }).then(show)

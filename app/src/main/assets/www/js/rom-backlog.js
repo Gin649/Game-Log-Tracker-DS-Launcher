@@ -206,7 +206,11 @@ window.betterBoxArt = betterBoxArt;
 async function relinkCustomGames(){
   if(typeof creds === 'undefined' || !creds) return false;
   const WEEK = 7 * 24 * 60 * 60 * 1000;
-  const cands = libraryData.filter(g => g.manual && g.customConsole && !(g.raChecked && Date.now() - g.raChecked < WEEK));
+  // A game you have marked Now Playing or Beaten, or logged time on, is left as it is: turning it into a
+  // RetroAchievements entry would send it back to the Backlog without that. Link to RetroAchievements in its profile
+  // still does it when you choose to.
+  const tracked = g => g.manualStarted || g.manualBeaten || (Array.isArray(g.playLog) && g.playLog.length > 0);
+  const cands = libraryData.filter(g => g.manual && g.customConsole && !tracked(g) && !(g.raChecked && Date.now() - g.raChecked < WEEK));
   if(!cands.length) return false;
   let consoles = [];
   try{ consoles = (await getConsoleList()) || []; }catch(e){ return false; }
@@ -281,27 +285,36 @@ async function fillMissingCustomArt(){
   if(!todo.length) return;
   customArtRunning = true;
   let found = 0;
+  // what was tried is written to the saved list a few games at a time
+  const tried = new Map(); // GameID -> { artTried, url }
+  const saveTried = async () => {
+    if(!tried.size) return;
+    const batch = new Map(tried);
+    tried.clear();
+    await enqueueTask(async () => {
+      const manual = await loadManualGames();
+      batch.forEach((t, id) => {
+        [libraryData.find(x => x.GameID === id), manual.find(x => x.GameID === id)].forEach(e => {
+          if(!e) return;
+          e.artTried = t.artTried;
+          e.artVer = 2;
+          if(t.url){ e.ImageIcon = t.url; e.ImageBoxArt = t.url; }
+        });
+      });
+      await saveManualGames(manual);
+    });
+  };
   try{
     for(const g of todo){
       let url = '';
       if(thorBridge && typeof thorBridge.customArt === 'function') url = await nativeCustomArt(g);
       if(!url) url = await igdbCoverFor(g.Title);
-      await enqueueTask(async () => {
-        const cur = libraryData.find(x => x.GameID === g.GameID);
-        if(!cur) return;
-        const manual = await loadManualGames();
-        const saved = manual.find(x => x.GameID === g.GameID);
-        [cur, saved].forEach(e => {
-          if(!e) return;
-          e.artTried = Date.now();
-          e.artVer = 2;
-          if(url){ e.ImageIcon = url; e.ImageBoxArt = url; }
-        });
-        await saveManualGames(manual);
-      });
+      tried.set(g.GameID, { artTried: Date.now(), url });
+      if(tried.size >= 8) await saveTried();
       if(url && ++found % 8 === 0) renderLibraryViews();
     }
   }finally{
+    try{ await saveTried(); }catch(e){}
     customArtRunning = false;
   }
   if(found) renderLibraryViews();
