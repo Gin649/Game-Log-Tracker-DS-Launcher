@@ -9,7 +9,6 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - Searching the Library or Backlog redraws the list a moment after you stop typing, not on every letter.
 - The Apps tab opens faster. App names are read in the background when the launcher starts.
 - Finding a game's ROM is quicker, which speeds up the Play button, the Add from ROMs list and playtime for games RetroAchievements doesn't track. The app remembers which ROM each game matched until the next time it scans your folders.
-
 - Backups now include the playtime counted on this device for games RetroAchievements doesn't track. Restoring one keeps whichever time is longer.
 - Backups are smaller: lists that can be downloaded again are left out, and so are base ROMs remembered for the ROM patcher (pick the ROM again after restoring). Older backups still restore.
 - Saved data is written more safely, so a crash or power loss in the middle of a save can't leave a value missing.
