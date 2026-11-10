@@ -258,15 +258,38 @@ final class ThorBridge {
         }
     }
 
-    /** The address of ScreenScraper's screenshot for a game (through the app's Worker), or "". Blocks on the network. */
+    /**
+     * The address of a screenshot for a game, or "". ScreenScraper is asked first (through the app's Worker). When it
+     * has none, the screenshot your frontend already has for the game's ROM is used, and after that LaunchBox's.
+     * Blocks on the network.
+     */
     @JavascriptInterface
     public String screenscraperScreenshot(String title, String console) {
         try {
             ScreenScraperClient.Info i = ScreenScraperClient.lookup(act, title, console);
-            return i == null || i.screenshot == null ? "" : i.screenshot;
+            if (i != null && i.screenshot != null && !i.screenshot.isEmpty()) return i.screenshot;
         } catch (Exception ignored) {
-            return "";
         }
+        try {
+            RomIndex.Rom rom = Config.useEsdeMedia() ? Shared.findRom(title, console) : null;
+            String p = rom == null ? null : MediaFinder.screenshot(rom);
+            if (p != null && new File(p).isFile()) {
+                String token = Base64.encodeToString(p.getBytes("UTF-8"), Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
+                return "https://" + Config.APP_HOST_BUILTIN + "/art/" + token;
+            }
+        } catch (Exception ignored) {
+        }
+        try {
+            SystemMap map = Config.LAUNCHBOX_ART ? Shared.systems() : null;
+            if (map != null) {
+                for (SystemMap.Sys sys : map.forConsole(console)) {
+                    String u = LaunchBoxArt.screenUrl(act, sys.folder, title);
+                    if (u != null && !u.isEmpty()) return u;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return "";
     }
 
     /** LaunchBox's description for a game (used when RetroAchievements has none), or "". Blocks on the network. */

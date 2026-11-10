@@ -91,6 +91,11 @@ final class MediaFinder {
         return look(systemFolder, rel, name, fileName);
     }
 
+    /** Just the screenshot your frontend has for a ROM, even when it also has fan art. Null when none. */
+    static String screenshot(RomIndex.Rom rom) {
+        return look(rom.sys.folder, rom.rel, rom.name, rom.file.getName(), true).screen;
+    }
+
     /** Just the box art (ES-DE covers, 3D boxes and the like) for a ROM, even when it also has fan art. Null when none. */
     static String boxArt(String systemFolder, String romPath) {
         if (systemFolder == null || romPath == null || Config.ROMS_ROOT.isEmpty()) return null;

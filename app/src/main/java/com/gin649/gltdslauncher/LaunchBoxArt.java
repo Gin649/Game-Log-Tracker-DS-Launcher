@@ -138,6 +138,17 @@ final class LaunchBoxArt {
         return file.isEmpty() ? null : IMAGE_URL + file;
     }
 
+    /** Address of the game's screenshot on LaunchBox's image server, or null. */
+    static String screenUrl(Context ctx, String folder, String title) throws IOException {
+        String platform = platformFor(ctx, folder);
+        if (platform == null) return null;
+        Index idx = index(ctx, Matcher.compact(platform));
+        if (idx == null) return null;
+        String[] row = match(idx, title);
+        if (row == null || row[3].isEmpty()) return null;
+        return IMAGE_URL + row[3];
+    }
+
     /** Address of the game's front cover on LaunchBox's image server (never a screenshot), or null. */
     static String frontUrl(Context ctx, String folder, String title) throws IOException {
         String platform = platformFor(ctx, folder);

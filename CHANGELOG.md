@@ -20,6 +20,7 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - Backlog table: the Game and Achievements headings now sort (Achievements is most points first, then least). Achievements shows the set's points as well, as in 37 / 450 pts. The System column only shows under All.
 - Game Library table: dates are shorter (Nov 7/26), only a game's name runs onto a second line, and the Award column is left out while Hide Beaten is on.
 - Play on this device always opens the original game, even when a patched copy with the same name sits beside it. Hold Play (by touch or with the confirm button) to choose a patched copy made in ROM Hacks. Copies made before this version are recognised once you apply their patch again, which no longer makes a new file.
+- Game details: when ScreenScraper has no screenshot for a game, See more now shows the one your frontend has for it, or else LaunchBox's.
 
 ### Fixed
 - Games RetroAchievements doesn't track (3DS, for example) now show their playtime and when they were last played in the Game Library, in both the table and tile views. They showed a dash and Never before, even after you played them from the launcher. The time is brought up to date when you come back from the game.
