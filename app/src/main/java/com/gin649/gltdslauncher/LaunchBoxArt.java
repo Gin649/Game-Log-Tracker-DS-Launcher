@@ -140,11 +140,16 @@ final class LaunchBoxArt {
 
     /** Address of the game's screenshot on LaunchBox's image server, or null. */
     static String screenUrl(Context ctx, String folder, String title) throws IOException {
+        return screenUrl(ctx, folder, title, false);
+    }
+
+    /** With exact, only a game listed under this very name counts (for hacks, so the original game is never taken). */
+    static String screenUrl(Context ctx, String folder, String title, boolean exact) throws IOException {
         String platform = platformFor(ctx, folder);
         if (platform == null) return null;
         Index idx = index(ctx, Matcher.compact(platform));
         if (idx == null) return null;
-        String[] row = match(idx, title);
+        String[] row = exact ? idx.exact.get(lbNorm(title)) : match(idx, title);
         if (row == null || row[3].isEmpty()) return null;
         return IMAGE_URL + row[3];
     }
@@ -168,13 +173,18 @@ final class LaunchBoxArt {
 
     /** LaunchBox's write-up for a game, or null when the console or game isn't listed or has none. */
     static String description(Context ctx, String folder, String title) throws IOException {
+        return description(ctx, folder, title, false);
+    }
+
+    /** With exact, only a game listed under this very name counts (for hacks, so the original game is never taken). */
+    static String description(Context ctx, String folder, String title, boolean exact) throws IOException {
         String platform = platformFor(ctx, folder);
         if (platform == null) return null;
         String key = Matcher.compact(platform);
         Map<String, String> d = descs(ctx, key);
         if (d == null || d.isEmpty()) return null;
         String hit = d.get(lbNorm(title));
-        if (hit != null) return hit;
+        if (hit != null || exact) return hit;
         String best = null;
         int bestScore = 0;
         for (Map.Entry<String, String> e : d.entrySet()) {

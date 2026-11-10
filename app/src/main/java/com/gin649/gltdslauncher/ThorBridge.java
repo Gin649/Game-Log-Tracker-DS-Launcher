@@ -172,6 +172,8 @@ final class ThorBridge {
                 String text = "";
                 try {
                     if ("lb".equals(kind)) text = launchboxDescription(title, console);
+                    else if ("hack-desc".equals(kind)) text = hackDescription(title, console);
+                    else if ("hack-shot".equals(kind)) text = hackScreenshot(title, console);
                     else if ("shot".equals(kind)) text = screenscraperScreenshot(title, console);
                     else text = screenscraperDescription(title, console);
                 } catch (Exception ignored) {
@@ -284,6 +286,71 @@ final class ThorBridge {
             if (map != null) {
                 for (SystemMap.Sys sys : map.forConsole(console)) {
                     String u = LaunchBoxArt.screenUrl(act, sys.folder, title);
+                    if (u != null && !u.isEmpty()) return u;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return "";
+    }
+
+    // A hack ("~Hack~ Name") must never get the original game's write-up or screenshot. Its own ROM's entry in your
+    // frontend is safe. Online, only an entry under the hack's very name counts.
+
+    private static boolean sameName(String a, String b) {
+        String x = Matcher.norm(a);
+        return !x.isEmpty() && x.equals(Matcher.norm(b));
+    }
+
+    /** A hack's own write-up: your frontend's, else ScreenScraper's or LaunchBox's entry of that name. "" when none. */
+    private String hackDescription(String title, String console) {
+        String name = Matcher.display(title);
+        try {
+            RomIndex.Rom rom = Shared.findRom(title, console);
+            String d = rom == null ? "" : MediaFinder.description(rom.sys.folder, rom.file.getName());
+            if (d != null && !d.trim().isEmpty()) return d;
+        } catch (Exception ignored) {
+        }
+        try {
+            ScreenScraperClient.Info i = ScreenScraperClient.lookup(act, name, console);
+            if (i != null && sameName(name, i.name) && i.synopsis != null && !i.synopsis.trim().isEmpty()) return i.synopsis;
+        } catch (Exception ignored) {
+        }
+        try {
+            SystemMap map = Shared.systems();
+            if (map != null) {
+                for (SystemMap.Sys sys : map.forConsole(console)) {
+                    String d = LaunchBoxArt.description(act, sys.folder, name, true);
+                    if (d != null && !d.isEmpty()) return d;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return "";
+    }
+
+    /** A hack's own screenshot, from the same places in the same order. "" when none. */
+    private String hackScreenshot(String title, String console) {
+        String name = Matcher.display(title);
+        try {
+            RomIndex.Rom rom = Config.useEsdeMedia() ? Shared.findRom(title, console) : null;
+            String p = rom == null ? null : MediaFinder.screenshot(rom);
+            if (p != null && new File(p).isFile()) {
+                String token = Base64.encodeToString(p.getBytes("UTF-8"), Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
+                return "https://" + Config.APP_HOST_BUILTIN + "/art/" + token;
+            }
+        } catch (Exception ignored) {
+        }
+        try {
+            ScreenScraperClient.Info i = ScreenScraperClient.lookup(act, name, console);
+            if (i != null && sameName(name, i.name) && i.screenshot != null && !i.screenshot.isEmpty()) return i.screenshot;
+        } catch (Exception ignored) {
+        }
+        try {
+            SystemMap map = Config.LAUNCHBOX_ART ? Shared.systems() : null;
+            if (map != null) {
+                for (SystemMap.Sys sys : map.forConsole(console)) {
+                    String u = LaunchBoxArt.screenUrl(act, sys.folder, name, true);
                     if (u != null && !u.isEmpty()) return u;
                 }
             }

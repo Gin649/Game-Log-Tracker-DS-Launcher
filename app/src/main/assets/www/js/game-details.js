@@ -106,6 +106,13 @@ function getScreenScraperShot(title, consoleName){
     .then(r => r.ok ? r.json() : null).then(j => (j && j.found && j.screenshot) || null).catch(() => null);
 }
 
+// A hack's own write-up or screenshot (kind "hack-desc" or "hack-shot"), never the original game's: the app only takes
+// what your frontend has for the hack's ROM, or an online entry under the hack's very name. Only inside the launcher.
+function getHackExtra(kind, title, consoleName){
+  if(typeof thorBridge === 'undefined' || !thorBridge || !thorBridge.describeAsync || !thorBridge.patchedList || !consoleName) return Promise.resolve(null);
+  return nativeDescribe(kind, title, consoleName).then(t => t || null).catch(() => null);
+}
+
 // LaunchBox's write-up, used to fill the gaps when ES-DE has none. Only inside the launcher app.
 function getLaunchBoxDescription(title, consoleName){
   if(typeof thorBridge === 'undefined' || !thorBridge || !thorBridge.launchboxDescription || !consoleName) return Promise.resolve(null);
@@ -233,9 +240,12 @@ function wireSeeMore(wrap, anchor, clampable, manualCtx){
     if(clampable) anchor.classList.toggle('clamp', !open);
     more.textContent = open ? 'See less' : 'See more';
     if(shotEl) shotEl.style.display = open ? '' : 'none';
-    if(open && !shotAsked && manualCtx && manualCtx.consoleName && !isHackTitle(manualCtx.title)){
+    if(open && !shotAsked && manualCtx && manualCtx.consoleName){
       shotAsked = true;
-      getScreenScraperShot(manualCtx.title, manualCtx.consoleName).then(url => {
+      const shot = isHackTitle(manualCtx.title)
+        ? getHackExtra('hack-shot', manualCtx.title, manualCtx.consoleName).then(u => /^https:\/\//.test(u || '') ? u : null)
+        : getScreenScraperShot(manualCtx.title, manualCtx.consoleName);
+      shot.then(url => {
         if(!url || !more.isConnected) return;
         const img = new Image();
         img.className = 'gd-shot';
@@ -281,11 +291,12 @@ function renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine,
       : '<div class="gd-empty">No playtime data yet.</div>';
   }
 
-  if(hack){
-    html += `<div class="gd-label${aboutOnly && !ib ? '' : ' gd-about-label'}">ABOUT</div><div class="gd-hack">Hack<br><br><a href="${esc(hack.url)}" target="_blank" rel="noopener">Click here for details</a></div>`;
-  }
   if(description){
     html += `<div class="gd-label${aboutOnly && !ib ? '' : ' gd-about-label'}">ABOUT</div><div class="gd-about"></div>`;
+    // a hack with a write-up of its own still gets its RomHacking.net link, under the text
+    if(hack) html += `<div class="gd-hack"><a href="${esc(hack.url)}" target="_blank" rel="noopener">Click here for details</a></div>`;
+  }else if(hack){
+    html += `<div class="gd-label${aboutOnly && !ib ? '' : ' gd-about-label'}">ABOUT</div><div class="gd-hack">Hack<br><br><a href="${esc(hack.url)}" target="_blank" rel="noopener">Click here for details</a></div>`;
   }
   html += '<button class="gd-more">See more</button>';
   wrap.innerHTML = html;
@@ -312,8 +323,10 @@ function setupGameDetailsUI(gameId, title, card, opts){
   }).catch(() => null);
   // Your frontend's own text first, then ScreenScraper, then LaunchBox, then IGDB.
   const descP = () => {
-    if(isHackTitle(title)) return Promise.resolve(null);
     const consoleName = opts && opts.consoleName;
+    if(isHackTitle(title)){ // only a write-up that is the hack's own; with none, the plain "Hack" note shows as before
+      return getHackExtra('hack-desc', title, consoleName).then(d => { const t = tidyDescription(d || ''); return t.length >= 40 ? t : null; });
+    }
     return getEsdeDescription(title, consoleName)
       .then(d => d || getScreenScraperDescription(title, consoleName))
       .then(d => d || getLaunchBoxDescription(title, consoleName))
@@ -349,7 +362,7 @@ function setupGameDetailsUI(gameId, title, card, opts){
     const mine = mineRes.status === 'fulfilled' ? mineRes.value : null;
     const igdb = igdbRes && igdbRes.status === 'fulfilled' ? igdbRes.value : null;
     const draw = (description) => renderGameDetails(wrap, stats, description, aboutOnly, manualCtx, mine, hack, igdb);
-    draw(isHackTitle(title) ? null : (early || null));
+    draw(early || null);
     if(early === undefined){
       descPromise.then(text => {
         if(text && card.dataset.gameId === String(gameId)) draw(text);
