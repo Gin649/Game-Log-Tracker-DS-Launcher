@@ -39,6 +39,7 @@ final class ArtWatch {
     // What the emulator's screens were last seen doing, kept between checks so each one only reads recent events
     private static final Map<String, Boolean> shown = new HashMap<String, Boolean>();
     private static boolean sawEmulator;
+    private static boolean game;        // false when what is being watched is an app from the Apps tab
     private static final long LOOK_BACK_MS = 10L * 60 * 1000;
 
     private ArtWatch() {}
@@ -58,11 +59,20 @@ final class ArtWatch {
 
     /** A game was just started in this emulator package. */
     static synchronized void start(Context context, String emulatorPackage) {
-        start(context, emulatorPackage, null);
+        begin(context, emulatorPackage, null, true);
     }
 
     /** As above, and the time the game is on screen is added to Playtime under this key. */
     static synchronized void start(Context context, String emulatorPackage, String timeKey) {
+        begin(context, emulatorPackage, timeKey, true);
+    }
+
+    /** An app from the Apps tab was just started. It is watched the same way, but it is not a game. */
+    static synchronized void startApp(Context context, String appPackage) {
+        begin(context, appPackage, null, false);
+    }
+
+    private static void begin(Context context, String emulatorPackage, String timeKey, boolean isGame) {
         stop();
         if (emulatorPackage == null || emulatorPackage.isEmpty()) return;
         Context c = context.getApplicationContext();
@@ -72,6 +82,7 @@ final class ArtWatch {
         startedAtElapsed = SystemClock.elapsedRealtime();
         lastTickElapsed = startedAtElapsed;
         playKey = timeKey;
+        game = isGame;
         startedAtWall = System.currentTimeMillis();
         sawCovered = false;
         goneStreak = 0;
@@ -86,6 +97,11 @@ final class ArtWatch {
     /** A game was started from here and has not closed yet (needs Usage access to be known). */
     static synchronized boolean gameRunning() {
         return active;
+    }
+
+    /** As gameRunning, but only for a game or a port: an app opened from the Apps tab doesn't count. */
+    static synchronized boolean playingGame() {
+        return active && game;
     }
 
     static synchronized void stop() {

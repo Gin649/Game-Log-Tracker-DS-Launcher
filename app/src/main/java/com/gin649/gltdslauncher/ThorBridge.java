@@ -396,14 +396,19 @@ final class ThorBridge {
         return launchAppOn(pkg, "top");
     }
 
-    /** Same, on the chosen screen: "top" (the default) or "bottom". With one screen it just starts the app. */
+    /**
+     * Same, on the chosen screen: "top" (the default) or "bottom". With one screen it just starts the app.
+     * While a game is running the app opens on the tracker's screen whatever was chosen, so it never lands on top of
+     * the game, and the game goes on being watched (its playtime, and the art coming back when it closes).
+     */
     @JavascriptInterface
     public String launchAppOn(String pkg, String screen) {
         try {
             Intent i = act.getPackageManager().getLaunchIntentForPackage(pkg);
             if (i == null) return "{\"ok\":false,\"message\":\"That app can't be opened.\"}";
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            int display = DisplayPicker.appDisplayId(act, !"bottom".equals(screen));
+            int beside = ArtWatch.playingGame() ? DisplayPicker.trackerDisplayId(act) : -1;
+            int display = beside >= 0 ? beside : DisplayPicker.appDisplayId(act, !"bottom".equals(screen));
             if (display >= 0) {
                 android.app.ActivityOptions options = android.app.ActivityOptions.makeBasic();
                 options.setLaunchDisplayId(display);
@@ -411,7 +416,7 @@ final class ThorBridge {
             } else {
                 act.startActivity(i);
             }
-            ArtWatch.start(act, pkg);
+            if (beside < 0) ArtWatch.startApp(act, pkg);
             return "{\"ok\":true}";
         } catch (Exception e) {
             return "{\"ok\":false,\"message\":\"Could not open that app.\"}";

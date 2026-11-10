@@ -14,6 +14,7 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - The app looks for a new version once a day, not only when it starts, so a launcher left open still hears about updates. It never asks while a game is running.
 - Coming back to the launcher and long play sessions use less of the device: rescanning your ROM folders and watching for a game closing both do less work.
 - Saved data is written more safely, so a crash or power loss in the middle of a save can't leave a value missing.
+- Opening an app from the Apps tab while a game is running now puts the app on the bottom screen, so it never covers the game. With no game running it opens on the screen you set for it. (Knowing a game is running needs Usage access.)
 
 ### Fixed
 - Games RetroAchievements doesn't track (3DS, for example) now show their playtime and when they were last played in the Game Library, in both the table and tile views. They showed a dash and Never before, even after you played them from the launcher. The time is brought up to date when you come back from the game.

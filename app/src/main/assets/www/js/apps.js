@@ -1,4 +1,5 @@
 // Apps tab: your installed Android apps, with favourites. Opening one starts it (on the top screen when there are two).
+// While a game is running the launcher opens it on the bottom screen instead, whatever screen is set for it.
 
 const APPS_FAV_KEY = 'apps-favs';
 let appsAll = [];       // [{ pkg, label }]
