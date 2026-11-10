@@ -26,7 +26,7 @@
     'a[href]', 'button', 'input', 'select', 'textarea', 'summary',
     '[tabindex]', '[role="button"]', '[role="switch"]',
     '.cart', '.unlock', '.year-item', '.subset-head', '.ag-result', '.soc-row',
-    '.lib-table th', '.lib-table tbody tr:not(.lib-sec)', '.modal-art',
+    '.lib-table th[data-key]', '.lib-table tbody tr:not(.lib-sec)', '.modal-art',
   ].join(',');
 
   let swapAB = false;
@@ -276,6 +276,14 @@
     }else if(dir === 'right' && cur.matches('.lib-table tbody tr')){
       const x = cur.querySelector('.manual-remove');
       if(x && isVisible(x)){ setFocus(x); return; }
+    }
+    if(cur.matches('.lib-table th') && (dir === 'left' || dir === 'right')){
+      // Left and right on a heading step along the headings that sort, and stop at the ends. Without this the
+      // row of games underneath, which is as wide as the table, counted as "to the right".
+      let th = cur;
+      do{ th = dir === 'right' ? th.nextElementSibling : th.previousElementSibling; }while(th && !th.matches('th[data-key]'));
+      if(th) setFocus(th);
+      return;
     }
     const list = candidates(getRoot()).filter(i => !i.el.matches('.manual-remove'));
     let next = pick(from, dir, list);

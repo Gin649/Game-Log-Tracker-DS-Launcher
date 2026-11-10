@@ -645,39 +645,56 @@ function wireGames(wrap){
   });
 }
 
-// A backlog game's total points aren't known when it was added before points were kept, or from a place that
-// doesn't give them. They come from RetroAchievements' list for its console (kept for a week, so this is one
-// request per console at most), are saved with the game, and the Backlog is drawn again.
+// A backlog game's total points come from RetroAchievements' list for its console (kept for a week, so this is
+// one request per console at most). They are kept in their own saved list, by game. Keeping them on the games
+// themselves lost them: a sync reads the backlog from storage again and puts fresh copies in the library.
+const BACKLOG_POINTS_KEY = 'backlog-points';
+let backlogPoints = null; // game id -> points, null until the saved list has been read
+let backlogPointsReading = false;
 const backlogPointsAsked = new Set();
+function backlogPointsOf(g){
+  if(g.customConsole) return null;
+  if(g.Points != null) return Number(g.Points);
+  const p = backlogPoints ? backlogPoints[g.GameID] : null;
+  return p != null ? Number(p) : null;
+}
 function fillBacklogPoints(rows){
-  const need = rows.filter(g => !g.customConsole && g.ConsoleID && g.Points == null && !backlogPointsAsked.has(g.GameID));
+  if(backlogPoints === null){
+    if(backlogPointsReading) return;
+    backlogPointsReading = true;
+    (async () => {
+      let saved = {};
+      try{
+        const r = await window.storage.get(BACKLOG_POINTS_KEY, false);
+        const v = r && r.value ? JSON.parse(r.value) : null;
+        if(v && typeof v === 'object') saved = v;
+      }catch(e){}
+      backlogPoints = saved;
+      renderBacklog(); // draws what was saved, and asks for the rest
+    })();
+    return;
+  }
+  const need = rows.filter(g => !g.customConsole && g.ConsoleID && backlogPointsOf(g) === null && !backlogPointsAsked.has(g.GameID));
   if(!need.length || typeof getGameListForConsole !== 'function') return;
   need.forEach(g => backlogPointsAsked.add(g.GameID));
   const consoles = [...new Set(need.map(g => Number(g.ConsoleID)))];
   (async () => {
-    const found = new Map();
+    let found = 0;
     for(const cid of consoles){
       try{
         const list = await getGameListForConsole(cid);
         const byId = new Map((list || []).map(x => [Number(x.ID ?? x.id), x]));
         need.forEach(g => {
           const hit = Number(g.ConsoleID) === cid ? byId.get(Number(g.GameID)) : null;
-          if(hit && hit.Points != null) found.set(Number(g.GameID), Number(hit.Points));
+          const pts = hit ? (hit.Points ?? hit.points) : null;
+          if(pts != null){ backlogPoints[g.GameID] = Number(pts); found++; }
         });
       }catch(e){
         need.forEach(g => { if(Number(g.ConsoleID) === cid) backlogPointsAsked.delete(g.GameID); }); // offline: ask again later
       }
     }
-    if(!found.size) return;
-    libraryData.forEach(g => { if(found.has(Number(g.GameID)) && g.Points == null) g.Points = found.get(Number(g.GameID)); });
-    try{
-      await enqueueTask(async () => {
-        const saved = await loadManualGames();
-        let changed = false;
-        saved.forEach(m => { if(found.has(Number(m.GameID)) && m.Points == null){ m.Points = found.get(Number(m.GameID)); changed = true; } });
-        if(changed) await saveManualGames(saved);
-      });
-    }catch(e){}
+    if(!found) return;
+    try{ await window.storage.set(BACKLOG_POINTS_KEY, JSON.stringify(backlogPoints), false); }catch(e){}
     renderBacklog();
   })();
 }
@@ -693,11 +710,12 @@ function renderBacklog(){
     foldText(g.Title).includes(searchVal) &&
     (systemFilter === 'All' || g.ConsoleName === systemFilter)
   );
+  fillBacklogPoints(rows);
   const byTitle = (a, b) => sortableTitle(a.Title).localeCompare(sortableTitle(b.Title));
   const sign = backlogSort.dir === 'asc' ? 1 : -1;
   if(backlogSort.key === 'points'){
     // games with no points to show (not on RetroAchievements, or not looked up yet) stay at the bottom either way
-    const pts = (g) => (!g.customConsole && g.Points != null) ? Number(g.Points) : null;
+    const pts = backlogPointsOf;
     rows = rows.slice().sort((a, b) => {
       const av = pts(a), bv = pts(b);
       if((av === null) !== (bv === null)) return av === null ? 1 : -1;
@@ -707,7 +725,6 @@ function renderBacklog(){
   }else{
     rows = rows.slice().sort((a, b) => sign * byTitle(a, b));
   }
-  fillBacklogPoints(rows);
 
   const countEl = $('#backlog-count');
   if(countEl) countEl.textContent = rows.length ? `(${rows.length} ${rows.length === 1 ? 'game' : 'games'})` : '';
@@ -732,7 +749,7 @@ function renderBacklog(){
             <tr data-game-id="${g.GameID}">
               <td><div class="g-title"><img src="${imgUrl(g.ImageIcon)}" alt="" loading="lazy" decoding="async"><span>${esc(g.Title)}${preRaStar(g.GameID)}</span>${g.manual ? `<button class="manual-remove" data-remove-id="${g.GameID}" title="Remove">✕</button>` : ''}</div></td>
               ${showSystem ? `<td style="color:var(--muted);font-size:0.75rem;">${esc(g.ConsoleName || '—')}</td>` : ''}
-              <td style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--muted)">${g.customConsole ? 'Not on RA' : (Number(g.MaxPossible) || 0) + (g.Points != null ? ' / ' + Number(g.Points) + ' pts' : '')}</td>
+              <td style="font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--muted)">${g.customConsole ? 'Not on RA' : (Number(g.MaxPossible) || 0) + (backlogPointsOf(g) != null ? ' / ' + backlogPointsOf(g) + ' pts' : '')}</td>
             </tr>
           `).join('')}
         </tbody>
