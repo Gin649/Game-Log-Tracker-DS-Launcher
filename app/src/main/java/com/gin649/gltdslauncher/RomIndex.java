@@ -129,7 +129,11 @@ final class RomIndex {
 
         for (File f : files) {
             String n = f.getName();
-            if (n.startsWith(".")) continue;
+            if (n.startsWith(".")) {
+                // what a disc patch left behind when the app was closed in the middle of it
+                if (DiscPatcher.isLeftover(f)) DiscPatcher.deleteTree(f);
+                continue;
+            }
             if (f.isDirectory()) {
                 if (depth < 2 && !SKIP_DIRS.contains(n.toLowerCase(Locale.ROOT))) {
                     scan(s, root, f, depth + 1, out);

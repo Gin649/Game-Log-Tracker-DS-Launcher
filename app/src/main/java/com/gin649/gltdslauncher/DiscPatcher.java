@@ -153,6 +153,31 @@ final class DiscPatcher {
         f.delete();
     }
 
+    private static final long LEFTOVER_AFTER_MS = 12L * 60 * 60 * 1000;
+
+    /**
+     * True for a working folder or unpacked image this class made that is old enough to be from a run that never
+     * finished (the app was closed in the middle of it). A run in progress is far younger than this.
+     */
+    static boolean isLeftover(File f) {
+        String n = f.getName();
+        if (!n.startsWith(".glt-work-") && !n.startsWith(".glt-unpacked-")) return false;
+        long age = System.currentTimeMillis() - f.lastModified();
+        return age > LEFTOVER_AFTER_MS;
+    }
+
+    /** Removes what an unfinished run left in this folder. These can be several gigabytes. */
+    static void sweepLeftovers(File dir) {
+        try {
+            File[] kids = dir == null ? null : dir.listFiles();
+            if (kids == null) return;
+            for (File k : kids) {
+                if (isLeftover(k)) deleteTree(k);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
     static void requireSpace(File dir, long needed) throws PatchException {
         long free = dir.getUsableSpace();
         if (free > 0 && free < needed) {
@@ -164,6 +189,7 @@ final class DiscPatcher {
     /** CHD / RVZ and friends: unpack with the real tool, patch the plain image, pack it again. */
     private static Result viaConversion(File base, byte[] patch, String stem, Progress p, boolean chd) throws IOException {
         File dir = base.getParentFile();
+        sweepLeftovers(dir);
         requireSpace(dir, base.length() * (chd ? 4 : 2) + (64L << 20));
         File work = new File(dir, ".glt-work-" + System.nanoTime());
         if (!work.mkdir()) throw new PatchException("Could not create a working folder next to the game.");
@@ -225,6 +251,7 @@ final class DiscPatcher {
         String name = base.getName();
         String ext = ext(name);
         File dir = base.getParentFile();
+        sweepLeftovers(dir);
         String stem = safeName(outStem);
         if (stem.isEmpty()) stem = "patched";
 

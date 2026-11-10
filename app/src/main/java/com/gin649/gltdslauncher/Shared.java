@@ -27,6 +27,7 @@ final class Shared {
 
     /** Re-read the system lists and rescan the ROM folders after the setup wizard changes something. */
     static synchronized void reload(Context ctx) {
+        syncWanted = true;
         appCtx = ctx.getApplicationContext();
         systems = SystemMap.load(ctx.getApplicationContext());
         rescan();
@@ -49,6 +50,9 @@ final class Shared {
     private static final java.util.concurrent.atomic.AtomicBoolean RESCAN_QUEUED = new java.util.concurrent.atomic.AtomicBoolean();
 
     private static volatile long lastScanAsked;
+    private static volatile boolean syncWanted; // the wizard changed something: sync even if the same ROMs are found
+    private static boolean syncedOnce;          // these two are only touched on the scan thread
+    private static int lastFound;
 
     /** Scans again when the last scan was asked for longer ago than this, so ROMs added while the app was open turn up. */
     static void rescanIfOlderThan(long millis) {
@@ -66,6 +70,15 @@ final class Shared {
             public void run() {
                 RESCAN_QUEUED.set(false);
                 INDEX.rebuild(systems() != null ? systems() : map);
+                // The database only needs bringing in step when the ROMs found are not the ones found last time (or
+                // the wizard changed something). Coming back to the app with nothing new skips it.
+                int found = 17;
+                for (RomIndex.Rom r : INDEX.all()) found = 31 * found + r.file.getPath().hashCode();
+                found = 31 * found + INDEX.all().size();
+                if (!syncWanted && syncedOnce && found == lastFound) return;
+                syncWanted = false;
+                syncedOnce = true;
+                lastFound = found;
                 try {
                     LibrarySync.syncAll(appCtx, INDEX, map);
                 } catch (Exception ignored) {

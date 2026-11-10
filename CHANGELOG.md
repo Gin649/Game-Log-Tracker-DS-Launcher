@@ -28,6 +28,7 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - Game and achievement names with characters such as quotes, & or < now show correctly in the lists and profiles.
 - When a game you track by hand turns out to be on RetroAchievements and becomes a RetroAchievements entry, it keeps what it had: its profile shows Playtime before RetroAchievements, and a game you had already beaten gets an asterisk beside its name with the date you beat it. This was lost before.
 - Moving the app's data folder can no longer put an older copy over something saved while the move was running.
+- A disc patch that was cut short (the app closed in the middle of it) no longer leaves its hidden working folder, which could be several gigabytes, next to the game for good. Leftovers are removed the next time your folders are scanned.
 - Getting a ROM ready for an Android port can no longer overwrite or delete the game's own file when the port's folder is also where you keep that ROM.
 - The Social tab shows all of a friend's beaten games, not only those among their first 500.
 - The backup file is named with today's date. In the evening it could carry tomorrow's.
