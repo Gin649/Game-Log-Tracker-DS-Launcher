@@ -930,7 +930,13 @@
     margin:0 0 12px;display:flex;align-items:baseline;gap:8px;
   }
   .year-heading .n{font-size:0.6875rem;color:var(--muted);font-weight:400;}
-  .year-icons{display:flex;flex-wrap:wrap;gap:6px 2px;}
+  .year-icons{display:flex;flex-wrap:wrap;gap:6px 2px;touch-action:pan-x pan-y;}
+  /* After a pinch on the Beaten tab the covers fill a set number per row, 2 to 10 (pinch-tiles.js). */
+  html.year-cols .year-icons{display:grid;grid-template-columns:repeat(var(--year-cols),minmax(0,1fr));gap:6px;}
+  html.year-cols .year-item{width:auto;}
+  html.year-cols .year-item img{width:100%;height:auto;aspect-ratio:1;margin-bottom:0;}
+  html.year-cols.year-small .pill-year{display:none;}
+  html.year-cols.year-small .year-item:has(.pill-year) img{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold);}
   .year-item{width:80px;text-align:center;cursor:pointer;position:relative;}
   .year-item img{
     width:72px;height:72px;border-radius:3px;image-rendering:pixelated;
@@ -1183,6 +1189,10 @@ html.top-panel #profile-hero{display:none;}
 .tile-grid.cols-5 .cart .title,.tile-grid.cols-5 .cart .console,.tile-grid.cols-5 .cart .prog-lbl,.tile-grid.cols-5 .cart .hours{font-size:0.5rem;}
 .tile-grid.cols-5 .cart .body{padding:5px;}
 .tile-grid.cols-5 .pill-corner{font-size:0.4375rem;padding:1px 3px;}
+.tile-grid.cols-6{gap:7px;}
+.tile-grid.cols-6 .cart .title,.tile-grid.cols-6 .cart .console,.tile-grid.cols-6 .cart .prog-lbl,.tile-grid.cols-6 .cart .hours{font-size:0.4375rem;}
+.tile-grid.cols-6 .cart .body{padding:4px;}
+.tile-grid.cols-6 .pill-corner{font-size:0.375rem;padding:1px 2px;}
 .tile-remove{position:absolute;top:4px;right:4px;z-index:2;}
 /* Game view row: the label sits above two roomy buttons so "List View" / "Tile View" never wrap or overlap */
 .textsize-row.view-row{flex-wrap:wrap;}

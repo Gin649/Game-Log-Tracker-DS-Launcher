@@ -721,7 +721,7 @@ function tileHtml(g, backlog){
 
 // rows: games in order. recentSet: the games to show first under a "Recently played" label, or null.
 function renderTiles(wrap, rows, recentSet, backlog){
-  const cols = Math.min(5, Math.max(3, tileCols));
+  const cols = Math.min(6, Math.max(2, tileCols));
   const first = recentSet ? rows.filter(g => recentSet.has(g)) : [];
   const rest = recentSet ? rows.filter(g => !recentSet.has(g)) : rows;
   let html = '';

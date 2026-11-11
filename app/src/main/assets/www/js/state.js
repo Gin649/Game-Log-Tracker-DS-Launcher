@@ -14,7 +14,7 @@ const achievementsListCache = {}; // GameID -> achievement list with earn dates,
 let systemFilter = 'All';
 let gameView = 'list'; // Game Library and Backlog: 'list' or 'tile' (Display Options)
 let consoleBar = 'names'; // the console bar shows console 'names' or 'logos' (Display Options)
-let tileCols = 4;       // tiles per row in tile view, 3 to 5
+let tileCols = 4;       // tiles per row in tile view, 2 to 6
 let libraryHideDone = false; // Game Library: hide beaten and mastered games
 
 // Games ticked in the Add Game search but not added yet, keyed by GameID, so the ticks survive a
