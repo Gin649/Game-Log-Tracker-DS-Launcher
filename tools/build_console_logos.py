@@ -34,6 +34,7 @@ LOGOS = {
     'wii': ('Consoles/Nintendo Wii.png', ['Wii', 'Nintendo Wii']),
     'wiiu': ('Consoles/Nintendo Wii U.png', ['Wii U', 'Nintendo Wii U']),
     'switch': ('Consoles/Nintendo Switch.png', ['Nintendo Switch', 'Switch']),
+    'switch2': ('extra:switch2.jpg', ['Nintendo Switch 2', 'Switch 2']),
     'gb': ('Handhelds/Nintendo Game Boy.png', ['Game Boy']),
     'gbc': ('Handhelds/Nintendo Game Boy Color.png', ['Game Boy Color']),
     'gba': ('Handhelds/Nintendo Game Boy Advance.png', ['Game Boy Advance']),
@@ -132,7 +133,8 @@ def main():
     os.makedirs(OUT_DIR, exist_ok=True)
     index = {}
     for slug, (rel, names) in sorted(LOGOS.items()):
-        path = os.path.join(src, rel)
+        # 'extra:' pictures are not in the set. They are kept in tools/console-logos-extra.
+        path = os.path.join(HERE, 'console-logos-extra', rel[6:]) if rel.startswith('extra:') else os.path.join(src, rel)
         if not os.path.isfile(path):
             print('missing:', rel)
             continue

@@ -1326,7 +1326,7 @@ html:not([data-theme]) .brand .mark{width:130px;height:130px;margin:-20px;}
 /* The console bar with logos (Display Options, Console bar, Logos). The bar is taller, and the console you are on
    has an outline, not a fill, so a logo's own colours show. A console with no logo keeps its name. */
 .chip-row.blades.logos .chip{display:flex;align-items:center;justify-content:center;}
-.chip-row.blades.logos .chip img{display:block;min-width:0;object-fit:contain;pointer-events:none;-webkit-user-drag:none;}
+.chip-row.blades.logos .chip img{display:block;min-width:0;object-fit:contain;pointer-events:none;-webkit-user-drag:none;border-radius:3px;}
 .chip-row.blades.logos .chip.centre{flex:0 1 auto;max-width:46%;height:3.5rem;padding:0 10px;gap:6px;background:var(--panel-2);color:var(--gold);border:2px solid var(--gold);box-shadow:none;}
 .chip-row.blades.logos .chip.centre img{max-height:2.4rem;max-width:min(8rem,100%);}
 .chip-row.blades.logos .chip.near{flex:1 1 5.4rem;min-width:3.4rem;max-width:6rem;height:2.9rem;padding:0 5px;}
