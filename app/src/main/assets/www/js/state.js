@@ -13,7 +13,7 @@ const estHoursCache = {}; // GameID -> { hours, beaten }, this session only
 const achievementsListCache = {}; // GameID -> achievement list with earn dates, filled by getEstimatedHours()
 let systemFilter = 'All';
 let gameView = 'list'; // Game Library and Backlog: 'list' or 'tile' (Display Options)
-let consoleBar = 'names'; // the console bar shows console 'names' or 'logos' (Display Options)
+let consoleBar = 'logos'; // the console bar shows console 'logos' (default) or 'names' (Display Options)
 let tileCols = 4;       // tiles per row in tile view, 2 to 6
 let libraryHideDone = false; // Game Library: hide beaten and mastered games
 
