@@ -4,7 +4,18 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 
 ## Unreleased (next update)
 
+### Added
+- Console logos: the console row now shows each console's logo in place of its name, and the row is taller to fit them. A console with no logo keeps its name. Display Options has a new Console bar choice to go back to names.
+- Pinch to resize: in tile view, pinch anywhere on the Library or Backlog to change the tiles per row, from 2 to 6. On the Beaten tab the covers go from 2 to 10 per row, and on the Apps tab the app tiles get bigger or smaller. Spread two fingers for bigger, pinch them together for smaller. Your choice is remembered.
+- Last Played has an Achievement Tracker: the points you earned and the achievements you unlocked in the last 24 hours, 3 days, week and month, and in the current year. It follows the mode you are in, casual or hardcore. The first time, it takes a moment to fill in.
+
+### Changed
+- Tiles per row is no longer in Display Options. Pinch the tiles to change it.
+- Pinching on the tabs no longer zooms the whole page. Game details, guides and manuals still zoom.
+- Last Played: Recent unlocks now shows your last 10.
+
 ### Fixed
+- Games added by hand for Xbox Series X|S were split over two console tabs when the console's name had been saved two ways. They now share one tab.
 - Box art picker: games you had opened before regional covers were added now show ScreenScraper's regional covers (USA, Europe, Japan and so on). They were stuck on a single ScreenScraper cover for up to a month. A game on a console with no ROM folder on the device gets them too.
 
 ## v1.1.9
