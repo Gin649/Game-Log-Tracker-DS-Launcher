@@ -169,7 +169,7 @@ function renderRecentGames(games){
 function renderUnlocks(list){
   const el = $('#recent-unlocks');
   if(!list || list.length === 0){ el.innerHTML = '<div class="empty">No unlocks in the last few days. Go play something!</div>'; return; }
-  el.innerHTML = list.slice(0, 20).map(a => {
+  el.innerHTML = list.slice(0, 10).map(a => {
     const isHardcore = Number(a.HardcoreMode) === 1;
     return `
       <div class="unlock">

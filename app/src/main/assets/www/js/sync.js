@@ -82,6 +82,7 @@ async function loadAll(opts){
         if(cached.points){ userPoints = cached.points; }
         if(cached.recent){ recentGamesData = cached.recent; renderRecentGames(recentGamesData); fromCache.recent = true; }
         if(cached.unlocks){ renderUnlocks(cached.unlocks); fromCache.unlocks = true; }
+        achTracker.show();
         if(cached.progress){
           await buildLibraryFromProgress(cached.progress);
           renderLibraryViews();
@@ -136,6 +137,8 @@ async function loadAll(opts){
       if(fromCache.unlocks) console.error('Recent unlocks refresh failed:', e);
       else $('#recent-unlocks').innerHTML = `<div class="error-box">Could not load recent unlocks: ${e.message}</div>`;
     }
+
+    achTracker.refresh(); // in the background, it is not waited for
 
     try{
       const results = await raCompletionProgress();
@@ -274,6 +277,7 @@ $('#btn-hardcore-toggle').addEventListener('click', () => {
   saveStatsMode(statsMode);
   if(lastProfile) renderProfile(lastProfile);
   renderRecentGames(recentGamesData);
+  achTracker.render();
   renderLibraryViews();
   if(openAchievementsGameId != null){
     const achWrap = document.getElementById('modal-achievements');
