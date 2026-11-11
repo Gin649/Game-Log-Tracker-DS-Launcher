@@ -228,8 +228,19 @@ const PLATFORM_TO_RA_CONSOLE = {
   'nintendo dsi': [78, /dsi/i],
 };
 
+// Consoles RA doesn't have that have been saved under more than one spelling. Each gets one name, so its games
+// share a tab ("Xbox Series S/X" and "Xbox Series X|S" are the same console).
+const SAME_CONSOLE = [
+  [/^xbox\s*series\b/i, 'Xbox Series X|S'],
+];
+function oneConsoleName(name){
+  const hit = SAME_CONSOLE.find(([re]) => re.test(String(name || '').trim()));
+  return hit ? hit[1] : name;
+}
+
 // RA's own name for a platform, or the name itself when there's no safe match.
 async function raConsoleNameFor(rawgName, consoleList){
+  rawgName = oneConsoleName(rawgName);
   const hit = PLATFORM_TO_RA_CONSOLE[String(rawgName || '').toLowerCase()];
   if(!hit) return rawgName;
   try{
@@ -242,11 +253,17 @@ async function raConsoleNameFor(rawgName, consoleList){
 
 // Renames custom games saved under a platform name RA spells differently. Returns true if anything changed.
 async function normalizeCustomConsoleNames(games){
-  const needs = games.some(g => g.customConsole && PLATFORM_TO_RA_CONSOLE[String(g.ConsoleName || '').toLowerCase()]);
-  if(!needs) return false;
-  let list;
-  try{ list = await getConsoleList(); }catch(e){ return false; }
+  // The spellings of our own are fixed first. They need no list from RA, so they are fixed offline too.
   let changed = false;
+  for(const g of games){
+    if(!g.customConsole) continue;
+    const one = oneConsoleName(g.ConsoleName);
+    if(one !== g.ConsoleName){ g.ConsoleName = one; changed = true; }
+  }
+  const needs = games.some(g => g.customConsole && PLATFORM_TO_RA_CONSOLE[String(g.ConsoleName || '').toLowerCase()]);
+  if(!needs) return changed;
+  let list;
+  try{ list = await getConsoleList(); }catch(e){ return changed; }
   for(const g of games){
     if(!g.customConsole) continue;
     const name = await raConsoleNameFor(g.ConsoleName, list);
