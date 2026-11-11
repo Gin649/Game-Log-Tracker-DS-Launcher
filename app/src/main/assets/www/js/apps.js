@@ -115,14 +115,16 @@ async function renderApps(){
     launchAppNow(launch.getAttribute('data-pkg'));
   });
   // Hold an app for half a second to pick its screen.
-  let holdTimer = 0;
+  let holdTimer = 0, holdX = 0, holdY = 0;
   const wrap = $('#apps-wrap');
   const cancelHold = () => { clearTimeout(holdTimer); holdTimer = 0; };
   wrap.addEventListener('pointerdown', (ev) => {
     appsLongPressed = false; // a new press: an earlier hold whose tap never arrived must not swallow this one
+    if(ev.isPrimary === false){ cancelHold(); return; } // a second finger is a pinch, not a hold
     const b = ev.target.closest('.app-launch');
     if(!b) return;
     cancelHold();
+    holdX = ev.clientX; holdY = ev.clientY;
     holdTimer = setTimeout(() => {
       holdTimer = 0;
       appsLongPressed = true;
@@ -130,5 +132,11 @@ async function renderApps(){
     }, 500);
   });
   ['pointerup', 'pointercancel', 'pointerleave', 'scroll'].forEach(t => wrap.addEventListener(t, cancelHold, true));
+  // A hold is one finger kept still. A second finger anywhere on the screen, or a finger that moves, is a pinch
+  // to resize the tiles (pinch-tiles.js) and must not open the screen choice.
+  document.addEventListener('touchstart', (ev) => { if(ev.touches.length > 1) cancelHold(); }, { passive: true, capture: true });
+  wrap.addEventListener('pointermove', (ev) => {
+    if(holdTimer && Math.hypot(ev.clientX - holdX, ev.clientY - holdY) > 10) cancelHold();
+  });
   wrap.addEventListener('contextmenu', (ev) => { if(ev.target.closest('.app-launch')) ev.preventDefault(); });
 })();
