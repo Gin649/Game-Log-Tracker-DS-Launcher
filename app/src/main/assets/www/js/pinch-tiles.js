@@ -1,7 +1,6 @@
 // Pinch on the game tiles (tile view), the covers on the Beaten tab or the Apps tab to change how many fit in a
 // row. Spreading two fingers makes them bigger, so fewer fit, and pinching them together makes them smaller.
-// The game tiles stay within the 2 to 6 of Display Options, and the choice is kept the same way as the buttons
-// there. The Beaten tab goes from 2 to 10.
+// The game tiles go from 2 to 6 in a row and the Beaten tab from 2 to 10. The choice is kept.
 (function(){
   const APPTILE_KEY = 'app-apps-tile', YEARCOLS_KEY = 'app-year-cols';
   const APP_SIZES = [64, 80, 96, 120, 150]; // the narrowest an app tile may be, in px. 96 is the usual size.
@@ -46,7 +45,6 @@
       g.classList.add('cols-' + n);
       g.style.setProperty('--tile-cols', n);
     });
-    try{ applyGameViewButtons(); }catch(e){}
     return true;
   }
   function stepApps(bigger){
