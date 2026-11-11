@@ -1197,7 +1197,7 @@ html.top-panel #profile-hero{display:none;}
 /* Game view row: the label sits above two roomy buttons so "List View" / "Tile View" never wrap or overlap */
 .textsize-row.view-row{flex-wrap:wrap;}
 .textsize-row.view-row .display-note{flex-basis:100%;}
-.textsize-btn.view-btn{width:auto;min-width:0;padding:0 12px;white-space:nowrap;flex:1 1 0;}
+.textsize-btn.view-btn,.textsize-btn.bar-btn{width:auto;min-width:0;padding:0 12px;white-space:nowrap;flex:1 1 0;}
 
 /* Static heading: the tabs, console chips and each tab's title and search bar stay put; only what is below scrolls. */
 .tabs,.chip-row.visible,.panel-head{position:sticky;background:var(--bg);}
@@ -1339,4 +1339,6 @@ html:not([data-theme]) .brand .mark{width:130px;height:130px;margin:-20px;}
   .chip-row.blades.logos .chip.near.far{flex:0 1 9px;min-width:4px;height:2.2rem;padding:0;font-size:0;}
   .chip-row.blades.logos .chip.near.far img{display:none;}
 }
+/* With logos the outline means the console you are on, so All does not keep one of its own here. */
+.chip-row.blades.logos .chip.first{border-color:var(--border);}
 .blade-count{flex:none;font-size:0.75rem;color:var(--muted);}
