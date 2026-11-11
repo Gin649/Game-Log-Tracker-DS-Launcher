@@ -1,5 +1,5 @@
 // Pinch on the game tiles (tile view), the covers on the Beaten tab or the Apps tab to change how many fit in a
-// row. Spreading two fingers makes them bigger, so fewer fit, and pinching them together makes them smaller.
+// row. The pinch can be anywhere on that tab, not only on the tiles. Spreading two fingers makes them bigger, so fewer fit, and pinching them together makes them smaller.
 // The game tiles go from 2 to 6 in a row and the Beaten tab from 2 to 10. The choice is kept.
 (function(){
   const APPTILE_KEY = 'app-apps-tile', YEARCOLS_KEY = 'app-year-cols';
@@ -71,7 +71,13 @@
   }
 
   const spread = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
-  const gridOf = (el) => el && el.closest ? el.closest('.tile-grid, .apps-grid, .year-icons') : null;
+  const GRIDS = '.tile-grid, .apps-grid, .year-icons';
+  // The tiles a pinch is for: the ones under the finger, or else the ones on the tab you are on. So a pinch that
+  // lands above the tiles (on the tabs, the console bar or the search box) still counts. The menu is left alone.
+  function gridFor(el){
+    if(!el || !el.closest || !el.closest('.wrap') || el.closest('#dropdown-menu, .modal-backdrop')) return null;
+    return el.closest(GRIDS) || document.querySelector('.tab-panel.active ' + GRIDS.split(', ').join(', .tab-panel.active '));
+  }
 
   function onMove(e){
     if(!pinch) return;
@@ -99,8 +105,8 @@
 
   document.addEventListener('touchstart', (e) => {
     if(e.touches.length !== 2){ end(); return; }
-    const grid = gridOf(e.touches[0].target);
-    if(!grid || gridOf(e.touches[1].target) !== grid) return;
+    const grid = gridFor(e.touches[0].target);
+    if(!grid || !gridFor(e.touches[1].target)) return;
     pinch = { dist: spread(e.touches) || 1, grid, kind: grid.classList.contains('apps-grid') ? 'apps' : grid.classList.contains('year-icons') ? 'year' : 'tiles', changed: false };
     document.addEventListener('touchmove', onMove, { passive: false });
   }, { passive: true });
