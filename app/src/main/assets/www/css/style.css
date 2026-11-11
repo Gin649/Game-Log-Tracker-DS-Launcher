@@ -41,7 +41,9 @@
       radial-gradient(circle at 80% 100%, rgba(var(--teal-rgb),0.06), transparent 40%);
   }
 
-  .wrap{max-width:960px;margin:0 auto;}
+  /* The tabs scroll but never zoom: a pinch that lands above or below the tiles used to zoom the whole page.
+     Game profiles, guides and manuals sit outside .wrap and still zoom. */
+  .wrap{max-width:960px;margin:0 auto;min-height:100vh;touch-action:pan-x pan-y;}
 
   .brand{
     display:flex;align-items:center;gap:10px;margin-bottom:28px;
