@@ -1312,3 +1312,21 @@ html:not([data-theme]) .brand .mark{width:130px;height:130px;margin:-20px;}
 /* a game beaten before it was tracked on RetroAchievements */
 .pre-ra-star{color:var(--gold);font-weight:700;margin-left:3px;}
 .modal-progress .row.pre-ra-note span{color:var(--muted);font-size:0.75rem;}
+
+/* The console bar with logos (Display Options, Console bar, Logos). The bar is taller, and the console you are on
+   has an outline, not a fill, so a logo's own colours show. A console with no logo keeps its name. */
+.chip-row.blades.logos .chip{display:flex;align-items:center;justify-content:center;}
+.chip-row.blades.logos .chip img{display:block;min-width:0;object-fit:contain;pointer-events:none;-webkit-user-drag:none;}
+.chip-row.blades.logos .chip.centre{flex:0 1 auto;max-width:46%;height:3.5rem;padding:0 10px;gap:6px;background:var(--panel-2);color:var(--gold);border:2px solid var(--gold);box-shadow:none;}
+.chip-row.blades.logos .chip.centre img{max-height:2.4rem;max-width:min(8rem,100%);}
+.chip-row.blades.logos .chip.near{flex:1 1 5.4rem;min-width:3.4rem;max-width:6rem;height:2.9rem;padding:0 5px;}
+.chip-row.blades.logos .chip.near img{max-height:1.8rem;max-width:100%;}
+.chip-row.blades.logos .chip.near.far{flex:1 1 4rem;min-width:2.6rem;max-width:4.6rem;height:2.4rem;padding:0 4px;}
+.chip-row.blades.logos .chip.near.far img{max-height:1.3rem;opacity:0.75;}
+.chip-row.blades.logos .chip.sliver{flex:0 1 5px;min-width:2px;height:1.9rem;}
+/* A narrow screen has room for one logo on each side, so the second one out becomes a plain blade. */
+@media (max-width:520px){
+  .chip-row.blades.logos .chip.near.far{flex:0 1 9px;min-width:4px;height:2.2rem;padding:0;font-size:0;}
+  .chip-row.blades.logos .chip.near.far img{display:none;}
+}
+.blade-count{flex:none;font-size:0.75rem;color:var(--muted);}
