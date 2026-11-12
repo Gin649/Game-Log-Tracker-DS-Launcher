@@ -246,6 +246,11 @@
     display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));
     gap:10px;
   }
+  /* Recently played shows 12 games, so its rows are always full: 4 in a row (3 rows), 6 on a wide screen
+     (2 rows) and 3 on a very narrow one (4 rows). */
+  #recent-games.cart-grid{grid-template-columns:repeat(4,minmax(0,1fr));}
+  @media (min-width:900px){ #recent-games.cart-grid{grid-template-columns:repeat(6,minmax(0,1fr));} }
+  @media (max-width:380px){ #recent-games.cart-grid{grid-template-columns:repeat(3,minmax(0,1fr));} }
   .cart{
     background:var(--panel);border:1px solid var(--border);border-radius:6px;
     overflow:hidden;display:flex;flex-direction:column;cursor:pointer;
