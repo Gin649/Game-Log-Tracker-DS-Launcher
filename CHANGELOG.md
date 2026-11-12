@@ -2,7 +2,7 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
-## Unreleased (next update)
+## v1.2.0
 
 ### Added
 - Console logos: the console row now shows each console's logo in place of its name, and the row is taller to fit them. A console with no logo keeps its name. Display Options has a new Console bar choice to go back to names.
