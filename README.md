@@ -6,7 +6,7 @@ Track your RetroAchievements and completions on the bottom screen, see your game
 
 Everything you add is saved on your own device in your choice of local or default system folder.
 
-Join the Gin649sRetroGameHub Discord: https://discord.gg/6dgZA4yD2
+Join the Gin649sRetroGameHub Discord: https://discord.gg/V3GdECWXg
 
 For all app related discussions and my Game of the Month Competition. Play some games with us.
 
