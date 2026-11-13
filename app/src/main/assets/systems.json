@@ -191,7 +191,8 @@
   "core": "genesis_plus_gx",
   "cores": [
    "picodrive"
-  ]
+  ],
+  "media": "disc"
  },
  {
   "folder": "sega32x",
@@ -232,7 +233,8 @@
   "standalones": [
    "duckstation",
    "duckstation_new"
-  ]
+  ],
+  "media": "disc"
  },
  {
   "folder": "nds",
@@ -264,7 +266,8 @@
   "core": "mednafen_pce_fast",
   "cores": [
    "mednafen_pce"
-  ]
+  ],
+  "media": "disc"
  },
  {
   "folder": "atari2600",
@@ -402,7 +405,8 @@
    "Dreamcast"
   ],
   "core": "flycast",
-  "standalone": "flycast"
+  "standalone": "flycast",
+  "media": "disc"
  },
  {
   "folder": "psp",
@@ -410,7 +414,8 @@
    "PlayStation Portable"
   ],
   "core": "ppsspp",
-  "standalone": "ppsspp"
+  "standalone": "ppsspp",
+  "media": "disc"
  },
  {
   "folder": "saturn",
@@ -421,14 +426,16 @@
   "core": "yabasanshiro",
   "cores": [
    "kronos"
-  ]
+  ],
+  "media": "disc"
  },
  {
   "folder": "3do",
   "ra": [
    "3DO Interactive Multiplayer"
   ],
-  "core": "opera"
+  "core": "opera",
+  "media": "disc"
  },
  {
   "folder": "gc",
@@ -440,7 +447,8 @@
   "standalones": [
    "dolphin",
    "dolphincs"
-  ]
+  ],
+  "media": "disc"
  },
  {
   "folder": "wii",
@@ -452,7 +460,8 @@
   "standalones": [
    "dolphin",
    "dolphincs"
-  ]
+  ],
+  "media": "disc"
  },
  {
   "folder": "msu-md",
@@ -483,7 +492,8 @@
   "standalones": [
    "armsx2",
    "nethersx2"
-  ]
+  ],
+  "media": "disc"
  },
  {
   "folder": "n3ds",
@@ -513,7 +523,8 @@
   "core": "",
   "standalones": [
    "cemu"
-  ]
+  ],
+  "media": "disc"
  },
  {
   "folder": "psvita",
@@ -535,7 +546,8 @@
   "core": "",
   "standalones": [
    "hakux"
-  ]
+  ],
+  "media": "disc"
  },
  {
   "folder": "xbox360",
@@ -545,7 +557,8 @@
   "core": "",
   "standalones": [
    "xendroid"
-  ]
+  ],
+  "media": "disc"
  },
  {
   "folder": "ps3",
@@ -556,7 +569,8 @@
   "standalones": [
    "armsx3",
    "aps3e"
-  ]
+  ],
+  "media": "disc"
  },
  {
   "folder": "fds",
@@ -623,14 +637,16 @@
   "ra": [
    "Neo Geo CD"
   ],
-  "core": "neocd"
+  "core": "neocd",
+  "media": "disc"
  },
  {
   "folder": "pcfx",
   "ra": [
    "PC-FX"
   ],
-  "core": "mednafen_pcfx"
+  "core": "mednafen_pcfx",
+  "media": "disc"
  },
  {
   "folder": "amiga",
@@ -644,7 +660,8 @@
   "ra": [
    "Atari Jaguar CD"
   ],
-  "core": ""
+  "core": "",
+  "media": "disc"
  },
  {
   "folder": "arcadia",

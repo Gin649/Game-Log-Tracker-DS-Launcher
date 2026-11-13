@@ -108,6 +108,15 @@ final class Shared {
 
     /** Resolve art for the game now open in the tracker and push it to the top screen. */
     static void showViewing(final String title, final String console, final String artUrl) {
+        showViewing(title, console, artUrl, "");
+    }
+
+    /** The game on show as the tracker names it, for finding its cartridge: {title, console, tracker game id, cover}. */
+    static volatile String[] viewingCart;
+
+    static void showViewing(final String title, final String console, final String artUrl, final String trackerId) {
+        viewingCart = new String[]{title == null ? "" : title, console == null ? "" : console,
+                trackerId == null ? "" : trackerId, artUrl == null ? "" : artUrl};
         final int token = VIEW_TOKEN.incrementAndGet();
         IO.execute(new Runnable() {
             @Override
@@ -175,6 +184,7 @@ final class Shared {
     }
 
     static void showLogo() {
+        viewingCart = null;
         VIEW_TOKEN.incrementAndGet();
         LibraryScraper.viewingId = 0;
         if (appCtx != null) LibraryScraper.leaving(appCtx, 0);

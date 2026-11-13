@@ -2,6 +2,10 @@ package com.gin649.gltdslauncher;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -9,6 +13,8 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -64,6 +70,11 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
 
     private ImageView art;
     private ImageView logo;
+    /** The game's cartridge or disc, floating over the fan art in the bottom right corner. */
+    private ImageView cart;
+    private boolean cartIsDisc;
+    private int cartToken;
+    private AnimatorSet cartAnim;
     private WebView panel;
     private volatile boolean panelReady;
     private boolean startupOn;
@@ -108,6 +119,17 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         FrameLayout.LayoutParams logoParams = new FrameLayout.LayoutParams(logoSize, logoSize);
         logoParams.gravity = Gravity.CENTER;
         root.addView(logo, logoParams);
+
+        // Under the title bar, so the cartridge can slide down behind it as if into a slot.
+        cart = new ImageView(this);
+        cart.setScaleType(ImageView.ScaleType.FIT_END);
+        cart.setAdjustViewBounds(true);
+        cart.setVisibility(View.GONE);
+        int cartSide = Math.round(getResources().getDisplayMetrics().heightPixels * 0.36f);
+        FrameLayout.LayoutParams cartParams = new FrameLayout.LayoutParams(cartSide, cartSide);
+        cartParams.gravity = Gravity.BOTTOM | Gravity.END;
+        cartParams.rightMargin = Math.round(getResources().getDisplayMetrics().widthPixels * 0.025f);
+        root.addView(cart, cartParams);
 
         buildPanel(root);
 
@@ -154,6 +176,13 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
                 if (lp.bottomMargin != h) {
                     lp.bottomMargin = h;
                     panel.setLayoutParams(lp);
+                }
+                // the cartridge sits just above the title bar
+                FrameLayout.LayoutParams cp = (FrameLayout.LayoutParams) cart.getLayoutParams();
+                int gap = h + Math.round(8 * getResources().getDisplayMetrics().density);
+                if (cp.bottomMargin != gap) {
+                    cp.bottomMargin = gap;
+                    cart.setLayoutParams(cp);
                 }
             }
         });
@@ -424,7 +453,83 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         });
     }
 
-    private void startStartup(String title) {
+    private void startStartup(final String title) {
+        if (!panelReady) return;
+        if (!startupOn && cart.getVisibility() == View.VISIBLE && cart.getDrawable() != null) {
+            // the cartridge goes in first, then the old TV comes on
+            startupOn = true;
+            insertCart(new Runnable() {
+                @Override
+                public void run() {
+                    if (startupOn) startStatic(title);
+                }
+            });
+            return;
+        }
+        startStatic(title);
+    }
+
+    /**
+     * The cartridge slides down behind the title bar as if pushed into a slot, with a small bump as it seats. A disc
+     * spins up first and keeps spinning as it drops. It is short, so starting a game does not feel any slower.
+     */
+    private void insertCart(final Runnable then) {
+        if (cartAnim != null) cartAnim.cancel();
+        // how tall the picture really is inside its square (a wide cartridge is shorter than a disc)
+        float tall = cart.getHeight();
+        android.graphics.drawable.Drawable d = cart.getDrawable();
+        if (d != null && d.getIntrinsicWidth() > 0) {
+            tall = Math.min(tall, cart.getWidth() * d.getIntrinsicHeight() / (float) d.getIntrinsicWidth());
+        }
+        float drop = tall * 0.78f; // most of it goes out of sight; the top stays showing, seated
+        ObjectAnimator down = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, 0f, drop);
+        down.setDuration(cartIsDisc ? 360 : 420);
+        down.setInterpolator(new AccelerateInterpolator(1.6f));
+        ObjectAnimator bumpUp = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, drop, drop - tall * 0.03f);
+        bumpUp.setDuration(60);
+        bumpUp.setInterpolator(new DecelerateInterpolator());
+        ObjectAnimator settle = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, drop - tall * 0.03f, drop);
+        settle.setDuration(70);
+        AnimatorSet set = new AnimatorSet();
+        if (cartIsDisc) {
+            cart.setPivotX(cart.getWidth() - cart.getHeight() / 2f); // the disc sits at the right of its box
+            cart.setPivotY(cart.getHeight() / 2f);
+            ObjectAnimator spin = ObjectAnimator.ofFloat(cart, View.ROTATION, 0f, 900f);
+            spin.setDuration(700);
+            spin.setInterpolator(new AccelerateInterpolator(1.4f));
+            down.setStartDelay(210); // it spins up where it is, then drops
+            AnimatorSet slide = new AnimatorSet();
+            slide.playSequentially(down, bumpUp, settle);
+            set.playTogether(spin, slide);
+        } else {
+            set.playSequentially(down, bumpUp, settle);
+        }
+        set.addListener(new AnimatorListenerAdapter() {
+            private boolean cancelled;
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                cancelled = true;
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                cartAnim = null;
+                if (!cancelled) then.run();
+            }
+        });
+        cartAnim = set;
+        set.start();
+    }
+
+    /** Puts the cartridge back where it floats, after a game or when another game is looked at. */
+    private void resetCart() {
+        if (cartAnim != null) cartAnim.cancel();
+        cart.setTranslationY(0f);
+        cart.setRotation(0f);
+    }
+
+    private void startStatic(String title) {
         if (!panelReady) return;
         startupOn = true;
         // the panel normally stops above the title bar; a hidden bar never reports its size, so clear it here
@@ -440,15 +545,78 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     private void endStartup() {
         if (!startupOn) return;
         startupOn = false;
+        resetCart();
         if (panelReady) panel.evaluateJavascript("GLTCrt.stop()", null);
         syncFallback();
         render(ArtBus.get());
+    }
+
+    /**
+     * Finds the cartridge or disc of the game on show and floats it in the corner. It shares the Start-up animation
+     * switch: with that off there is no cartridge. A game with no cartridge picture simply has none here.
+     */
+    private void loadCart(ArtBus.State s) {
+        final int mine = ++cartToken;
+        final String[] v = Shared.viewingCart;
+        boolean wanted = s.game && v != null && !v[0].isEmpty() && !"0".equals(Prefs.get(this, "startupAnim", "1"));
+        if (!wanted) {
+            cart.setImageDrawable(null);
+            cart.setTag(null);
+            syncCart();
+            return;
+        }
+        final String key = v[0] + "\n" + v[1] + "\n" + v[2];
+        if (key.equals(cart.getTag()) && cart.getDrawable() != null) { // the same game drawn again (another fan art)
+            syncCart();
+            return;
+        }
+        cart.setImageDrawable(null);
+        cart.setTag(null);
+        syncCart();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Bitmap b = null;
+                boolean disc = false;
+                try {
+                    java.io.File f = CartArt.find(ArtActivity.this, v[0], v[1], v[2], v[3], v[0].trim().startsWith("~"));
+                    if (f != null) b = android.graphics.BitmapFactory.decodeFile(f.getPath());
+                    SystemMap map = Shared.systems();
+                    if (map != null) {
+                        for (SystemMap.Sys sys : map.forConsole(v[1])) {
+                            if ("disc".equals(sys.media)) disc = true;
+                        }
+                    }
+                } catch (Throwable ignored) {
+                }
+                final Bitmap bitmap = b;
+                final boolean isDisc = disc;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (mine != cartToken || isFinishing() || bitmap == null) return;
+                        resetCart();
+                        cartIsDisc = isDisc;
+                        cart.setImageBitmap(bitmap);
+                        cart.setTag(key);
+                        syncCart();
+                    }
+                });
+            }
+        }).start();
+    }
+
+    /** The cartridge shows over fan art only: not over the header panel or the logo, and not while a game starts up. */
+    private void syncCart() {
+        boolean show = cart.getDrawable() != null && artShown && (!startupOn || cartAnim != null);
+        cart.setVisibility(show ? View.VISIBLE : View.GONE);
     }
 
     private void render(final ArtBus.State s) {
         if (startupOn) return; // endStartup() draws the latest state when the animation is done
         final int mine = ++token;
 
+        loadCart(s);
         if (!s.game) {
             art.setImageDrawable(null);
             artShown = false;
@@ -507,6 +675,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
                             artShown = false;
                         }
                         syncFallback();
+                        syncCart();
                     }
                 });
             }

@@ -20,6 +20,8 @@ final class SystemMap {
         String folder;
         String core = "";
         boolean hack;
+        /** "disc" for a system whose games come on a disc; empty for cartridges and cards. */
+        String media = "";
         String standalone = "";   // the first standalone emulator for this system (id from emulators.json), or empty
         /** Every standalone emulator that can play this system, best first (includes the one above). */
         final List<String> standalones = new ArrayList<String>();
@@ -256,6 +258,7 @@ final class SystemMap {
             Sys s = get(o.getString("folder"));
             if (o.has("core")) s.core = o.getString("core");
             if (o.has("hack")) s.hack = o.getBoolean("hack");
+            if (o.has("media")) s.media = o.optString("media", "");
             if (o.has("standalone")) {
                 s.standalone = o.optString("standalone", "");
                 s.standalones.remove(s.standalone);

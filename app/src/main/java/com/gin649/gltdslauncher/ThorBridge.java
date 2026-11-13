@@ -60,7 +60,7 @@ final class ThorBridge {
     public void setViewing(String json) {
         try {
             JSONObject o = new JSONObject(json);
-            Shared.showViewing(o.optString("title"), o.optString("console"), o.optString("art"));
+            Shared.showViewing(o.optString("title"), o.optString("console"), o.optString("art"), o.optString("gameId"));
         } catch (Exception ignored) {
         }
     }
@@ -194,6 +194,7 @@ final class ThorBridge {
     @JavascriptInterface
     public void setStartupAnim(boolean on) {
         Prefs.put(act, "startupAnim", on ? "1" : "0");
+        ArtBus.set(ArtBus.get()); // the top screen draws again, with or without the floating cartridge
     }
 
     /** The app theme (retro, nes, snes, psx or xbox), kept here so the top screen can follow it. */
