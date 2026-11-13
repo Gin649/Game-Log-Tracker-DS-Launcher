@@ -136,6 +136,7 @@ async function initGameView(){
     const row = $('#game-art-row'); if(row) row.style.display = 'none';
   }
   applyGameArtButtons();
+  try{ if(gameArt === 'cart' && recentGamesData.length) renderRecentGames(recentGamesData); }catch(e){}
   applyGameViewButtons();
   applyConsoleBarButtons();
   redrawGameViews();
@@ -152,6 +153,7 @@ document.querySelectorAll('.art-btn').forEach(b => b.addEventListener('click', (
   e.stopPropagation();
   gameArt = b.dataset.art === 'cart' ? 'cart' : 'art';
   applyGameArtButtons(); redrawGameViews();
+  try{ renderRecentGames(recentGamesData); }catch(err){}
   try{ window.storage.set(GAMEART_KEY, gameArt, false); }catch(err){}
 }));
 // Console bar: the consoles by name, or by their logos.
