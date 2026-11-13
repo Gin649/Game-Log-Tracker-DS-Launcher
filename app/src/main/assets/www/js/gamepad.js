@@ -189,8 +189,12 @@
       const c0 = cur.getBoundingClientRect();
       let rowTop = dir === 'down' ? Infinity : -Infinity;
       const ahead = [];
+      // The console row's blades have different heights, so the small ones start lower than the big one in the
+      // middle. They are still the same row: up and down leave the row, they never step to another blade.
+      const chipRow = cur.closest('#system-chips');
       for(const it of list){
         if(it.el === cur) continue;
+        if(chipRow && chipRow.contains(it.el)) continue;
         if(dir === 'down' ? it.r.top <= c0.top + 12 : it.r.top >= c0.top - 12) continue; // same row, or behind
         ahead.push(it);
         rowTop = dir === 'down' ? Math.min(rowTop, it.r.top) : Math.max(rowTop, it.r.top);
