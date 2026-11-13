@@ -99,8 +99,24 @@ final class SystemMap {
                 }
             }
         }
+        m.addCustomCommands(ctx);
         m.attachDirs();
         return m;
+    }
+
+    /**
+     * Offers each launch command made in setup for the consoles it was made for, after the built-in emulators so
+     * nothing changes until it is picked. A folder named your own way ("PS1") gets the commands made for the system
+     * it stands for ("psx").
+     */
+    private void addCustomCommands(Context ctx) {
+        for (CustomLaunch.Command c : CustomLaunch.all(ctx)) {
+            for (Sys s : all) {
+                String base = s.base.isEmpty() ? s.folder : s.base;
+                if (!c.systems.contains(s.folder) && !c.systems.contains(base)) continue;
+                if (!s.standalones.contains(c.id)) s.standalones.add(c.id);
+            }
+        }
     }
 
     /** Folder names to built-in systems ("Game Boy Advance" stands for "gba"), from folder_aliases.json. */

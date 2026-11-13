@@ -851,6 +851,8 @@ public class SetupActivity extends Activity {
         final List<SystemMap.Sys> systems = new ArrayList<SystemMap.Sys>();
         final Map<String, List<String>> standalone = new HashMap<String, List<String>>();
         final Map<String, List<String>> cores = new HashMap<String, List<String>>();
+        /** Apps with a launcher icon, as {package, name}, sorted by name, for your own launch commands. */
+        final List<String[]> apps = new ArrayList<String[]>();
         boolean coresRead;
     }
 
@@ -878,6 +880,23 @@ public class SetupActivity extends Activity {
                         String pkg = Recipes.installedPackage(SetupActivity.this, r);
                         d.recipes.add(r);
                         d.pkgs.put(r.id, pkg == null ? "" : pkg);
+                    }
+                    try {
+                        android.content.pm.PackageManager pm = getPackageManager();
+                        Intent main = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
+                        java.util.Set<String> seenPkg = new java.util.HashSet<String>();
+                        for (android.content.pm.ResolveInfo ri : pm.queryIntentActivities(main, 0)) {
+                            String pkg = ri.activityInfo.packageName;
+                            if (pkg.equals(getPackageName()) || !seenPkg.add(pkg)) continue;
+                            d.apps.add(new String[]{pkg, String.valueOf(ri.loadLabel(pm))});
+                        }
+                        java.util.Collections.sort(d.apps, new java.util.Comparator<String[]>() {
+                            @Override
+                            public int compare(String[] a, String[] b) {
+                                return a[1].compareToIgnoreCase(b[1]);
+                            }
+                        });
+                    } catch (Exception ignored) {
                     }
                     String raUse = d.found.isEmpty() ? "" : (raPkgNow.isEmpty() || !d.found.contains(raPkgNow) ? d.found.get(0) : raPkgNow);
                     d.coresRead = !raUse.isEmpty() && RaCores.installed(SetupActivity.this, raUse) != null;
@@ -945,6 +964,10 @@ public class SetupActivity extends Activity {
     }
 
     private void buildEmulators(EmuData d) {
+        if (editing != null) {
+            customCommandForm(d);
+            return;
+        }
         List<String> found = d.found;
         text("Emulators", 17, TEXT);
         final LinearLayout installedBox = new LinearLayout(this);
@@ -1005,7 +1028,7 @@ public class SetupActivity extends Activity {
             for (String id : d.standalone.get(sys.folder)) {
                 Recipes.Recipe r = Recipes.byId(this, id);
                 if (r == null) continue;
-                items.add("Standalone: " + r.label);
+                items.add((id.startsWith(CustomLaunch.ID_PREFIX) ? "Your command: " : "Standalone: ") + r.label);
                 values.add("standalone:" + id);
             }
             for (String c : d.cores.get(sys.folder)) {
@@ -1038,7 +1061,214 @@ public class SetupActivity extends Activity {
             text("No system folders with an installed emulator were found yet. Choose your ROMs folder in the previous step "
                     + "and install the emulators you use.", 13, MUTED);
         }
+        customCommandList();
     }
+    // your own launch commands (see CustomLaunch)
+
+    /** The command being added or changed on the emulator page, or null when the page shows the usual list. */
+    private CustomLaunch.Command editing;
+    private EditText etCustName, etCustAct, etCustCmd;
+    private Spinner spCustSys, spCustApp;
+    private CheckBox cbCustDual;
+    private final List<String> custSysValues = new ArrayList<String>();
+    private final List<String> custAppValues = new ArrayList<String>();
+
+    private void customCommandList() {
+        text("Your own launch commands", 17, TEXT);
+        text("For an emulator this app doesn't know, or to start a console a different way. Commands use ES-DE's format, so "
+                + "you can copy one from ES-DE's es_find_rules.xml or es_systems.xml. Once added, the command is picked for "
+                + "its console above, and you can switch back there at any time.", 13, MUTED);
+        List<CustomLaunch.Command> list = CustomLaunch.all(this);
+        for (final CustomLaunch.Command c : list) {
+            StringBuilder sb = new StringBuilder(c.label.isEmpty() ? c.pkg : c.label);
+            if (!c.systems.isEmpty()) sb.append("  (").append(android.text.TextUtils.join(", ", c.systems)).append(")");
+            text(sb.toString(), 14, TEAL);
+            action("Edit", new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    collect();
+                    editing = c;
+                    render();
+                }
+            });
+        }
+        action("Add a launch command", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                collect();
+                editing = new CustomLaunch.Command();
+                render();
+            }
+        });
+    }
+
+    private void customCommandForm(EmuData d) {
+        final CustomLaunch.Command c = editing;
+        final boolean isNew = c.id.isEmpty();
+        spCustSys = null;
+        spCustApp = null;
+        text(isNew ? "New launch command" : "Change launch command", 17, TEXT);
+
+        text("Name", 14, TEXT);
+        etCustName = field("Like \"DuckStation (my settings)\"", c.label, false);
+
+        text("Console", 14, TEXT);
+        custSysValues.clear();
+        List<String> sysLabels = new ArrayList<String>();
+        for (SystemMap.Sys s : d.systems) {
+            String base = s.base.isEmpty() ? s.folder : s.base;
+            if (custSysValues.contains(base)) continue;
+            custSysValues.add(base);
+            sysLabels.add(systemLabel(base));
+        }
+        String curSys = c.systems.isEmpty() ? "" : c.systems.get(0);
+        if (!curSys.isEmpty() && !custSysValues.contains(curSys)) {
+            custSysValues.add(curSys);
+            sysLabels.add(systemLabel(curSys));
+        }
+        if (custSysValues.isEmpty()) {
+            text("No consoles with ROMs were found yet. Add your ROM folders in the previous step first.", 13, GOLD);
+        } else {
+            spCustSys = spinner(sysLabels, Math.max(0, custSysValues.indexOf(curSys)));
+        }
+
+        text("App", 14, TEXT);
+        custAppValues.clear();
+        List<String> appLabels = new ArrayList<String>();
+        for (String[] a : d.apps) {
+            custAppValues.add(a[0]);
+            appLabels.add(a[1] + " (" + a[0] + ")");
+        }
+        if (!c.pkg.isEmpty() && !custAppValues.contains(c.pkg)) { // saved for an app that isn't installed right now
+            custAppValues.add(c.pkg);
+            appLabels.add(c.pkg + " (not installed)");
+        }
+        spCustApp = spinner(appLabels, Math.max(0, custAppValues.indexOf(c.pkg)));
+
+        text("Activity (optional)", 14, TEXT);
+        text("The screen of the app to open, like .EmulationActivity or com.example.emu.MainActivity. Leave it empty to let "
+                + "Android pick from the command.", 13, MUTED);
+        etCustAct = field(".EmulationActivity", c.activity, false);
+
+        text("Command", 14, TEXT);
+        text("%ACTION%, %CATEGORY%, %DATA%, %MIMETYPE%, %EXTRA_name%, %EXTRABOOL_name%, %EXTRAINTEGER_name%, %EXTRALONG_name%, "
+                + "%EXTRAARRAY_name% and %ACTIVITY_CLEAR_TASK% work. For the game use %ROMSAF% (a content address), %ROM% "
+                + "(the file path), %ROMFILEURI% or %BASENAME%. An %EMULATOR_...% part is skipped, since the app is picked above.", 13, MUTED);
+        etCustCmd = field("%ACTION%=android.intent.action.VIEW %DATA%=%ROMSAF%", c.command, true);
+        etCustCmd.setSingleLine(false);
+        etCustCmd.setMinLines(3);
+        etCustCmd.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+
+        cbCustDual = new CheckBox(this);
+        cbCustDual.setText("Shows both screens itself (like a DS emulator), so it starts on the bottom screen");
+        cbCustDual.setTextColor(TEXT);
+        cbCustDual.setTextSize(14);
+        cbCustDual.setChecked(c.dual);
+        content.addView(cbCustDual);
+
+        action("Save", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                saveCustomCommand(c, isNew);
+            }
+        });
+        action("Cancel", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                editing = null;
+                render();
+            }
+        });
+        if (!isNew) {
+            action("Delete", new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    deleteCustomCommand(c);
+                }
+            });
+        }
+    }
+
+    private void saveCustomCommand(CustomLaunch.Command c, boolean isNew) {
+        int app = spCustApp == null ? -1 : spCustApp.getSelectedItemPosition();
+        if (app < 0 || app >= custAppValues.size()) {
+            Toast.makeText(this, "Pick the app this command opens.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        int sys = spCustSys == null ? -1 : spCustSys.getSelectedItemPosition();
+        if (sys < 0 || sys >= custSysValues.size()) {
+            Toast.makeText(this, "Pick the console this command is for.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        List<CustomLaunch.Command> list = CustomLaunch.all(this);
+        CustomLaunch.Command saved = c;
+        if (isNew) {
+            saved = new CustomLaunch.Command();
+            saved.id = CustomLaunch.newId(list);
+            list.add(saved);
+        } else {
+            for (CustomLaunch.Command x : list) {
+                if (x.id.equals(c.id)) saved = x;
+            }
+        }
+        saved.pkg = custAppValues.get(app);
+        saved.label = etCustName.getText().toString().trim();
+        if (saved.label.isEmpty()) saved.label = (String) spCustApp.getSelectedItem();
+        saved.activity = etCustAct.getText().toString().trim();
+        saved.command = etCustCmd.getText().toString().trim();
+        saved.dual = cbCustDual.isChecked();
+        saved.systems.clear();
+        saved.systems.add(custSysValues.get(sys));
+
+        CustomLaunch.Parsed p = CustomLaunch.parse(saved);
+        CustomLaunch.saveAll(this, list);
+        Recipes.reset();
+        Shared.reload(this);
+
+        // use it for its console right away, including a folder named your own way for the same console
+        String value = "standalone:" + saved.id;
+        SystemMap m = Shared.systems();
+        if (m != null) {
+            for (SystemMap.Sys s : m.all) {
+                String base = s.base.isEmpty() ? s.folder : s.base;
+                if (!saved.systems.contains(base)) continue;
+                emuChoice.put(s.folder, value);
+                put("emu." + s.folder, value);
+            }
+        }
+        if (!p.unknown.isEmpty()) {
+            Toast.makeText(this, "Saved. These parts weren't understood and are left out: "
+                    + android.text.TextUtils.join(" ", p.unknown), Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(this, "Saved and picked for " + systemLabel(saved.systems.get(0)) + ".", Toast.LENGTH_SHORT).show();
+        }
+        editing = null;
+        render();
+    }
+
+    private void deleteCustomCommand(CustomLaunch.Command c) {
+        List<CustomLaunch.Command> list = CustomLaunch.all(this);
+        for (int i = list.size() - 1; i >= 0; i--) {
+            if (list.get(i).id.equals(c.id)) list.remove(i);
+        }
+        CustomLaunch.saveAll(this, list);
+        // consoles and games that used it go back to the usual emulator
+        String value = "standalone:" + c.id;
+        for (Map.Entry<String, ?> e : Prefs.all(this).entrySet()) {
+            String k = e.getKey();
+            if ((k.startsWith("emu.") || k.startsWith("gemu.")) && value.equals(e.getValue())) Prefs.remove(this, k);
+        }
+        List<String> drop = new ArrayList<String>();
+        for (Map.Entry<String, String> e : emuChoice.entrySet()) {
+            if (value.equals(e.getValue())) drop.add(e.getKey());
+        }
+        for (String k : drop) emuChoice.remove(k);
+        Recipes.reset();
+        Shared.reload(this);
+        editing = null;
+        render();
+    }
+
 
     private void stepScreens() {
         if (!DisplayPicker.hasTwoScreens(this)) {
@@ -1143,6 +1373,11 @@ public class SetupActivity extends Activity {
 
     private void goBack() {
         collect();
+        if (editing != null) { // Back leaves the launch command form without saving
+            editing = null;
+            render();
+            return;
+        }
         if (step == 0) {
             closeWizard();
             return;
@@ -1153,6 +1388,10 @@ public class SetupActivity extends Activity {
 
     private void goNext() {
         collect();
+        if (editing != null) {
+            Toast.makeText(this, "Save or cancel the launch command first.", Toast.LENGTH_LONG).show();
+            return;
+        }
         if (step == 2) {
             if (romFolders.isEmpty()) {
                 Toast.makeText(this, "Add your ROMs folder first.", Toast.LENGTH_LONG).show();

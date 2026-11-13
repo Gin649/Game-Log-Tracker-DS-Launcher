@@ -33,7 +33,10 @@ final class Recipes {
         /** Other actions to try, in order, when the first one is not understood by the installed version; %PKG% is the emulator's package. */
         final List<String> actions = new ArrayList<String>();
         String category = "";
-        String data = "none";   // none, saf (content address) or path
+        String data = "none";   // none, saf (content address), path, or fileuri (a file:// address)
+        /** The data's type, for apps that only answer an intent with one ("application/octet-stream", say). */
+        String mime = "";
+        boolean noHistory;
         boolean clearTask;
         /** Emulator that shows both of a handheld's screens itself (DS, 3DS): it starts on the bottom screen. */
         boolean dual;
@@ -43,6 +46,8 @@ final class Recipes {
         final List<String> labels = new ArrayList<String>();
         final Map<String, String> extras = new LinkedHashMap<String, String>();
         final Map<String, Boolean> boolExtras = new LinkedHashMap<String, Boolean>();
+        final Map<String, Integer> intExtras = new LinkedHashMap<String, Integer>();
+        final Map<String, Long> longExtras = new LinkedHashMap<String, Long>();
         /** Extras that are a list of strings; %ROM%, %ROMSAF%, %ROMFILEURI% and %ROMBASE% work in each item. */
         final Map<String, List<String>> arrayExtras = new LinkedHashMap<String, List<String>>();
     }
@@ -66,6 +71,11 @@ final class Recipes {
                 } catch (Exception ignored) {
                 }
             }
+        }
+        // your own launch commands from setup; an id can't clash with a built-in one, they all start with "custom-"
+        try {
+            out.addAll(CustomLaunch.recipes(ctx));
+        } catch (Exception ignored) {
         }
         cache = out;
         return out;
@@ -233,11 +243,17 @@ final class Recipes {
         String uriText = RomUri.isContent(uri) ? uri.toString() : path;
         String fileUri = Uri.fromFile(rom).toString();
 
+        Uri data = null;
         if ("saf".equals(r.data)) {
-            i.setData(uri);
+            data = uri;
         } else if ("path".equals(r.data)) {
-            i.setData(new Uri.Builder().path(path).build());
+            data = new Uri.Builder().path(path).build();
+        } else if ("fileuri".equals(r.data)) {
+            data = Uri.fromFile(rom);
         }
+        if (data != null && !r.mime.isEmpty()) i.setDataAndType(data, r.mime);
+        else if (data != null) i.setData(data);
+        else if (!r.mime.isEmpty()) i.setType(r.mime);
 
         for (Map.Entry<String, String> e : r.extras.entrySet()) {
             i.putExtra(e.getKey(), fillIn(e.getValue(), uriText, path, base, fileUri));
@@ -250,6 +266,12 @@ final class Recipes {
         for (Map.Entry<String, Boolean> e : r.boolExtras.entrySet()) {
             i.putExtra(e.getKey(), e.getValue().booleanValue());
         }
+        for (Map.Entry<String, Integer> e : r.intExtras.entrySet()) {
+            i.putExtra(e.getKey(), e.getValue().intValue());
+        }
+        for (Map.Entry<String, Long> e : r.longExtras.entrySet()) {
+            i.putExtra(e.getKey(), e.getValue().longValue());
+        }
 
         if (RomUri.isContent(uri)) {
             i.setClipData(ClipData.newRawUri("rom", uri));
@@ -257,6 +279,7 @@ final class Recipes {
         }
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if (r.clearTask) i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        if (r.noHistory) i.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
         return i;
     }
 }

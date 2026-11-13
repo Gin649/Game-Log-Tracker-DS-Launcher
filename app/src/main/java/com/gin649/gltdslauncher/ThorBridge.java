@@ -93,6 +93,79 @@ final class ThorBridge {
         return Playtime.importJson(act, json == null ? "{}" : json);
     }
 
+    // Backups (see Backup): the launcher's own settings, and backup files kept in the data folder
+
+    /** The launcher's settings and game rows for a backup, as JSON. Logins and keys are left out. */
+    @JavascriptInterface
+    public String appBackupExport() {
+        try {
+            return Backup.appSettings(act).toString();
+        } catch (Exception e) {
+            return "{}";
+        }
+    }
+
+    /** Puts a backup's launcher settings back. Returns {ok, message, regrant:[folders to pick again in setup]}. */
+    @JavascriptInterface
+    public String appBackupImport(String json) {
+        try {
+            return Backup.restore(act, new JSONObject(json)).toString();
+        } catch (Exception e) {
+            return "{\"ok\":false,\"message\":\"That backup's launcher settings can't be read.\"}";
+        }
+    }
+
+    /** True when today's automatic backup hasn't been made yet. */
+    @JavascriptInterface
+    public boolean backupDue() {
+        return Backup.due(act);
+    }
+
+    /** Starts writing a backup file (kind auto, manual or before-restore). Send the text with backupPut, then backupEnd. */
+    @JavascriptInterface
+    public String backupBegin(String kind) {
+        return Backup.begin(act, kind == null ? "manual" : kind);
+    }
+
+    @JavascriptInterface
+    public boolean backupPut(String id, String piece) {
+        return Backup.chunk(id, piece == null ? "" : piece);
+    }
+
+    /** {ok, name, path} or {ok:false, message}. */
+    @JavascriptInterface
+    public String backupEnd(String id) {
+        return Backup.end(act, id).toString();
+    }
+
+    /** The backup files on this device, newest first: [{name, path, size, time, kind}]. */
+    @JavascriptInterface
+    public String backupList() {
+        return Backup.list(act).toString();
+    }
+
+    /** Where backup files are kept, to show in the Data window. */
+    @JavascriptInterface
+    public String backupFolder() {
+        return Backup.dir(act).getPath();
+    }
+
+    /** How many pieces backupGet splits a backup file into, or -1. Only files in the Backups folder can be read. */
+    @JavascriptInterface
+    public int backupChunks(String path) {
+        return Backup.chunks(act, path);
+    }
+
+    @JavascriptInterface
+    public String backupGet(String path, int index) {
+        return Backup.readChunk(act, path, index);
+    }
+
+    @JavascriptInterface
+    public boolean backupDelete(String path) {
+        return Backup.delete(act, path);
+    }
+
     /** Looks in the ROM folders again, for games added while the app was open. */
     @JavascriptInterface
     public void rescanRoms() {

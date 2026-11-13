@@ -3,6 +3,7 @@
 function openDataModal(){
   $('#data-backdrop').classList.add('open');
   $('#data-status').innerHTML = '';
+  renderDeviceBackups();
 }
 function closeDataModal(){
   $('#data-backdrop').classList.remove('open');
@@ -31,7 +32,9 @@ function isRebuildableCache(rawKey){
   return REBUILDABLE_CACHE_PREFIXES.some(p => rawKey.startsWith('priv:' + p) || rawKey.startsWith('shared:' + p));
 }
 
-async function exportLocalData(){
+// Everything a backup holds. Inside the launcher it also carries the launcher's own settings (ROM folders, emulator
+// picks, your launch commands, play counts and picked art), never its logins or keys.
+async function buildBackupPayload(){
   const all = await window.storage._getAllRaw();
   const payload = {
     app: 'Game Log Tracker',
@@ -45,6 +48,14 @@ async function exportLocalData(){
   try{
     if(thorBridge && typeof thorBridge.playtimeExport === 'function') payload.devicePlaytime = JSON.parse(thorBridge.playtimeExport());
   }catch(e){}
+  try{
+    if(thorBridge && typeof thorBridge.appBackupExport === 'function') payload.appSettings = JSON.parse(thorBridge.appBackupExport());
+  }catch(e){}
+  return payload;
+}
+
+async function exportLocalData(){
+  const payload = await buildBackupPayload();
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -60,6 +71,11 @@ async function importLocalData(file){
   let payload;
   try{ payload = JSON.parse(await file.text()); }
   catch(e){ throw new Error('That file isn\'t valid JSON.'); }
+  return importPayload(payload);
+}
+
+// Puts a backup back. Returns what the launcher said about its own settings, or null outside the launcher.
+async function importPayload(payload){
   if(!payload || !Array.isArray(payload.entries)) throw new Error('This doesn\'t look like a Game Log Tracker backup file.');
   // older backups wrote remembered ROMs out in a form that can't be read back; never put those over a working one
   let entries = payload.entries.filter(e => e && !isRememberedRom(String(e.key)));
@@ -79,7 +95,112 @@ async function importLocalData(file){
   try{
     if(payload.devicePlaytime && thorBridge && typeof thorBridge.playtimeImport === 'function') thorBridge.playtimeImport(JSON.stringify(payload.devicePlaytime));
   }catch(e){}
+  let launcher = null;
+  try{
+    if(payload.appSettings && thorBridge && typeof thorBridge.appBackupImport === 'function'){
+      launcher = JSON.parse(thorBridge.appBackupImport(JSON.stringify(payload.appSettings)));
+    }
+  }catch(e){}
+  return launcher;
 }
+
+// What to say once a restore is done, and how long to leave it up before the page reloads.
+function restoreDoneNote(launcher){
+  const regrant = launcher && Array.isArray(launcher.regrant) ? launcher.regrant : [];
+  if(launcher && launcher.ok === false) return { text: 'Your data is back, but ' + launcher.message, wait: 5000, color: '--gold' };
+  if(regrant.length){
+    return { text: 'Restored. On this install, pick these ROM folders again in Launcher settings so emulators can open their games: '
+      + regrant.join(', '), wait: 6000, color: '--gold' };
+  }
+  return { text: 'Restored. Reloading…', wait: 900, color: '--teal' };
+}
+
+// Backup files kept on the device, in the app's data folder (only inside the launcher).
+const hasDeviceBackups = () => typeof thorBridge !== 'undefined' && thorBridge && typeof thorBridge.backupBegin === 'function';
+
+async function saveBackupToDevice(kind){
+  const text = JSON.stringify(await buildBackupPayload());
+  const id = thorBridge.backupBegin(kind);
+  if(!id) throw new Error('The backup folder can\'t be written to. Check the app has file access.');
+  const piece = 256 * 1024;
+  for(let i = 0; i < text.length; i += piece){
+    if(!thorBridge.backupPut(id, text.slice(i, i + piece))) throw new Error('Writing the backup failed.');
+  }
+  const res = JSON.parse(thorBridge.backupEnd(id));
+  if(!res.ok) throw new Error(res.message || 'The backup could not be saved.');
+  return res;
+}
+
+function readDeviceBackup(path){
+  const n = thorBridge.backupChunks(path);
+  if(n < 0) throw new Error('That backup can\'t be read.');
+  let text = '';
+  for(let i = 0; i < n; i++) text += thorBridge.backupGet(path, i);
+  try{ return JSON.parse(text); }
+  catch(e){ throw new Error('That backup file is damaged.'); }
+}
+
+function renderDeviceBackups(){
+  const field = $('#thor-backup-field');
+  if(!field) return;
+  if(!hasDeviceBackups()){ field.style.display = 'none'; return; }
+  field.style.display = '';
+  const box = $('#data-backup-list');
+  let list = [];
+  try{ list = JSON.parse(thorBridge.backupList()) || []; }catch(e){}
+  try{
+    const where = thorBridge.backupFolder();
+    if(where) $('#data-backup-where').textContent = 'Kept in ' + where + '.';
+  }catch(e){}
+  if(!list.length){ box.innerHTML = '<div class="hint">No backups on this device yet.</div>'; return; }
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const kinds = { auto: 'Automatic', manual: 'Made by you', 'before-restore': 'Before a restore' };
+  const size = b => b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+  box.innerHTML = list.map((b, i) =>
+    '<div class="backup-row" style="display:flex;align-items:center;gap:8px;margin-top:8px;">' +
+      '<div style="flex:1;min-width:0;"><div>' + esc(new Date(b.time).toLocaleString()) + '</div>' +
+      '<div class="hint" style="margin:0;">' + esc(kinds[b.kind] || '') + ' · ' + size(b.size) + '</div></div>' +
+      '<button class="btn-line gold" data-restore="' + i + '" type="button">Restore</button>' +
+      (b.kind === 'manual' ? '<button class="btn-line" data-delete="' + i + '" type="button">Delete</button>' : '') +
+    '</div>').join('');
+  box.querySelectorAll('[data-restore]').forEach(btn => btn.addEventListener('click', () => askRestore(list[+btn.dataset.restore])));
+  box.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => {
+    const b = list[+btn.dataset.delete];
+    const del = () => { try{ thorBridge.backupDelete(b.path); }catch(e){} renderDeviceBackups(); };
+    if(typeof thorChoice === 'function') thorChoice('Delete this backup?', 'Made ' + new Date(b.time).toLocaleString() + '.', [['Delete', del]]);
+    else del();
+  }));
+}
+
+function askRestore(b){
+  const go = async () => {
+    const statusEl = $('#data-status');
+    try{
+      statusEl.innerHTML = statusLine('Backing up what is here now…', '--muted');
+      await saveBackupToDevice('before-restore'); // so a restore can be undone with the backup it leaves
+      statusEl.innerHTML = statusLine('Restoring…', '--muted');
+      const launcher = await importPayload(readDeviceBackup(b.path));
+      const note = restoreDoneNote(launcher);
+      statusEl.innerHTML = statusLine(note.text, note.color);
+      setTimeout(() => window.location.reload(), note.wait);
+    }catch(err){
+      statusEl.innerHTML = `<div class="error-box">Restore failed: ${err.message}</div>`;
+    }
+  };
+  const when = new Date(b.time).toLocaleString();
+  if(typeof thorChoice === 'function'){
+    thorChoice('Restore this backup?', 'From ' + when + '. What is on this device now is backed up first, so you can go back to it.', [['Restore', go]]);
+  }else{
+    go();
+  }
+}
+
+// One automatic backup a day, made a little after the app opens so it never slows the start.
+setTimeout(() => {
+  try{
+    if(hasDeviceBackups() && thorBridge.backupDue()) saveBackupToDevice('auto').catch(() => {});
+  }catch(e){}
+}, 45000);
 
 // Opener button, close button, and a tap on the backdrop.
 function wireModal(openSel, closeSel, backdropId, open, close){
@@ -108,15 +229,31 @@ $('#data-export-btn').addEventListener('click', async () => {
   }
 });
 $('#data-import-btn').addEventListener('click', () => $('#data-import-file').click());
+$('#data-backup-now-btn').addEventListener('click', async () => {
+  const btn = $('#data-backup-now-btn');
+  const statusEl = $('#data-status');
+  statusEl.innerHTML = '';
+  btn.disabled = true; btn.textContent = 'Backing up…';
+  try{
+    await saveBackupToDevice('manual');
+    statusEl.innerHTML = statusLine('Backup saved on this device.', '--teal');
+    renderDeviceBackups();
+  }catch(e){
+    statusEl.innerHTML = `<div class="error-box">Backup failed: ${e.message}</div>`;
+  }finally{
+    btn.disabled = false; btn.textContent = 'Back up now';
+  }
+});
 $('#data-import-file').addEventListener('change', async (e) => {
   const file = e.target.files && e.target.files[0];
   if(!file) return;
   const statusEl = $('#data-status');
   statusEl.innerHTML = statusLine('Importing…', '--muted');
   try{
-    await importLocalData(file);
-    statusEl.innerHTML = statusLine('Import complete. Reloading…', '--teal');
-    setTimeout(() => window.location.reload(), 900);
+    const launcher = await importLocalData(file);
+    const note = restoreDoneNote(launcher);
+    statusEl.innerHTML = statusLine(note.text === 'Restored. Reloading…' ? 'Import complete. Reloading…' : note.text, note.color);
+    setTimeout(() => window.location.reload(), note.wait);
   }catch(err){
     statusEl.innerHTML = `<div class="error-box">Import failed: ${err.message}</div>`;
   }finally{

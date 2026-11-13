@@ -60,7 +60,12 @@ final class Launcher {
         if (!wantRa) {
             List<String> ids = new ArrayList<String>();
             if (!saId.isEmpty()) ids.add(saId);
-            else ids.addAll(sys.standalones);
+            else {
+                // with nothing picked, your own launch commands are never used on their own: only when chosen
+                for (String id : sys.standalones) {
+                    if (!id.startsWith(CustomLaunch.ID_PREFIX)) ids.add(id);
+                }
+            }
             Recipes.Recipe first = null;
             for (String id : ids) {
                 Recipes.Recipe r = Recipes.byId(act, id);

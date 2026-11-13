@@ -303,6 +303,13 @@
         <div class="hint">Loads a backup onto this device. Anything already here with the same key is replaced.</div>
       </div>
 
+      <div class="field" id="thor-backup-field" style="display:none;">
+        <label>Backups on this device</label>
+        <button class="btn-primary" id="data-backup-now-btn" style="width:100%;">Back up now</button>
+        <div class="hint">Includes the launcher's settings too: ROM folders, emulator picks, your launch commands, play counts and picked art (never your logins or keys). One is also made automatically each day the app is used, and the last 7 are kept. <span id="data-backup-where"></span></div>
+        <div id="data-backup-list"></div>
+      </div>
+
       <div class="field" id="thor-art-field" style="display:none;">
         <label>Game art</label>
         <button class="btn-line gold" id="btn-thor-art" style="width:100%;"><span id="thor-art-label">Fetch game art</span></button>
