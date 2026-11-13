@@ -95,12 +95,87 @@ final class FanArt {
      */
     static List<String> candidates(Context ctx, GameEntity g) {
         List<String> out = new ArrayList<String>();
-        if (g.id > 0 && Config.useEsdeMedia()) {
-            String d = MediaFinder.lookup(g.systemId, g.romPath).direct;
-            if (d != null && new File(d).isFile()) out.add(d);
-        }
-        for (File f : files(ctx, g)) out.add(f.getPath());
+        List<File> mine = files(ctx, g);
+        String front = frontend(g);
+        // left out when a bigger copy of the same picture was downloaded (see dropRepeats)
+        if (front != null && !(new File(dir(ctx, g), ".nofront").isFile() && !mine.isEmpty())) out.add(front);
+        for (File f : mine) out.add(f.getPath());
         return out;
+    }
+
+    /** The frontend's own fan art or miximage for the game, or null. */
+    private static String frontend(GameEntity g) {
+        if (g.id <= 0 || !Config.useEsdeMedia()) return null;
+        String d = MediaFinder.lookup(g.systemId, g.romPath).direct;
+        return d != null && new File(d).isFile() ? d : null;
+    }
+
+    /**
+     * Goes through all of the game's pictures, the frontend's own included, and drops repeats of the same image,
+     * keeping the biggest copy. The picture in use moves to the copy that stays. The frontend's picture is never
+     * deleted: when a downloaded copy is bigger it is just left out of the list. Returns true when anything changed.
+     */
+    static boolean dropRepeats(Context ctx, GameEntity g) {
+        boolean changed = false;
+        synchronized (LOCK) {
+            File d = dir(ctx, g);
+            List<File> have = files(ctx, g);
+            List<String> src = sourceList(d);
+            boolean aligned = src.size() == have.size();
+            boolean[] gone = new boolean[have.size()];
+            for (int i = 0; i < have.size(); i++) {
+                if (gone[i]) continue;
+                Print a = print(null, have.get(i));
+                for (int j = i + 1; j < have.size(); j++) {
+                    if (gone[j]) continue;
+                    Print b = print(null, have.get(j));
+                    if (!same(a, b) && !same(b, a)) continue;
+                    int lose = b.pixels > a.pixels ? i : j, keep = lose == i ? j : i;
+                    if (have.get(lose).getPath().equals(g.localMiximagePath)) setPick(ctx, g, have.get(keep).getPath());
+                    have.get(lose).delete();
+                    if (aligned) noteSame(d, src.get(lose));
+                    gone[lose] = true;
+                    changed = true;
+                    if (lose == i) break;
+                }
+            }
+            if (changed && aligned) {
+                List<String> rest = new ArrayList<String>();
+                for (int i = 0; i < have.size(); i++) if (!gone[i]) rest.add(src.get(i));
+                writeSources(d, rest);
+            }
+            String front = frontend(g);
+            if (front != null) {
+                Print f = print(null, new File(front));
+                List<File> left = files(ctx, g);
+                List<String> leftSrc = sourceList(d);
+                boolean leftAligned = leftSrc.size() == left.size();
+                for (int i = 0; i < left.size(); i++) {
+                    Print b = print(null, left.get(i));
+                    if (!same(f, b) && !same(b, f)) continue;
+                    if (b.pixels > f.pixels) {
+                        // the download is bigger: it stays and the frontend's copy is left out of the list
+                        try {
+                            new File(d, ".nofront").createNewFile();
+                        } catch (IOException ignored) {
+                        }
+                        if (front.equals(g.localMiximagePath)) setPick(ctx, g, left.get(i).getPath());
+                    } else {
+                        // the frontend's copy is as big: the download goes
+                        if (left.get(i).getPath().equals(g.localMiximagePath)) setPick(ctx, g, front);
+                        left.get(i).delete();
+                        if (leftAligned) {
+                            noteSame(d, leftSrc.get(i));
+                            leftSrc.remove(i);
+                            writeSources(d, leftSrc);
+                        }
+                    }
+                    changed = true;
+                    break;
+                }
+            }
+        }
+        return changed;
     }
 
     /** The pictures kept for a game, in order. */
@@ -387,6 +462,7 @@ final class FanArt {
             File d = dir(ctx, g);
             // the list of repeats only applies to pictures that are going; the next search starts afresh
             new File(d, "same.txt").delete();
+            if (g.localMiximagePath == null || !isGallery(ctx, g.localMiximagePath)) new File(d, ".nofront").delete();
             List<File> have = files(ctx, g);
             if (have.isEmpty()) return;
             List<String> src = sourceList(d);
@@ -453,6 +529,7 @@ final class FanArt {
      */
     static void reload(Context ctx, GameEntity g, boolean useSgdb) {
         File d = dir(ctx, g);
+        if (dropRepeats(ctx, g)) showPick(ctx, g); // repeats saved before this check existed
         try {
             if (!new File(d, ".full").isFile()) {
                 refetchPick(ctx, g);
@@ -488,7 +565,13 @@ final class FanArt {
         } catch (IOException e) {
             // offline: what was found so far stays
         }
+        if (still(g) && dropRepeats(ctx, g)) showPick(ctx, g);
         if (still(g)) LibraryScraper.fanSearchDone(ctx, g);
+    }
+
+    /** Puts the picture in use back on the top screen, with the count brought up to date. */
+    private static void showPick(Context ctx, GameEntity g) {
+        if (still(g) && g.localMiximagePath != null) LibraryScraper.refreshTopScreen(ctx, g, g.localMiximagePath);
     }
 
     /** Whether the game is still the one open on the top screen. */
