@@ -1,11 +1,9 @@
 package com.gin649.gltdslauncher;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 
 import com.gin649.gltdslauncher.database.GameEntity;
 import com.gin649.gltdslauncher.database.GameRepository;
-import com.gin649.gltdslauncher.graphics.MiximageCompositor;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,21 +12,21 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * The fan art pictures found online for one game, kept side by side so the top screen can swipe between them.
- * They live in fanart/&lt;system&gt;/&lt;game id&gt;/1.jpg, 2.jpg and so on. The game's miximage path points at the one
- * in use, so the choice is remembered without anything else being stored. src.txt lists where each picture came
- * from (so nothing is downloaded twice) and .done lists the places the search for more has been through.
+ * The fan art pictures found online for one game. They live in fanart/&lt;system&gt;/&lt;game id&gt;/1.jpg, 2.jpg and so
+ * on, saved exactly as downloaded (whatever the format, the name stays .jpg). The game's miximage path points at the
+ * one in use. Tapping the top screen downloads all the others to swipe through, and when the game is left only the
+ * one on show is kept, so each game holds a single picture. src.txt lists where each picture came from.
  */
 final class FanArt {
 
-    static final int MAX = 6;
+    /** The most pictures downloaded for a game when the top screen is tapped. */
+    static final int MAX = 20;
     private static final Object LOCK = new Object();
 
     private FanArt() {}
@@ -151,17 +149,47 @@ final class FanArt {
     }
 
     /**
-     * Saves a picture as the next one for the game. Returns the file, or null when it could not be saved or the game
-     * already has the most it keeps.
+     * Saves a downloaded picture as the next one for the game, exactly as it came: not made smaller and not saved
+     * again as a JPEG, so it stays as sharp as the source. Returns the file, or null when the bytes aren't a picture,
+     * it could not be saved or the game already has the most it keeps.
      */
-    static File add(Context ctx, GameEntity g, String source, Bitmap b) {
+    static File add(Context ctx, GameEntity g, String source, byte[] data) {
+        if (data == null || data.length == 0) return null;
+        android.graphics.BitmapFactory.Options bounds = new android.graphics.BitmapFactory.Options();
+        bounds.inJustDecodeBounds = true;
+        android.graphics.BitmapFactory.decodeByteArray(data, 0, data.length, bounds);
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null;
         synchronized (LOCK) {
             File d = dir(ctx, g);
             List<File> have = files(ctx, g);
             if (have.size() >= MAX) return null;
             int next = have.isEmpty() ? 1 : num(have.get(have.size() - 1)) + 1;
-            File out = MiximageCompositor.saveJpeg(b, new File(d, next + ".jpg"));
-            if (out == null) return null;
+            File out = new File(d, next + ".jpg");
+            if (have.isEmpty()) {
+                // a first picture saved as it came is already full size, so it never needs fetching again
+                try {
+                    d.mkdirs();
+                    new File(d, ".full").createNewFile();
+                } catch (IOException ignored) {
+                }
+            }
+            File tmp = new File(out.getPath() + ".tmp");
+            try {
+                d.mkdirs();
+                FileOutputStream fos = new FileOutputStream(tmp);
+                try {
+                    fos.write(data);
+                } finally {
+                    fos.close();
+                }
+                if (!tmp.renameTo(out)) {
+                    tmp.delete();
+                    return null;
+                }
+            } catch (IOException e) {
+                tmp.delete();
+                return null;
+            }
             try {
                 FileOutputStream fos = new FileOutputStream(new File(d, "src.txt"), true);
                 try {
@@ -172,6 +200,61 @@ final class FanArt {
             } catch (IOException ignored) {
             }
             return out;
+        }
+    }
+
+    /** Where each kept picture came from, in the order they were saved. */
+    private static List<String> sourceList(File dir) {
+        List<String> out = new ArrayList<String>();
+        File f = new File(dir, "src.txt");
+        if (!f.isFile()) return out;
+        try {
+            BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF-8"));
+            try {
+                String line;
+                while ((line = r.readLine()) != null) if (!line.isEmpty()) out.add(line);
+            } finally {
+                r.close();
+            }
+        } catch (IOException ignored) {
+        }
+        return out;
+    }
+
+    /**
+     * Keeps only the picture on show for the game and deletes its other fan arts. When the game's own frontend
+     * picture (or a miximage) is the one in use, all the downloaded ones go.
+     */
+    static void keepPick(Context ctx, GameEntity g) {
+        if (g == null) return;
+        synchronized (LOCK) {
+            File d = dir(ctx, g);
+            List<File> have = files(ctx, g);
+            if (have.isEmpty()) return;
+            List<String> src = sourceList(d);
+            String keepSource = null;
+            File keep = null;
+            for (int i = 0; i < have.size(); i++) {
+                if (have.get(i).getPath().equals(g.localMiximagePath)) {
+                    keep = have.get(i);
+                    if (src.size() == have.size()) keepSource = src.get(i);
+                }
+            }
+            for (File f : have) if (!f.equals(keep)) f.delete();
+            File srcFile = new File(d, "src.txt");
+            if (keep == null || keepSource == null) {
+                srcFile.delete();
+                return;
+            }
+            try {
+                FileOutputStream fos = new FileOutputStream(srcFile, false);
+                try {
+                    fos.write((keepSource + "\n").getBytes("UTF-8"));
+                } finally {
+                    fos.close();
+                }
+            } catch (IOException ignored) {
+            }
         }
     }
 
@@ -205,101 +288,118 @@ final class FanArt {
     }
 
     /**
-     * Looks for the game's other fan art online, up to MAX in all, once. Called when a game is opened, so a bulk
-     * "Fetch game art" only has to download one picture per game.
+     * Tapping the top screen: downloads every fan art the game has online (ScreenScraper, SteamGridDB, LaunchBox),
+     * up to MAX, skipping ones already here, and adds each to the swipe list as it arrives. The picture in use is
+     * downloaded again first when it was saved smaller by an older version, so it is full quality too. Stops if the
+     * game is left part-way.
      */
-    static void fillMore(Context ctx, GameEntity g, boolean useSgdb) {
+    static void reload(Context ctx, GameEntity g, boolean useSgdb) {
         File d = dir(ctx, g);
-        Set<String> did = searched(d);
-        boolean wantSgdb = useSgdb && !did.contains(FROM_SGDB);
-        // fan art is for the top screen
-        boolean wantLaunchBox = Config.LAUNCHBOX_ART && DisplayPicker.topScreenInUse(ctx) && !did.contains(FROM_LAUNCHBOX);
-        if (!wantSgdb && !wantLaunchBox) return;
-        int before = did.size();
         try {
-            if (wantSgdb) {
+            if (!new File(d, ".full").isFile()) {
+                refetchPick(ctx, g);
+                if (!still(g)) return;
+            }
+            try {
+                ScreenScraperClient.Info si = ScreenScraperClient.lookup(ctx, g.title, g.systemId);
+                if (si != null && si.fanart != null) addAndShow(ctx, g, si.fanart, ScreenScraperClient.download(si.fanart));
+            } catch (IOException ignored) {
+                // ScreenScraper unavailable: the others still count
+            }
+            if (useSgdb) {
                 try {
                     for (String url : SteamGridDbClient.heroUrls(ctx, g.title, MAX)) {
-                        if (files(ctx, g).size() >= MAX) break;
+                        if (!still(g) || files(ctx, g).size() >= MAX) break;
                         if (has(ctx, g, url)) continue;
-                        byte[] data = SteamGridDbClient.download(url);
-                        Bitmap b = data == null ? null : MiximageCompositor.decode(data, 1920);
-                        if (b != null) {
-                            try {
-                                add(ctx, g, url, b);
-                            } finally {
-                                b.recycle();
-                            }
-                        }
+                        addAndShow(ctx, g, url, SteamGridDbClient.download(url));
                         pause(400);
                     }
-                    did.add(FROM_SGDB);
                 } catch (SteamGridDbClient.AuthException e) {
-                    // the key is wrong, so this isn't counted as searched and a corrected key gets its turn; LaunchBox
-                    // below may still have some
+                    // the key is wrong: LaunchBox below may still have some
                 } catch (SteamGridDbClient.LimitException e) {
-                    // too many requests for now: try again next time the game is opened
+                    // too many requests for now
                 }
             }
-            if (wantLaunchBox) {
+            if (Config.LAUNCHBOX_ART && still(g)) {
                 for (String file : LaunchBoxArt.fanFiles(ctx, g.systemId, g.title)) {
-                    if (files(ctx, g).size() >= MAX) break;
+                    if (!still(g) || files(ctx, g).size() >= MAX) break;
                     if (has(ctx, g, file)) continue;
-                    Bitmap b = LaunchBoxArt.fanImage(file);
-                    if (b != null) {
-                        try {
-                            add(ctx, g, file, b);
-                        } finally {
-                            b.recycle();
-                        }
-                    }
+                    addAndShow(ctx, g, file, LaunchBoxArt.fanBytes(file));
                 }
-                did.add(FROM_LAUNCHBOX);
             }
         } catch (IOException e) {
-            // offline: try again next time the game is opened
+            // offline: what was found so far stays
         }
-        if (did.size() == before) return;
+        if (still(g)) LibraryScraper.fanSearchDone(ctx, g);
+    }
+
+    /** Whether the game is still the one open on the top screen. */
+    private static boolean still(GameEntity g) {
+        return LibraryScraper.viewingId == g.id;
+    }
+
+    private static void addAndShow(Context ctx, GameEntity g, String source, byte[] data) {
+        if (data == null || has(ctx, g, source) || !still(g)) return;
+        if (add(ctx, g, source, data) == null) return;
+        // the picture on show stays (you may have swiped meanwhile); only the count goes up
+        ArtBus.State cur = ArtBus.get();
+        String showing = cur.game && cur.gameId == g.id && cur.localPath != null ? cur.localPath : g.localMiximagePath;
+        if (showing != null) LibraryScraper.refreshTopScreen(ctx, g, showing);
+    }
+
+    /**
+     * For fan art saved by an older version (made smaller): downloads the picture in use again, full size, from
+     * where it came, and puts it in place of the old one. A picture whose source is unknown, or has gone, stays.
+     */
+    private static void refetchPick(Context ctx, GameEntity g) throws IOException {
+        File d = dir(ctx, g);
+        List<File> have = files(ctx, g);
+        List<String> src = sourceList(d);
+        int idx = -1;
+        for (int i = 0; i < have.size(); i++) if (have.get(i).getPath().equals(g.localMiximagePath)) idx = i;
+        if (idx >= 0 && src.size() == have.size()) {
+            String source = src.get(idx);
+            byte[] data;
+            if (source.startsWith("http")) {
+                data = source.contains("steamgriddb") ? SteamGridDbClient.download(source) : ScreenScraperClient.download(source);
+            } else {
+                data = LaunchBoxArt.fanBytes(source);
+            }
+            if (data != null) {
+                File old = have.get(idx);
+                synchronized (LOCK) {
+                    // the old copy's source line is dropped so the new copy can take it
+                    List<String> rest = new ArrayList<String>(src);
+                    rest.remove(idx);
+                    old.delete();
+                    writeSources(d, rest);
+                }
+                File fresh = add(ctx, g, source, data);
+                if (fresh != null) {
+                    setPick(ctx, g, fresh.getPath());
+                    if (still(g)) LibraryScraper.refreshTopScreen(ctx, g, fresh.getPath());
+                }
+            }
+        }
         try {
-            d.mkdirs(); // a game nothing was found for has no folder yet, and still needs its marker
-            FileOutputStream fos = new FileOutputStream(new File(d, ".done"));
+            d.mkdirs();
+            new File(d, ".full").createNewFile();
+        } catch (IOException ignored) {
+        }
+    }
+
+    private static void writeSources(File d, List<String> list) {
+        try {
+            FileOutputStream fos = new FileOutputStream(new File(d, "src.txt"), false);
             try {
                 StringBuilder sb = new StringBuilder();
-                for (String s : did) sb.append(s).append('\n');
+                for (String s : list) sb.append(s).append('\n');
                 fos.write(sb.toString().getBytes("UTF-8"));
             } finally {
                 fos.close();
             }
         } catch (IOException ignored) {
         }
-    }
-
-    private static final String FROM_SGDB = "sgdb", FROM_LAUNCHBOX = "launchbox";
-
-    /**
-     * The places already searched for a game's other fan art, from its .done marker. A source is written down only once
-     * it has answered, so one that was switched off, or whose key was refused, is tried when it becomes available.
-     * An empty marker is from before sources were written down and counts as both.
-     */
-    private static Set<String> searched(File dir) {
-        Set<String> s = new HashSet<String>();
-        File f = new File(dir, ".done");
-        if (!f.isFile()) return s;
-        try {
-            BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF-8"));
-            try {
-                String line;
-                while ((line = r.readLine()) != null) if (!line.trim().isEmpty()) s.add(line.trim());
-            } finally {
-                r.close();
-            }
-        } catch (IOException ignored) {
-        }
-        if (s.isEmpty()) {
-            s.add(FROM_SGDB);
-            s.add(FROM_LAUNCHBOX);
-        }
-        return s;
     }
 
     private static void pause(long ms) {

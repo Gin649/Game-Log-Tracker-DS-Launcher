@@ -57,7 +57,9 @@ final class LibraryScraper {
     static void requestFor(final Context ctx, RomIndex.Rom rom) {
         final GameEntity g = LibrarySync.find(ctx, rom);
         viewingId = g == null ? 0 : g.id;
+        leaving(ctx, viewingId);
         if (g == null) return;
+        remember(g);
         topUp(ctx, g);
         if (NO_ART.contains(g.id)) return; // a game that came up empty before is tried again once per app session
         boolean hasPicture = g.localMiximagePath != null && new File(g.localMiximagePath).isFile();
@@ -83,6 +85,8 @@ final class LibraryScraper {
     /** A tracker game with no ROM here is opened: fetches its fan art in the background if it has none yet. */
     static void requestVirtual(final Context ctx, final GameEntity g) {
         viewingId = g.id;
+        leaving(ctx, g.id);
+        remember(g);
         topUp(ctx, g);
         if (NO_ART.contains(g.id)) return;
         if (g.localMiximagePath != null && new File(g.localMiximagePath).isFile()) return;
@@ -103,22 +107,54 @@ final class LibraryScraper {
     private static final Set<Integer> TOPPING = Collections.synchronizedSet(new HashSet<Integer>());
     private static final ExecutorService MORE = Executors.newSingleThreadExecutor();
 
-    /** For a game open on the top screen that has a fan art: looks online for its other fan arts so they can be swiped through. */
+    /**
+     * A game's other fan arts are no longer downloaded when it is opened. Tapping the top screen looks for all of
+     * them (reloadFan), and when the game is left only the one on show is kept (FanArt.keepPick).
+     */
     private static void topUp(final Context ctx, final GameEntity g) {
-        if (g == null || !FanArt.hasFanArt(ctx, g)) return;
-        if (!TOPPING.add(g.id)) return;
+    }
+
+    /** The game last opened, so its other fan arts can be cleared away once another game (or none) is open. */
+    private static volatile GameEntity lastViewed;
+
+    /** Called whenever the game on the top screen changes: the one left keeps only the fan art on show. */
+    static void leaving(final Context ctx, int nowId) {
+        final GameEntity prev = lastViewed;
+        if (prev == null || prev.id == nowId) return;
+        lastViewed = null;
+        MORE.execute(new Runnable() {
+            @Override
+            public void run() {
+                GameEntity g = prev.id < 0 ? FanArt.virtualById(prev.id) : GameRepository.get(ctx).dao().getById(prev.id);
+                FanArt.keepPick(ctx, g != null ? g : prev);
+            }
+        });
+    }
+
+    /** Tapping the top screen: looks online for every fan art the game has, so they can all be swiped through. */
+    static void reloadFan(final Context ctx, final GameEntity g) {
+        if (g == null || !TOPPING.add(g.id)) return;
         MORE.execute(new Runnable() {
             @Override
             public void run() {
                 try {
                     boolean sgdb = SteamGridDbClient.enabled(ctx) && System.currentTimeMillis() >= sgdbOffUntil;
-                    FanArt.fillMore(ctx, g, sgdb);
-                    if (g.id == viewingId && g.localMiximagePath != null) refreshTopScreen(ctx, g, g.localMiximagePath);
+                    FanArt.reload(ctx, g, sgdb);
                 } finally {
                     TOPPING.remove(g.id);
                 }
             }
         });
+    }
+
+    /** After a tap's search: says how many fan arts there are to swipe through. */
+    static void fanSearchDone(Context ctx, GameEntity g) {
+        int n = FanArt.candidates(ctx, g).size();
+        ArtActivity.note(n < 2 ? "No other fan art found" : n + " fan arts \u2039 swipe \u203A");
+    }
+
+    private static void remember(GameEntity g) {
+        if (g != null) lastViewed = g;
     }
 
     /** The games of the current "Fetch game art" run: those in the tracker's Library and Backlog that have a ROM. */
@@ -252,14 +288,7 @@ final class LibraryScraper {
                 ScreenScraperClient.Info si = ScreenScraperClient.lookup(ctx, g.title, g.systemId);
                 if (si != null && si.fanart != null) {
                     byte[] data = ScreenScraperClient.download(si.fanart);
-                    Bitmap b = data == null ? null : MiximageCompositor.decode(data, 1920);
-                    if (b != null) {
-                        try {
-                            if (keepFan(ctx, g, si.fanart, b)) return true;
-                        } finally {
-                            b.recycle();
-                        }
-                    }
+                    if (data != null && keepFan(ctx, g, si.fanart, data)) return true;
                 }
             } catch (IOException e) {
                 offline = true;
@@ -271,14 +300,7 @@ final class LibraryScraper {
                 pause(API_PAUSE_MS);
                 if (!heroes.isEmpty()) {
                     byte[] hero = SteamGridDbClient.download(heroes.get(0));
-                    Bitmap b = hero == null ? null : MiximageCompositor.decode(hero, 1920);
-                    if (b != null) {
-                        try {
-                            if (keepFan(ctx, g, heroes.get(0), b)) return true;
-                        } finally {
-                            b.recycle();
-                        }
-                    }
+                    if (hero != null && keepFan(ctx, g, heroes.get(0), hero)) return true;
                 }
             } catch (SteamGridDbClient.AuthException e) {
                 message = e.getMessage() + " Skipping SteamGridDB for now.";
@@ -353,8 +375,8 @@ final class LibraryScraper {
      * Saves a fan art picture into the game's set and makes it the one in use, unless the game already has a fan art
      * chosen (that choice stays). Returns whether the game now has fan art.
      */
-    private static boolean keepFan(Context ctx, GameEntity g, String source, Bitmap b) {
-        File added = FanArt.has(ctx, g, source) ? null : FanArt.add(ctx, g, source, b);
+    private static boolean keepFan(Context ctx, GameEntity g, String source, byte[] data) {
+        File added = FanArt.has(ctx, g, source) ? null : FanArt.add(ctx, g, source, data);
         List<File> all = FanArt.files(ctx, g);
         if (all.isEmpty()) return false;
         boolean chosen = FanArt.isGallery(ctx, g.localMiximagePath)

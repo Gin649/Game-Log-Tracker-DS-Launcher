@@ -58,10 +58,10 @@ final class LaunchBoxArt {
 
     /** What was found for a game; every picture may be null, and fan is the full-frame background when present. */
     static final class Art {
-        Bitmap fan, screen, box, logo;
+        byte[] fan; // the fan art file as it was downloaded, so it can be kept untouched
+        Bitmap screen, box, logo;
 
         void recycle() {
-            if (fan != null) fan.recycle();
             if (screen != null) screen.recycle();
             if (box != null) box.recycle();
             if (logo != null) logo.recycle();
@@ -95,7 +95,7 @@ final class LaunchBoxArt {
 
         Art a = new Art();
         if (fanOnly) {
-            if (!row[1].isEmpty()) a.fan = image(row[1].split("\\|")[0], 1920);
+            if (!row[1].isEmpty()) a.fan = fanBytes(row[1].split("\\|")[0]);
         } else {
             if (!row[2].isEmpty()) a.box = image(row[2], 900);
             if (!row[3].isEmpty()) a.screen = image(row[3], 1600);
@@ -121,9 +121,19 @@ final class LaunchBoxArt {
         return out;
     }
 
-    /** One fan art picture from LaunchBox's image server, or null. */
-    static Bitmap fanImage(String file) {
-        return image(file, 1920);
+    /** One fan art file from LaunchBox's image server, as it is, or null. */
+    static byte[] fanBytes(String file) {
+        try {
+            return download(IMAGE_URL + file, MAX_DOWNLOAD);
+        } catch (Exception e) {
+            return null;
+        } finally {
+            try {
+                Thread.sleep(250); // be gentle with a free service
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     /** Address of the game's box art (else a screenshot) on LaunchBox's image server, or null. */

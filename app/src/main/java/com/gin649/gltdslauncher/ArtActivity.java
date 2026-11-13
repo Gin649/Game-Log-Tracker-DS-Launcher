@@ -312,7 +312,13 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
                     float dx = ev.getX() - downX;
                     float dy = ev.getY() - downY;
                     float min = 70 * getResources().getDisplayMetrics().density;
-                    if (Math.abs(dx) > min && Math.abs(dx) > 2 * Math.abs(dy)) { swiped = true; Shared.swipeFan(dx < 0 ? 1 : -1); }
+                    if (Math.abs(dx) > min && Math.abs(dx) > 2 * Math.abs(dy)) {
+                        swiped = true;
+                        Shared.swipeFan(dx < 0 ? 1 : -1);
+                    } else if (Math.abs(dx) < min / 3 && Math.abs(dy) < min / 3) {
+                        // a tap: look online for all of the game's fan art, to swipe through
+                        if (Shared.reloadFan()) showNote("Looking for fan art\u2026", 4000);
+                    }
                 }
                 tracking = false;
                 break;
@@ -323,6 +329,26 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
                 break;
         }
         return super.dispatchTouchEvent(ev);
+    }
+
+    /** A short message on the badge, such as how the search for fan art went. */
+    private void showNote(String text, long ms) {
+        badge.removeCallbacks(hideBadge);
+        badge.setText(text);
+        badge.setVisibility(View.VISIBLE);
+        badge.postDelayed(hideBadge, ms);
+    }
+
+    /** Puts a short message on the top screen's badge, from any thread. */
+    static void note(final String text) {
+        final ArtActivity a = instance;
+        if (a == null) return;
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                a.showNote(text, 2500);
+            }
+        });
     }
 
     @Override

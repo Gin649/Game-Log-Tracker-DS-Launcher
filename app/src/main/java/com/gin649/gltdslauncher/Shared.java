@@ -159,9 +159,25 @@ final class Shared {
         });
     }
 
+    /** A tap on the top screen: looks online for all of the game on show's fan art. False when no game is on show. */
+    static boolean reloadFan() {
+        final ArtBus.State cur = ArtBus.get();
+        if (!cur.game || cur.gameId == 0 || appCtx == null || cur.gameId != LibraryScraper.viewingId) return false;
+        IO.execute(new Runnable() {
+            @Override
+            public void run() {
+                com.gin649.gltdslauncher.database.GameEntity g = cur.gameId < 0 ? FanArt.virtualById(cur.gameId)
+                        : com.gin649.gltdslauncher.database.GameRepository.get(appCtx).dao().getById(cur.gameId);
+                if (g != null) LibraryScraper.reloadFan(appCtx, g);
+            }
+        });
+        return true;
+    }
+
     static void showLogo() {
         VIEW_TOKEN.incrementAndGet();
         LibraryScraper.viewingId = 0;
+        if (appCtx != null) LibraryScraper.leaving(appCtx, 0);
         ArtBus.set(ArtBus.State.logo());
     }
 }
