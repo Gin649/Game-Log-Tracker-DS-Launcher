@@ -25,8 +25,8 @@ import java.util.Set;
  */
 final class FanArt {
 
-    /** The most pictures downloaded for a game when the top screen is tapped. */
-    static final int MAX = 20;
+    /** No cap: a tap downloads every fan art found, since all but the one kept are deleted when the game is left. */
+    static final int MAX = Integer.MAX_VALUE;
     private static final Object LOCK = new Object();
 
     private FanArt() {}
