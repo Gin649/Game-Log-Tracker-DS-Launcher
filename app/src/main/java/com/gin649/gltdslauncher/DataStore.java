@@ -40,6 +40,7 @@ final class DataStore {
         if (c != null && chosen.equals(rootFor) && all == rootAll) return c;
         File dir = chosen.isEmpty() ? defaultRoot() : new File(chosen);
         File out = (dir != null && usable(dir)) ? dir : ctx.getFilesDir();
+        if (out != ctx.getFilesDir()) hideFromGallery(out);
         rootFor = chosen;
         rootAll = all;
         rootCache = out;
@@ -59,6 +60,19 @@ final class DataStore {
             return null;
         }
         return new File(Environment.getExternalStorageDirectory(), DEFAULT_FOLDER);
+    }
+
+    /**
+     * A .nomedia file keeps the art the app fetches (and its backups folder) out of the phone's Gallery and music apps.
+     * The app reads its pictures by path, so it doesn't change anything here, and file managers still show the folder.
+     */
+    private static void hideFromGallery(File dir) {
+        try {
+            File marker = new File(dir, ".nomedia");
+            if (!marker.exists()) marker.createNewFile();
+        } catch (Exception ignored) {
+            // only tidiness: a folder that can't take the file works the same
+        }
     }
 
     private static boolean usable(File dir) {
