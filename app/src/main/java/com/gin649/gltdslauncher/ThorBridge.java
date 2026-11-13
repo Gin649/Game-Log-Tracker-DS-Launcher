@@ -251,7 +251,8 @@ final class ThorBridge {
     /**
      * Drops repeated covers from the cover picker's list: the same picture from two places (your frontend's copy and
      * ScreenScraper's, say), even sized or cropped differently. Of each repeat the biggest copy stays, in the place
-     * of the first one listed. The list is [{"label":..,"url":..}] and the answer, in the same form, comes back to
+     * of the first one listed. Covers from two different regions are never merged, even with the same art, so every
+     * region's cover still shows; a cover with no region (your frontend's, LaunchBox's, IGDB's) can merge with one. The list is [{"label":..,"url":..}] and the answer, in the same form, comes back to
      * window.thorDescription(reqId, json). A cover that can't be fetched is kept as it is.
      */
     @JavascriptInterface
@@ -266,11 +267,20 @@ final class ThorBridge {
                     Object[] prints = new Object[n];
                     for (int i = 0; i < n; i++) prints[i] = FanArt.printOf(coverBytes(in.getJSONObject(i).optString("url")));
                     int[] group = new int[n];
-                    for (int i = 0; i < n; i++) group[i] = i;
+                    String[] region = new String[n];
+                    for (int i = 0; i < n; i++) {
+                        group[i] = i;
+                        region[i] = regionOf(in.getJSONObject(i).optString("label"));
+                    }
+                    String[] groupRegion = region.clone();
                     for (int i = 0; i < n; i++) {
                         if (group[i] != i || prints[i] == null) continue;
                         for (int j = i + 1; j < n; j++) {
-                            if (group[j] == j && prints[j] != null && FanArt.sameImage(prints[i], prints[j])) group[j] = i;
+                            if (group[j] != j || prints[j] == null) continue;
+                            if (!groupRegion[i].isEmpty() && !region[j].isEmpty() && !groupRegion[i].equals(region[j])) continue;
+                            if (!FanArt.sameImage(prints[i], prints[j])) continue;
+                            group[j] = i;
+                            if (groupRegion[i].isEmpty()) groupRegion[i] = region[j];
                         }
                     }
                     JSONArray out = new JSONArray();
@@ -281,7 +291,11 @@ final class ThorBridge {
                             if (group[j] == i && FanArt.pixelsOf(prints[j]) > FanArt.pixelsOf(prints[best])) best = j;
                         }
                         JSONObject keep = new JSONObject(in.getJSONObject(best).toString());
-                        if (i == 0 && best != 0) keep.put("label", in.getJSONObject(0).optString("label")); // still the one shown now
+                        if (i == 0 && best != 0) {
+                            keep.put("label", in.getJSONObject(0).optString("label")); // still the one shown now
+                        } else if (region[best].isEmpty() && !groupRegion[i].isEmpty()) {
+                            keep.put("label", keep.optString("label") + " \u00b7 " + groupRegion[i]); // say whose cover it matches
+                        }
                         out.put(keep);
                     }
                     answer = out.toString();
@@ -290,6 +304,12 @@ final class ThorBridge {
                 MainActivity.deliverDescription(reqId, answer);
             }
         });
+    }
+
+    /** The region in a cover's label ("ScreenScraper · Japan" gives "Japan"), or "" when it has none. */
+    private static String regionOf(String label) {
+        int at = label == null ? -1 : label.lastIndexOf('\u00b7');
+        return at < 0 ? "" : label.substring(at + 1).trim();
     }
 
     /** A cover's bytes: your frontend's file for the app's own /art/ addresses, else downloaded. Null on failure. */
