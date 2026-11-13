@@ -80,9 +80,8 @@ final class MediaFinder {
      */
     static Found lookup(String systemFolder, String romPath) {
         Found none = new Found();
-        if (systemFolder == null || romPath == null || Config.ROMS_ROOT.isEmpty()) return none;
-        String root = Config.ROMS_ROOT + "/" + systemFolder + "/";
-        if (!romPath.startsWith(root)) return none;
+        String root = sysRoot(systemFolder, romPath);
+        if (root == null) return none;
         String rel = romPath.substring(root.length());
         String fileName = rel.substring(rel.lastIndexOf('/') + 1);
         int dot = rel.lastIndexOf('.');
@@ -98,15 +97,39 @@ final class MediaFinder {
 
     /** Just the box art (ES-DE covers, 3D boxes and the like) for a ROM, even when it also has fan art. Null when none. */
     static String boxArt(String systemFolder, String romPath) {
-        if (systemFolder == null || romPath == null || Config.ROMS_ROOT.isEmpty()) return null;
-        String root = Config.ROMS_ROOT + "/" + systemFolder + "/";
-        if (!romPath.startsWith(root)) return null;
+        String root = sysRoot(systemFolder, romPath);
+        if (root == null) return null;
         String rel = romPath.substring(root.length());
         String fileName = rel.substring(rel.lastIndexOf('/') + 1);
         int dot = rel.lastIndexOf('.');
         if (dot > rel.lastIndexOf('/')) rel = rel.substring(0, dot);
         String name = rel.substring(rel.lastIndexOf('/') + 1);
         return look(systemFolder, rel, name, fileName, true).box;
+    }
+
+    /**
+     * The folder of this system that holds the ROM, ending in "/", or null when it isn't in one. A system can have a
+     * folder in each ROM folder, so the one the ROM is actually in is used.
+     */
+    private static String sysRoot(String systemFolder, String romPath) {
+        if (systemFolder == null || romPath == null) return null;
+        SystemMap sm = Shared.systems();
+        SystemMap.Sys sys = sm == null ? null : sm.byFolder(systemFolder);
+        File d = sys == null ? null : sys.dirOf(romPath);
+        if (d != null) return d.getPath() + "/";
+        if (Config.ROMS_ROOT.isEmpty()) return null;
+        String root = Config.ROMS_ROOT + "/" + systemFolder + "/";
+        return romPath.startsWith(root) ? root : null;
+    }
+
+    /** Every folder of this system, the preferred first (gamelist.xml files and art beside the ROMs are looked for in each). */
+    private static List<File> sysDirs(String systemFolder) {
+        List<File> out = new ArrayList<File>();
+        SystemMap sm = Shared.systems();
+        SystemMap.Sys sys = sm == null ? null : sm.byFolder(systemFolder);
+        if (sys != null) out.addAll(sys.dirs);
+        if (out.isEmpty() && !Config.ROMS_ROOT.isEmpty()) out.add(new File(Config.ROMS_ROOT, systemFolder));
+        return out;
     }
 
     /** Everything one lookup needs, worked out once. */
@@ -138,10 +161,8 @@ final class MediaFinder {
             }
         }
 
-        List<File> gamelistDirs = new ArrayList<File>();
-        File romDir = new File(Config.ROMS_ROOT, systemFolder);
-        gamelistDirs.add(romDir);
-        w.sysDirs.add(romDir);
+        List<File> gamelistDirs = sysDirs(systemFolder);
+        w.sysDirs.addAll(gamelistDirs);
         for (File d : gamelistDirs) {
             Map<String, Map<Integer, String>> m = gamelist(d);
             if (m != null) w.gamelists.add(m);
@@ -299,7 +320,7 @@ final class MediaFinder {
                 if (d != null) xmls.add(new File(d, "gamelist.xml"));
             }
         }
-        if (!Config.ROMS_ROOT.isEmpty()) xmls.add(new File(new File(Config.ROMS_ROOT, systemFolder), "gamelist.xml"));
+        for (File d : sysDirs(systemFolder)) xmls.add(new File(d, "gamelist.xml"));
         String fn = romFileName.toLowerCase(Locale.ROOT);
         int dot = fn.lastIndexOf('.');
         String bare = dot > 0 ? fn.substring(0, dot) : fn;

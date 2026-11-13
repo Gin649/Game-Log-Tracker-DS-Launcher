@@ -200,14 +200,15 @@ final class Matcher {
             if (s == 0) continue;
             s += (r.sys.hack == hack) ? 15 : -15;
             s += regionBonus(r.name);
+            // on a tie the copy in the preferred ROM folder wins
             if (!hack && PatchedRoms.is(r.file)) {
-                if (s > bestPatchedScore) {
+                if (s > bestPatchedScore || (s == bestPatchedScore && bestPatched != null && r.rank < bestPatched.rank)) {
                     bestPatchedScore = s;
                     bestPatched = r;
                 }
                 continue;
             }
-            if (s > bestScore) {
+            if (s > bestScore || (s == bestScore && best != null && r.rank < best.rank)) {
                 bestScore = s;
                 best = r;
             }

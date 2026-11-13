@@ -50,7 +50,17 @@ public final class GameRepository {
      * are removed, and existing rows (favorites, play counts, art) are left alone.
      * Returns {added, removed}.
      */
+    /** Says whether a row whose file wasn't found may be removed. */
+    public interface RemoveCheck {
+        boolean mayRemove(String romPath);
+    }
+
     public int[] syncSystem(final String systemId, final List<ScannedRom> found) {
+        return syncSystem(systemId, found, null);
+    }
+
+    /** As above; with a check, a missing file's row is only removed when the check allows it. */
+    public int[] syncSystem(final String systemId, final List<ScannedRom> found, final RemoveCheck check) {
         final int[] result = new int[2];
         db.runInTransaction(new Runnable() {
             @Override
@@ -62,7 +72,7 @@ public final class GameRepository {
                 }
                 List<Integer> gone = new ArrayList<Integer>();
                 for (GameEntity g : dao.getGamesBySystem(systemId)) {
-                    if (!onDisk.contains(g.romPath)) gone.add(g.id);
+                    if (!onDisk.contains(g.romPath) && (check == null || check.mayRemove(g.romPath))) gone.add(g.id);
                 }
                 for (int i = 0; i < gone.size(); i += DELETE_CHUNK) {
                     dao.deleteByIds(gone.subList(i, Math.min(i + DELETE_CHUNK, gone.size())));

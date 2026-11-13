@@ -39,16 +39,11 @@ final class ThorBridge {
         warmApps(act);
     }
 
-    /** The file behind a /rom/<token> address, or null. Only files under the ROMs folder are ever served. */
+    /** The file behind a /rom/<token> address, or null. Only files inside the ROM folders are ever served. */
     static File romForToken(String token) {
         File f = ROM_TOKENS.get(token);
-        if (f == null || Config.ROMS_ROOT.isEmpty()) return null;
-        try {
-            String root = new File(Config.ROMS_ROOT).getCanonicalPath() + "/";
-            return f.getCanonicalPath().startsWith(root) && f.isFile() ? f : null;
-        } catch (Exception e) {
-            return null;
-        }
+        if (f == null) return null;
+        return Config.inRomFolders(f) && f.isFile() ? f : null;
     }
 
     private static synchronized String nextId() {
@@ -718,11 +713,10 @@ final class ThorBridge {
             // the address carries the file's own path, so a saved address still works after a restart
             File f = new File(new String(Base64.decode(token, Base64.URL_SAFE | Base64.NO_WRAP), "UTF-8"));
             if (!f.isFile()) return null;
+            if (Config.inRomFolders(f)) return f;
             String p = f.getCanonicalPath();
-            String[] roots = {Config.ROMS_ROOT, Config.MEDIA_ROOT};
-            for (String r : roots) {
-                if (!r.isEmpty() && p.startsWith(new File(r).getCanonicalPath() + "/")) return f;
-            }
+            String r = Config.MEDIA_ROOT;
+            if (!r.isEmpty() && p.startsWith(new File(r).getCanonicalPath() + "/")) return f;
         } catch (Exception ignored) {
         }
         return null;
@@ -841,7 +835,10 @@ final class ThorBridge {
     public String romsIn(String folder) {
         JSONArray out = new JSONArray();
         try {
-            for (RomIndex.Rom r : Shared.index().inFolder(folder)) {
+            RomIndex index = Shared.index();
+            for (RomIndex.Rom r : index.inFolder(folder)) {
+                // a game in more than one ROM folder is listed once, as the copy in the preferred folder
+                if (index.preferred(r) != r) continue;
                 out.put(romJson(r.name, r.sys, r.file.getPath()));
             }
         } catch (Exception ignored) {
@@ -951,10 +948,10 @@ final class ThorBridge {
                 if (sys == null && path != null && map != null) { // a disc the list doesn't hold: find the system by folder
                     int best = -1;
                     for (SystemMap.Sys s : map.all) {
-                        String dir = s.dir().getPath() + "/";
-                        if (path.startsWith(dir) && dir.length() > best) {
+                        File d = s.dirOf(path);
+                        if (d != null && d.getPath().length() > best) {
                             sys = s;
-                            best = dir.length();
+                            best = d.getPath().length();
                         }
                     }
                 }
@@ -1177,7 +1174,11 @@ final class ThorBridge {
         }
     }
 
-    /** The patched copies of this game's ROM that Play can offer: [{name, path}], empty when there are none. */
+    /**
+     * What holding Play can offer besides the usual game: [{name, path, kind, where}], empty when there is nothing.
+     * When the game is in more than one ROM folder, the list starts with the copy Play uses (kind "main"), then the
+     * other copies (kind "copy"). Patched copies made in ROM Hacks follow (kind "patch").
+     */
     @JavascriptInterface
     public String patchedList(String json) {
         org.json.JSONArray out = new org.json.JSONArray();
@@ -1185,18 +1186,40 @@ final class ThorBridge {
             JSONObject o = new JSONObject(json);
             PatchedRoms.load(act);
             RomIndex.Rom rom = Shared.findRom(matchTitle(o), o.optString("console"));
+            // the same game Play would start, so the copies listed are copies of that
+            RomIndex.Rom pinned = Shared.findRomByPath(o.optString("file"));
+            RomIndex.Rom played = pinned != null ? pinned : rom;
+            if (played != null) {
+                java.util.List<RomIndex.Rom> copies = Shared.index().copiesOf(played);
+                if (copies.size() > 1) {
+                    for (int i = 0; i < copies.size(); i++) {
+                        RomIndex.Rom c = copies.get(i);
+                        out.put(choiceJson(c.file, i == 0 ? "main" : "copy"));
+                    }
+                }
+            }
             if (rom == null) return out.toString();
-            for (File f : PatchedRoms.of(rom.file)) {
-                JSONObject e = new JSONObject();
-                String n = f.getName();
-                int dot = n.lastIndexOf('.');
-                e.put("name", dot > 0 ? n.substring(0, dot) : n);
-                e.put("path", f.getPath());
-                out.put(e);
+            java.util.Set<String> seen = new java.util.HashSet<String>();
+            for (RomIndex.Rom c : Shared.index().copiesOf(rom)) {
+                for (File f : PatchedRoms.of(c.file)) {
+                    if (seen.add(f.getPath())) out.put(choiceJson(f, "patch"));
+                }
             }
         } catch (Exception ignored) {
         }
         return out.toString();
+    }
+
+    private static JSONObject choiceJson(File f, String kind) throws org.json.JSONException {
+        JSONObject e = new JSONObject();
+        String n = f.getName();
+        int dot = n.lastIndexOf('.');
+        e.put("name", dot > 0 ? n.substring(0, dot) : n);
+        e.put("path", f.getPath());
+        e.put("kind", kind);
+        int i = Config.romFolderOf(f);
+        e.put("where", i < 0 ? "" : Config.folderLabel(Config.ROM_FOLDERS.get(i).path));
+        return e;
     }
 
     /** True when this file is still there, inside the ROMs folder. Used to check a patched disc made earlier. */
@@ -1220,10 +1243,9 @@ final class ThorBridge {
         try {
             File base = new File(basePath);
             File dir = base.getParentFile();
-            if (dir == null || Config.ROMS_ROOT.isEmpty()
-                    || !base.getCanonicalPath().startsWith(new File(Config.ROMS_ROOT).getCanonicalPath() + "/")) {
+            if (dir == null || !Config.inRomFolders(base)) {
                 o.put("ok", false);
-                o.put("message", "That ROM is not inside your ROMs folder.");
+                o.put("message", "That ROM is not inside one of your ROM folders.");
                 return o.toString();
             }
             String safe = fileName.replaceAll("[\\\\/:*?\"<>|]", "_");
@@ -1338,7 +1360,7 @@ final class ThorBridge {
             File f = new File(path);
             DiscPatcher.setTools(new File(act.getApplicationInfo().nativeLibraryDir, "libchdman.so"),
                     new File(act.getApplicationInfo().nativeLibraryDir, "libdolphintool.so"));
-            String why = insideRoms(f) ? DiscPatcher.unsupportedReason(f) : "That file is not inside your ROMs folder.";
+            String why = insideRoms(f) ? DiscPatcher.unsupportedReason(f) : "That file is not inside one of your ROM folders.";
             o.put("ok", why == null);
             if (why != null) o.put("message", why);
             else if (DiscPatcher.noteFor(f) != null) o.put("note", DiscPatcher.noteFor(f));
@@ -1353,12 +1375,7 @@ final class ThorBridge {
     }
 
     private static boolean insideRoms(File f) {
-        try {
-            return !Config.ROMS_ROOT.isEmpty()
-                    && f.getCanonicalPath().startsWith(new File(Config.ROMS_ROOT).getCanonicalPath() + "/");
-        } catch (Exception e) {
-            return false;
-        }
+        return Config.inRomFolders(f);
     }
 
     /** Starts handing over a patch file (small) in pieces. Returns the id for patchStageChunk / discPatchStart. */

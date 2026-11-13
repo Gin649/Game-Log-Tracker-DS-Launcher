@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-/** A list of every ROM file under your ES-DE Roms folder, grouped by system. */
+/** A list of every ROM file in your ROM folders, grouped by system, the preferred folder first. */
 final class RomIndex {
 
     static final class Rom {
@@ -20,6 +20,8 @@ final class RomIndex {
         final String bareNorm; // the same for "5587 - Chrono Trigger" without its number, or null when there is none
         /** For a multi-disc game with no .m3u: every disc in order (the entry itself is disc 1). Otherwise null. */
         List<File> discs;
+        /** The ROM folder this came from, by its place in Config.ROM_FOLDERS (0 is the preferred folder). */
+        int rank;
 
         Rom(SystemMap.Sys sys, File file, String name, String rel) {
             this.sys = sys;
@@ -61,11 +63,42 @@ final class RomIndex {
 
     synchronized void rebuild(SystemMap map) {
         List<Rom> out = new ArrayList<Rom>();
+        // the same folder can be reached twice (a single console's folder that is also inside a ROMs folder): scan it once
+        Set<String> scanned = new HashSet<String>();
         for (SystemMap.Sys s : map.all) {
-            if (Config.ROMS_ROOT.isEmpty()) break;
-            File d = s.dir();
-            if (d.isDirectory()) scan(s, d, d, 0, out);
+            for (int i = 0; i < s.dirs.size(); i++) {
+                File d = s.dirs.get(i);
+                if (!d.isDirectory()) continue;
+                String key;
+                try {
+                    key = d.getCanonicalPath();
+                } catch (Exception e) {
+                    key = d.getPath();
+                }
+                if (!scanned.add(key)) continue;
+                int from = out.size();
+                scan(s, d, d, 0, out);
+                for (int j = from; j < out.size(); j++) out.get(j).rank = s.ranks.get(i);
+            }
         }
+        // preferred folder first everywhere, so a lookup that takes the first good match takes the preferred copy
+        java.util.Collections.sort(out, new java.util.Comparator<Rom>() {
+            @Override
+            public int compare(Rom a, Rom b) {
+                return a.rank - b.rank;
+            }
+        });
+        java.util.Map<String, List<Rom>> copies = new java.util.HashMap<String, List<Rom>>();
+        for (Rom r : out) {
+            String k = copyKey(map, r);
+            List<Rom> list = copies.get(k);
+            if (list == null) {
+                list = new ArrayList<Rom>();
+                copies.put(k, list);
+            }
+            list.add(r);
+        }
+        copiesByKey = copies;
         java.util.Map<SystemMap.Sys, List<Rom>> split = new java.util.LinkedHashMap<SystemMap.Sys, List<Rom>>();
         for (Rom r : out) {
             List<Rom> list = split.get(r.sys);
@@ -78,6 +111,35 @@ final class RomIndex {
         bySys = split;
         roms = out;
         ready = true;
+    }
+
+    private volatile java.util.Map<String, List<Rom>> copiesByKey = new java.util.HashMap<String, List<Rom>>();
+
+    /**
+     * Two files are copies of the same game when they are for the same system and have the same name, whatever
+     * folder they are in ("psx" in one ROMs folder and "PS1" in another count as the same system).
+     */
+    private static String copyKey(SystemMap map, Rom r) {
+        return map.baseOf(r.sys.folder) + "|" + r.name.toLowerCase(Locale.ROOT);
+    }
+
+    /** Every copy of this ROM's game, this one included, the preferred folder first. */
+    List<Rom> copiesOf(Rom r) {
+        if (r == null) return new ArrayList<Rom>();
+        SystemMap map = Shared.systems();
+        List<Rom> list = map == null ? null : copiesByKey.get(copyKey(map, r));
+        if (list == null || list.isEmpty()) {
+            List<Rom> one = new ArrayList<Rom>();
+            one.add(r);
+            return one;
+        }
+        return list;
+    }
+
+    /** The copy of this game that Play uses: the one in the preferred folder. */
+    Rom preferred(Rom r) {
+        List<Rom> list = copiesOf(r);
+        return list.isEmpty() ? r : list.get(0);
     }
 
     /** Every ROM found by the last scan. */

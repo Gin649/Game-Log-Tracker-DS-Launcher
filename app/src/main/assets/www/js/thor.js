@@ -178,8 +178,8 @@ function thorWirePlay(card, gameId, title, consoleName, artUrl, romPath){
     msg.classList.toggle('error', !res.ok);
     msg.textContent = res.message || (res.ok ? 'Starting the game…' : 'Could not start the game.');
   };
-  // Play opens the original game. Patched copies made in ROM Hacks are a choice: hold Play (by touch, or the
-  // confirm button) to pick one.
+  // Play opens the original game, from the preferred ROM folder when it is in more than one. The other copies and
+  // patched copies made in ROM Hacks are a choice: hold Play (by touch, or the confirm button) to pick one.
   const patchedCopies = () => {
     try{ return typeof thorBridge.patchedList === 'function' ? (JSON.parse(thorBridge.patchedList(JSON.stringify(info))) || []) : []; }
     catch(e){ return []; }
@@ -193,10 +193,20 @@ function thorWirePlay(card, gameId, title, consoleName, artUrl, romPath){
     msg.textContent = res.message || (res.ok ? 'Starting the game…' : 'Could not start the game.');
   };
   const chooseCopy = () => {
-    const copies = patchedCopies();
-    if(!copies.length || btn.disabled) return false;
-    thorChoice('Which one?', 'Play opens the original game. These are the patched copies made from it in ROM Hacks.',
-      [['Original game', () => play('')]].concat(copies.map(c => [c.name, () => playFile(c.path)])));
+    const list = patchedCopies();
+    if(!list.length || btn.disabled) return false;
+    const main = list.find(c => c.kind === 'main');
+    const others = list.filter(c => c.kind === 'copy');
+    const patched = list.filter(c => c.kind !== 'main' && c.kind !== 'copy'); // older builds sent no kind: all patched
+    const where = (c) => c.where ? ' (' + c.where + ')' : '';
+    let note;
+    if(others.length && patched.length) note = 'Play opens the copy in your preferred ROM folder. Pick another copy, or a patched copy made in ROM Hacks.';
+    else if(others.length) note = 'This game is in more than one ROM folder. Play opens the copy in your preferred folder.';
+    else note = 'Play opens the original game. These are the patched copies made from it in ROM Hacks.';
+    const choices = [[main ? 'Original game' + where(main) : 'Original game', () => play('')]]
+      .concat(others.map(c => [c.name + where(c), () => playFile(c.path)]))
+      .concat(patched.map(c => [c.name, () => playFile(c.path)]));
+    thorChoice('Which one?', note, choices);
     return true;
   };
   let holdTimer = null, held = false;
@@ -214,9 +224,11 @@ function thorWirePlay(card, gameId, title, consoleName, artUrl, romPath){
     play('');
   });
   setTimeout(() => {
-    if(!card.isConnected || !patchedCopies().length) return;
+    const list = card.isConnected ? patchedCopies() : [];
+    if(!list.length) return;
     btn.setAttribute('data-hold', '1');
-    if(msg.style.display === 'none'){ msg.style.display = 'block'; msg.textContent = 'Hold Play to choose a patched copy.'; }
+    const hasCopies = list.some(c => c.kind === 'main');
+    if(msg.style.display === 'none'){ msg.style.display = 'block'; msg.textContent = hasCopies ? 'Hold Play to choose another copy.' : 'Hold Play to choose a patched copy.'; }
   }, 0);
 
   // No ROM for this game on the device: say so instead of offering Play.

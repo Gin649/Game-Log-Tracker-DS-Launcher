@@ -26,23 +26,33 @@ final class LibrarySync {
     }
 
     /**
-     * Copies the ROM scan into the database. Does nothing when storage is not readable or the ROMs folder
-     * is missing (an SD card that is out, say), so a failed scan can never wipe the library.
+     * Copies the ROM scan into the database. Does nothing when storage is not readable or no ROM folder can be
+     * read, so a failed scan can never wipe the library. With several folders, a game only counts as gone when
+     * the folder it was in can be read and the file isn't there: games on an SD card that is out are kept.
      */
     static void syncAll(Context ctx, RomIndex index, SystemMap map) {
         if (ctx == null || map == null || !index.isReady()) return;
         if (!Environment.isExternalStorageManager()) return;
-        if (Config.ROMS_ROOT.isEmpty() || !new File(Config.ROMS_ROOT).isDirectory()) return;
+        if (!Config.anyRomFolderReadable()) return;
 
         MediaFinder.reset();
         GameRepository repo = GameRepository.get(ctx);
+        GameRepository.RemoveCheck check = new GameRepository.RemoveCheck() {
+            @Override
+            public boolean mayRemove(String romPath) {
+                int i = Config.romFolderOf(new File(romPath));
+                // in none of the folders any more (that folder was taken out of setup): it goes
+                if (i < 0) return true;
+                return new File(Config.ROM_FOLDERS.get(i).path).isDirectory();
+            }
+        };
         for (SystemMap.Sys s : map.all) {
-            if (!s.dir().isDirectory()) continue; // not there right now: leave its rows alone
+            if (!s.present()) continue; // not there right now: leave its rows alone
             List<GameRepository.ScannedRom> found = new ArrayList<GameRepository.ScannedRom>();
             for (RomIndex.Rom r : index.forSystem(s)) {
                 found.add(new GameRepository.ScannedRom(cleanTitle(r.name), r.file.getPath()));
             }
-            repo.syncSystem(s.folder, found);
+            repo.syncSystem(s.folder, found, check);
         }
         linkEsdeMedia(ctx, false); // only tidies old links; each game is looked at when its profile opens, or by Fetch game art
     }

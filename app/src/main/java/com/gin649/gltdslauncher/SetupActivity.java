@@ -95,7 +95,12 @@ public class SetupActivity extends Activity {
     private boolean firstRun;
     private boolean finished;
 
-    private String raUser, raKey, romsRoot, romsTree, esRoot, raPackage, siteUrl;
+    private String raUser, raKey, esRoot, raPackage, siteUrl;
+    /** The ROM folders, the preferred one first. See Config.RomFolder. */
+    private List<Config.RomFolder> romFolders = new ArrayList<Config.RomFolder>();
+    /** The "what does this folder hold" spinner for each ROM folder on screen, and the system behind each item. */
+    private final List<Spinner> folderSpinners = new ArrayList<Spinner>();
+    private final List<List<String>> folderValues = new ArrayList<List<String>>();
     /** "esde" or "none" (any other frontend, or no frontend at all). */
     private String frontend;
     /** Folder chosen for the app's own files; empty means the default. */
@@ -133,8 +138,7 @@ public class SetupActivity extends Activity {
         raKey = get("raKey", "");
         origUser = raUser;
         origKey = raKey;
-        romsRoot = get("romsRoot", "");
-        romsTree = get("romsTree", "");
+        romFolders = Config.parseRomFolders(get("romsFolders", ""), get("romsRoot", ""), get("romsTree", ""));
         esRoot = get("esRoot", "");
         dataRoot = get("dataRoot", "");
         frontend = get("frontend", "");
@@ -215,8 +219,7 @@ public class SetupActivity extends Activity {
             d.put("raUser", raUser);
             d.put("raKey", raKey);
             d.put("sgdbKey", sgdbKey);
-            d.put("romsRoot", romsRoot);
-            d.put("romsTree", romsTree);
+            d.put("romsFolders", Config.romFoldersJson(romFolders));
             d.put("esRoot", esRoot);
             d.put("dataRoot", dataRoot);
             d.put("frontend", frontend);
@@ -251,8 +254,7 @@ public class SetupActivity extends Activity {
             raUser = d.optString("raUser", raUser);
             raKey = d.optString("raKey", raKey);
             sgdbKey = d.optString("sgdbKey", sgdbKey);
-            romsRoot = d.optString("romsRoot", romsRoot);
-            romsTree = d.optString("romsTree", romsTree);
+            if (d.has("romsFolders")) romFolders = Config.parseRomFolders(d.optString("romsFolders", ""), "", "");
             esRoot = d.optString("esRoot", esRoot);
             dataRoot = d.optString("dataRoot", dataRoot);
             frontend = d.optString("frontend", frontend);
@@ -372,6 +374,7 @@ public class SetupActivity extends Activity {
 
     private String guessEsRoot() {
         List<String> tries = new ArrayList<String>();
+        String romsRoot = Config.firstAllSystems(romFolders);
         if (!romsRoot.isEmpty()) {
             File parent = new File(romsRoot).getParentFile();
             if (parent != null) tries.add(parent.getPath() + "/ES-DE");
@@ -396,6 +399,8 @@ public class SetupActivity extends Activity {
         cbSingle = null;
         spZoom = null;
         emuSpinners.clear();
+        folderSpinners.clear();
+        folderValues.clear();
 
         titleView.setText((step + 1) + " of " + (LAST_STEP + 1) + "   " + STEP_TITLES[step]);
         backBtn.setText(step == 0 ? "Finish later" : "Back");
@@ -527,16 +532,7 @@ public class SetupActivity extends Activity {
         frontendButton("ES-DE", "esde");
         frontendButton("None / something else", "none");
 
-        text("ROMs folder", 17, TEXT);
-        text("The folder that holds one folder per system, like gba, snes and psx. Folders named in full, like "
-                + "\"Game Boy Advance\" or \"PS1\", are recognised too.", 13, MUTED);
-        text(romsRoot.isEmpty() ? "Not chosen yet" : romsRoot, 14, romsRoot.isEmpty() ? GOLD : TEAL);
-        action("Choose ROMs folder", new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                pickFolder(REQ_ROMS);
-            }
-        });
+        romFolderList();
 
         boolean mediaFound = false;
         if (frontend.equals("esde")) {
@@ -581,20 +577,197 @@ public class SetupActivity extends Activity {
         if (!summary.isEmpty()) text(summary, 13, MUTED);
     }
 
+    // ROM folders
+
+    /** The system list, for telling what a folder holds. Loaded here when the app hasn't loaded it yet. */
+    private SystemMap systemsForWizard() {
+        SystemMap m = Shared.systems();
+        if (m != null) return m;
+        if (wizardSystems == null) wizardSystems = SystemMap.load(this);
+        return wizardSystems;
+    }
+
+    private SystemMap wizardSystems;
+
+    /**
+     * What a picked folder holds: "" for a folder with a folder per system inside (gba, snes, "PS1" and so on), or the
+     * system for a folder that holds one console's games, told by its own name ("PS2", "GameCube"). When it can't be
+     * told it is treated as a folder per system, and the list says so, so the console can be picked by hand.
+     */
+    private String detectSystem(File dir) {
+        SystemMap m = systemsForWizard();
+        int inside = 0;
+        File[] kids = dir.listFiles();
+        if (kids != null) {
+            for (File k : kids) {
+                if (k.isDirectory() && !k.getName().startsWith(".") && m.systemForName(k.getName()) != null) inside++;
+            }
+        }
+        String own = m.systemForName(dir.getName());
+        if (inside >= 2 || (inside == 1 && own == null)) return "";
+        return own == null ? "" : own;
+    }
+
+    /** How a system is shown in the folder list: its RetroAchievements name and folder, like "PlayStation 2 (ps2)". */
+    private String systemLabel(String folder) {
+        SystemMap.Sys s = systemsForWizard().byFolder(folder);
+        String name = s == null || s.ra.isEmpty() ? folder : s.ra.get(0);
+        if (s != null && s.hack) name += " hacks";
+        return name.equals(folder) ? folder : name + " (" + folder + ")";
+    }
+
+    private void romFolderList() {
+        text("ROM folders", 17, TEXT);
+        text("Add the folder that holds one folder per system, like gba, snes and psx. Folders named in full, like "
+                + "\"Game Boy Advance\" or \"PS1\", are recognised too. You can also add a folder that holds just one "
+                + "console's games, like a PS2 folder on internal storage, and more than one ROMs folder.", 13, MUTED);
+        if (romFolders.size() > 1) {
+            text("When a game is in more than one folder, Play uses the first folder in this list. Hold Play to pick another copy.", 13, MUTED);
+        }
+        if (romFolders.isEmpty()) text("Not chosen yet", 14, GOLD);
+
+        SystemMap m = systemsForWizard();
+        List<String> labels = new ArrayList<String>();
+        List<String> values = new ArrayList<String>();
+        List<SystemMap.Sys> sorted = new ArrayList<SystemMap.Sys>();
+        for (SystemMap.Sys s : m.all) {
+            if (s.base.isEmpty()) sorted.add(s);
+        }
+        java.util.Collections.sort(sorted, new java.util.Comparator<SystemMap.Sys>() {
+            @Override
+            public int compare(SystemMap.Sys a, SystemMap.Sys b) {
+                return systemLabel(a.folder).compareToIgnoreCase(systemLabel(b.folder));
+            }
+        });
+        labels.add("A folder for each system");
+        values.add("");
+        for (SystemMap.Sys s : sorted) {
+            labels.add("Only " + systemLabel(s.folder));
+            values.add(s.folder);
+        }
+
+        for (int i = 0; i < romFolders.size(); i++) {
+            final int at = i;
+            final Config.RomFolder f = romFolders.get(i);
+            text((i + 1) + ". " + f.path + (i == 0 && romFolders.size() > 1 ? "   (preferred)" : ""), 14, TEAL);
+
+            File dir = new File(f.path);
+            String what;
+            int color = MUTED;
+            if (!dir.isDirectory()) {
+                what = hasFileAccess() ? "Not there right now (an SD card that is out?). Its games come back when it is." : "Allow file access to see what is in it.";
+                color = GOLD;
+            } else if (f.allSystems()) {
+                int n = 0;
+                File[] kids = dir.listFiles();
+                if (kids != null) {
+                    for (File k : kids) {
+                        if (k.isDirectory() && !k.getName().startsWith(".") && m.systemForName(k.getName()) != null) n++;
+                    }
+                }
+                if (n == 0) {
+                    what = "No system folders found in it. If it holds one console's games, pick the console below.";
+                    color = GOLD;
+                } else {
+                    what = n + (n == 1 ? " system folder found" : " system folders found");
+                }
+            } else {
+                int n = 0;
+                File[] kids = dir.listFiles();
+                if (kids != null) {
+                    for (File k : kids) {
+                        if (!k.getName().startsWith(".")) n++;
+                    }
+                }
+                what = "Holds " + systemLabel(f.system) + " games (" + n + (n == 1 ? " item" : " items") + ")";
+            }
+            text(what, 13, color);
+
+            final List<String> myValues = new ArrayList<String>(values);
+            List<String> myLabels = new ArrayList<String>(labels);
+            if (!myValues.contains(f.system)) { // a system from your own systems.json, say
+                myValues.add(f.system);
+                myLabels.add("Only " + systemLabel(f.system));
+            }
+            Spinner sp = spinner(myLabels, myValues.indexOf(f.system));
+            folderSpinners.add(sp);
+            folderValues.add(myValues);
+            sp.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(android.widget.AdapterView<?> parent, View view, int pos, long id) {
+                    // Android reports the first selection too: only a real change redraws the list
+                    if (at < romFolders.size() && pos >= 0 && pos < myValues.size() && !myValues.get(pos).equals(romFolders.get(at).system)) {
+                        collect();
+                        render();
+                    }
+                }
+
+                @Override
+                public void onNothingSelected(android.widget.AdapterView<?> parent) {
+                }
+            });
+
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            if (i > 0) {
+                Button up = new Button(this);
+                up.setText("Make preferred");
+                up.setAllCaps(false);
+                up.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        collect();
+                        Config.RomFolder moved = romFolders.remove(at);
+                        romFolders.add(0, moved);
+                        render();
+                    }
+                });
+                row.addView(up);
+            }
+            Button remove = new Button(this);
+            remove.setText("Remove");
+            remove.setAllCaps(false);
+            remove.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    collect();
+                    romFolders.remove(at);
+                    render();
+                }
+            });
+            row.addView(remove);
+            content.addView(row);
+        }
+
+        action(romFolders.isEmpty() ? "Choose ROMs folder" : "Add another ROM folder", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pickFolder(REQ_ROMS);
+            }
+        });
+    }
+
+    /** Saves the folder list, and the first ROMs folder on its own too for anything that only knows about one. */
+    private void saveRomFolders() {
+        put("romsFolders", Config.romFoldersJson(romFolders));
+        String root = "", tree = "";
+        for (Config.RomFolder f : romFolders) {
+            if (f.allSystems()) {
+                root = f.path;
+                tree = f.tree;
+                break;
+            }
+        }
+        if (root.isEmpty() && !romFolders.isEmpty()) {
+            root = romFolders.get(0).path;
+            tree = romFolders.get(0).tree;
+        }
+        put("romsRoot", root);
+        put("romsTree", tree);
+    }
+
     private String folderSummary() {
         StringBuilder sb = new StringBuilder();
-        if (!romsRoot.isEmpty()) {
-            File[] dirs = new File(romsRoot).listFiles();
-            int n = 0;
-            if (dirs != null) {
-                for (File d : dirs) {
-                    if (d.isDirectory()) n++;
-                }
-            }
-            sb.append(n).append(" system folders found in the ROMs folder");
-            if (!hasFileAccess()) sb.append(" (allow file access to see them)");
-            sb.append("\n");
-        }
         if (frontend.equals("esde") && !esRoot.isEmpty()) {
             sb.append("downloaded_media: ").append(new File(esRoot, "downloaded_media").isDirectory() ? "found" : "not found").append("\n");
             sb.append("custom_systems/es_systems.xml: ").append(new File(esRoot, "custom_systems/es_systems.xml").isFile() ? "found" : "not found");
@@ -632,8 +805,11 @@ public class SetupActivity extends Activity {
         }
         collect();
         if (requestCode == REQ_ROMS) {
-            romsRoot = path;
-            romsTree = u.toString();
+            if (Config.hasPath(romFolders, path)) {
+                Toast.makeText(this, "That folder is already in the list.", Toast.LENGTH_LONG).show();
+                return;
+            }
+            romFolders.add(new Config.RomFolder(path, u.toString(), detectSystem(new File(path))));
             if (frontend.equals("esde") && esRoot.isEmpty()) esRoot = guessEsRoot();
         } else if (requestCode == REQ_DATA) {
             dataRoot = path.endsWith("/" + DataStore.DEFAULT_FOLDER) ? path : path + "/" + DataStore.DEFAULT_FOLDER;
@@ -654,8 +830,7 @@ public class SetupActivity extends Activity {
     private void applyFolders() {
         File dataBefore = DataStore.root(this);
         put("dataRoot", effectiveDataRoot()); // saved as a real path so it can't change if file access changes later
-        put("romsRoot", romsRoot);
-        put("romsTree", romsTree);
+        saveRomFolders();
         put("esRoot", esRoot);
         put("frontend", frontend);
         Prefs.putInt(this, "useEsdeMedia", useEsdeMedia ? 1 : 0);
@@ -721,7 +896,7 @@ public class SetupActivity extends Activity {
                     } catch (Exception ignored) {
                     }
                     for (SystemMap.Sys sys : Shared.systems().all) {
-                        if (withRoms.isEmpty() ? !sys.dir().isDirectory() : !withRoms.contains(sys.folder)) continue;
+                        if (withRoms.isEmpty() ? !sys.present() : !withRoms.contains(sys.folder)) continue;
                         List<String> st = new ArrayList<String>();
                         for (String id : sys.standalones) {
                             String p = d.pkgs.get(id);
@@ -919,7 +1094,13 @@ public class SetupActivity extends Activity {
         sb.append("RetroAchievements: ").append(raUser.isEmpty() ? "not set" : raUser).append("\n");
         sb.append("SteamGridDB: ").append(sgdbKey.isEmpty() ? "not set" : "key set").append("\n");
         sb.append("Free LaunchBox art: ").append(launchBoxArt ? "on" : "off").append("\n");
-        sb.append("ROMs: ").append(romsRoot.isEmpty() ? "not chosen" : romsRoot).append("\n");
+        if (romFolders.isEmpty()) sb.append("ROMs: not chosen\n");
+        for (int i = 0; i < romFolders.size(); i++) {
+            Config.RomFolder f = romFolders.get(i);
+            sb.append(romFolders.size() == 1 ? "ROMs: " : "ROMs " + (i + 1) + ": ").append(f.path);
+            if (!f.allSystems()) sb.append(" (").append(systemLabel(f.system)).append(")");
+            sb.append("\n");
+        }
         sb.append("Frontend: ").append(frontend.equals("esde") ? "ES-DE" : "none / other").append("\n");
         if (frontend.equals("esde")) sb.append("ES-DE: ").append(esRoot.isEmpty() ? "none" : esRoot).append("\n");
         sb.append("App data: ").append(effectiveDataRoot().isEmpty() ? "the app's private folder" : effectiveDataRoot()).append("\n");
@@ -943,6 +1124,13 @@ public class SetupActivity extends Activity {
         }
         if (cbSingle != null) singleScreen = cbSingle.isChecked();
         if (spSingle != null) singleWhich = spSingle.getSelectedItemPosition() == 0 ? "top" : "bottom";
+        for (int i = 0; i < folderSpinners.size() && i < romFolders.size(); i++) {
+            List<String> values = folderValues.get(i);
+            int p = folderSpinners.get(i).getSelectedItemPosition();
+            if (p < 0 || p >= values.size()) continue;
+            Config.RomFolder f = romFolders.get(i);
+            if (!values.get(p).equals(f.system)) romFolders.set(i, new Config.RomFolder(f.path, f.tree, values.get(p)));
+        }
         if (spDisplay != null) {
             int p = spDisplay.getSelectedItemPosition();
             topDisplay = (p <= 0 || p - 1 >= displayIds.size()) ? -1 : displayIds.get(p - 1);
@@ -966,8 +1154,8 @@ public class SetupActivity extends Activity {
     private void goNext() {
         collect();
         if (step == 2) {
-            if (romsRoot.isEmpty()) {
-                Toast.makeText(this, "Choose your ROMs folder first.", Toast.LENGTH_LONG).show();
+            if (romFolders.isEmpty()) {
+                Toast.makeText(this, "Add your ROMs folder first.", Toast.LENGTH_LONG).show();
                 return;
             }
             applyFolders();
@@ -988,8 +1176,7 @@ public class SetupActivity extends Activity {
         }
 
         put("dataRoot", effectiveDataRoot());
-        put("romsRoot", romsRoot);
-        put("romsTree", romsTree);
+        saveRomFolders();
         put("esRoot", esRoot);
         put("frontend", frontend);
         Prefs.putInt(this, "launchboxArt", launchBoxArt ? 1 : 0);

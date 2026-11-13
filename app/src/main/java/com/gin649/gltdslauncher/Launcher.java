@@ -155,9 +155,10 @@ final class Launcher {
 
     /** mode: "" = ask first when a multi-disc game has no playlist, "create" = make one and play it, "first" = disc 1 only. */
     static JSONObject launch(Activity act, String title, String console, String mode, String file) {
-        // A game added from a ROM you picked keeps that file's path: play that exact file, not a look-alike by name
-        RomIndex.Rom r = Shared.findRomByPath(file);
-        if (r == null) r = Shared.findRom(title, console);
+        // A game added from a ROM you picked keeps that file's path: play that game, not a look-alike by name.
+        // When the same game is in more than one ROM folder, the copy in the preferred folder is played.
+        RomIndex.Rom pinned = Shared.findRomByPath(file);
+        RomIndex.Rom r = pinned != null ? Shared.index().preferred(pinned) : Shared.findRom(title, console);
         // Standalone emulators such as Dolphin don't read .m3u playlists: ask which disc to start instead
         if (r != null && !usesRetroArch(act, r)) {
             List<File> discs = discFiles(r);
@@ -202,7 +203,7 @@ final class Launcher {
                 return o;
             }
         }
-        if (r != null && file != null && !file.isEmpty() && r.file.getPath().equals(file)) {
+        if (r != null && pinned != null) {
             if (!Environment.isExternalStorageManager()) {
                 return result(false, "Allow \"All files access\" for this app in Android settings, then try again.");
             }
@@ -220,7 +221,7 @@ final class Launcher {
         if (rom == null) {
             List<String> folders = new ArrayList<String>();
             for (SystemMap.Sys s : Shared.systems().forConsole(console)) {
-                if (s.dir().isDirectory()) folders.add(s.folder);
+                if (s.present()) folders.add(s.folder);
             }
             String where = folders.isEmpty() ? "no Roms folder matches " + console : "looked in " + folders;
             return result(false, "No ROM found for " + Matcher.display(title.split("\\|")[0].trim()) + " (" + where + ").");
@@ -237,14 +238,14 @@ final class Launcher {
 
         SystemMap map = Shared.systems();
         SystemMap.Sys sys = null;
-        int bestLen = -1;
+        File sysDir = null;
         if (map != null) {
             String full = file.getPath();
             for (SystemMap.Sys s : map.all) {
-                String dir = s.dir().getPath() + "/";
-                if (full.startsWith(dir) && dir.length() > bestLen) {
+                File d = s.dirOf(full);
+                if (d != null && (sysDir == null || d.getPath().length() > sysDir.getPath().length())) {
                     sys = s;
-                    bestLen = dir.length();
+                    sysDir = d;
                 }
             }
         }
@@ -253,7 +254,7 @@ final class Launcher {
         String name = file.getName();
         int dot = name.lastIndexOf('.');
         String base = dot > 0 ? name.substring(0, dot) : name;
-        String rel = file.getPath().substring(sys.dir().getPath().length() + 1);
+        String rel = file.getPath().substring(sysDir.getPath().length() + 1);
         int relDot = rel.lastIndexOf('.');
         if (relDot > 0) rel = rel.substring(0, relDot);
         return launchRom(act, new RomIndex.Rom(sys, file, base, rel));
