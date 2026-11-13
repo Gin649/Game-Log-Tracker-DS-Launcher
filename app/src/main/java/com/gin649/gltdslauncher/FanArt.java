@@ -145,7 +145,82 @@ final class FanArt {
 
     /** Whether this source (a LaunchBox file name or SteamGridDB address) has been saved already. */
     static boolean has(Context ctx, GameEntity g, String source) {
-        return sources(dir(ctx, g)).contains(source);
+        File d = dir(ctx, g);
+        return sources(d).contains(source) || lines(new File(d, "same.txt")).contains(source);
+    }
+
+    /**
+     * Sources whose picture turned out to be one already kept (the same image from another site, at the same size
+     * or smaller). They are written down so they aren't downloaded again.
+     */
+    private static void noteSame(File d, String source) {
+        try {
+            d.mkdirs();
+            FileOutputStream fos = new FileOutputStream(new File(d, "same.txt"), true);
+            try {
+                fos.write((source + "\n").getBytes("UTF-8"));
+            } finally {
+                fos.close();
+            }
+        } catch (IOException ignored) {
+        }
+    }
+
+    private static Set<String> lines(File f) {
+        Set<String> out = new HashSet<String>();
+        if (!f.isFile()) return out;
+        try {
+            BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF-8"));
+            try {
+                String line;
+                while ((line = r.readLine()) != null) if (!line.isEmpty()) out.add(line);
+            } finally {
+                r.close();
+            }
+        } catch (IOException ignored) {
+        }
+        return out;
+    }
+
+    /**
+     * A picture's fingerprint for spotting the same image from another site: {difference hash, width, height}.
+     * The hash compares the brightness of neighbouring points on a 9 by 8 grid, so it stays the same when a picture
+     * is resized or saved with different compression. Null when it can't be read.
+     */
+    private static long[] fingerprint(byte[] data, File file) {
+        android.graphics.BitmapFactory.Options o = new android.graphics.BitmapFactory.Options();
+        o.inJustDecodeBounds = true;
+        if (data != null) android.graphics.BitmapFactory.decodeByteArray(data, 0, data.length, o);
+        else android.graphics.BitmapFactory.decodeFile(file.getPath(), o);
+        int w = o.outWidth, h = o.outHeight;
+        if (w <= 0 || h <= 0) return null;
+        android.graphics.BitmapFactory.Options d = new android.graphics.BitmapFactory.Options();
+        d.inSampleSize = Math.max(1, Math.min(w, h) / 64);
+        android.graphics.Bitmap b = data != null ? android.graphics.BitmapFactory.decodeByteArray(data, 0, data.length, d)
+                : android.graphics.BitmapFactory.decodeFile(file.getPath(), d);
+        if (b == null) return null;
+        android.graphics.Bitmap small = android.graphics.Bitmap.createScaledBitmap(b, 9, 8, true);
+        if (small != b) b.recycle();
+        long hash = 0;
+        for (int y = 0; y < 8; y++) {
+            for (int x = 0; x < 8; x++) {
+                hash = (hash << 1) | (luma(small.getPixel(x, y)) > luma(small.getPixel(x + 1, y)) ? 1 : 0);
+            }
+        }
+        small.recycle();
+        return new long[] {hash, w, h};
+    }
+
+    private static int luma(int c) {
+        return (299 * ((c >> 16) & 0xff) + 587 * ((c >> 8) & 0xff) + 114 * (c & 0xff)) / 1000;
+    }
+
+    /** Whether two fingerprints are the same image: nearly the same hash and the same shape. */
+    private static boolean same(long[] a, long[] b) {
+        if (a == null || b == null) return false;
+        double ra = (double) a[1] / a[2], rb = (double) b[1] / b[2];
+        if (Math.abs(ra - rb) > 0.04 * Math.max(ra, rb)) return false;
+        return Long.bitCount(a[0] ^ b[0]) <= 8;
     }
 
     /**
@@ -162,6 +237,25 @@ final class FanArt {
         synchronized (LOCK) {
             File d = dir(ctx, g);
             List<File> have = files(ctx, g);
+            // the same image from another site: only the bigger copy is kept, in the older one's place
+            long[] mine = fingerprint(data, null);
+            for (int i = 0; i < have.size(); i++) {
+                File f = have.get(i);
+                long[] theirs = fingerprint(null, f);
+                if (!same(mine, theirs)) continue;
+                if ((long) mine[1] * mine[2] <= theirs[1] * theirs[2]) {
+                    noteSame(d, source); // ours is no bigger: keep theirs
+                    return f;
+                }
+                if (!overwrite(f, data)) return f;
+                List<String> src = sourceList(d);
+                if (src.size() == have.size()) {
+                    noteSame(d, src.get(i)); // the smaller copy's site isn't fetched again either
+                    src.set(i, source);
+                    writeSources(d, src);
+                }
+                return f;
+            }
             if (have.size() >= MAX) return null;
             int next = have.isEmpty() ? 1 : num(have.get(have.size() - 1)) + 1;
             File out = new File(d, next + ".jpg");
@@ -229,6 +323,8 @@ final class FanArt {
         if (g == null) return;
         synchronized (LOCK) {
             File d = dir(ctx, g);
+            // the list of repeats only applies to pictures that are going; the next search starts afresh
+            new File(d, "same.txt").delete();
             List<File> have = files(ctx, g);
             if (have.isEmpty()) return;
             List<String> src = sourceList(d);
@@ -385,6 +481,27 @@ final class FanArt {
             d.mkdirs();
             new File(d, ".full").createNewFile();
         } catch (IOException ignored) {
+        }
+    }
+
+    /** Replaces a kept picture's file with a bigger copy of the same image, in place, so its position stays. */
+    private static boolean overwrite(File f, byte[] data) {
+        File tmp = new File(f.getPath() + ".tmp");
+        try {
+            FileOutputStream fos = new FileOutputStream(tmp);
+            try {
+                fos.write(data);
+            } finally {
+                fos.close();
+            }
+            if (!f.delete() || !tmp.renameTo(f)) {
+                tmp.delete();
+                return false;
+            }
+            return true;
+        } catch (IOException e) {
+            tmp.delete();
+            return false;
         }
     }
 
