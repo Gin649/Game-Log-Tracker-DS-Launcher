@@ -44,7 +44,7 @@ import java.util.Set;
 final class Backup {
 
     static final String FOLDER = "Backups";
-    private static final int KEEP_AUTO = 7;
+    private static final int KEEP_AUTO = 3;
     private static final int KEEP_BEFORE_RESTORE = 3;
     private static final long AUTO_EVERY_MS = 20L * 60 * 60 * 1000; // about once a day, whatever time the app is opened
     private static final int CHUNK = 512 * 1024; // characters per bridge call, as in DataStore
