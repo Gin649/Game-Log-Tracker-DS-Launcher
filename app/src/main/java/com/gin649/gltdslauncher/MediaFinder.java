@@ -30,6 +30,8 @@ final class MediaFinder {
         String fallback;
         /** Parts for building a miximage; any may be null. Only filled in when direct is null. */
         String screen, box, logo;
+        /** The cartridge or disc picture (ES-DE physicalmedia). Only looked for when the parts are asked for. */
+        String physical;
 
         /** A miximage can be built: there is no ready picture but there is a screenshot to use as the background. */
         boolean canBuild() {
@@ -37,10 +39,11 @@ final class MediaFinder {
         }
     }
 
-    private static final int FANART = 0, MIX = 1, MARQUEE = 2, BOX = 3, SCREEN = 4;
+    private static final int FANART = 0, MIX = 1, MARQUEE = 2, BOX = 3, SCREEN = 4, PHYSICAL = 5;
     /** ES-DE type folders for each kind, best first. */
     private static final String[][] ES_TYPES = {
-            {"fanart"}, {"miximages"}, {"marquees"}, {"covers", "3dboxes"}, {"screenshots", "titlescreens"}
+            {"fanart"}, {"miximages"}, {"marquees"}, {"covers", "3dboxes"}, {"screenshots", "titlescreens"},
+            {"physicalmedia"}
     };
     /** Sub-folders other tools use under a system folder (Skraper, ES classic). */
     private static final String[][] SUBS = {
@@ -48,7 +51,8 @@ final class MediaFinder {
             {"miximages", "miximage", "media/miximages"},
             {"marquees", "wheel", "media/marquees", "media/wheel"},
             {"covers", "boxart", "box2dfront", "media/covers", "media/box2dfront", "media/boxart", "", "images", "image", "media", "media/images"},
-            {"screenshots", "snaps", "titlescreens", "media/screenshots"}
+            {"screenshots", "snaps", "titlescreens", "media/screenshots"},
+            {"physicalmedia", "cartridges", "cartridge", "media/physicalmedia", "media/cartridges", "media/cartridge"}
     };
     private static final String[] EXTS = {"png", "jpg", "jpeg", "webp"};
     private static final long TTL_MS = 60 * 1000;
@@ -105,6 +109,11 @@ final class MediaFinder {
         if (dot > rel.lastIndexOf('/')) rel = rel.substring(0, dot);
         String name = rel.substring(rel.lastIndexOf('/') + 1);
         return look(systemFolder, rel, name, fileName, true).box;
+    }
+
+    /** Just the cartridge or disc picture your frontend has for a ROM (ES-DE's physicalmedia). Null when none. */
+    static String physical(RomIndex.Rom rom) {
+        return look(rom.sys.folder, rom.rel, rom.name, rom.file.getName(), true).physical;
     }
 
     /**
@@ -178,6 +187,7 @@ final class MediaFinder {
         f.screen = of(w, SCREEN);
         f.box = of(w, BOX);
         f.logo = of(w, MARQUEE);
+        if (parts) f.physical = of(w, PHYSICAL);
         if (f.screen == null) { // nothing to build a miximage on: the marquee, then box art as the last resort
             f.fallback = f.logo != null ? f.logo : f.box;
         }

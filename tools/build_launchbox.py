@@ -2,8 +2,9 @@
 """Builds the small per-console art index the app reads, from LaunchBox's public games database.
 
 LaunchBox publishes one big Metadata.zip (games, alternate names, image file names). This keeps only the
-consoles named in app/src/main/assets/launchbox.json and, per game, the file names of four pictures:
-up to six fan arts (joined with "|"), box front, a screenshot and the clear logo. One JSON file per console is written to
+consoles named in app/src/main/assets/launchbox.json and, per game, the file names of its pictures:
+up to six fan arts (joined with "|"), box front, a screenshot, the clear logo, the cartridge front and the disc.
+One JSON file per console is written to
 <out>/launchbox/, plus index.json. The app downloads only the consoles it needs; the pictures themselves
 come from images.launchbox-app.com when a game is scraped.
 
@@ -23,8 +24,11 @@ WANT = {
     'box': ['Box - Front', 'Box - Front - Reconstructed'],
     'shot': ['Screenshot - Gameplay', 'Screenshot - Game Title'],
     'logo': ['Clear Logo'],
+    'cart': ['Cart - Front'],
+    'disc': ['Disc'],
 }
-FIELDS = ['fan', 'box', 'shot', 'logo']
+# New fields go at the end: released versions of the app read the first four and ignore the rest.
+FIELDS = ['fan', 'box', 'shot', 'logo', 'cart', 'disc']
 MAX_FAN = 6
 REGION_RANK = {'': 0, 'world': 0, 'north america': 1, 'united states': 1, 'canada': 2, 'europe': 3, 'united kingdom': 3,
                'australia': 4, 'japan': 5}
@@ -159,11 +163,12 @@ def main():
         if not games:
             continue
         games.sort(key=lambda r: r[0].lower())
-        data = json.dumps({'v': 1, 'g': games}, ensure_ascii=False, separators=(',', ':'))
+        data = json.dumps({'v': 1, 'carts': 1, 'g': games}, ensure_ascii=False, separators=(',', ':'))
         with open(os.path.join(a.out, 'launchbox', key + '.json'), 'w', encoding='utf-8') as f:
             f.write(data)
         index['platforms'][key] = {'games': len(games), 'bytes': len(data.encode('utf-8'))}
-        print('%-40s %6d rows %8.1f KB' % (key, len(games), len(data.encode('utf-8')) / 1024))
+        carts, discs = sum(1 for r in games if r[5]), sum(1 for r in games if r[6])
+        print('%-40s %6d rows %8.1f KB %6d carts %6d discs' % (key, len(games), len(data.encode('utf-8')) / 1024, carts, discs))
     for key, items in descs.items():
         if not items:
             continue

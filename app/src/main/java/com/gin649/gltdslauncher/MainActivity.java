@@ -290,6 +290,19 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** The cartridge or disc picture for a game tile (Cart view), or 404 when there is none and the tile keeps its icon. */
+    private WebResourceResponse serveCart(Uri u) {
+        try {
+            java.io.File f = CartArt.find(this, u.getQueryParameter("t"), u.getQueryParameter("c"));
+            if (f == null) return errorResponse(404, "Not found");
+            java.util.Map<String, String> headers = new java.util.HashMap<String, String>();
+            headers.put("Cache-Control", "max-age=604800");
+            return new WebResourceResponse("image/webp", null, 200, "OK", headers, new java.io.FileInputStream(f));
+        } catch (Exception e) {
+            return errorResponse(404, "Not found");
+        }
+    }
+
     /** Starts the start-up animation over this screen (single-screen devices). False when the page isn't up. */
     static boolean playStartupHere() {
         final MainActivity a = current;
@@ -432,6 +445,10 @@ public class MainActivity extends Activity {
                 if (Config.APP_HOST_BUILTIN.equals(u.getHost()) && u.getPath() != null
                         && u.getPath().startsWith("/art/")) {
                     return serveArt(u.getPath().substring(5));
+                }
+                if (Config.APP_HOST_BUILTIN.equals(u.getHost()) && u.getPath() != null
+                        && u.getPath().startsWith("/cart/")) {
+                    return serveCart(u);
                 }
                 return assetLoader.shouldInterceptRequest(u);
             }

@@ -50,8 +50,10 @@ final class LaunchBoxArt {
     private static Map<String, String> platforms;
     private static final Map<String, Index> INDEXES = new HashMap<String, Index>();
 
-    /** One console's games: normalized title to its row [title, fan, box, shot, logo]. */
+    /** One console's games: normalized title to its row [title, fan, box, shot, logo, cart, disc]. */
     private static final class Index {
+        /** False for an index built before cartridge and disc pictures were listed. */
+        boolean carts;
         final List<String[]> rows = new ArrayList<String[]>();
         final Map<String, String[]> exact = new HashMap<String, String[]>();
     }
@@ -173,6 +175,55 @@ final class LaunchBoxArt {
         String[] row = match(idx, title);
         if (row == null || row[2].isEmpty()) return null;
         return IMAGE_URL + row[2];
+    }
+
+    /**
+     * Address of the game's cartridge picture (else its disc) on LaunchBox's image server, or null when it has none.
+     * An index saved on the device before these pictures were listed is fetched again, once.
+     */
+    static String cartUrl(Context ctx, String folder, String title) throws IOException {
+        String platform = platformFor(ctx, folder);
+        if (platform == null) return null;
+        String key = Matcher.compact(platform);
+        Index idx = index(ctx, key);
+        if (idx != null && !idx.carts && !idx.rows.isEmpty()) idx = withCarts(ctx, key);
+        if (idx == null) return null;
+        String[] row = match(idx, title);
+        if (row == null) return null;
+        String file = !row[5].isEmpty() ? row[5] : row[6];
+        return file.isEmpty() ? null : IMAGE_URL + file;
+    }
+
+    private static final java.util.Set<String> CART_RETRIED = new java.util.HashSet<String>();
+
+    private static synchronized Index withCarts(Context ctx, String key) throws IOException {
+        if (!CART_RETRIED.add(key)) return INDEXES.get(key);
+        File f = new File(DataStore.root(ctx), "launchbox/" + key + ".json");
+        File aside = new File(f.getPath() + ".old");
+        boolean moved = f.isFile() && f.renameTo(aside);
+        INDEXES.remove(key);
+        try {
+            Index fresh = index(ctx, key);
+            if (fresh != null && !fresh.rows.isEmpty()) {
+                aside.delete();
+                return fresh;
+            }
+        } catch (IOException e) {
+            CART_RETRIED.remove(key); // offline: try again another time
+        }
+        // nothing newer could be fetched, so go back to the copy we had
+        if (moved) {
+            f.delete();
+            aside.renameTo(f);
+        }
+        INDEXES.remove(key);
+        return index(ctx, key);
+    }
+
+    /** A picture from LaunchBox's image server as it is, or null when it isn't there or is too big. */
+    static byte[] imageBytes(String url) throws IOException {
+        if (url == null || !url.startsWith(IMAGE_URL)) return null;
+        return download(url, MAX_DOWNLOAD);
     }
 
     /** Like Matcher.norm, but a minus sign before a number counts: "Super Mario Bros. -2" is a hack, not "Super Mario Bros. 2". */
@@ -306,11 +357,13 @@ final class LaunchBoxArt {
 
         Index out = new Index();
         try {
-            JSONArray games = new JSONObject(new String(data, "UTF-8")).getJSONArray("g");
+            JSONObject root = new JSONObject(new String(data, "UTF-8"));
+            out.carts = root.optInt("carts") == 1;
+            JSONArray games = root.getJSONArray("g");
             for (int i = 0; i < games.length(); i++) {
                 JSONArray r = games.getJSONArray(i);
-                String[] row = new String[5];
-                for (int j = 0; j < 5; j++) row[j] = r.optString(j, "");
+                String[] row = new String[7];
+                for (int j = 0; j < 7; j++) row[j] = r.optString(j, "");
                 out.rows.add(row);
                 String k = lbNorm(row[0]);
                 String[] cur = out.exact.get(k);

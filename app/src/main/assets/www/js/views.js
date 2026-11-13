@@ -684,6 +684,21 @@ function renderLibrary(){
     `);
 }
 
+// Cart view (Display Options, Game art): the app looks for a picture of the game's cartridge or disc and answers
+// at this address. The address is the same every time for a game, so a list that is drawn again stays identical.
+// Hacks are left out: they would get the original game's cartridge.
+const CART_ART_BASE = 'https://appassets.androidplatform.net/cart/art';
+function cartArtAvailable(){
+  return !!window.ThorBridge;
+}
+function cartArtHtml(g){
+  if(gameArt !== 'cart' || !cartArtAvailable()) return '';
+  const title = String(g.Title || '');
+  if(!title || !g.ConsoleName || /^\s*~/.test(title)) return '';
+  const src = `${CART_ART_BASE}?t=${encodeURIComponent(title)}&c=${encodeURIComponent(g.ConsoleName)}`;
+  return `<img class="media" src="${src}" alt="" loading="lazy" decoding="async" draggable="false">`;
+}
+
 // Tile view (Display Options): the Last Played cards, in a grid with 3 to 5 tiles per row.
 function tileHtml(g, backlog){
   const isCustom = g.customConsole === true;
@@ -714,7 +729,7 @@ function tileHtml(g, backlog){
             </div>`;
   }
   return `<div class="cart" data-game-id="${g.GameID}">
-      <div class="art-wrap"><img class="art" src="${imgUrl(g.ImageIcon)}" alt="${esc(g.Title)}" loading="lazy" decoding="async">${badge}${remove}</div>
+      <div class="art-wrap"><img class="art" src="${imgUrl(g.ImageIcon)}" alt="${esc(g.Title)}" loading="lazy" decoding="async">${cartArtHtml(g)}${badge}${remove}</div>
       <div class="body"><p class="title">${esc(g.Title)}${preRaStar(g.GameID)}</p><p class="console">${esc(g.ConsoleName || '')}</p>${foot}</div>
     </div>`;
 }
@@ -747,6 +762,16 @@ function setGamesHtml(wrap, html){
 function wireGames(wrap){
   if(wrap.gamesWired) return;
   wrap.gamesWired = true;
+  // Cart view: a cartridge or disc picture that loads takes the icon's place in its tile. One that isn't there is
+  // taken away and the tile stays as it was. These events don't bubble, so they are caught on the way down.
+  wrap.addEventListener('load', (e) => {
+    const img = e.target;
+    if(img && img.classList && img.classList.contains('media') && img.parentNode) img.parentNode.classList.add('has-media');
+  }, true);
+  wrap.addEventListener('error', (e) => {
+    const img = e.target;
+    if(img && img.classList && img.classList.contains('media')) img.remove();
+  }, true);
   wrap.addEventListener('click', (e) => {
     const hit = (sel) => { const el = e.target.closest(sel); return el && wrap.contains(el) ? el : null; };
     const remove = hit('.manual-remove');

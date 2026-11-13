@@ -106,12 +106,15 @@ setTimeout(colorMenuItems, 300);
 
 
 // Game view: Game Library and Backlog as a list (default) or as tiles. A pinch sets the tiles per row, 2 to 6 (pinch-tiles.js).
-const GAMEVIEW_KEY = 'app-game-view', TILECOLS_KEY = 'app-tile-cols', CONSOLEBAR_KEY = 'app-console-bar';
+const GAMEVIEW_KEY = 'app-game-view', TILECOLS_KEY = 'app-tile-cols', CONSOLEBAR_KEY = 'app-console-bar', GAMEART_KEY = 'app-game-art';
 function applyGameViewButtons(){
   document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('on', b.dataset.view === gameView));
 }
 function applyConsoleBarButtons(){
   document.querySelectorAll('.bar-btn').forEach(b => b.classList.toggle('on', b.dataset.bar === consoleBar));
+}
+function applyGameArtButtons(){
+  document.querySelectorAll('.art-btn').forEach(b => b.classList.toggle('on', b.dataset.art === gameArt));
 }
 function redrawGameViews(){
   try{ if(libraryData && libraryData.length){ renderLibrary(); renderBacklog(); } }catch(e){}
@@ -125,7 +128,14 @@ async function initGameView(){
     if(n >= 2 && n <= 6) tileCols = n;
     const bar = await window.storage.get(CONSOLEBAR_KEY, false);
     if(bar && (bar.value === 'logos' || bar.value === 'names')) consoleBar = bar.value;
+    const art = await window.storage.get(GAMEART_KEY, false);
+    if(art && (art.value === 'art' || art.value === 'cart')) gameArt = art.value;
   }catch(e){}
+  if(!cartArtAvailable()){ // the cart pictures are found by the app itself, so there is nothing to choose in a browser
+    gameArt = 'art';
+    const row = $('#game-art-row'); if(row) row.style.display = 'none';
+  }
+  applyGameArtButtons();
   applyGameViewButtons();
   applyConsoleBarButtons();
   redrawGameViews();
@@ -136,6 +146,13 @@ document.querySelectorAll('.view-btn').forEach(b => b.addEventListener('click', 
   gameView = b.dataset.view === 'tile' ? 'tile' : 'list';
   applyGameViewButtons(); redrawGameViews();
   try{ window.storage.set(GAMEVIEW_KEY, gameView, false); }catch(err){}
+}));
+// Game art: the tiles show each game's icon, or its cartridge or disc where one is found (the rest keep their icon).
+document.querySelectorAll('.art-btn').forEach(b => b.addEventListener('click', (e) => {
+  e.stopPropagation();
+  gameArt = b.dataset.art === 'cart' ? 'cart' : 'art';
+  applyGameArtButtons(); redrawGameViews();
+  try{ window.storage.set(GAMEART_KEY, gameArt, false); }catch(err){}
 }));
 // Console bar: the consoles by name, or by their logos.
 document.querySelectorAll('.bar-btn').forEach(b => b.addEventListener('click', (e) => {
