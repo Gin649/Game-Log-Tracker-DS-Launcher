@@ -654,12 +654,21 @@ function closeGameModal(opts){
     let list = [];
     try{ list = await loadBoxCandidates(pick.ctx); }catch(e){}
     if(pick !== mine) return; // the viewer was closed or reopened meanwhile
-    const shown = mine.list[mine.idx] && mine.list[mine.idx].url;
-    // keep what is on screen first, then the others
+    const head = mine.list[mine.idx];
+    const shown = head && head.url;
+    // keep what is on screen first, then the others. A cover you chose earlier may be a smaller copy of one in the
+    // list: then the two are one entry, the bigger copy, shown in its place.
+    let full;
     const same = list.find(c => c.url === shown);
-    const rest = list.filter(c => c.url !== shown);
-    mine.list = [same ? { label: same.label, url: shown } : mine.list[mine.idx]].concat(rest);
+    if(same || !head){
+      full = (same ? [{ label: same.label, url: shown }] : []).concat(list.filter(c => c.url !== shown));
+    }else{
+      full = await dropRepeatCovers([head].concat(list));
+      if(pick !== mine) return;
+    }
+    mine.list = full.length ? full : [head];
     mine.idx = 0;
+    if(mine.list[0] && mine.list[0].url !== shown) img.src = mine.list[0].url;
     mine.loading = false; mine.loaded = true;
     renderPick();
   }
