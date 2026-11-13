@@ -183,11 +183,24 @@ final class FanArt {
     }
 
     /**
-     * A picture's fingerprint for spotting the same image from another site: {difference hash, width, height}.
-     * The hash compares the brightness of neighbouring points on a 9 by 8 grid, so it stays the same when a picture
-     * is resized or saved with different compression. Null when it can't be read.
+     * A picture's fingerprint for spotting the same image from another site: a small greyscale copy, 32 points tall,
+     * plus the full width and height. Null when it can't be read. Copies of kept pictures are remembered, so each
+     * file is only read once.
      */
-    private static long[] fingerprint(byte[] data, File file) {
+    private static final class Print {
+        int w, h;      // the small copy
+        int[] px;      // its brightness, row by row
+        long pixels;   // the picture's real size, width times height
+    }
+
+    private static final java.util.Map<String, Print> PRINTS = new java.util.concurrent.ConcurrentHashMap<String, Print>();
+
+    private static Print print(byte[] data, File file) {
+        String key = file == null ? null : file.getPath() + ":" + file.length() + ":" + file.lastModified();
+        if (key != null) {
+            Print had = PRINTS.get(key);
+            if (had != null) return had;
+        }
         android.graphics.BitmapFactory.Options o = new android.graphics.BitmapFactory.Options();
         o.inJustDecodeBounds = true;
         if (data != null) android.graphics.BitmapFactory.decodeByteArray(data, 0, data.length, o);
@@ -195,32 +208,81 @@ final class FanArt {
         int w = o.outWidth, h = o.outHeight;
         if (w <= 0 || h <= 0) return null;
         android.graphics.BitmapFactory.Options d = new android.graphics.BitmapFactory.Options();
-        d.inSampleSize = Math.max(1, Math.min(w, h) / 64);
+        d.inSampleSize = Math.max(1, h / 128);
         android.graphics.Bitmap b = data != null ? android.graphics.BitmapFactory.decodeByteArray(data, 0, data.length, d)
                 : android.graphics.BitmapFactory.decodeFile(file.getPath(), d);
         if (b == null) return null;
-        android.graphics.Bitmap small = android.graphics.Bitmap.createScaledBitmap(b, 9, 8, true);
+        Print p = new Print();
+        p.h = 32;
+        p.w = Math.max(1, Math.min(120, Math.round((float) w * p.h / h)));
+        android.graphics.Bitmap small = android.graphics.Bitmap.createScaledBitmap(b, p.w, p.h, true);
         if (small != b) b.recycle();
-        long hash = 0;
-        for (int y = 0; y < 8; y++) {
-            for (int x = 0; x < 8; x++) {
-                hash = (hash << 1) | (luma(small.getPixel(x, y)) > luma(small.getPixel(x + 1, y)) ? 1 : 0);
+        p.px = new int[p.w * p.h];
+        for (int y = 0; y < p.h; y++) {
+            for (int x = 0; x < p.w; x++) {
+                int c = small.getPixel(x, y);
+                p.px[y * p.w + x] = (299 * ((c >> 16) & 0xff) + 587 * ((c >> 8) & 0xff) + 114 * (c & 0xff)) / 1000;
             }
         }
         small.recycle();
-        return new long[] {hash, w, h};
+        p.pixels = (long) w * h;
+        if (key != null) PRINTS.put(key, p);
+        return p;
     }
 
-    private static int luma(int c) {
-        return (299 * ((c >> 16) & 0xff) + 587 * ((c >> 8) & 0xff) + 114 * (c & 0xff)) / 1000;
-    }
-
-    /** Whether two fingerprints are the same image: nearly the same hash and the same shape. */
-    private static boolean same(long[] a, long[] b) {
+    /**
+     * Whether two pictures are the same image, even cropped, framed or sized differently. The middle of the first
+     * is looked for in the second at a range of sizes and positions, and they count as the same when the best
+     * match lines up almost exactly (correlation of 0.85 or more; different art for the same game scores far lower).
+     */
+    private static boolean same(Print a, Print b) {
         if (a == null || b == null) return false;
-        double ra = (double) a[1] / a[2], rb = (double) b[1] / b[2];
-        if (Math.abs(ra - rb) > 0.04 * Math.max(ra, rb)) return false;
-        return Long.bitCount(a[0] ^ b[0]) <= 8;
+        int x0 = a.w / 4, x1 = a.w * 3 / 4, y0 = a.h / 4, y1 = a.h * 3 / 4;
+        int n = (x1 - x0) * (y1 - y0);
+        if (n < 16) return false;
+        double ma = 0;
+        for (int y = y0; y < y1; y++) for (int x = x0; x < x1; x++) ma += a.px[y * a.w + x];
+        ma /= n;
+        double va = 0;
+        for (int y = y0; y < y1; y++) for (int x = x0; x < x1; x++) {
+            double t = a.px[y * a.w + x] - ma;
+            va += t * t;
+        }
+        if (va < 1) return false; // a flat picture says nothing
+        float cxa = a.w / 2f, cya = a.h / 2f, cxb = b.w / 2f, cyb = b.h / 2f;
+        int[] vals = new int[n];
+        for (int si = 0; si <= 9; si++) {
+            float sc = 0.80f + 0.05f * si;
+            for (int dy = -a.h / 4; dy <= a.h / 4; dy++) {
+                for (int dx = -b.w / 4; dx <= b.w / 4; dx++) {
+                    int k = 0;
+                    boolean inside = true;
+                    double sum = 0;
+                    for (int y = y0; y < y1 && inside; y++) {
+                        int by = (int) ((y - cya) * sc + cyb + dy);
+                        if (by < 0 || by >= b.h) { inside = false; break; }
+                        for (int x = x0; x < x1; x++) {
+                            int bx = (int) ((x - cxa) * sc + cxb + dx);
+                            if (bx < 0 || bx >= b.w) { inside = false; break; }
+                            int v = b.px[by * b.w + bx];
+                            vals[k++] = v;
+                            sum += v;
+                        }
+                    }
+                    if (!inside) continue;
+                    double mb = sum / n, vb = 0, cov = 0;
+                    k = 0;
+                    for (int y = y0; y < y1; y++) for (int x = x0; x < x1; x++) {
+                        double tb = vals[k++] - mb;
+                        vb += tb * tb;
+                        cov += (a.px[y * a.w + x] - ma) * tb;
+                    }
+                    if (vb < 1) continue;
+                    if (cov / Math.sqrt(va * vb) >= 0.85) return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -238,12 +300,12 @@ final class FanArt {
             File d = dir(ctx, g);
             List<File> have = files(ctx, g);
             // the same image from another site: only the bigger copy is kept, in the older one's place
-            long[] mine = fingerprint(data, null);
+            Print mine = print(data, null);
             for (int i = 0; i < have.size(); i++) {
                 File f = have.get(i);
-                long[] theirs = fingerprint(null, f);
-                if (!same(mine, theirs)) continue;
-                if ((long) mine[1] * mine[2] <= theirs[1] * theirs[2]) {
+                Print theirs = print(null, f);
+                if (!same(mine, theirs) && !same(theirs, mine)) continue;
+                if (mine.pixels <= theirs.pixels) {
                     noteSame(d, source); // ours is no bigger: keep theirs
                     return f;
                 }
