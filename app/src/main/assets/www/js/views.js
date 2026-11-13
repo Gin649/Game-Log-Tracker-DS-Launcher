@@ -691,7 +691,7 @@ function renderLibrary(){
 
 // Cart view (Display Options, Game art), for the Last Played cards and the Library and Backlog tiles: the app looks for a picture of the game's cartridge or disc and answers
 // at this address. The address is the same every time for a game, so a list that is drawn again stays identical.
-// Hacks are left out: they would get the original game's cartridge.
+// A game with no picture of its cartridge gets one made from its console's blank shell and its cover.
 const CART_ART_BASE = 'https://appassets.androidplatform.net/cart/art';
 function cartArtAvailable(){
   return !!window.ThorBridge;
@@ -699,8 +699,12 @@ function cartArtAvailable(){
 function cartArtHtml(g){
   if(gameArt !== 'cart' || !cartArtAvailable()) return '';
   const title = String(g.Title || '');
-  if(!title || !g.ConsoleName || /^\s*~/.test(title)) return '';
-  const src = `${CART_ART_BASE}?t=${encodeURIComponent(title)}&c=${encodeURIComponent(g.ConsoleName)}`;
+  if(!title || !g.ConsoleName) return '';
+  // g: the game (for the cover you picked), i: its usual picture, h: a hack or the like, which never takes the
+  // original game's cartridge or cover
+  const tagged = /^\s*~/.test(title) ? '&h=1' : '';
+  const pic = imgUrl(g.ImageBoxArt || g.ImageIcon || '');
+  const src = `${CART_ART_BASE}?t=${encodeURIComponent(title)}&c=${encodeURIComponent(g.ConsoleName)}&g=${encodeURIComponent(g.GameID)}&i=${encodeURIComponent(pic)}${tagged}`;
   return `<img class="media" src="${src}" alt="" loading="lazy" decoding="async" draggable="false">`;
 }
 

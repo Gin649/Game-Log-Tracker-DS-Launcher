@@ -16,25 +16,33 @@ import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 /**
- * The picture of a game's cartridge or disc, for the tiles in Cart view. It comes from your frontend's media
- * (ES-DE's physicalmedia folder) when the game is on the device, else from LaunchBox's games database. The picture
- * is trimmed, made small and kept in the Carts folder of the app's data folder, so each game is only looked up
- * once. A game with no picture is remembered for a while, and its tile keeps its usual icon.
+ * The picture of a game's cartridge or disc, for Cart view. A real picture of it is used when there is one: your
+ * frontend's media (ES-DE's physicalmedia folder) when the game is on the device, else LaunchBox's games database.
+ * A game with neither gets a cartridge made here: its console's blank shell (see {@link Shells}) with the game's
+ * cover put in the label. Pictures are trimmed, made small and kept in the Carts folder of the app's data folder,
+ * so each game is only worked out once. A game with no picture and no shell keeps its usual icon.
  */
 final class CartArt {
 
     /** Longest side of the saved picture. Two tiles in a row on the Thor are about this wide. */
-    private static final int MAX_SIDE = 512;
+    static final int MAX_SIDE = 512;
     private static final long MISS_MS = 12L * 60 * 60 * 1000;
+    private static final long NO_COVER_MS = 10L * 60 * 1000;
 
     private static final Map<String, Object> LOCKS = new HashMap<String, Object>();
+    /** Games whose cover could not be fetched just now, so they are not asked for again on every redraw. */
+    private static final Map<String, Long> NO_COVER = new HashMap<String, Long>();
     /** LaunchBox is a free service, so only two pictures are fetched from it at a time. */
     private static final Semaphore LAUNCHBOX = new Semaphore(2);
 
     private CartArt() {}
 
-    /** The saved picture for a game, found and saved now if need be, or null when it has none. Blocks; never call on the main thread. */
-    static File find(Context ctx, String title, String console) {
+    /**
+     * The saved picture for a game, found or made now if need be, or null when it has none. gameId is the game's
+     * number in the tracker (for the cover you picked), cover is the address of its usual picture, and a hack never
+     * takes the original game's cartridge or cover. Blocks; never call on the main thread.
+     */
+    static File find(Context ctx, String title, String console, String gameId, String cover, boolean hack) {
         if (title == null || console == null) return null;
         String key = Matcher.compact(console) + ":" + Matcher.norm(title);
         if (key.length() < 3) return null;
@@ -51,47 +59,115 @@ final class CartArt {
         }
         synchronized (lock) {
             if (out.isFile() && out.length() > 0) return out;
-            CacheDb db = CacheDb.get(ctx);
-            String missKey = "cart-miss:" + key;
-            String miss = db.read(missKey);
-            if (miss != null) {
-                try {
-                    if (System.currentTimeMillis() - Long.parseLong(miss) < MISS_MS) return null;
-                } catch (NumberFormatException ignored) {
-                }
-            }
-
             SystemMap map = Shared.systems();
             List<SystemMap.Sys> systems = map == null ? new ArrayList<SystemMap.Sys>() : map.forConsole(console);
-            boolean unsure = false; // the network let us down, so "no picture" isn't certain
-            Bitmap b = null;
-            try {
-                b = fromFrontend(systems, title);
-            } catch (Throwable ignored) {
-            }
-            if (b == null && Config.LAUNCHBOX_ART) {
+            RomIndex.Rom rom = null;
+            if (!hack) {
                 try {
-                    b = fromLaunchBox(ctx, systems, title);
-                } catch (IOException e) {
-                    unsure = true;
+                    rom = romFor(systems, title);
                 } catch (Throwable ignored) {
                 }
             }
-            if (b == null) {
+
+            // a real picture of the cartridge or disc
+            CacheDb db = CacheDb.get(ctx);
+            String missKey = "cart-miss:" + key;
+            if (!hack && !recentMiss(db.read(missKey))) {
+                boolean unsure = false; // the network let us down, so "no picture" isn't certain
+                Bitmap b = null;
+                try {
+                    b = fromFrontend(rom);
+                } catch (Throwable ignored) {
+                }
+                if (b == null && Config.LAUNCHBOX_ART) {
+                    try {
+                        b = fromLaunchBox(ctx, systems, title);
+                    } catch (IOException e) {
+                        unsure = true;
+                    } catch (Throwable ignored) {
+                    }
+                }
+                if (b != null) {
+                    try {
+                        if (save(shrink(trim(b)), out)) return out;
+                    } catch (Throwable ignored) { // includes out of memory on a huge picture
+                    }
+                    return null;
+                }
                 if (!unsure) db.write(missKey, String.valueOf(System.currentTimeMillis()));
-                return null;
             }
+
+            // none: the console's blank shell with the game's cover in its label
             try {
-                return save(shrink(trim(b)), out) ? out : null;
-            } catch (Throwable t) { // includes out of memory on a huge picture
+                return custom(ctx, key, systems, rom, console, title, gameId, cover, hack);
+            } catch (Throwable t) {
                 return null;
             }
         }
     }
 
-    /** The picture your frontend has for this game's ROM, when the game is on the device and was scraped with it. */
-    private static Bitmap fromFrontend(List<SystemMap.Sys> systems, String title) {
-        if (!Config.useEsdeMedia() || systems.isEmpty()) return null;
+    private static boolean recentMiss(String saved) {
+        if (saved == null) return false;
+        try {
+            return System.currentTimeMillis() - Long.parseLong(saved) < MISS_MS;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    /**
+     * A cartridge made from the console's shell and the game's cover. It is kept under a name that goes with the
+     * shell and the cover you picked, so picking another cover (or swapping the shell) makes a new one.
+     */
+    private static File custom(Context ctx, String key, List<SystemMap.Sys> systems, RomIndex.Rom rom, String console,
+                               String title, String gameId, String cover, boolean hack) {
+        List<String> names = new ArrayList<String>();
+        if (rom != null) names.add(rom.sys.folder); // the folder the game is in comes first (Famicom before NES)
+        for (SystemMap.Sys s : systems) {
+            if (!s.hack && !names.contains(s.folder)) names.add(s.folder);
+        }
+        Shells.Shell shell = Shells.find(ctx, names, console);
+        if (shell == null) return null;
+
+        String pick = null;
+        if (gameId != null && gameId.matches("[A-Za-z0-9_.-]+")) {
+            pick = DataStore.get(ctx, "priv:boxpick:" + gameId);
+            if (pick != null) pick = pick.trim();
+            if (pick != null && pick.isEmpty()) pick = null;
+        }
+        String base = hash(key);
+        File out = new File(dir(ctx), base + "-s" + hash(shell.id + "|" + (pick == null ? "auto" : pick)) + ".webp");
+        if (out.isFile() && out.length() > 0) return out;
+
+        Long failed;
+        synchronized (NO_COVER) {
+            failed = NO_COVER.get(out.getName());
+        }
+        if (failed != null && System.currentTimeMillis() - failed < NO_COVER_MS) return null;
+
+        Bitmap art = pick == null ? null : cover(ctx, pick);
+        if (art == null && !hack) art = coverFor(ctx, systems, rom, title);
+        if (art == null) art = cover(ctx, cover);
+        Bitmap made = art == null ? null : shell.withLabel(art);
+        if (made == null || !save(shrink(trim(made)), out)) {
+            synchronized (NO_COVER) {
+                NO_COVER.put(out.getName(), System.currentTimeMillis());
+            }
+            return null;
+        }
+        // a cartridge made earlier with another cover or shell is no longer wanted
+        File[] old = dir(ctx).listFiles();
+        if (old != null) {
+            for (File f : old) {
+                if (f.getName().startsWith(base + "-s") && !f.equals(out)) f.delete();
+            }
+        }
+        return out;
+    }
+
+    /** The game's ROM on this device, or null when it isn't here. */
+    private static RomIndex.Rom romFor(List<SystemMap.Sys> systems, String title) {
+        if (systems.isEmpty()) return null;
         RomIndex index = Shared.index();
         if (index == null) return null;
         List<RomIndex.Rom> pool = new ArrayList<RomIndex.Rom>();
@@ -103,10 +179,53 @@ final class CartArt {
                 }
             }
         }
-        RomIndex.Rom rom = Matcher.best(pool, title);
-        if (rom == null) return null;
+        return Matcher.best(pool, title);
+    }
+
+    /** The picture your frontend has for this game's ROM, when the game is on the device and was scraped with it. */
+    private static Bitmap fromFrontend(RomIndex.Rom rom) {
+        if (!Config.useEsdeMedia() || rom == null) return null;
         String path = MediaFinder.physical(rom);
         return path == null ? null : MiximageCompositor.decodeFile(path, 1024);
+    }
+
+    /** The cover the tracker would show for a game that is here or listed: your frontend's first, then LaunchBox's. */
+    private static Bitmap coverFor(Context ctx, List<SystemMap.Sys> systems, RomIndex.Rom rom, String title) {
+        if (rom != null && Config.useEsdeMedia()) {
+            String path = MediaFinder.boxArt(rom.sys.folder, rom.file.getPath());
+            Bitmap b = path == null ? null : MiximageCompositor.decodeFile(path, 1024);
+            if (b != null) return b;
+        }
+        if (!Config.LAUNCHBOX_ART) return null;
+        for (SystemMap.Sys s : systems) {
+            if (s.hack) continue;
+            try {
+                String url = LaunchBoxArt.frontUrl(ctx, s.folder, title);
+                if (url != null) return cover(ctx, url);
+            } catch (IOException e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /** A cover from one of the addresses the tracker uses for them: a file your frontend has, or a picture online. */
+    private static Bitmap cover(Context ctx, String url) {
+        if (url == null || url.isEmpty()) return null;
+        try {
+            String local = "https://" + Config.APP_HOST_BUILTIN + "/art/";
+            if (url.startsWith(local)) {
+                File f = ThorBridge.artForToken(url.substring(local.length()));
+                return f == null ? null : MiximageCompositor.decodeFile(f.getPath(), 1024);
+            }
+            if (!url.startsWith("https://")) return null;
+            byte[] data = LaunchBoxArt.imageBytes(url);
+            if (data == null) data = ScreenScraperClient.download(url);
+            if (data != null) return MiximageCompositor.decode(data, 1024);
+            return Images.download(url, 1024, 1024);
+        } catch (Throwable t) {
+            return null;
+        }
     }
 
     /** LaunchBox's picture of the cartridge, else the disc. Throws when the network could not be reached. */
