@@ -310,6 +310,21 @@ final class FanArt {
      * is looked for in the second at a range of sizes and positions, and they count as the same when the best
      * match lines up almost exactly (correlation of 0.85 or more; different art for the same game scores far lower).
      */
+    /** A downloaded picture's fingerprint, for other lists that drop repeats (the box art picker). Null if unreadable. */
+    static Object printOf(byte[] data) {
+        return data == null || data.length == 0 ? null : print(data, null);
+    }
+
+    /** Whether two fingerprints from printOf are the same image, and the pixel count of one. */
+    static boolean sameImage(Object a, Object b) {
+        if (!(a instanceof Print) || !(b instanceof Print)) return false;
+        return same((Print) a, (Print) b) || same((Print) b, (Print) a);
+    }
+
+    static long pixelsOf(Object p) {
+        return p instanceof Print ? ((Print) p).pixels : 0;
+    }
+
     private static boolean same(Print a, Print b) {
         if (a == null || b == null) return false;
         int x0 = a.w / 4, x1 = a.w * 3 / 4, y0 = a.h / 4, y1 = a.h * 3 / 4;

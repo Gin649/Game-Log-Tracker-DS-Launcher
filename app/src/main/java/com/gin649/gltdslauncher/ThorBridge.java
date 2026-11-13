@@ -243,6 +243,90 @@ final class ThorBridge {
         });
     }
 
+    private static final okhttp3.OkHttpClient COVER_HTTP = new okhttp3.OkHttpClient.Builder()
+            .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(20, java.util.concurrent.TimeUnit.SECONDS)
+            .build();
+
+    /**
+     * Drops repeated covers from the cover picker's list: the same picture from two places (your frontend's copy and
+     * ScreenScraper's, say), even sized or cropped differently. Of each repeat the biggest copy stays, in the place
+     * of the first one listed. The list is [{"label":..,"url":..}] and the answer, in the same form, comes back to
+     * window.thorDescription(reqId, json). A cover that can't be fetched is kept as it is.
+     */
+    @JavascriptInterface
+    public void boxDedupeAsync(final String reqId, final String listJson) {
+        DESC_IO.execute(new Runnable() {
+            @Override
+            public void run() {
+                String answer = listJson;
+                try {
+                    JSONArray in = new JSONArray(listJson);
+                    int n = in.length();
+                    Object[] prints = new Object[n];
+                    for (int i = 0; i < n; i++) prints[i] = FanArt.printOf(coverBytes(in.getJSONObject(i).optString("url")));
+                    int[] group = new int[n];
+                    for (int i = 0; i < n; i++) group[i] = i;
+                    for (int i = 0; i < n; i++) {
+                        if (group[i] != i || prints[i] == null) continue;
+                        for (int j = i + 1; j < n; j++) {
+                            if (group[j] == j && prints[j] != null && FanArt.sameImage(prints[i], prints[j])) group[j] = i;
+                        }
+                    }
+                    JSONArray out = new JSONArray();
+                    for (int i = 0; i < n; i++) {
+                        if (group[i] != i) continue;
+                        int best = i;
+                        for (int j = i + 1; j < n; j++) {
+                            if (group[j] == i && FanArt.pixelsOf(prints[j]) > FanArt.pixelsOf(prints[best])) best = j;
+                        }
+                        JSONObject keep = new JSONObject(in.getJSONObject(best).toString());
+                        if (i == 0 && best != 0) keep.put("label", in.getJSONObject(0).optString("label")); // still the one shown now
+                        out.put(keep);
+                    }
+                    answer = out.toString();
+                } catch (Exception ignored) {
+                }
+                MainActivity.deliverDescription(reqId, answer);
+            }
+        });
+    }
+
+    /** A cover's bytes: your frontend's file for the app's own /art/ addresses, else downloaded. Null on failure. */
+    private static byte[] coverBytes(String url) {
+        if (url == null || url.isEmpty()) return null;
+        try {
+            String local = "https://" + Config.APP_HOST_BUILTIN + "/art/";
+            if (url.startsWith(local)) {
+                String path = new String(Base64.decode(url.substring(local.length()), Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING), "UTF-8");
+                File f = new File(path);
+                if (!f.isFile() || f.length() > 20L * 1024 * 1024) return null;
+                java.io.FileInputStream in = new java.io.FileInputStream(f);
+                try {
+                    ByteArrayOutputStream bo = new ByteArrayOutputStream();
+                    byte[] buf = new byte[65536];
+                    int r;
+                    while ((r = in.read(buf)) > 0) bo.write(buf, 0, r);
+                    return bo.toByteArray();
+                } finally {
+                    in.close();
+                }
+            }
+            if (!url.startsWith("http")) return null;
+            okhttp3.Response r = COVER_HTTP.newCall(new okhttp3.Request.Builder().url(url).build()).execute();
+            try {
+                if (!r.isSuccessful() || r.body() == null) return null;
+                long len = r.body().contentLength();
+                if (len > 20L * 1024 * 1024) return null;
+                return r.body().bytes();
+            } finally {
+                r.close();
+            }
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private static void addCandidate(org.json.JSONArray out, java.util.HashSet<String> seen, String label, String url) {
         if (url == null || url.isEmpty() || !seen.add(url)) return;
         try {

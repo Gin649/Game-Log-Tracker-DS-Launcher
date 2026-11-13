@@ -2,7 +2,8 @@
 // the controller's left/right) to browse other covers for the game and press "Use this one" to keep it.
 // The list of covers is only looked up when you first move away from the current picture, never when a profile opens.
 //   boxpick:<gameId>  the cover you chose (a picture address). Part of the backup, so it follows you.
-//   boxcand2:<gameId> the covers found for the game, kept 30 days (rebuilt on demand, left out of the backup).
+//   boxcand3:<gameId> the covers found for the game, kept 30 days (rebuilt on demand, left out of the backup).
+// The same cover found in two places (sized or cropped differently) is shown once, the biggest copy.
 const BOXPICK_PREFIX = 'boxpick:';
 const BOXCAND_TTL = 30 * 24 * 60 * 60 * 1000;
 const boxPickMem = new Map(); // gameId -> url | null
@@ -62,7 +63,7 @@ function nativeBoxCandidates(title, consoleName, romPath){
 // Every cover we can find for a game: [{ label, url }]. The first entry is the picture the profile shows now.
 async function loadBoxCandidates(ctx){
   const id = String(ctx.gameId);
-  const ckey = 'boxcand2:' + id; // "2": lists saved before regional covers were found are built again
+  const ckey = 'boxcand3:' + id; // "3": lists saved before repeats were dropped are built again
   try{
     const r = await window.storage.get(ckey, false);
     if(r && r.value){
@@ -86,8 +87,27 @@ async function loadBoxCandidates(ctx){
     if(g && g.cover) add('IGDB', g.cover);
     if(!g) complete = false; // IGDB couldn't be reached: this list isn't kept, so the next look asks again
   }
-  if(list.length > 1 && complete){
-    try{ await window.storage.set(ckey, JSON.stringify({ list, ts: Date.now() }), false); }catch(e){}
+  const kept = list.length > 1 ? await dropRepeatCovers(list) : list;
+  if(kept.length > 1 && complete){
+    try{ await window.storage.set(ckey, JSON.stringify({ list: kept, ts: Date.now() }), false); }catch(e){}
   }
-  return list;
+  return kept;
+}
+
+// The app compares the pictures themselves and keeps the biggest copy of each. Without the app, the list stays as it is.
+function dropRepeatCovers(list){
+  return new Promise(resolve => {
+    if(typeof thorBridge === 'undefined' || !thorBridge || typeof thorBridge.boxDedupeAsync !== 'function'){ resolve(list); return; }
+    const id = 'bd' + (++descSeq);
+    const timer = setTimeout(() => { descWaiting.delete(id); resolve(list); }, 45000);
+    descWaiting.set(id, t => {
+      clearTimeout(timer);
+      try{
+        const out = JSON.parse(t);
+        resolve(Array.isArray(out) && out.length ? out : list);
+      }catch(e){ resolve(list); }
+    });
+    try{ thorBridge.boxDedupeAsync(id, JSON.stringify(list)); }
+    catch(e){ clearTimeout(timer); descWaiting.delete(id); resolve(list); }
+  });
 }
