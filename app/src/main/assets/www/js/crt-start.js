@@ -35,7 +35,8 @@
   }
 
   window.GLTCrt = {
-    start(){
+    // quiet: the app plays the sound itself (the top screen does)
+    start(title, quiet){
       if(!built) build();
       root.style.display = 'block';
       // fills the screen: the 16:9 picture is scaled to cover it
@@ -44,7 +45,7 @@
       t0 = performance.now();
       draw(0);
       raf = requestAnimationFrame(loop);
-      try{
+      if(!quiet) try{
         if(!audio) audio = new Audio('crt-start.wav');
         audio.currentTime = 0;
         audio.play().catch(() => {});

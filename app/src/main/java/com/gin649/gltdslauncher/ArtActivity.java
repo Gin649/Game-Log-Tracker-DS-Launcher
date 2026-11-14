@@ -77,7 +77,14 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     private int cartToken;
     private AnimatorSet cartAnim;
     private AnimatorSet cartIdle;
-    private android.media.MediaPlayer soundNes, soundDisc, soundClunk;
+    /** The animation sounds, all loaded up front so they are ready the moment Play is pressed. */
+    private android.media.SoundPool sounds;
+    private int soundNes, soundDisc, soundClunk, soundStatic;
+    /** Sounds that have finished loading, and one asked for before it had (played as soon as it is ready). */
+    private final java.util.Set<Integer> soundsReady = new java.util.HashSet<Integer>();
+    private int soundWaiting;
+    private long soundWaitingAt;
+    private int staticStream;
     /** Which animation and sound the cartridge on show gets: an NES cartridge, any other cartridge, or a disc. */
     private int cartKind;
     /** Plain black over everything while the emulator takes the screen, so the fan art never flashes back up. */
@@ -200,9 +207,8 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         root.addView(blackout, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
         // a cartridge going in and its power switch, the NES one being pressed down, and a disc drive spinning up
-        soundNes = loadSound(R.raw.cart_nes);
-        soundDisc = loadSound(R.raw.disc_spin);
-        soundClunk = loadSound(R.raw.cart_clunk);
+        // and the old TV's static
+        loadSounds();
 
         setContentView(root);
         applyThemeNow();
@@ -335,12 +341,11 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         resumed = false;
         TopPanel.setViewAlive(false);
         if (panel != null) panel.destroy();
-        for (android.media.MediaPlayer p : new android.media.MediaPlayer[]{soundNes, soundDisc, soundClunk}) {
-            try {
-                if (p != null) p.release();
-            } catch (Exception ignored) {
-            }
+        try {
+            if (sounds != null) sounds.release();
+        } catch (Exception ignored) {
         }
+        sounds = null;
         cartShowing = false;
         super.onDestroy();
     }
@@ -640,7 +645,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         final AnimatorSet set = new AnimatorSet();
         if (cartKind != KIND_DISC) {
             // The sound starts as the drop starts, so the clunk in it lands as the cartridge seats.
-            final android.media.MediaPlayer sound = cartKind == KIND_NES ? soundNes : soundClunk;
+            final int sound = cartKind == KIND_NES ? soundNes : soundClunk;
             down.addListener(new AnimatorListenerAdapter() {
                 @Override
                 public void onAnimationStart(Animator animation) {
@@ -687,37 +692,69 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         cart.setRotationY(0f);
     }
 
-    /** A sound kept ready to play, at the same volume setting as the app's other sound. Null when it can't be loaded. */
-    private android.media.MediaPlayer loadSound(int resource) {
+    /**
+     * Loads the sounds into a SoundPool, which is made for short sounds like these. They used to be MediaPlayers,
+     * which sometimes stayed silent: winding one back to the start happens in the background, and starting it
+     * before that had finished could play nothing at all.
+     */
+    private void loadSounds() {
         try {
-            android.media.MediaPlayer p = android.media.MediaPlayer.create(this, resource);
-            if (p != null) p.setVolume(0.9f, 0.9f);
-            return p;
+            android.media.AudioAttributes attrs = new android.media.AudioAttributes.Builder()
+                    .setUsage(android.media.AudioAttributes.USAGE_GAME)
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build();
+            sounds = new android.media.SoundPool.Builder().setMaxStreams(3).setAudioAttributes(attrs).build();
+            sounds.setOnLoadCompleteListener(new android.media.SoundPool.OnLoadCompleteListener() {
+                @Override
+                public void onLoadComplete(android.media.SoundPool pool, int id, int status) {
+                    if (status != 0) return;
+                    soundsReady.add(id);
+                    // asked for while it was still loading (Play pressed right after the app opened): play it now,
+                    // unless so long has passed that it would no longer match the animation
+                    if (id == soundWaiting && System.currentTimeMillis() - soundWaitingAt < 600) {
+                        soundWaiting = 0;
+                        playNow(id);
+                    }
+                }
+            });
+            soundNes = sounds.load(this, R.raw.cart_nes, 1);
+            soundDisc = sounds.load(this, R.raw.disc_spin, 1);
+            soundClunk = sounds.load(this, R.raw.cart_clunk, 1);
+            soundStatic = sounds.load(this, R.raw.crt_start, 1);
         } catch (Exception e) {
-            return null;
+            sounds = null; // no sound is fine
         }
     }
 
-    private void playSound(final android.media.MediaPlayer p) {
-        try {
-            if (p == null) return;
-            if (p.isPlaying()) p.pause();
-            // Only wind back when it has played before. Winding back a sound that has never been played, then
-            // starting it straight away, left the first game after opening the app silent.
-            if (p.getCurrentPosition() > 0) p.seekTo(0);
-            p.start();
-            // and if it still hasn't started a moment later, ask once more
-            cart.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        if (!p.isPlaying() && p.getCurrentPosition() == 0) p.start();
-                    } catch (Exception ignored) {
-                    }
-                }
-            }, 120);
-        } catch (Exception ignored) { // no sound is fine
+    /** Plays one of the sounds, or plays it once it has loaded. Returns the stream, or 0. */
+    private int playSound(int id) {
+        if (sounds == null || id == 0) return 0;
+        if (!soundsReady.contains(id)) {
+            soundWaiting = id;
+            soundWaitingAt = System.currentTimeMillis();
+            return 0;
         }
+        return playNow(id);
+    }
+
+    private int playNow(int id) {
+        try {
+            int stream = sounds.play(id, 0.9f, 0.9f, 1, 0, 1f);
+            if (id == soundStatic) staticStream = stream;
+            return stream;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private void stopStaticSound() {
+        if (sounds == null) return;
+        try {
+            if (staticStream != 0) sounds.stop(staticStream);
+        } catch (Exception ignored) {
+        }
+        staticStream = 0;
+        if (soundWaiting == soundStatic) soundWaiting = 0;
     }
 
     private void startStatic(String title) {
@@ -730,7 +767,9 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         panel.setVisibility(View.VISIBLE);
         caption.setVisibility(View.GONE);
         badge.setVisibility(View.GONE);
-        panel.evaluateJavascript("GLTCrt.start(" + JSONObject.quote(title == null ? "" : title) + ")", null);
+        // the static's sound is played here rather than by the page, which didn't always manage it
+        panel.evaluateJavascript("GLTCrt.start(" + JSONObject.quote(title == null ? "" : title) + ",true)", null);
+        playSound(soundStatic);
     }
 
     private void endStartup() {
@@ -738,6 +777,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         startupOn = false;
         resetCart();
         if (panelReady) panel.evaluateJavascript("GLTCrt.stop()", null);
+        stopStaticSound();
         syncFallback();
         render(ArtBus.get());
     }
