@@ -109,6 +109,9 @@ setTimeout(colorMenuItems, 300);
 const GAMEVIEW_KEY = 'app-game-view', TILECOLS_KEY = 'app-tile-cols', CONSOLEBAR_KEY = 'app-console-bar', GAMEART_KEY = 'app-game-art';
 function applyGameViewButtons(){
   document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('on', b.dataset.view === gameView));
+  // Tile View Options only shows while Tile View is chosen (and only in the app, which finds the cart pictures)
+  const row = $('#game-art-row');
+  if(row) row.style.display = (gameView === 'tile' && cartArtAvailable()) ? '' : 'none';
 }
 function applyConsoleBarButtons(){
   document.querySelectorAll('.bar-btn').forEach(b => b.classList.toggle('on', b.dataset.bar === consoleBar));
@@ -131,10 +134,7 @@ async function initGameView(){
     const art = await window.storage.get(GAMEART_KEY, false);
     if(art && (art.value === 'art' || art.value === 'cart')) gameArt = art.value;
   }catch(e){}
-  if(!cartArtAvailable()){ // the cart pictures are found by the app itself, so there is nothing to choose in a browser
-    gameArt = 'art';
-    const row = $('#game-art-row'); if(row) row.style.display = 'none';
-  }
+  if(!cartArtAvailable()) gameArt = 'art'; // the cart pictures are found by the app itself, so there is nothing to choose in a browser
   applyGameArtButtons();
   applyGameViewButtons();
   applyConsoleBarButtons();

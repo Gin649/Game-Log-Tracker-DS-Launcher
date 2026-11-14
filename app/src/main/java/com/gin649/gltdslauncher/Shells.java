@@ -79,7 +79,7 @@ final class Shells {
     static Shell find(Context ctx, List<String> folders, String console) {
         SystemMap map = Shared.systems();
         File[] mine = new File(DataStore.root(ctx), "Shells").listFiles();
-        String byName = Matcher.compact(console);
+        String byName = pc(console) ? "pc" : Matcher.compact(console);
         for (int pass = 0; pass < 2; pass++) {
             // pass 0 is your Shells folder, pass 1 the shells that come with the app
             for (String folder : folders) {
@@ -92,6 +92,13 @@ final class Shells {
             }
         }
         return null;
+    }
+
+    /** A PC game, however its console is written ("PC", "Windows", "PC (Microsoft Windows)"). It gets a plain disc. */
+    static boolean pc(String console) {
+        String n = Matcher.compact(console);
+        return n.equals("pc") || n.equals("windows") || n.equals("pcwindows") || n.equals("microsoftwindows")
+                || n.equals("pcmicrosoftwindows");
     }
 
     private static Shell fromFolder(File[] dirs, SystemMap map, String folder, String consoleName) {

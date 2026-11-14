@@ -751,6 +751,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
                 try {
                     java.io.File f = CartArt.find(ArtActivity.this, v[0], v[1], v[2], v[3], v[0].trim().startsWith("~"), false);
                     if (f != null) b = android.graphics.BitmapFactory.decodeFile(f.getPath());
+                    if (Shells.pc(v[1])) disc = true;
                     SystemMap map = Shared.systems();
                     if (map != null) {
                         for (SystemMap.Sys sys : map.forConsole(v[1])) {
