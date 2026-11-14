@@ -78,7 +78,9 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     private AnimatorSet cartAnim;
     private AnimatorSet cartIdle;
     private android.media.SoundPool sounds;
-    private int soundCart, soundDisc;
+    private int soundCart, soundDisc, soundClunk;
+    /** Which animation and sound the cartridge on show gets: an NES cartridge, any other cartridge, or a disc. */
+    private int cartKind;
     /** Plain black over everything while the emulator takes the screen, so the fan art never flashes back up. */
     private View blackout;
     private WebView panel;
@@ -207,6 +209,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
                     .build();
             soundCart = sounds.load(this, R.raw.cart_insert, 1);
             soundDisc = sounds.load(this, R.raw.disc_spin, 1);
+            soundClunk = sounds.load(this, R.raw.cart_clunk, 1);
         } catch (Exception e) {
             sounds = null;
         }
@@ -499,15 +502,30 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         startStatic(title);
     }
 
-    /** How long the cartridge takes to go in, before the old TV comes on. The launcher waits this much longer. */
-    static final int CART_INSERT_MS = 1700;
+    /** How long a cartridge or disc takes to go in, before the old TV comes on. The launcher waits this much longer. */
+    private static final int CART_INSERT_MS = 1700;
+    /**
+     * Cartridges other than the NES one have a longer sound: the slide and clunk as it seats, then the click of a
+     * power switch. The clunk is this far into the sound and the switch this far after the clunk. The cartridge
+     * stays seated until the switch clicks, and that is when the old TV comes on.
+     */
+    private static final int CLUNK_AT_MS = 400, SWITCH_AFTER_MS = 520;
+    /** When the cartridge is seated: the float over, the pause and the drop (700 + 380 + 440). */
+    private static final int SEATED_AT_MS = 1520;
+
+    private static final int KIND_CART = 0, KIND_NES = 1, KIND_DISC = 2;
+
+    private static int insertMs(int kind) {
+        return kind == KIND_CART ? SEATED_AT_MS + SWITCH_AFTER_MS : CART_INSERT_MS;
+    }
 
     /** The extra wait before a game starts while its cartridge goes in on this screen, or 0 when none is showing. */
     static int cartInsertMs() {
-        return cartShowing && resumed ? CART_INSERT_MS : 0;
+        return cartShowing && resumed ? insertMs(cartKindShowing) : 0;
     }
 
     private static volatile boolean cartShowing;
+    private static volatile int cartKindShowing;
 
     /** Where the picture really is inside its square: {width, height, centre x, centre y}. It sits bottom right. */
     private float[] cartBox() {
@@ -593,7 +611,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         down.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
-                if (!cartIsDisc) playSound(soundCart); // the thunk lands as it seats
+                if (cartKind == KIND_NES) playSound(soundCart); // the thunk lands as it seats
             }
         });
         ObjectAnimator bumpUp = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, seatY, seatY - tall * 0.035f);
@@ -603,8 +621,24 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         settle.setDuration(110);
 
         AnimatorSet path = new AnimatorSet();
-        path.playSequentially(rise, hang, down, bumpUp, settle); // 700 + 380 + 440 + 70 + 110 = CART_INSERT_MS
-        AnimatorSet set = new AnimatorSet();
+        if (cartKind == KIND_CART) {
+            // seated, it waits for the power switch to click
+            ObjectAnimator wait = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, seatY, seatY);
+            wait.setDuration(SWITCH_AFTER_MS - 180);
+            path.playSequentially(rise, hang, down, bumpUp, settle, wait); // 1520 to seat, then 520 to the switch
+        } else {
+            path.playSequentially(rise, hang, down, bumpUp, settle); // 700 + 380 + 440 + 70 + 110 = CART_INSERT_MS
+        }
+        final AnimatorSet set = new AnimatorSet();
+        if (cartKind == KIND_CART) {
+            // started early, so the clunk in it lands just as the cartridge seats
+            cart.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    if (cartAnim == set) playSound(soundClunk);
+                }
+            }, SEATED_AT_MS - CLUNK_AT_MS);
+        }
         if (cartIsDisc) {
             ObjectAnimator spin = ObjectAnimator.ofFloat(cart, View.ROTATION, 0f, 2160f);
             spin.setDuration(CART_INSERT_MS);
@@ -699,7 +733,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
             @Override
             public void run() {
                 Bitmap b = null;
-                boolean disc = false;
+                boolean disc = false, nes = Matcher.compact(v[1]).equals("nes");
                 try {
                     java.io.File f = CartArt.find(ArtActivity.this, v[0], v[1], v[2], v[3], v[0].trim().startsWith("~"));
                     if (f != null) b = android.graphics.BitmapFactory.decodeFile(f.getPath());
@@ -707,18 +741,21 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
                     if (map != null) {
                         for (SystemMap.Sys sys : map.forConsole(v[1])) {
                             if ("disc".equals(sys.media)) disc = true;
+                            if ("nes".equals(sys.folder) || "famicom".equals(sys.folder)) nes = true;
                         }
                     }
                 } catch (Throwable ignored) {
                 }
                 final Bitmap bitmap = b;
                 final boolean isDisc = disc;
+                final int kind = disc ? KIND_DISC : nes ? KIND_NES : KIND_CART;
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         if (mine != cartToken || isFinishing() || bitmap == null) return;
                         resetCart();
                         cartIsDisc = isDisc;
+                        cartKind = kind;
                         cart.setImageBitmap(bitmap);
                         cart.setTag(key);
                         syncCart();
@@ -733,6 +770,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         boolean show = cart.getDrawable() != null && artShown && (!startupOn || cartAnim != null);
         cart.setVisibility(show ? View.VISIBLE : View.GONE);
         cartShowing = show && !startupOn;
+        cartKindShowing = cartKind;
         if (show && !startupOn) {
             // once it has a size: it has none until it has been laid out
             cart.post(new Runnable() {
