@@ -347,6 +347,8 @@ final class Launcher {
         boolean wantAnim = !"0".equals(Prefs.get(act, "startupAnim", "1"));
         // The top screen always gets it. The screen the launcher is on gets it too when the game uses both screens,
         // or when there is only the one.
+        // A cartridge floating on the top screen goes in first, so the game waits that much longer.
+        final long cartMs = wantAnim ? ArtActivity.cartInsertMs() : 0;
         boolean onTop = wantAnim && ArtActivity.playStartup(rom.name);
         boolean onHere = wantAnim && (dual || !DisplayPicker.topScreenInUse(act)) && MainActivity.playStartupHere();
         boolean animOn = onTop || onHere;
@@ -364,7 +366,7 @@ final class Launcher {
                     ArtWatch.start(fact, pkg, Playtime.key(fact, from));
                     LibrarySync.markPlayed(fact, from);
                 }
-            }, START_DELAY_MS);
+            }, START_DELAY_MS + (onTop ? cartMs : 0));
             return result(true, "Starting " + rom.name + " in " + started + "...");
         }
 

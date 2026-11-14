@@ -13,6 +13,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.webkit.JavascriptInterface;
@@ -75,6 +76,11 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     private boolean cartIsDisc;
     private int cartToken;
     private AnimatorSet cartAnim;
+    private AnimatorSet cartIdle;
+    private android.media.SoundPool sounds;
+    private int soundCart, soundDisc;
+    /** Plain black over everything while the emulator takes the screen, so the fan art never flashes back up. */
+    private View blackout;
     private WebView panel;
     private volatile boolean panelReady;
     private boolean startupOn;
@@ -187,6 +193,24 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
             }
         });
 
+        blackout = new View(this);
+        blackout.setBackgroundColor(Color.BLACK);
+        blackout.setVisibility(View.GONE);
+        root.addView(blackout, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+
+        // the thunk of a cartridge going in, and a disc drive spinning up
+        try {
+            sounds = new android.media.SoundPool.Builder().setMaxStreams(2)
+                    .setAudioAttributes(new android.media.AudioAttributes.Builder()
+                            .setUsage(android.media.AudioAttributes.USAGE_GAME)
+                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
+                    .build();
+            soundCart = sounds.load(this, R.raw.cart_insert, 1);
+            soundDisc = sounds.load(this, R.raw.disc_spin, 1);
+        } catch (Exception e) {
+            sounds = null;
+        }
+
         setContentView(root);
         applyThemeNow();
         TopPanel.setViewAlive(true);
@@ -289,6 +313,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
         resumed = true;
+        blackout.setVisibility(View.GONE);
         TopPanel.setViewShown(true);
         ArtBus.attach(this);
         TopPanel.attachView(this);
@@ -300,6 +325,9 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     @Override
     protected void onPause() {
         resumed = false;
+        // A game is opening over this screen: go black behind the static rather than back to the fan art, which
+        // used to show for a moment before the emulator appeared.
+        if (startupOn) blackout.setVisibility(View.VISIBLE);
         endStartup();
         TopPanel.setViewShown(false);
         ArtBus.attach(null);
@@ -314,6 +342,8 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         resumed = false;
         TopPanel.setViewAlive(false);
         if (panel != null) panel.destroy();
+        if (sounds != null) sounds.release();
+        cartShowing = false;
         super.onDestroy();
     }
 
@@ -469,40 +499,120 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         startStatic(title);
     }
 
+    /** How long the cartridge takes to go in, before the old TV comes on. The launcher waits this much longer. */
+    static final int CART_INSERT_MS = 1700;
+
+    /** The extra wait before a game starts while its cartridge goes in on this screen, or 0 when none is showing. */
+    static int cartInsertMs() {
+        return cartShowing && resumed ? CART_INSERT_MS : 0;
+    }
+
+    private static volatile boolean cartShowing;
+
+    /** Where the picture really is inside its square: {width, height, centre x, centre y}. It sits bottom right. */
+    private float[] cartBox() {
+        float w = cart.getWidth(), h = cart.getHeight();
+        float pw = w, ph = h;
+        android.graphics.drawable.Drawable d = cart.getDrawable();
+        if (d != null && d.getIntrinsicWidth() > 0 && d.getIntrinsicHeight() > 0) {
+            float k = Math.min(w / d.getIntrinsicWidth(), h / d.getIntrinsicHeight());
+            pw = d.getIntrinsicWidth() * k;
+            ph = d.getIntrinsicHeight() * k;
+        }
+        return new float[]{pw, ph, w - pw / 2f, h - ph / 2f};
+    }
+
+    /** While it floats in the corner the cartridge turns gently from side to side, so it is not a still picture. */
+    private void startIdle() {
+        if (cartIdle != null || cartAnim != null || cart.getWidth() == 0) return;
+        float[] box = cartBox();
+        cart.setPivotX(box[2]);
+        cart.setPivotY(box[3]);
+        cart.setCameraDistance(9000 * getResources().getDisplayMetrics().density);
+        ObjectAnimator turn = ObjectAnimator.ofFloat(cart, View.ROTATION_Y, -20f, 20f);
+        turn.setDuration(2600);
+        turn.setRepeatCount(ObjectAnimator.INFINITE);
+        turn.setRepeatMode(ObjectAnimator.REVERSE);
+        turn.setInterpolator(new AccelerateDecelerateInterpolator());
+        ObjectAnimator bob = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, 0f, -cart.getHeight() * 0.025f);
+        bob.setDuration(1900);
+        bob.setRepeatCount(ObjectAnimator.INFINITE);
+        bob.setRepeatMode(ObjectAnimator.REVERSE);
+        bob.setInterpolator(new AccelerateDecelerateInterpolator());
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(turn, bob);
+        cartIdle = set;
+        set.start();
+    }
+
+    private void stopIdle() {
+        if (cartIdle != null) {
+            cartIdle.cancel();
+            cartIdle = null;
+        }
+    }
+
     /**
-     * The cartridge slides down behind the title bar as if pushed into a slot, with a small bump as it seats. A disc
-     * spins up first and keeps spinning as it drops. It is short, so starting a game does not feel any slower.
+     * Play was pressed: the cartridge floats to the middle of the screen, hangs there a moment, then drops down
+     * behind the title bar as if pushed into a slot, with a thunk as it seats. A disc spins up on the way, with the
+     * sound of a drive, and is still spinning as it drops. Then the old TV comes on.
      */
     private void insertCart(final Runnable then) {
         if (cartAnim != null) cartAnim.cancel();
-        // how tall the picture really is inside its square (a wide cartridge is shorter than a disc)
-        float tall = cart.getHeight();
-        android.graphics.drawable.Drawable d = cart.getDrawable();
-        if (d != null && d.getIntrinsicWidth() > 0) {
-            tall = Math.min(tall, cart.getWidth() * d.getIntrinsicHeight() / (float) d.getIntrinsicWidth());
-        }
-        float drop = tall * 0.78f; // most of it goes out of sight; the top stays showing, seated
-        ObjectAnimator down = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, 0f, drop);
-        down.setDuration(cartIsDisc ? 360 : 420);
-        down.setInterpolator(new AccelerateInterpolator(1.6f));
-        ObjectAnimator bumpUp = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, drop, drop - tall * 0.03f);
-        bumpUp.setDuration(60);
+        stopIdle();
+        View root = (View) cart.getParent();
+        float[] box = cartBox();
+        cart.setPivotX(box[2]);
+        cart.setPivotY(box[3]);
+        final float grow = 1.3f;
+        float fromX = cart.getTranslationX(), fromY = cart.getTranslationY();
+        // the middle of the screen, a little above centre so the drop has somewhere to go
+        float midX = root.getWidth() / 2f - (cart.getLeft() + box[2]);
+        float midY = root.getHeight() * 0.44f - (cart.getTop() + box[3]);
+        // seated: most of it behind the title bar, the top edge still showing
+        float barTop = root.getHeight() - (caption.getVisibility() == View.VISIBLE ? caption.getHeight() : 0);
+        float tall = box[1] * grow;
+        float seatY = (barTop - tall * 0.16f + tall / 2f) - (cart.getTop() + box[3]);
+
+        AnimatorSet rise = new AnimatorSet();
+        rise.playTogether(
+                ObjectAnimator.ofFloat(cart, View.TRANSLATION_X, fromX, midX),
+                ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, fromY, midY),
+                ObjectAnimator.ofFloat(cart, View.SCALE_X, cart.getScaleX(), grow),
+                ObjectAnimator.ofFloat(cart, View.SCALE_Y, cart.getScaleY(), grow),
+                ObjectAnimator.ofFloat(cart, View.ROTATION_Y, cart.getRotationY(), 0f));
+        rise.setDuration(700);
+        rise.setInterpolator(new DecelerateInterpolator(1.6f));
+
+        ObjectAnimator hang = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, midY, midY - tall * 0.03f, midY);
+        hang.setDuration(380);
+
+        ObjectAnimator down = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, midY, seatY);
+        down.setDuration(440);
+        down.setInterpolator(new AccelerateInterpolator(1.7f));
+        down.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (!cartIsDisc) playSound(soundCart); // the thunk lands as it seats
+            }
+        });
+        ObjectAnimator bumpUp = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, seatY, seatY - tall * 0.035f);
+        bumpUp.setDuration(70);
         bumpUp.setInterpolator(new DecelerateInterpolator());
-        ObjectAnimator settle = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, drop - tall * 0.03f, drop);
-        settle.setDuration(70);
+        ObjectAnimator settle = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, seatY - tall * 0.035f, seatY);
+        settle.setDuration(110);
+
+        AnimatorSet path = new AnimatorSet();
+        path.playSequentially(rise, hang, down, bumpUp, settle); // 700 + 380 + 440 + 70 + 110 = CART_INSERT_MS
         AnimatorSet set = new AnimatorSet();
         if (cartIsDisc) {
-            cart.setPivotX(cart.getWidth() - cart.getHeight() / 2f); // the disc sits at the right of its box
-            cart.setPivotY(cart.getHeight() / 2f);
-            ObjectAnimator spin = ObjectAnimator.ofFloat(cart, View.ROTATION, 0f, 900f);
-            spin.setDuration(700);
-            spin.setInterpolator(new AccelerateInterpolator(1.4f));
-            down.setStartDelay(210); // it spins up where it is, then drops
-            AnimatorSet slide = new AnimatorSet();
-            slide.playSequentially(down, bumpUp, settle);
-            set.playTogether(spin, slide);
+            ObjectAnimator spin = ObjectAnimator.ofFloat(cart, View.ROTATION, 0f, 2160f);
+            spin.setDuration(CART_INSERT_MS);
+            spin.setInterpolator(new AccelerateInterpolator(1.5f));
+            set.playTogether(path, spin);
+            playSound(soundDisc);
         } else {
-            set.playSequentially(down, bumpUp, settle);
+            set.play(path);
         }
         set.addListener(new AnimatorListenerAdapter() {
             private boolean cancelled;
@@ -525,8 +635,20 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     /** Puts the cartridge back where it floats, after a game or when another game is looked at. */
     private void resetCart() {
         if (cartAnim != null) cartAnim.cancel();
+        stopIdle();
+        cart.setTranslationX(0f);
         cart.setTranslationY(0f);
+        cart.setScaleX(1f);
+        cart.setScaleY(1f);
         cart.setRotation(0f);
+        cart.setRotationY(0f);
+    }
+
+    private void playSound(int id) {
+        try {
+            if (sounds != null && id != 0) sounds.play(id, 0.9f, 0.9f, 1, 0, 1f);
+        } catch (Exception ignored) { // no sound is fine
+        }
     }
 
     private void startStatic(String title) {
@@ -610,6 +732,18 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     private void syncCart() {
         boolean show = cart.getDrawable() != null && artShown && (!startupOn || cartAnim != null);
         cart.setVisibility(show ? View.VISIBLE : View.GONE);
+        cartShowing = show && !startupOn;
+        if (show && !startupOn) {
+            // once it has a size: it has none until it has been laid out
+            cart.post(new Runnable() {
+                @Override
+                public void run() {
+                    if (cart.getVisibility() == View.VISIBLE && !startupOn) startIdle();
+                }
+            });
+        } else if (!show) {
+            stopIdle();
+        }
     }
 
     private void render(final ArtBus.State s) {
