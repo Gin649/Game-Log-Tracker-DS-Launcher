@@ -77,8 +77,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     private int cartToken;
     private AnimatorSet cartAnim;
     private AnimatorSet cartIdle;
-    private android.media.SoundPool sounds;
-    private int soundNes, soundDisc, soundClunk;
+    private android.media.MediaPlayer soundNes, soundDisc, soundClunk;
     /** Which animation and sound the cartridge on show gets: an NES cartridge, any other cartridge, or a disc. */
     private int cartKind;
     /** Plain black over everything while the emulator takes the screen, so the fan art never flashes back up. */
@@ -201,18 +200,9 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         root.addView(blackout, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
         // a cartridge going in and its power switch, the NES one being pressed down, and a disc drive spinning up
-        try {
-            sounds = new android.media.SoundPool.Builder().setMaxStreams(2)
-                    .setAudioAttributes(new android.media.AudioAttributes.Builder()
-                            .setUsage(android.media.AudioAttributes.USAGE_GAME)
-                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
-                    .build();
-            soundNes = sounds.load(this, R.raw.cart_nes, 1);
-            soundDisc = sounds.load(this, R.raw.disc_spin, 1);
-            soundClunk = sounds.load(this, R.raw.cart_clunk, 1);
-        } catch (Exception e) {
-            sounds = null;
-        }
+        soundNes = loadSound(R.raw.cart_nes);
+        soundDisc = loadSound(R.raw.disc_spin);
+        soundClunk = loadSound(R.raw.cart_clunk);
 
         setContentView(root);
         applyThemeNow();
@@ -345,7 +335,12 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         resumed = false;
         TopPanel.setViewAlive(false);
         if (panel != null) panel.destroy();
-        if (sounds != null) sounds.release();
+        for (android.media.MediaPlayer p : new android.media.MediaPlayer[]{soundNes, soundDisc, soundClunk}) {
+            try {
+                if (p != null) p.release();
+            } catch (Exception ignored) {
+            }
+        }
         cartShowing = false;
         super.onDestroy();
     }
@@ -514,7 +509,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     private static final int SWITCH_AFTER_MS = 520, NES_SWITCH_AFTER_MS = 820;
     /** After the clunk: when the NES cartridge is pressed down, and how long the press takes. */
     private static final int NES_PRESS_AFTER_MS = 400, NES_PRESS_MS = 200;
-    /** When the cartridge is seated: the float over, the pause and the drop (700 + 380 + 440). */
+    /** When the cartridge is seated: the float over, the pause and the drop (700 + 420 + 400). */
     private static final int SEATED_AT_MS = 1520;
     /** The bump and settle that follow the drop (70 + 110). */
     private static final int BUMP_MS = 180;
@@ -611,10 +606,10 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         rise.setInterpolator(new DecelerateInterpolator(1.6f));
 
         ObjectAnimator hang = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, midY, midY - tall * 0.03f, midY);
-        hang.setDuration(380);
+        hang.setDuration(SEATED_AT_MS - 700 - CLUNK_AT_MS); // the float (700), this pause and the drop end at SEATED_AT_MS
 
         ObjectAnimator down = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, midY, seatY);
-        down.setDuration(440);
+        down.setDuration(CLUNK_AT_MS); // as long as the slide in the sound, which starts with it
         down.setInterpolator(new AccelerateInterpolator(1.7f));
         ObjectAnimator bumpUp = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, seatY, seatY - tall * 0.035f);
         bumpUp.setDuration(70);
@@ -640,18 +635,18 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
             wait.setDuration(NES_SWITCH_AFTER_MS - NES_PRESS_AFTER_MS);
             path.playSequentially(rise, hang, down, bumpUp, settle, rest, press, wait);
         } else {
-            path.playSequentially(rise, hang, down, bumpUp, settle); // 700 + 380 + 440 + 70 + 110 = CART_INSERT_MS
+            path.playSequentially(rise, hang, down, bumpUp, settle); // 700 + 420 + 400 + 70 + 110 = CART_INSERT_MS
         }
         final AnimatorSet set = new AnimatorSet();
         if (cartKind != KIND_DISC) {
-            // started early, so the clunk in it lands just as the cartridge seats
-            final int sound = cartKind == KIND_NES ? soundNes : soundClunk;
-            cart.postDelayed(new Runnable() {
+            // The sound starts as the drop starts, so the clunk in it lands as the cartridge seats.
+            final android.media.MediaPlayer sound = cartKind == KIND_NES ? soundNes : soundClunk;
+            down.addListener(new AnimatorListenerAdapter() {
                 @Override
-                public void run() {
-                    if (cartAnim == set) playSound(sound);
+                public void onAnimationStart(Animator animation) {
+                    playSound(sound);
                 }
-            }, SEATED_AT_MS - CLUNK_AT_MS);
+            });
         }
         if (cartIsDisc) {
             ObjectAnimator spin = ObjectAnimator.ofFloat(cart, View.ROTATION, 0f, 2160f);
@@ -692,9 +687,23 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         cart.setRotationY(0f);
     }
 
-    private void playSound(int id) {
+    /** A sound kept ready to play, at the same volume setting as the app's other sound. Null when it can't be loaded. */
+    private android.media.MediaPlayer loadSound(int resource) {
         try {
-            if (sounds != null && id != 0) sounds.play(id, 0.9f, 0.9f, 1, 0, 1f);
+            android.media.MediaPlayer p = android.media.MediaPlayer.create(this, resource);
+            if (p != null) p.setVolume(0.9f, 0.9f);
+            return p;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void playSound(android.media.MediaPlayer p) {
+        try {
+            if (p == null) return;
+            if (p.isPlaying()) p.pause();
+            p.seekTo(0);
+            p.start();
         } catch (Exception ignored) { // no sound is fine
         }
     }
