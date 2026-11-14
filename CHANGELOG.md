@@ -10,6 +10,7 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - Several ROM folders: Setup can hold more than one ROM folder. Each one can be an ES-DE style folder with a folder per console, or just one console's games. When a game is in more than one folder, Play uses the first in the list; hold Play to pick another copy.
 - Your own launch commands: the Emulators step in Setup can add a launch command for any installed app, in ES-DE's command format, so one can be copied from ES-DE.
 - Backups on this device: the Data window can back up to the device and restore from there. Backups now include the launcher's settings (emulator picks, your launch commands, play counts and picked art; never logins or keys). One is made automatically each day you use the app and the last 3 are kept. ROM folders are only restored on the same device, since folder addresses differ on another one.
+- Added a licence.
 
 ### Changed
 - Fan art is saved at full quality, so it is much sharper, and wide pictures are shown whole instead of cropped. Each game keeps only the picture you leave on show; tap the top screen to load all the options again. Near-identical pictures from different sites show once, as the best-quality copy.
