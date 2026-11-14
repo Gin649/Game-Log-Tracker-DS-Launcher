@@ -806,7 +806,16 @@ public class SetupActivity extends Activity {
         collect();
         if (requestCode == REQ_ROMS) {
             if (Config.hasPath(romFolders, path)) {
-                Toast.makeText(this, "That folder is already in the list.", Toast.LENGTH_LONG).show();
+                // Picked again: that renews its permission. A backup put back on a new install lists the folder
+                // without one, and emulators that are handed the game through it (Mupen64Plus AE, ARMSX2) then
+                // open at their own menu.
+                String same = new Config.RomFolder(path, "", "").path;
+                for (int n = 0; n < romFolders.size(); n++) {
+                    Config.RomFolder f = romFolders.get(n);
+                    if (f.path.equals(same)) romFolders.set(n, new Config.RomFolder(f.path, u.toString(), f.system));
+                }
+                Toast.makeText(this, "Permission for that folder is renewed.", Toast.LENGTH_LONG).show();
+                render();
                 return;
             }
             romFolders.add(new Config.RomFolder(path, u.toString(), detectSystem(new File(path))));

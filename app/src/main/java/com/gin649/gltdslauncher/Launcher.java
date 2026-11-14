@@ -331,6 +331,14 @@ final class Launcher {
             started = "RetroArch (" + plan.core + ")";
         }
 
+        // An emulator that is handed the game through your ROM folder's permission can't open it without one, and
+        // stops at its own menu. That happens after a backup is put back on a new install, so say what to do.
+        String hint = "";
+        if (standalone && "saf".equals(plan.recipe.data) && !RomUri.isContent(RomUri.forRom(act, rom.file))) {
+            hint = " If it stops at the emulator's menu, open Setup and choose your ROM folder again.";
+        }
+        final String fhint = hint;
+
         // A handheld emulator that draws both screens itself starts on the bottom screen and puts its top
         // screen on the other display; everything else runs on the top screen.
         int display = DisplayPicker.gameDisplayId(act, standalone && plan.recipe.dual);
@@ -367,7 +375,7 @@ final class Launcher {
                     LibrarySync.markPlayed(fact, from);
                 }
             }, START_DELAY_MS + (onTop ? cartMs : 0));
-            return result(true, "Starting " + rom.name + " in " + started + "...");
+            return result(true, "Starting " + rom.name + " in " + started + "..." + fhint);
         }
 
         Exception last = startIntents(act, intents, display);
@@ -375,7 +383,7 @@ final class Launcher {
 
         ArtWatch.start(act, pkg, Playtime.key(act, rom));
         LibrarySync.markPlayed(act, rom);
-        return result(true, "Starting " + rom.name + " in " + started + "...");
+        return result(true, "Starting " + rom.name + " in " + started + "..." + fhint);
     }
 
     /** When the emulator is started, so it opens over the end of the 2-second animation. */
