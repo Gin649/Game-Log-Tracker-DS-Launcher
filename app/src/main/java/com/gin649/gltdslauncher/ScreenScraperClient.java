@@ -64,7 +64,9 @@ final class ScreenScraperClient {
                 JSONObject o = new JSONObject(saved);
                 long age = System.currentTimeMillis() - o.optLong("ts");
                 boolean found = o.optBoolean("found");
-                boolean stale = wantCarts && found && !o.has("carts") && !o.optBoolean("cartsAsked");
+                // an answer with no cartridge list is from before the Worker sent them: ask again, at most once a day
+                boolean stale = wantCarts && found && !o.has("carts")
+                        && System.currentTimeMillis() - o.optLong("cartsAsked", 0) > MISS_MS;
                 if (!stale && age < (found ? FOUND_MS : MISS_MS)) return found ? parse(o) : null;
             } catch (JSONException ignored) {
             }
@@ -85,7 +87,7 @@ final class ScreenScraperClient {
             if (!res.isSuccessful()) throw new IOException("Worker answered " + res.code());
             JSONObject o = new JSONObject(text);
             o.put("ts", System.currentTimeMillis());
-            if (wantCarts) o.put("cartsAsked", true); // a Worker that sends no carts isn't asked again for them
+            if (wantCarts) o.put("cartsAsked", System.currentTimeMillis());
             db.write(key, o.toString());
             return o.optBoolean("found") ? parse(o) : null;
         } catch (JSONException e) {
