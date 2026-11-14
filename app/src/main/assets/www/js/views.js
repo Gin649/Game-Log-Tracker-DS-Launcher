@@ -134,8 +134,7 @@ function renderRecentGames(games){
   const shown = recentWithCustom(games).filter(g => !isSubsetGame(g)); // subsets live in their base game's profile
   if(shown.length === 0){ el.innerHTML = '<div class="empty">No recently played games found.</div>'; return; }
   const libById = new Map(libraryData.map(x => [x.GameID, x]));
-  wireCartArt(el);
-  const html = shown.slice(0, 12).map(g => {
+  el.innerHTML = shown.slice(0, 12).map(g => {
     const total = Number(g.NumPossibleAchievements || g.AchievementsTotal || 0);
     const earned = statsMode === 'hardcore' ? Number(g.NumAchievedHardcore || 0) : Number(g.NumAchieved || 0);
     const pct = total ? Math.round((earned/total)*100) : 0;
@@ -149,7 +148,7 @@ function renderRecentGames(games){
     const badge = award ? `<span class="pill pill-corner ${award.cls}">${award.label}</span>` : '';
     return `
         <div class="cart" data-game-id="${g.GameID}">
-          <div class="art-wrap"><img class="art" src="${artSrc}" alt="${esc(g.Title)}">${cartArtHtml(g)}${badge}</div>
+          <div class="art-wrap"><img class="art" src="${artSrc}" alt="${esc(g.Title)}">${badge}</div>
           <div class="body">
             <p class="title">${esc(g.Title)}</p>
             <p class="console">${esc(g.ConsoleName)}</p>
@@ -162,10 +161,6 @@ function renderRecentGames(games){
         </div>
       `;
   }).join('');
-  // Drawn again only when something changed, so cartridge pictures that have loaded are not fetched and faded in again.
-  if(el.recentHtml === html && el.querySelector('.cart')) return;
-  el.recentHtml = html;
-  el.innerHTML = html;
   el.querySelectorAll('.cart').forEach(card => {
     card.addEventListener('click', () => openGameModal(Number(card.getAttribute('data-game-id'))));
   });
@@ -689,7 +684,7 @@ function renderLibrary(){
     `);
 }
 
-// Cart view (Display Options, Game art), for the Last Played cards and the Library and Backlog tiles: the app looks for a picture of the game's cartridge or disc and answers
+// Cart view (Display Options, Game art), for the Library and Backlog tiles: the app looks for a picture of the game's cartridge or disc and answers
 // at this address. The address is the same every time for a game, so a list that is drawn again stays identical.
 // A game with no picture of its cartridge gets one made from its console's blank shell and its cover.
 const CART_ART_BASE = 'https://appassets.androidplatform.net/cart/art';

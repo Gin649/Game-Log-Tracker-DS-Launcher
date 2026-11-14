@@ -1211,9 +1211,9 @@ html.top-panel #profile-hero{display:none;}
 .tile-remove{position:absolute;top:4px;right:4px;z-index:2;}
 /* Cart view: the cartridge or disc sits whole in the middle of the same square the icon has.
    It only shows once it has loaded, and then the icon is hidden but keeps the square's size. */
-#recent-games .cart .art-wrap .media,.tile-grid .cart .art-wrap .media{position:absolute;left:0;top:0;width:100%;height:100%;box-sizing:border-box;padding:4%;object-fit:contain;object-position:50% 50%;display:block;visibility:hidden;}
-#recent-games .cart .art-wrap.has-media .media,.tile-grid .cart .art-wrap.has-media .media{visibility:visible;}
-#recent-games .cart .art-wrap.has-media .art,.tile-grid .cart .art-wrap.has-media .art{visibility:hidden;}
+.tile-grid .cart .art-wrap .media{position:absolute;left:0;top:0;width:100%;height:100%;box-sizing:border-box;padding:4%;object-fit:contain;object-position:50% 50%;display:block;visibility:hidden;}
+.tile-grid .cart .art-wrap.has-media .media{visibility:visible;}
+.tile-grid .cart .art-wrap.has-media .art{visibility:hidden;}
 /* Game view row: the label sits above two roomy buttons so "List View" / "Tile View" never wrap or overlap */
 .textsize-row.view-row{flex-wrap:wrap;}
 .textsize-row.view-row .display-note{flex-basis:100%;}
