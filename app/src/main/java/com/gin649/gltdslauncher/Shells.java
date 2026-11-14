@@ -159,7 +159,8 @@ final class Shells {
     }
 
     private static Shell keep(String id, Bitmap b) {
-        Shell s = prepare(b);
+        // the arcade cabinet is shown large on the top screen, so it keeps twice the usual size
+        Shell s = prepare(b, id.equals("app:arcade") ? CartArt.MAX_SIDE * 2 : CartArt.MAX_SIDE);
         if (s == null) return null;
         s.id = id;
         synchronized (Shells.class) {
@@ -169,11 +170,11 @@ final class Shells {
     }
 
     /** Makes the picture the size cartridges are saved at and finds its window. Null when it has none. */
-    private static Shell prepare(Bitmap b) {
+    private static Shell prepare(Bitmap b, int maxSide) {
         if (b == null) return null;
         int longest = Math.max(b.getWidth(), b.getHeight());
-        if (longest > CartArt.MAX_SIDE) {
-            float k = CartArt.MAX_SIDE / (float) longest;
+        if (longest > maxSide) {
+            float k = maxSide / (float) longest;
             b = Bitmap.createScaledBitmap(b, Math.max(1, Math.round(b.getWidth() * k)), Math.max(1, Math.round(b.getHeight() * k)), true);
         }
         if (b.getConfig() != Bitmap.Config.ARGB_8888) b = b.copy(Bitmap.Config.ARGB_8888, false);

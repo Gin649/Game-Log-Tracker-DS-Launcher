@@ -74,12 +74,14 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     /** The game's cartridge or disc, floating over the fan art in the bottom right corner. */
     private ImageView cart;
     private boolean cartIsDisc;
+    /** An arcade cabinet's lights, laid over it: off until the game starts (null for anything else). */
+    private CabinetLights lights;
     private int cartToken;
     private AnimatorSet cartAnim;
     private AnimatorSet cartIdle;
     /** The animation sounds, all loaded up front so they are ready the moment Play is pressed. */
     private android.media.SoundPool sounds;
-    private int soundNes, soundDisc, soundClunk, soundStatic;
+    private int soundNes, soundDisc, soundClunk, soundStatic, soundCoin;
     /** Sounds that have finished loading, and one asked for before it had (played as soon as it is ready). */
     private final java.util.Set<Integer> soundsReady = new java.util.HashSet<Integer>();
     private int soundWaiting;
@@ -519,9 +521,19 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     /** The bump and settle that follow the drop (70 + 110). */
     private static final int BUMP_MS = 180;
 
-    private static final int KIND_CART = 0, KIND_NES = 1, KIND_DISC = 2;
+    private static final int KIND_CART = 0, KIND_NES = 1, KIND_DISC = 2, KIND_ARCADE = 3;
+
+    /**
+     * The arcade cabinet's start: it floats to the middle (and the fan art dims), a coin drops in, the marquee
+     * flickers on, then the screen opens out from a line like an old CRT and shows the cover. A moment later the
+     * old TV comes on as for everything else.
+     */
+    private static final int ARCADE_RISE_MS = 720, ARCADE_COIN_MS = 480, ARCADE_MARQUEE_MS = 400,
+            ARCADE_SCREEN_MS = 560, ARCADE_HOLD_MS = 700;
+    private static final int ARCADE_MS = ARCADE_RISE_MS + ARCADE_COIN_MS + ARCADE_MARQUEE_MS + ARCADE_SCREEN_MS + ARCADE_HOLD_MS;
 
     private static int insertMs(int kind) {
+        if (kind == KIND_ARCADE) return ARCADE_MS;
         if (kind == KIND_CART) return SEATED_AT_MS + SWITCH_AFTER_MS;
         if (kind == KIND_NES) return SEATED_AT_MS + NES_SWITCH_AFTER_MS;
         return CART_INSERT_MS;
@@ -555,7 +567,9 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         cart.setPivotX(box[2]);
         cart.setPivotY(box[3]);
         cart.setCameraDistance(9000 * getResources().getDisplayMetrics().density);
-        ObjectAnimator turn = ObjectAnimator.ofFloat(cart, View.ROTATION_Y, -20f, 20f);
+        ObjectAnimator turn = cartKind == KIND_ARCADE
+                ? ObjectAnimator.ofFloat(cart, View.ROTATION, -3f, 3f) // a cabinet rocks a little rather than turning
+                : ObjectAnimator.ofFloat(cart, View.ROTATION_Y, -20f, 20f);
         turn.setDuration(2600);
         turn.setRepeatCount(ObjectAnimator.INFINITE);
         turn.setRepeatMode(ObjectAnimator.REVERSE);
@@ -586,6 +600,10 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     private void insertCart(final Runnable then) {
         if (cartAnim != null) cartAnim.cancel();
         stopIdle();
+        if (cartKind == KIND_ARCADE) {
+            startCabinet(then);
+            return;
+        }
         View root = (View) cart.getParent();
         float[] box = cartBox();
         cart.setPivotX(box[2]);
@@ -680,10 +698,103 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         set.start();
     }
 
+    /** The arcade cabinet goes to the middle of the screen and lights up (see ARCADE_RISE_MS and the rest). */
+    private void startCabinet(final Runnable then) {
+        View root = (View) cart.getParent();
+        float[] box = cartBox();
+        cart.setPivotX(box[2]);
+        cart.setPivotY(box[3]);
+        // nearly the height of the screen, in the middle
+        final float grow = root.getHeight() * 0.86f / Math.max(1f, box[1]);
+        float midX = root.getWidth() / 2f - (cart.getLeft() + box[2]);
+        float midY = root.getHeight() / 2f + root.getHeight() * 0.015f - (cart.getTop() + box[3]);
+
+        AnimatorSet rise = new AnimatorSet();
+        rise.playTogether(
+                ObjectAnimator.ofFloat(cart, View.TRANSLATION_X, cart.getTranslationX(), midX),
+                ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, cart.getTranslationY(), midY),
+                ObjectAnimator.ofFloat(cart, View.SCALE_X, cart.getScaleX(), grow),
+                ObjectAnimator.ofFloat(cart, View.SCALE_Y, cart.getScaleY(), grow),
+                ObjectAnimator.ofFloat(cart, View.ROTATION, cart.getRotation(), 0f),
+                ObjectAnimator.ofFloat(cart, View.ROTATION_Y, cart.getRotationY(), 0f),
+                ObjectAnimator.ofFloat(art, View.ALPHA, art.getAlpha(), 0.45f)); // the fan art dims behind it
+        rise.setDuration(ARCADE_RISE_MS);
+        rise.setInterpolator(new AccelerateDecelerateInterpolator());
+
+        final CabinetLights l = lights;
+        android.animation.ValueAnimator coin = android.animation.ValueAnimator.ofFloat(0f, 1f);
+        coin.setDuration(ARCADE_COIN_MS);
+        coin.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                playSound(soundCoin);
+            }
+        });
+        coin.addUpdateListener(new android.animation.ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(android.animation.ValueAnimator a) {
+                if (l == null) return;
+                // the coin slots flash as the coin goes in, then stay half lit
+                float t = a.getAnimatedFraction() * ARCADE_COIN_MS;
+                l.coins(t < 80 ? 0f : t < 240 ? 1f : 0.45f);
+            }
+        });
+
+        android.animation.ValueAnimator marquee = android.animation.ValueAnimator.ofFloat(0f, 1f);
+        marquee.setDuration(ARCADE_MARQUEE_MS);
+        marquee.setInterpolator(new android.view.animation.LinearInterpolator());
+        marquee.addUpdateListener(new android.animation.ValueAnimator.AnimatorUpdateListener() {
+            private final float[] flicker = {0.6f, 0.1f, 0.9f, 0.2f, 1f, 1f, 0.5f, 1f, 1f, 1f};
+
+            @Override
+            public void onAnimationUpdate(android.animation.ValueAnimator a) {
+                if (l == null) return;
+                // like a fluorescent tube catching
+                int i = Math.min(flicker.length - 1, (int) (a.getAnimatedFraction() * flicker.length));
+                l.marquee(flicker[i]);
+                l.coins(1f);
+            }
+        });
+
+        android.animation.ValueAnimator screen = android.animation.ValueAnimator.ofFloat(0f, 1f);
+        screen.setDuration(ARCADE_SCREEN_MS);
+        screen.setInterpolator(new DecelerateInterpolator(1.3f));
+        screen.addUpdateListener(new android.animation.ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(android.animation.ValueAnimator a) {
+                if (l != null) l.screen((Float) a.getAnimatedValue());
+            }
+        });
+
+        ObjectAnimator hold = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, midY, midY);
+        hold.setDuration(ARCADE_HOLD_MS);
+
+        AnimatorSet set = new AnimatorSet();
+        set.playSequentially(rise, coin, marquee, screen, hold);
+        set.addListener(new AnimatorListenerAdapter() {
+            private boolean cancelled;
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                cancelled = true;
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                cartAnim = null;
+                if (!cancelled) then.run();
+            }
+        });
+        cartAnim = set;
+        set.start();
+    }
+
     /** Puts the cartridge back where it floats, after a game or when another game is looked at. */
     private void resetCart() {
         if (cartAnim != null) cartAnim.cancel();
         stopIdle();
+        art.setAlpha(1f);
+        if (lights != null) lights.off();
         cart.setTranslationX(0f);
         cart.setTranslationY(0f);
         cart.setScaleX(1f);
@@ -703,7 +814,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
                     .setUsage(android.media.AudioAttributes.USAGE_GAME)
                     .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
                     .build();
-            sounds = new android.media.SoundPool.Builder().setMaxStreams(3).setAudioAttributes(attrs).build();
+            sounds = new android.media.SoundPool.Builder().setMaxStreams(4).setAudioAttributes(attrs).build();
             sounds.setOnLoadCompleteListener(new android.media.SoundPool.OnLoadCompleteListener() {
                 @Override
                 public void onLoadComplete(android.media.SoundPool pool, int id, int status) {
@@ -720,6 +831,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
             soundNes = sounds.load(this, R.raw.cart_nes, 1);
             soundDisc = sounds.load(this, R.raw.disc_spin, 1);
             soundClunk = sounds.load(this, R.raw.cart_clunk, 1);
+            soundCoin = sounds.load(this, R.raw.coin_insert, 1);
             soundStatic = sounds.load(this, R.raw.crt_start, 1);
         } catch (Exception e) {
             sounds = null; // no sound is fine
@@ -793,6 +905,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         boolean wanted = s.game && v != null && !v[0].isEmpty() && !"0".equals(Prefs.get(this, "floatCart", "1"));
         if (!wanted) {
             cart.setImageDrawable(null);
+            lights = null;
             cart.setTag(null);
             syncCart();
             return;
@@ -803,6 +916,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
             return;
         }
         cart.setImageDrawable(null);
+        lights = null;
         cart.setTag(null);
         syncCart();
         new Thread(new Runnable() {
@@ -810,9 +924,13 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
             public void run() {
                 Bitmap b = null;
                 boolean disc = false, nes = Matcher.compact(v[1]).equals("nes");
+                boolean arcade = false;
+                CabinetLights lit = null;
                 try {
                     java.io.File f = CartArt.find(ArtActivity.this, v[0], v[1], v[2], v[3], v[0].trim().startsWith("~"), false);
                     if (f != null) b = android.graphics.BitmapFactory.decodeFile(f.getPath());
+                    arcade = CartArt.isArcade(v[1]);
+                    if (arcade && b != null) lit = CabinetLights.make(ArtActivity.this, b);
                     if (Shells.pc(v[1])) disc = true;
                     SystemMap map = Shared.systems();
                     if (map != null) {
@@ -825,15 +943,18 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
                 }
                 final Bitmap bitmap = b;
                 final boolean isDisc = disc;
-                final int kind = disc ? KIND_DISC : nes ? KIND_NES : KIND_CART;
+                final int kind = arcade ? KIND_ARCADE : disc ? KIND_DISC : nes ? KIND_NES : KIND_CART;
+                final CabinetLights cabinet = lit;
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         if (mine != cartToken || isFinishing() || bitmap == null) return;
                         resetCart();
-                        cartIsDisc = isDisc;
+                        cartIsDisc = isDisc && kind != KIND_ARCADE;
                         cartKind = kind;
-                        cart.setImageBitmap(bitmap);
+                        lights = cabinet;
+                        if (cabinet != null) cart.setImageDrawable(cabinet.drawable);
+                        else cart.setImageBitmap(bitmap);
                         cart.setTag(key);
                         syncCart();
                     }

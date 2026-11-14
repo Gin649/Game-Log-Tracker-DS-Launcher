@@ -29,7 +29,7 @@ final class CartArt {
     static final int MAX_SIDE = 512;
     private static final long MISS_MS = 12L * 60 * 60 * 1000;
     /** Starts the name of every saved picture. Change it to have them all made again. */
-    private static final String VERSION = "3_";
+    private static final String VERSION = "4_";
     private static final long NO_COVER_MS = 10L * 60 * 1000;
 
     private static final Map<String, Object> LOCKS = new HashMap<String, Object>();
@@ -51,7 +51,6 @@ final class CartArt {
         if (title == null || console == null) return null;
         String key = Matcher.compact(console) + ":" + Matcher.norm(title);
         if (key.length() < 3) return null;
-        if (!wanted(console, tile)) return null;
         clearOld(ctx);
         File out = new File(dir(ctx), VERSION + hash(key) + ".webp");
         if (out.isFile() && out.length() > 0) return out;
@@ -74,10 +73,10 @@ final class CartArt {
             } catch (Throwable ignored) {
             }
 
-            // a real picture of the cartridge or disc
+            // a real picture of the cartridge or disc (not for systems that always use their own shell)
             CacheDb db = CacheDb.get(ctx);
             String missKey = "cart-miss3:" + key;
-            if (!hack && !recentMiss(db.read(missKey))) {
+            if (!hack && !shellOnly(console, systems) && !recentMiss(db.read(missKey))) {
                 boolean unsure = false; // the network let us down, so "no picture" isn't certain
                 Bitmap b = null;
                 try {
@@ -119,21 +118,33 @@ final class CartArt {
         }
     }
 
-    /** Systems whose cartridges and discs look too plain on a tile. Their tiles keep the icon; the top screen still floats the cartridge. */
-    private static final java.util.Set<String> ICON_TILES = new java.util.HashSet<String>(
-            java.util.Arrays.asList("mastersystem", "pcengine", "pcenginecd"));
+    /**
+     * Systems that always get their own shell with the game's cover, never a scan: the scans of their cartridges
+     * and discs were patchy and looked plain. Arcade games get an arcade cabinet with the cover on its screen.
+     */
+    private static final java.util.Set<String> SHELL_ONLY = new java.util.HashSet<String>(
+            java.util.Arrays.asList("mastersystem", "pcengine", "pcenginecd", "arcade"));
 
-    /** Arcade games have no cartridge anywhere: only their fan art shows. tile: asked for a game tile, not the top screen. */
-    private static boolean wanted(String console, boolean tile) {
-        if (Matcher.compact(console).equals("arcade")) return false;
-        SystemMap map = Shared.systems();
-        if (map == null) return true;
-        for (SystemMap.Sys s : map.forConsole(console)) {
-            if ("arcade".equals(s.folder)) return false;
-            if (tile && ICON_TILES.contains(s.folder)) return false;
+    private static boolean shellOnly(String console, List<SystemMap.Sys> systems) {
+        if (isArcade(console)) return true;
+        for (SystemMap.Sys s : systems) {
+            if (SHELL_ONLY.contains(s.folder)) return true;
         }
-        return true;
+        return false;
     }
+
+    /** An arcade game: it gets the arcade cabinet, which lights up on the top screen when the game starts. */
+    static boolean isArcade(String console) {
+        if (console == null) return false;
+        if (Matcher.compact(console).equals("arcade")) return true;
+        SystemMap map = Shared.systems();
+        if (map == null) return false;
+        for (SystemMap.Sys s : map.forConsole(console)) {
+            if ("arcade".equals(s.folder)) return true;
+        }
+        return false;
+    }
+
 
     private static boolean cleared;
 
@@ -167,9 +178,11 @@ final class CartArt {
     private static File custom(Context ctx, String key, List<SystemMap.Sys> systems, RomIndex.Rom rom, String console,
                                String title, String gameId, String cover, boolean hack) {
         List<String> names = new ArrayList<String>();
-        if (rom != null) names.add(rom.sys.folder); // the folder the game is in comes first (Famicom before NES)
+        boolean arcade = isArcade(console);
+        if (arcade) names.add("arcade");
+        if (rom != null && !arcade) names.add(rom.sys.folder); // the folder the game is in comes first (Famicom before NES)
         for (SystemMap.Sys s : systems) {
-            if (!s.hack && !names.contains(s.folder)) names.add(s.folder);
+            if (!s.hack && !names.contains(s.folder) && !arcade) names.add(s.folder);
         }
         Shells.Shell shell = Shells.find(ctx, names, console);
         if (shell == null) return null;
@@ -198,7 +211,9 @@ final class CartArt {
         if (art == null) art = hack ? frontendCover(rom) : coverFor(ctx, systems, rom, title);
         if (art == null) art = cover(ctx, cover);
         Bitmap made = art == null ? null : shell.withLabel(art);
-        if (made == null || !save(shrink(trim(made)), out)) {
+        // The cabinet is kept whole and at full size: the top screen lights it up a part at a time, and it is shown
+        // large there, so its picture must line up with the shell's own.
+        if (made == null || !save(arcade ? made : shrink(trim(made)), out)) {
             synchronized (NO_COVER) {
                 NO_COVER.put(out.getName(), System.currentTimeMillis());
             }

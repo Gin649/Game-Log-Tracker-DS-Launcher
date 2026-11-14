@@ -1,0 +1,35 @@
+{
+  "format": 1,
+  "name": "arcade",
+  "author": "Game Log Tracker",
+  "license": "Free to reuse",
+  "source": "Made for Game Log Tracker DS Launcher",
+  "lights": {
+    "marquee": [
+      61,
+      32,
+      459,
+      148
+    ],
+    "coins": [
+      [
+        207,
+        799,
+        241,
+        834
+      ],
+      [
+        279,
+        799,
+        313,
+        834
+      ]
+    ],
+    "screen": [
+      130,
+      223,
+      390,
+      571
+    ]
+  }
+}
