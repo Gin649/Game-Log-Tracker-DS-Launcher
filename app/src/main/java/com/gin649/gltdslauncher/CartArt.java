@@ -62,11 +62,9 @@ final class CartArt {
             SystemMap map = Shared.systems();
             List<SystemMap.Sys> systems = map == null ? new ArrayList<SystemMap.Sys>() : map.forConsole(console);
             RomIndex.Rom rom = null;
-            if (!hack) {
-                try {
-                    rom = romFor(systems, title);
-                } catch (Throwable ignored) {
-                }
+            try {
+                rom = hack ? hackRom(title, console) : romFor(systems, title);
+            } catch (Throwable ignored) {
             }
 
             // a real picture of the cartridge or disc
@@ -136,7 +134,10 @@ final class CartArt {
             if (pick != null && pick.isEmpty()) pick = null;
         }
         String base = hash(key);
-        File out = new File(dir(ctx), base + "-s" + hash(shell.id + "|" + (pick == null ? "auto" : pick)) + ".webp");
+        // the usual picture is part of the name too: once the tracker has found a game's box art, its cartridge is
+        // made again with that in place of the small icon
+        String from = pick != null ? pick : "auto|" + (cover == null ? "" : cover);
+        File out = new File(dir(ctx), base + "-s" + hash(shell.id + "|" + from) + ".webp");
         if (out.isFile() && out.length() > 0) return out;
 
         Long failed;
@@ -146,7 +147,8 @@ final class CartArt {
         if (failed != null && System.currentTimeMillis() - failed < NO_COVER_MS) return null;
 
         Bitmap art = pick == null ? null : cover(ctx, pick);
-        if (art == null && !hack) art = coverFor(ctx, systems, rom, title);
+        // A hack only takes the box art of its own ROM. Looking it up by name would find the original game's.
+        if (art == null) art = hack ? frontendCover(rom) : coverFor(ctx, systems, rom, title);
         if (art == null) art = cover(ctx, cover);
         Bitmap made = art == null ? null : shell.withLabel(art);
         if (made == null || !save(shrink(trim(made)), out)) {
@@ -163,6 +165,19 @@ final class CartArt {
             }
         }
         return out;
+    }
+
+    /** A hack's own ROM, from one of your hack folders, or null. Never the game it is a hack of. */
+    private static RomIndex.Rom hackRom(String title, String console) {
+        RomIndex.Rom r = Shared.findRom(title, console);
+        return r != null && r.sys.hack ? r : null;
+    }
+
+    /** The box art your frontend has for this ROM, or null. */
+    private static Bitmap frontendCover(RomIndex.Rom rom) {
+        if (rom == null || !Config.useEsdeMedia()) return null;
+        String path = MediaFinder.boxArt(rom.sys.folder, rom.file.getPath());
+        return path == null ? null : MiximageCompositor.decodeFile(path, 1024);
     }
 
     /** The game's ROM on this device, or null when it isn't here. */
@@ -191,11 +206,8 @@ final class CartArt {
 
     /** The cover the tracker would show for a game that is here or listed: your frontend's first, then LaunchBox's. */
     private static Bitmap coverFor(Context ctx, List<SystemMap.Sys> systems, RomIndex.Rom rom, String title) {
-        if (rom != null && Config.useEsdeMedia()) {
-            String path = MediaFinder.boxArt(rom.sys.folder, rom.file.getPath());
-            Bitmap b = path == null ? null : MiximageCompositor.decodeFile(path, 1024);
-            if (b != null) return b;
-        }
+        Bitmap own = frontendCover(rom);
+        if (own != null) return own;
         if (!Config.LAUNCHBOX_ART) return null;
         for (SystemMap.Sys s : systems) {
             if (s.hack) continue;

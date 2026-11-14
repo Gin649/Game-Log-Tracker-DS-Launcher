@@ -703,7 +703,9 @@ function cartArtHtml(g){
   // g: the game (for the cover you picked), i: its usual picture, h: a hack or the like, which never takes the
   // original game's cartridge or cover
   const tagged = /^\s*~/.test(title) ? '&h=1' : '';
-  const pic = imgUrl(g.ImageBoxArt || g.ImageIcon || '');
+  // the box art its profile found, when it has been opened; else the picture the list has
+  const found = typeof cachedBoxArt === 'function' ? cachedBoxArt(g.GameID) : '';
+  const pic = found || imgUrl(g.ImageBoxArt || g.ImageIcon || '');
   const src = `${CART_ART_BASE}?t=${encodeURIComponent(title)}&c=${encodeURIComponent(g.ConsoleName)}&g=${encodeURIComponent(g.GameID)}&i=${encodeURIComponent(pic)}${tagged}`;
   return `<img class="media" src="${src}" alt="" loading="lazy" decoding="async" draggable="false">`;
 }
