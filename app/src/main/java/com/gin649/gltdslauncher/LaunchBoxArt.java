@@ -358,7 +358,7 @@ final class LaunchBoxArt {
         Index out = new Index();
         try {
             JSONObject root = new JSONObject(new String(data, "UTF-8"));
-            out.carts = root.optInt("carts") >= 2; // 2: North American cartridges and discs only
+            out.carts = root.optInt("carts") >= 3; // 3: the North American cartridge or disc first, then Europe's, then any
             JSONArray games = root.getJSONArray("g");
             for (int i = 0; i < games.length(); i++) {
                 JSONArray r = games.getJSONArray(i);

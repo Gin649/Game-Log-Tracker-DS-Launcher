@@ -108,6 +108,10 @@ async function importPayload(payload){
 function restoreDoneNote(launcher){
   const regrant = launcher && Array.isArray(launcher.regrant) ? launcher.regrant : [];
   if(launcher && launcher.ok === false) return { text: 'Your data is back, but ' + launcher.message, wait: 5000, color: '--gold' };
+  if(launcher && launcher.otherDevice){
+    return { text: 'Restored. The backup came from another device, so your ROM folders here were left as they are. Check them in Launcher settings.',
+      wait: 6000, color: '--gold' };
+  }
   if(regrant.length){
     return { text: 'Restored. On this install, pick these ROM folders again in Launcher settings so emulators can open their games: '
       + regrant.join(', '), wait: 6000, color: '--gold' };

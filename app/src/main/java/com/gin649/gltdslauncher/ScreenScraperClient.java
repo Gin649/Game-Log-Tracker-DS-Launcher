@@ -38,12 +38,22 @@ final class ScreenScraperClient {
         String name = "", synopsis = "", box, screenshot, wheel, fanart;
         /** Every regional cover the Worker listed, as {region label, address}; empty on an older cached answer. */
         java.util.List<String[]> boxes = new java.util.ArrayList<String[]>();
+        /** Pictures of the cartridge or disc, as {region code, address}; empty when the Worker sent none. */
+        java.util.List<String[]> carts = new java.util.ArrayList<String[]>();
     }
 
     private ScreenScraperClient() {}
 
     /** The game's ScreenScraper entry, or null when it has none. Blocks on the network the first time. */
     static Info lookup(Context ctx, String title, String system) throws IOException {
+        return lookup(ctx, title, system, false);
+    }
+
+    /**
+     * wantCarts: a saved answer from before the Worker sent cartridge pictures is asked for again, once, so Cart view
+     * can use them. Everything else keeps using the saved answer.
+     */
+    static Info lookup(Context ctx, String title, String system, boolean wantCarts) throws IOException {
         if (title == null || title.trim().isEmpty() || system == null || system.trim().isEmpty()) return null;
         // "3": answers saved before the Worker listed regional covers held one cover only, so they are asked for again
         String key = "ss-info3:" + Matcher.compact(system) + ":" + Matcher.norm(title);
@@ -54,7 +64,8 @@ final class ScreenScraperClient {
                 JSONObject o = new JSONObject(saved);
                 long age = System.currentTimeMillis() - o.optLong("ts");
                 boolean found = o.optBoolean("found");
-                if (age < (found ? FOUND_MS : MISS_MS)) return found ? parse(o) : null;
+                boolean stale = wantCarts && found && !o.has("carts") && !o.optBoolean("cartsAsked");
+                if (!stale && age < (found ? FOUND_MS : MISS_MS)) return found ? parse(o) : null;
             } catch (JSONException ignored) {
             }
         }
@@ -74,6 +85,7 @@ final class ScreenScraperClient {
             if (!res.isSuccessful()) throw new IOException("Worker answered " + res.code());
             JSONObject o = new JSONObject(text);
             o.put("ts", System.currentTimeMillis());
+            if (wantCarts) o.put("cartsAsked", true); // a Worker that sends no carts isn't asked again for them
             db.write(key, o.toString());
             return o.optBoolean("found") ? parse(o) : null;
         } catch (JSONException e) {
@@ -100,7 +112,46 @@ final class ScreenScraperClient {
                 if (!u.isEmpty()) i.boxes.add(new String[]{l, u});
             }
         }
+        org.json.JSONArray cs = o.optJSONArray("carts");
+        if (cs != null) {
+            for (int k = 0; k < cs.length(); k++) {
+                JSONObject c = cs.optJSONObject(k);
+                if (c == null) continue;
+                String u = c.optString("url"), r = c.optString("region");
+                if (!u.isEmpty()) i.carts.add(new String[]{r, u});
+            }
+        }
         return i;
+    }
+
+    /**
+     * The best cartridge or disc picture's address: the US one, else the world release, else Europe's (or one of
+     * its countries), else any other, with Japan's last. Null when there is none.
+     */
+    static String bestCart(Info info) {
+        if (info == null) return null;
+        String best = null;
+        int bestRank = Integer.MAX_VALUE;
+        for (String[] c : info.carts) {
+            int r = cartRank(c[0]);
+            if (r < bestRank) {
+                bestRank = r;
+                best = c[1];
+            }
+        }
+        return best;
+    }
+
+    private static int cartRank(String region) {
+        String r = region == null ? "" : region.trim().toLowerCase(java.util.Locale.ROOT);
+        if (r.equals("us") || r.equals("usa")) return 0;
+        if (r.equals("wor") || r.equals("world")) return 1;
+        if (r.equals("ca") || r.equals("cus")) return 2;
+        if (r.equals("eu") || r.equals("europe")) return 3;
+        if (java.util.Arrays.asList("uk", "fr", "de", "it", "sp", "es", "nl", "pt", "se", "dk", "fi", "no", "gr", "pl", "ru", "au").contains(r)) return 4;
+        if (r.equals("jp") || r.equals("japan")) return 7;
+        if (r.isEmpty() || r.equals("ss")) return 5;
+        return 6;
     }
 
     private static String addr(JSONObject o, String k) {

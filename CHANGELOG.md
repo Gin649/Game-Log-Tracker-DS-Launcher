@@ -2,6 +2,26 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
+## v1.2.1
+
+### Added
+- Cart view: in Display Options, Tile View Options can switch the Library and Backlog tiles from Art view to Cart view, which shows each game as its cartridge or disc. Pictures come from your ES-DE media, then LaunchBox, then ScreenScraper, with the US version first, then Europe's, then any other. A game with no picture gets its console's blank cartridge with its box art on it.
+- Floating cartridge: the game's cartridge or disc floats on the top screen while its profile is open. It has its own switch in Display Options and is on by default. With the Start-up animation on, it goes in with a sound when you press Play, then the old TV turns on.
+- Several ROM folders: Setup can hold more than one ROM folder. Each one can be an ES-DE style folder with a folder per console, or just one console's games. When a game is in more than one folder, Play uses the first in the list; hold Play to pick another copy.
+- Your own launch commands: the Emulators step in Setup can add a launch command for any installed app, in ES-DE's command format, so one can be copied from ES-DE.
+- Backups on this device: the Data window can back up to the device and restore from there. Backups now include the launcher's settings (emulator picks, your launch commands, play counts and picked art; never logins or keys). One is made automatically each day you use the app and the last 3 are kept. ROM folders are only restored on the same device, since folder addresses differ on another one.
+
+### Changed
+- Fan art is saved at full quality, so it is much sharper, and wide pictures are shown whole instead of cropped. Each game keeps only the picture you leave on show; tap the top screen to load all the options again. Near-identical pictures from different sites show once, as the best-quality copy.
+- Box art picker: repeated covers show once, as the best-quality copy, and covers are looked up fresh each time, so new ones on the sites show up. Covers from different regions are never merged.
+- Display Options: Console bar is listed before Game view.
+- Last Played: the Recently played rows are always full.
+
+### Fixed
+- These standalone emulators now start games from the launcher: ARMSX2 (it said "Could not start ARMSX2"), Mupen64Plus AE (it opened without the game; the game must be in Mupen's own library, with your N64 folder added there), PPSSPP, ARMSX3, hakuX (it was never seen as installed), aPS3e, and Vita3K and Vita3K+ (which now read the game ID inside ES-DE style .psvita files).
+- With a controller you can move down from the console row to the games, and up from a row of games goes to the row above instead of the search bar.
+- Fetched art no longer shows up in gallery apps.
+
 ## v1.2.0
 
 ### Added

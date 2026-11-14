@@ -194,7 +194,24 @@ final class ThorBridge {
     @JavascriptInterface
     public void setStartupAnim(boolean on) {
         Prefs.put(act, "startupAnim", on ? "1" : "0");
-        ArtBus.set(ArtBus.get()); // the top screen draws again, with or without the floating cartridge
+    }
+
+    /** The game's cartridge or disc floating on the top screen while its profile is open (on unless switched off). */
+    @JavascriptInterface
+    public boolean floatCart() {
+        return !"0".equals(Prefs.get(act, "floatCart", "1"));
+    }
+
+    @JavascriptInterface
+    public void setFloatCart(boolean on) {
+        Prefs.put(act, "floatCart", on ? "1" : "0");
+        ArtBus.set(ArtBus.get()); // the top screen draws again, with or without the cartridge
+    }
+
+    /** Only a device with a second screen has a top screen for the cartridge to float on. */
+    @JavascriptInterface
+    public boolean hasTopScreen() {
+        return DisplayPicker.hasTwoScreens(act);
     }
 
     /** The app theme (retro, nes, snes, psx or xbox), kept here so the top screen can follow it. */

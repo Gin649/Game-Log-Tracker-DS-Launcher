@@ -66,6 +66,7 @@ final class Backup {
     static JSONObject appSettings(Context ctx) throws Exception {
         JSONObject out = new JSONObject();
         out.put("version", 1);
+        out.put("device", deviceName()); // a restore on another device leaves its folders out
 
         JSONObject settings = new JSONObject();
         for (Map.Entry<String, ?> e : Prefs.all(ctx).entrySet()) {
@@ -129,20 +130,41 @@ final class Backup {
                 }
             }
 
-            // a folder's permission belongs to the install that was given it: keep it only if this one still holds it
-            Object folders = values.get("romsFolders");
-            if (folders instanceof String) {
-                List<Config.RomFolder> list = Config.parseRomFolders((String) folders, "", "");
-                List<Config.RomFolder> kept = new ArrayList<Config.RomFolder>();
-                for (Config.RomFolder f : list) {
-                    boolean ok = f.tree.isEmpty() || granted.contains(f.tree);
-                    if (!ok) regrant.put(f.path);
-                    kept.add(ok ? f : new Config.RomFolder(f.path, "", f.system));
+            // Folder addresses belong to the device: another one has its own (an SD card has a different name on
+            // each), so a backup from elsewhere keeps this device's folders as they are. On the same device the
+            // folders come back, apart from any that aren't there now.
+            boolean sameDevice = deviceName().equals(in.optString("device", ""));
+            boolean foldersKept = false;
+            if (!sameDevice) {
+                for (String k : DEVICE_FOLDERS) values.remove(k);
+            } else {
+                Object folders = values.get("romsFolders");
+                if (folders instanceof String) {
+                    List<Config.RomFolder> list = Config.parseRomFolders((String) folders, "", "");
+                    List<Config.RomFolder> kept = new ArrayList<Config.RomFolder>();
+                    for (Config.RomFolder f : list) {
+                        if (!new java.io.File(f.path).isDirectory()) continue;
+                        // a folder's permission belongs to the install that was given it: keep it only if this one still holds it
+                        boolean ok = f.tree.isEmpty() || granted.contains(f.tree);
+                        if (!ok) regrant.put(f.path);
+                        kept.add(ok ? f : new Config.RomFolder(f.path, "", f.system));
+                    }
+                    if (kept.isEmpty()) {
+                        values.remove("romsFolders"); // none of them is here: keep this device's own
+                    } else {
+                        values.put("romsFolders", Config.romFoldersJson(kept));
+                        foldersKept = true;
+                    }
                 }
-                values.put("romsFolders", Config.romFoldersJson(kept));
+                if (!foldersKept) {
+                    values.remove("romsRoot");
+                    values.remove("romsTree");
+                }
+                Object tree = values.get("romsTree");
+                if (tree instanceof String && !((String) tree).isEmpty() && !granted.contains(tree)) values.put("romsTree", "");
+                Object es = values.get("esRoot");
+                if (es instanceof String && !((String) es).isEmpty() && !new java.io.File((String) es).isDirectory()) values.remove("esRoot");
             }
-            Object tree = values.get("romsTree");
-            if (tree instanceof String && !((String) tree).isEmpty() && !granted.contains(tree)) values.put("romsTree", "");
 
             Prefs.putAll(ctx, values);
 
@@ -158,6 +180,7 @@ final class Backup {
             res.put("settings", values.size());
             res.put("games", games);
             res.put("regrant", regrant);
+            res.put("otherDevice", !sameDevice);
             res.put("message", "Restored " + values.size() + " settings and " + games + " games' play counts and art.");
         } catch (Exception e) {
             try {
@@ -167,6 +190,14 @@ final class Backup {
             }
         }
         return res;
+    }
+
+    /** Settings that hold folder addresses on this device: the ROM folders and the ES-DE folder. */
+    private static final String[] DEVICE_FOLDERS = {"romsFolders", "romsRoot", "romsTree", "esRoot"};
+
+    /** The kind of device this is ("AYN Thor", say), to tell a backup made on another one. */
+    private static String deviceName() {
+        return (android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL).trim();
     }
 
     private static Object valueOf(JSONObject item) throws Exception {

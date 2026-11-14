@@ -783,13 +783,14 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     }
 
     /**
-     * Finds the cartridge or disc of the game on show and floats it in the corner. It shares the Start-up animation
-     * switch: with that off there is no cartridge. A game with no cartridge picture simply has none here.
+     * Finds the cartridge or disc of the game on show and floats it in the corner. It has its own switch in Display
+     * Options (Floating cartridge, on unless switched off); the Start-up animation switch only decides whether it goes
+     * in when a game starts. A game with no cartridge picture simply has none here.
      */
     private void loadCart(ArtBus.State s) {
         final int mine = ++cartToken;
         final String[] v = Shared.viewingCart;
-        boolean wanted = s.game && v != null && !v[0].isEmpty() && !"0".equals(Prefs.get(this, "startupAnim", "1"));
+        boolean wanted = s.game && v != null && !v[0].isEmpty() && !"0".equals(Prefs.get(this, "floatCart", "1"));
         if (!wanted) {
             cart.setImageDrawable(null);
             cart.setTag(null);

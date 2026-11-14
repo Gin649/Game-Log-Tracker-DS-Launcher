@@ -445,3 +445,21 @@ document.addEventListener('selectionchange', () => {
     try{ thorBridge.setStartupAnim(on); }catch(err){}
   });
 })();
+
+// Display Options: the game's cartridge or disc floating on the top screen (devices with a top screen only).
+(function(){
+  const row = document.getElementById('float-cart-row'), sw = document.getElementById('float-cart-switch');
+  if(!row || !sw || typeof thorBridge === 'undefined' || !thorBridge || typeof thorBridge.floatCart !== 'function') return;
+  try{ if(typeof thorBridge.hasTopScreen === 'function' && !thorBridge.hasTopScreen()) return; }catch(e){}
+  row.style.display = '';
+  const show = on => { sw.classList.toggle('on', on); sw.setAttribute('aria-checked', String(on)); };
+  let on = true;
+  try{ on = !!thorBridge.floatCart(); }catch(e){}
+  show(on);
+  sw.addEventListener('click', (e) => {
+    e.stopPropagation();
+    on = !on;
+    show(on);
+    try{ thorBridge.setFloatCart(on); }catch(err){}
+  });
+})();

@@ -34,9 +34,12 @@ REGION_RANK = {'': 0, 'world': 0, 'north america': 1, 'united states': 1, 'canad
                'australia': 4, 'japan': 5}
 
 
-# Cartridges and discs are the North American ones only (or a release for the whole world). A picture with no
-# region named is taken when there is nothing better; one from Japan, Europe or anywhere else is never used.
-CART_REGION_RANK = {'north america': 0, 'united states': 0, 'world': 1, '': 2}
+# Cartridges and discs: the North American one first (or a release for the whole world), then the European one,
+# then any other. A picture with no region named comes after Europe's, since it could be from anywhere.
+CART_REGION_RANK = {'north america': 0, 'united states': 0, 'world': 1, 'canada': 2, 'europe': 3,
+                    'united kingdom': 4, '': 5}
+CART_REGION_OTHER = 6   # any other region; Japan's comes last
+CART_REGION_JAPAN = 7
 
 
 def compact(s):
@@ -115,9 +118,8 @@ def build(zf, platforms):
         rank = (hit[1], region_rank(text(el, 'Region')))
         if hit[0] in ('cart', 'disc'):
             region = (text(el, 'Region') or '').strip().lower()
-            if region not in CART_REGION_RANK:
-                continue
-            rank = (hit[1], CART_REGION_RANK[region])
+            r = CART_REGION_RANK.get(region, CART_REGION_JAPAN if region == 'japan' else CART_REGION_OTHER)
+            rank = (hit[1], r)
         if hit[0] == 'fan':
             fans.setdefault(gid, []).append((rank, fn))
         k = (gid, hit[0])
@@ -173,7 +175,7 @@ def main():
         if not games:
             continue
         games.sort(key=lambda r: r[0].lower())
-        data = json.dumps({'v': 1, 'carts': 2, 'g': games}, ensure_ascii=False, separators=(',', ':'))
+        data = json.dumps({'v': 1, 'carts': 3, 'g': games}, ensure_ascii=False, separators=(',', ':'))
         with open(os.path.join(a.out, 'launchbox', key + '.json'), 'w', encoding='utf-8') as f:
             f.write(data)
         index['platforms'][key] = {'games': len(games), 'bytes': len(data.encode('utf-8'))}

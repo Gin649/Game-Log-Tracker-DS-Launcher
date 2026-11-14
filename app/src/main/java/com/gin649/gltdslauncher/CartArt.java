@@ -17,7 +17,8 @@ import java.util.concurrent.Semaphore;
 
 /**
  * The picture of a game's cartridge or disc, for Cart view. A real picture of it is used when there is one: your
- * frontend's media (ES-DE's physicalmedia folder) when the game is on the device, else LaunchBox's games database.
+ * frontend's media (ES-DE's physicalmedia folder) when the game is on the device, else LaunchBox's games database,
+ * else ScreenScraper's. The US one is taken first, then Europe's, then any other.
  * A game with neither gets a cartridge made here: its console's blank shell (see {@link Shells}) with the game's
  * cover put in the label. Pictures are trimmed, made small and kept in the Carts folder of the app's data folder,
  * so each game is only worked out once. A game with no picture and no shell keeps its usual icon.
@@ -28,7 +29,7 @@ final class CartArt {
     static final int MAX_SIDE = 512;
     private static final long MISS_MS = 12L * 60 * 60 * 1000;
     /** Starts the name of every saved picture. Change it to have them all made again. */
-    private static final String VERSION = "2_";
+    private static final String VERSION = "3_";
     private static final long NO_COVER_MS = 10L * 60 * 1000;
 
     private static final Map<String, Object> LOCKS = new HashMap<String, Object>();
@@ -36,6 +37,8 @@ final class CartArt {
     private static final Map<String, Long> NO_COVER = new HashMap<String, Long>();
     /** LaunchBox is a free service, so only two pictures are fetched from it at a time. */
     private static final Semaphore LAUNCHBOX = new Semaphore(2);
+    /** ScreenScraper allows few requests at once, so its pictures are fetched one at a time. */
+    private static final Semaphore SCREENSCRAPER = new Semaphore(1);
 
     private CartArt() {}
 
@@ -73,7 +76,7 @@ final class CartArt {
 
             // a real picture of the cartridge or disc
             CacheDb db = CacheDb.get(ctx);
-            String missKey = "cart-miss:" + key;
+            String missKey = "cart-miss3:" + key;
             if (!hack && !recentMiss(db.read(missKey))) {
                 boolean unsure = false; // the network let us down, so "no picture" isn't certain
                 Bitmap b = null;
@@ -84,6 +87,14 @@ final class CartArt {
                 if (b == null && Config.LAUNCHBOX_ART) {
                     try {
                         b = fromLaunchBox(ctx, systems, title);
+                    } catch (IOException e) {
+                        unsure = true;
+                    } catch (Throwable ignored) {
+                    }
+                }
+                if (b == null) {
+                    try {
+                        b = fromScreenScraper(ctx, console, title);
                     } catch (IOException e) {
                         unsure = true;
                     } catch (Throwable ignored) {
@@ -110,7 +121,7 @@ final class CartArt {
 
     /** Systems whose cartridges and discs look too plain on a tile. Their tiles keep the icon; the top screen still floats the cartridge. */
     private static final java.util.Set<String> ICON_TILES = new java.util.HashSet<String>(
-            java.util.Arrays.asList("mastersystem", "pcengine", "pcenginecd", "segacd"));
+            java.util.Arrays.asList("mastersystem", "pcengine", "pcenginecd"));
 
     /** Arcade games have no cartridge anywhere: only their fan art shows. tile: asked for a game tile, not the top screen. */
     private static boolean wanted(String console, boolean tile) {
@@ -295,6 +306,25 @@ final class CartArt {
             return MiximageCompositor.decode(LaunchBoxArt.imageBytes(url), 1024);
         } finally {
             LAUNCHBOX.release();
+        }
+    }
+
+    /** ScreenScraper's picture of the cartridge or disc, through the app's Worker. Throws when the network let us down. */
+    private static Bitmap fromScreenScraper(Context ctx, String console, String title) throws IOException {
+        try {
+            SCREENSCRAPER.acquire();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("interrupted");
+        }
+        try {
+            ScreenScraperClient.Info info = ScreenScraperClient.lookup(ctx, title, console, true);
+            String url = ScreenScraperClient.bestCart(info);
+            if (url == null) return null;
+            byte[] data = ScreenScraperClient.download(url);
+            return data == null ? null : MiximageCompositor.decode(data, 1024);
+        } finally {
+            SCREENSCRAPER.release();
         }
     }
 
