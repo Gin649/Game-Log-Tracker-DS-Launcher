@@ -65,7 +65,8 @@
    "ppsspp"
   ],
   "action": "android.intent.action.VIEW",
-  "data": "path"
+  "data": "saf",
+  "activity": "org.ppsspp.ppsspp.PpssppActivity"
  },
  {
   "id": "mupen64plusae",
@@ -223,7 +224,7 @@
   "arrayExtras": {
    "AppStartParameters": [
     "-r",
-    "%ROMBASE%"
+    "%ROMID%"
    ]
   }
  },
@@ -231,6 +232,7 @@
   "id": "hakux",
   "label": "hakuX",
   "packages": [
+   "com.rfandango.haku_x",
    "com.rfandango.hakux",
    "com.hakux"
   ],
@@ -238,7 +240,11 @@
    "hakux"
   ],
   "action": "android.intent.action.VIEW",
-  "data": "saf"
+  "data": "saf",
+  "activity": "com.rfandango.haku_x.LauncherActivity",
+  "activities": [
+   ""
+  ]
  },
  {
   "id": "armsx3",
@@ -251,7 +257,11 @@
    "armsx3"
   ],
   "action": "android.intent.action.VIEW",
-  "data": "saf"
+  "data": "saf",
+  "activity": "com.armsx2.MainActivity",
+  "activities": [
+   "com.armsx2.Main"
+  ]
  },
  {
   "id": "xendroid",
@@ -300,7 +310,7 @@
   "arrayExtras": {
    "AppStartParameters": [
     "-r",
-    "%ROMBASE%"
+    "%ROMID%"
    ]
   }
  },
@@ -317,7 +327,7 @@
   "action": "aenu.intent.action.APS3E",
   "data": "none",
   "extras": {
-   "iso_uri": "%ROMFILEURI%"
+   "iso_uri": "%ROMSAF%"
   }
  },
  {

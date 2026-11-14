@@ -48,7 +48,7 @@ final class Recipes {
         final Map<String, Boolean> boolExtras = new LinkedHashMap<String, Boolean>();
         final Map<String, Integer> intExtras = new LinkedHashMap<String, Integer>();
         final Map<String, Long> longExtras = new LinkedHashMap<String, Long>();
-        /** Extras that are a list of strings; %ROM%, %ROMSAF%, %ROMFILEURI% and %ROMBASE% work in each item. */
+        /** Extras that are a list of strings; %ROM%, %ROMSAF%, %ROMFILEURI%, %ROMBASE% and %ROMID% work in each item. */
         final Map<String, List<String>> arrayExtras = new LinkedHashMap<String, List<String>>();
     }
 
@@ -221,8 +221,33 @@ final class Recipes {
         return buildAll(ctx, r, pkg, rom).get(0);
     }
 
-    private static String fillIn(String text, String uriText, String path, String base, String fileUri) {
+    private static String fillIn(String text, String uriText, String path, String base, String fileUri, File rom) {
+        if (text.contains("%ROMID%")) text = text.replace("%ROMID%", gameId(rom, base));
         return text.replace("%ROMSAF%", uriText).replace("%ROMFILEURI%", fileUri).replace("%ROMBASE%", base).replace("%ROM%", path);
+    }
+
+    /**
+     * The game's ID for emulators that start a game by its ID (Vita3K wants "PCSE00491"). ES-DE keeps Vita games as a
+     * small file, like "Persona 4 Golden.psvita", with the ID written inside, so a small file gives its first line.
+     * Otherwise the file name is used, for folders and files named by their ID.
+     */
+    private static String gameId(File rom, String base) {
+        try {
+            if (rom.isFile() && rom.length() > 0 && rom.length() < 1024) {
+                java.io.BufferedReader in = new java.io.BufferedReader(new java.io.InputStreamReader(new FileInputStream(rom), "UTF-8"));
+                try {
+                    String line;
+                    while ((line = in.readLine()) != null) {
+                        line = line.trim();
+                        if (!line.isEmpty()) return line;
+                    }
+                } finally {
+                    in.close();
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return base;
     }
 
     private static Intent build(Context ctx, Recipe r, String pkg, File rom, String activity, String action) {
@@ -262,11 +287,11 @@ final class Recipes {
         else if (!r.mime.isEmpty()) i.setType(r.mime);
 
         for (Map.Entry<String, String> e : r.extras.entrySet()) {
-            i.putExtra(e.getKey(), fillIn(e.getValue(), uriText, path, base, fileUri));
+            i.putExtra(e.getKey(), fillIn(e.getValue(), uriText, path, base, fileUri, rom));
         }
         for (Map.Entry<String, List<String>> e : r.arrayExtras.entrySet()) {
             String[] items = new String[e.getValue().size()];
-            for (int n = 0; n < items.length; n++) items[n] = fillIn(e.getValue().get(n), uriText, path, base, fileUri);
+            for (int n = 0; n < items.length; n++) items[n] = fillIn(e.getValue().get(n), uriText, path, base, fileUri, rom);
             i.putExtra(e.getKey(), items);
         }
         for (Map.Entry<String, Boolean> e : r.boolExtras.entrySet()) {

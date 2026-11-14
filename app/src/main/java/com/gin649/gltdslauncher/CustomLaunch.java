@@ -179,6 +179,8 @@ final class CustomLaunch {
 
     /** ES-DE's names for the ROM in extras, turned into the ones Recipes fills in. */
     private static String placeholders(String v) {
+        // %INJECT%=file means "the text inside that file", which ES-DE uses for Vita game IDs
+        v = v.replaceAll("%INJECT%=[^,\\s]*", "%ROMID%");
         return v.replace("%ROMPROVIDER%", "%ROMSAF%").replace("%BASENAME%", "%ROMBASE%");
     }
 
