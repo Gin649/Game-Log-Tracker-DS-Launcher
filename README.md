@@ -143,6 +143,10 @@ Other sites the app contacts, and why:
 
 Insert-coin sound by [Free Sounds Library](https://www.freesoundslibrary.com), used under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
+## Licence
+
+All rights reserved. You may download and use the released app, but the source code, design and artwork may not be copied, changed or reused without permission. See [LICENSE](LICENSE).
+
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for what changed in each version.
