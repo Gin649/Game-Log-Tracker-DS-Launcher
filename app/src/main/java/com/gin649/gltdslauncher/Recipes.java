@@ -33,7 +33,7 @@ final class Recipes {
         /** Other actions to try, in order, when the first one is not understood by the installed version; %PKG% is the emulator's package. */
         final List<String> actions = new ArrayList<String>();
         String category = "";
-        String data = "none";   // none, saf (content address), path, or fileuri (a file:// address)
+        String data = "none";   // none, saf (content address), safsystem (content address from the system folder), path, or fileuri (a file:// address)
         /** The data's type, for apps that only answer an intent with one ("application/octet-stream", say). */
         String mime = "";
         boolean noHistory;
@@ -244,8 +244,14 @@ final class Recipes {
         String fileUri = Uri.fromFile(rom).toString();
 
         Uri data = null;
+        // True when the data is an address this app can't give permission for (the emulator uses its own)
+        boolean notOurs = false;
         if ("saf".equals(r.data)) {
             data = uri;
+        } else if ("safsystem".equals(r.data)) {
+            Uri sys = RomUri.inSystemFolder(rom);
+            data = sys != null ? sys : uri;
+            notOurs = sys != null && !sys.equals(uri);
         } else if ("path".equals(r.data)) {
             data = new Uri.Builder().path(path).build();
         } else if ("fileuri".equals(r.data)) {
@@ -273,7 +279,8 @@ final class Recipes {
             i.putExtra(e.getKey(), e.getValue().longValue());
         }
 
-        if (RomUri.isContent(uri)) {
+        // Asking Android to pass on a permission this app doesn't hold stops the start altogether
+        if (RomUri.isContent(uri) && !notOurs) {
             i.setClipData(ClipData.newRawUri("rom", uri));
             i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         }
