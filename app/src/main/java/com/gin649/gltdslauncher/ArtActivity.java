@@ -78,7 +78,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     private AnimatorSet cartAnim;
     private AnimatorSet cartIdle;
     private android.media.SoundPool sounds;
-    private int soundCart, soundDisc, soundClunk;
+    private int soundNes, soundDisc, soundClunk;
     /** Which animation and sound the cartridge on show gets: an NES cartridge, any other cartridge, or a disc. */
     private int cartKind;
     /** Plain black over everything while the emulator takes the screen, so the fan art never flashes back up. */
@@ -200,14 +200,14 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         blackout.setVisibility(View.GONE);
         root.addView(blackout, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
-        // the thunk of a cartridge going in, and a disc drive spinning up
+        // a cartridge going in and its power switch, the NES one being pressed down, and a disc drive spinning up
         try {
             sounds = new android.media.SoundPool.Builder().setMaxStreams(2)
                     .setAudioAttributes(new android.media.AudioAttributes.Builder()
                             .setUsage(android.media.AudioAttributes.USAGE_GAME)
                             .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
                     .build();
-            soundCart = sounds.load(this, R.raw.cart_insert, 1);
+            soundNes = sounds.load(this, R.raw.cart_nes, 1);
             soundDisc = sounds.load(this, R.raw.disc_spin, 1);
             soundClunk = sounds.load(this, R.raw.cart_clunk, 1);
         } catch (Exception e) {
@@ -505,18 +505,26 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     /** How long a cartridge or disc takes to go in, before the old TV comes on. The launcher waits this much longer. */
     private static final int CART_INSERT_MS = 1700;
     /**
-     * Cartridges other than the NES one have a longer sound: the slide and clunk as it seats, then the click of a
-     * power switch. The clunk is this far into the sound and the switch this far after the clunk. The cartridge
-     * stays seated until the switch clicks, and that is when the old TV comes on.
+     * A cartridge's sound is the slide and clunk as it seats, then the click of a power switch. The clunk is this
+     * far into the sound. The cartridge stays seated until the switch clicks, and that is when the old TV comes on.
+     * The NES sound has one more step, as on the console: once the cartridge is in, it is pressed down.
      */
-    private static final int CLUNK_AT_MS = 400, SWITCH_AFTER_MS = 520;
+    private static final int CLUNK_AT_MS = 400;
+    /** After the clunk: when the power switch clicks, for other cartridges and for the NES one. */
+    private static final int SWITCH_AFTER_MS = 520, NES_SWITCH_AFTER_MS = 820;
+    /** After the clunk: when the NES cartridge is pressed down, and how long the press takes. */
+    private static final int NES_PRESS_AFTER_MS = 400, NES_PRESS_MS = 200;
     /** When the cartridge is seated: the float over, the pause and the drop (700 + 380 + 440). */
     private static final int SEATED_AT_MS = 1520;
+    /** The bump and settle that follow the drop (70 + 110). */
+    private static final int BUMP_MS = 180;
 
     private static final int KIND_CART = 0, KIND_NES = 1, KIND_DISC = 2;
 
     private static int insertMs(int kind) {
-        return kind == KIND_CART ? SEATED_AT_MS + SWITCH_AFTER_MS : CART_INSERT_MS;
+        if (kind == KIND_CART) return SEATED_AT_MS + SWITCH_AFTER_MS;
+        if (kind == KIND_NES) return SEATED_AT_MS + NES_SWITCH_AFTER_MS;
+        return CART_INSERT_MS;
     }
 
     /** The extra wait before a game starts while its cartridge goes in on this screen, or 0 when none is showing. */
@@ -608,12 +616,6 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         ObjectAnimator down = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, midY, seatY);
         down.setDuration(440);
         down.setInterpolator(new AccelerateInterpolator(1.7f));
-        down.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                if (cartKind == KIND_NES) playSound(soundCart); // the thunk lands as it seats
-            }
-        });
         ObjectAnimator bumpUp = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, seatY, seatY - tall * 0.035f);
         bumpUp.setDuration(70);
         bumpUp.setInterpolator(new DecelerateInterpolator());
@@ -624,18 +626,30 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         if (cartKind == KIND_CART) {
             // seated, it waits for the power switch to click
             ObjectAnimator wait = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, seatY, seatY);
-            wait.setDuration(SWITCH_AFTER_MS - 180);
-            path.playSequentially(rise, hang, down, bumpUp, settle, wait); // 1520 to seat, then 520 to the switch
+            wait.setDuration(SWITCH_AFTER_MS - BUMP_MS);
+            path.playSequentially(rise, hang, down, bumpUp, settle, wait);
+        } else if (cartKind == KIND_NES) {
+            // in, then pressed down a little further, then the power button
+            float pressedY = seatY + tall * 0.09f;
+            ObjectAnimator rest = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, seatY, seatY);
+            rest.setDuration(NES_PRESS_AFTER_MS - BUMP_MS - NES_PRESS_MS);
+            ObjectAnimator press = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, seatY, pressedY);
+            press.setDuration(NES_PRESS_MS);
+            press.setInterpolator(new AccelerateInterpolator(1.4f));
+            ObjectAnimator wait = ObjectAnimator.ofFloat(cart, View.TRANSLATION_Y, pressedY, pressedY);
+            wait.setDuration(NES_SWITCH_AFTER_MS - NES_PRESS_AFTER_MS);
+            path.playSequentially(rise, hang, down, bumpUp, settle, rest, press, wait);
         } else {
             path.playSequentially(rise, hang, down, bumpUp, settle); // 700 + 380 + 440 + 70 + 110 = CART_INSERT_MS
         }
         final AnimatorSet set = new AnimatorSet();
-        if (cartKind == KIND_CART) {
+        if (cartKind != KIND_DISC) {
             // started early, so the clunk in it lands just as the cartridge seats
+            final int sound = cartKind == KIND_NES ? soundNes : soundClunk;
             cart.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    if (cartAnim == set) playSound(soundClunk);
+                    if (cartAnim == set) playSound(sound);
                 }
             }, SEATED_AT_MS - CLUNK_AT_MS);
         }
