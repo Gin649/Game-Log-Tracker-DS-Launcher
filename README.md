@@ -139,6 +139,10 @@ Other sites the app contacts, and why:
 - cdnjs.cloudflare.com, to load the manual viewer the first time you open a manual.
 - GitHub, to check for new app versions and to find ROM patches and guides.
 
+## Credits
+
+Insert-coin sound by [Free Sounds Library](https://www.freesoundslibrary.com), used under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for what changed in each version.
