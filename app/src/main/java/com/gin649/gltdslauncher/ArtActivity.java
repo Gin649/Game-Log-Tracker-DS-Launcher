@@ -698,12 +698,24 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         }
     }
 
-    private void playSound(android.media.MediaPlayer p) {
+    private void playSound(final android.media.MediaPlayer p) {
         try {
             if (p == null) return;
             if (p.isPlaying()) p.pause();
-            p.seekTo(0);
+            // Only wind back when it has played before. Winding back a sound that has never been played, then
+            // starting it straight away, left the first game after opening the app silent.
+            if (p.getCurrentPosition() > 0) p.seekTo(0);
             p.start();
+            // and if it still hasn't started a moment later, ask once more
+            cart.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (!p.isPlaying() && p.getCurrentPosition() == 0) p.start();
+                    } catch (Exception ignored) {
+                    }
+                }
+            }, 120);
         } catch (Exception ignored) { // no sound is fine
         }
     }
