@@ -29,7 +29,7 @@ final class CartArt {
     static final int MAX_SIDE = 512;
     private static final long MISS_MS = 12L * 60 * 60 * 1000;
     /** Starts the name of every saved picture. Change it to have them all made again. */
-    private static final String VERSION = "4_";
+    private static final String VERSION = "5_";
     private static final long NO_COVER_MS = 10L * 60 * 1000;
 
     private static final Map<String, Object> LOCKS = new HashMap<String, Object>();
