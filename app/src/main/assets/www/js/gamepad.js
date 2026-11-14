@@ -119,6 +119,8 @@
   }
 
   const TILE = '.cart, .app-launch, .year-item';
+  // What stays put at the top of the page while the rest scrolls (position:sticky in the stylesheet).
+  const PINNED = '.tabs, .chip-row, .panel-head, .lib-table th';
 
   // The highlight
   const cls = (el) => el.className.replace(/\bpad-focus\b/, '').trim();
@@ -199,7 +201,27 @@
         ahead.push(it);
         rowTop = dir === 'down' ? Math.min(rowTop, it.r.top) : Math.max(rowTop, it.r.top);
       }
-      list = ahead.filter(it => Math.abs(it.r.top - rowTop) <= 12);
+      // The headings, the console row and the search bar stay pinned at the top while the games scroll under them.
+      // A row of games that has slid under them is then higher up the screen than they are, so going by position
+      // alone, up from a game would jump to the search bar. Pinned things count as being above all the games:
+      // up from a game goes to what is above it in its own tab first, and from a pinned thing up and down stay
+      // among the pinned things while there are any that way.
+      const pinned = (el) => !!el.closest(PINNED);
+      const curPinned = pinned(cur);
+      const panel = cur.closest('.tab-panel');
+      let pool = ahead;
+      if(curPinned){
+        const want = ahead.filter(it => pinned(it.el));
+        if(want.length) pool = want;
+      }else if(dir === 'up' && panel){
+        const want = ahead.filter(it => !pinned(it.el) && panel.contains(it.el));
+        if(want.length) pool = want;
+      }
+      if(pool !== ahead){
+        rowTop = dir === 'down' ? Infinity : -Infinity;
+        for(const it of pool) rowTop = dir === 'down' ? Math.min(rowTop, it.r.top) : Math.max(rowTop, it.r.top);
+      }
+      list = pool.filter(it => Math.abs(it.r.top - rowTop) <= 12);
       if(cur.closest('#modal-card')){
         // In a game profile, down and up follow the left edge: Play, then Play port, and so on, not the buttons beside them.
         let hit = null, bestD = Infinity;
