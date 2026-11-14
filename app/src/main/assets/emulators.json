@@ -79,7 +79,8 @@
    "m64plus"
   ],
   "action": "android.intent.action.VIEW",
-  "data": "saf"
+  "data": "safsystem",
+  "activity": "paulscode.android.mupen64plusae.SplashActivity"
  },
  {
   "id": "armsx2",
@@ -91,7 +92,12 @@
    "armsx2"
   ],
   "action": "android.intent.action.VIEW",
-  "data": "saf"
+  "data": "saf",
+  "activity": "com.armsx2.MainActivity",
+  "activities": [
+   "com.armsx2.Main",
+   "kr.co.iefriends.pcsx2.MainActivity"
+  ]
  },
  {
   "id": "nethersx2",
