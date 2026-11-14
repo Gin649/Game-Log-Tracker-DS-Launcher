@@ -34,6 +34,11 @@ REGION_RANK = {'': 0, 'world': 0, 'north america': 1, 'united states': 1, 'canad
                'australia': 4, 'japan': 5}
 
 
+# Cartridges and discs are the North American ones only (or a release for the whole world). A picture with no
+# region named is taken when there is nothing better; one from Japan, Europe or anywhere else is never used.
+CART_REGION_RANK = {'north america': 0, 'united states': 0, 'world': 1, '': 2}
+
+
 def compact(s):
     return re.sub(r'[^a-z0-9]', '', (s or '').lower())
 
@@ -108,6 +113,11 @@ def build(zf, platforms):
         if not hit or not fn:
             continue
         rank = (hit[1], region_rank(text(el, 'Region')))
+        if hit[0] in ('cart', 'disc'):
+            region = (text(el, 'Region') or '').strip().lower()
+            if region not in CART_REGION_RANK:
+                continue
+            rank = (hit[1], CART_REGION_RANK[region])
         if hit[0] == 'fan':
             fans.setdefault(gid, []).append((rank, fn))
         k = (gid, hit[0])
@@ -163,7 +173,7 @@ def main():
         if not games:
             continue
         games.sort(key=lambda r: r[0].lower())
-        data = json.dumps({'v': 1, 'carts': 1, 'g': games}, ensure_ascii=False, separators=(',', ':'))
+        data = json.dumps({'v': 1, 'carts': 2, 'g': games}, ensure_ascii=False, separators=(',', ':'))
         with open(os.path.join(a.out, 'launchbox', key + '.json'), 'w', encoding='utf-8') as f:
             f.write(data)
         index['platforms'][key] = {'games': len(games), 'bytes': len(data.encode('utf-8'))}

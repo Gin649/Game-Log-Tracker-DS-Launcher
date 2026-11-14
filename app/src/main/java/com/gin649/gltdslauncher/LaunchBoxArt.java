@@ -52,7 +52,7 @@ final class LaunchBoxArt {
 
     /** One console's games: normalized title to its row [title, fan, box, shot, logo, cart, disc]. */
     private static final class Index {
-        /** False for an index built before cartridge and disc pictures were listed. */
+        /** False for an index built before cartridge and disc pictures were listed, or when it listed ones from any region. */
         boolean carts;
         final List<String[]> rows = new ArrayList<String[]>();
         final Map<String, String[]> exact = new HashMap<String, String[]>();
@@ -358,7 +358,7 @@ final class LaunchBoxArt {
         Index out = new Index();
         try {
             JSONObject root = new JSONObject(new String(data, "UTF-8"));
-            out.carts = root.optInt("carts") == 1;
+            out.carts = root.optInt("carts") >= 2; // 2: North American cartridges and discs only
             JSONArray games = root.getJSONArray("g");
             for (int i = 0; i < games.length(); i++) {
                 JSONArray r = games.getJSONArray(i);

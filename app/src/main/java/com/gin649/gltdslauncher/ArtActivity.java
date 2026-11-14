@@ -749,7 +749,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
                 Bitmap b = null;
                 boolean disc = false, nes = Matcher.compact(v[1]).equals("nes");
                 try {
-                    java.io.File f = CartArt.find(ArtActivity.this, v[0], v[1], v[2], v[3], v[0].trim().startsWith("~"));
+                    java.io.File f = CartArt.find(ArtActivity.this, v[0], v[1], v[2], v[3], v[0].trim().startsWith("~"), false);
                     if (f != null) b = android.graphics.BitmapFactory.decodeFile(f.getPath());
                     SystemMap map = Shared.systems();
                     if (map != null) {

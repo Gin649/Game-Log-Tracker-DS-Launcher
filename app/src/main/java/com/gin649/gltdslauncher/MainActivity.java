@@ -294,7 +294,7 @@ public class MainActivity extends Activity {
     private WebResourceResponse serveCart(Uri u) {
         try {
             java.io.File f = CartArt.find(this, u.getQueryParameter("t"), u.getQueryParameter("c"),
-                    u.getQueryParameter("g"), u.getQueryParameter("i"), "1".equals(u.getQueryParameter("h")));
+                    u.getQueryParameter("g"), u.getQueryParameter("i"), "1".equals(u.getQueryParameter("h")), true);
             if (f == null) return errorResponse(404, "Not found");
             java.util.Map<String, String> headers = new java.util.HashMap<String, String>();
             headers.put("Cache-Control", "max-age=604800");

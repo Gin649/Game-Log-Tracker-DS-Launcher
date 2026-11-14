@@ -27,6 +27,8 @@ final class CartArt {
     /** Longest side of the saved picture. Two tiles in a row on the Thor are about this wide. */
     static final int MAX_SIDE = 512;
     private static final long MISS_MS = 12L * 60 * 60 * 1000;
+    /** Starts the name of every saved picture. Change it to have them all made again. */
+    private static final String VERSION = "2_";
     private static final long NO_COVER_MS = 10L * 60 * 1000;
 
     private static final Map<String, Object> LOCKS = new HashMap<String, Object>();
@@ -42,11 +44,13 @@ final class CartArt {
      * number in the tracker (for the cover you picked), cover is the address of its usual picture, and a hack never
      * takes the original game's cartridge or cover. Blocks; never call on the main thread.
      */
-    static File find(Context ctx, String title, String console, String gameId, String cover, boolean hack) {
+    static File find(Context ctx, String title, String console, String gameId, String cover, boolean hack, boolean tile) {
         if (title == null || console == null) return null;
         String key = Matcher.compact(console) + ":" + Matcher.norm(title);
         if (key.length() < 3) return null;
-        File out = new File(dir(ctx), hash(key) + ".webp");
+        if (!wanted(console, tile)) return null;
+        clearOld(ctx);
+        File out = new File(dir(ctx), VERSION + hash(key) + ".webp");
         if (out.isFile() && out.length() > 0) return out;
 
         Object lock;
@@ -104,6 +108,38 @@ final class CartArt {
         }
     }
 
+    /** Systems whose cartridges and discs look too plain on a tile. Their tiles keep the icon; the top screen still floats the cartridge. */
+    private static final java.util.Set<String> ICON_TILES = new java.util.HashSet<String>(
+            java.util.Arrays.asList("mastersystem", "pcengine", "pcenginecd", "segacd"));
+
+    /** Arcade games have no cartridge anywhere: only their fan art shows. tile: asked for a game tile, not the top screen. */
+    private static boolean wanted(String console, boolean tile) {
+        if (Matcher.compact(console).equals("arcade")) return false;
+        SystemMap map = Shared.systems();
+        if (map == null) return true;
+        for (SystemMap.Sys s : map.forConsole(console)) {
+            if ("arcade".equals(s.folder)) return false;
+            if (tile && ICON_TILES.contains(s.folder)) return false;
+        }
+        return true;
+    }
+
+    private static boolean cleared;
+
+    /**
+     * Pictures saved by an earlier version of this (cartridges from any region) are thrown away once, so they are
+     * looked up again. Saved pictures now have names starting with the version.
+     */
+    private static synchronized void clearOld(Context ctx) {
+        if (cleared) return;
+        cleared = true;
+        File[] all = dir(ctx).listFiles();
+        if (all == null) return;
+        for (File f : all) {
+            if (!f.getName().startsWith(VERSION)) f.delete();
+        }
+    }
+
     private static boolean recentMiss(String saved) {
         if (saved == null) return false;
         try {
@@ -133,7 +169,7 @@ final class CartArt {
             if (pick != null) pick = pick.trim();
             if (pick != null && pick.isEmpty()) pick = null;
         }
-        String base = hash(key);
+        String base = VERSION + hash(key);
         // the usual picture is part of the name too: once the tracker has found a game's box art, its cartridge is
         // made again with that in place of the small icon
         String from = pick != null ? pick : "auto|" + (cover == null ? "" : cover);
