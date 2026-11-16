@@ -321,6 +321,12 @@
         <div class="hint">Loads a backup onto this device. Anything already here with the same key is replaced.</div>
       </div>
 
+      <div class="field" id="cloud-field" style="display:none;">
+        <label>Cloud sync</label>
+        <div id="cloud-box"></div>
+        <div class="hint">Keeps this launcher the same on every device signed in to the same Google account. Your games are kept in a hidden folder in your own Google Drive that only this app can see. Logins and API keys are never synced, and each device keeps its own ROM folders. Before anything from the cloud replaces what is here, a backup of this device is made below.</div>
+      </div>
+
       <div class="field" id="thor-backup-field" style="display:none;">
         <label>Backups on this device</label>
         <button class="btn-primary" id="data-backup-now-btn" style="width:100%;">Back up now</button>
@@ -407,6 +413,7 @@
 <script src="js/rom-patcher.js"></script>
 <script src="js/guides.js"></script>
 <script src="js/ra-guides.js"></script>
+<script src="js/cloud-sync.js"></script>
 
 </body>
 </html>

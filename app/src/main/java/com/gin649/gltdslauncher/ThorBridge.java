@@ -214,6 +214,69 @@ final class ThorBridge {
         return DisplayPicker.hasTwoScreens(act);
     }
 
+    // Cloud sync (see CloudSync and js/cloud-sync.js). The slow calls answer through window.thorCloudDone(id, json).
+
+    @JavascriptInterface
+    public String cloudStatus() {
+        return CloudSync.status(act).toString();
+    }
+
+    @JavascriptInterface
+    public void cloudSignIn(final String id) {
+        act.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                CloudSync.signIn(act, id);
+            }
+        });
+    }
+
+    @JavascriptInterface
+    public void cloudSignOut(String id, boolean deleteCopy) {
+        CloudSync.signOut(act, id, deleteCopy);
+    }
+
+    @JavascriptInterface
+    public void cloudMeta(String id) {
+        CloudSync.meta(act, id);
+    }
+
+    @JavascriptInterface
+    public void cloudDownload(String id, String fileId) {
+        CloudSync.download(act, id, fileId);
+    }
+
+    @JavascriptInterface
+    public String cloudChunk(int i) {
+        return CloudSync.chunk(i);
+    }
+
+    @JavascriptInterface
+    public void cloudPutBegin() {
+        CloudSync.putBegin();
+    }
+
+    @JavascriptInterface
+    public void cloudPut(String piece) {
+        CloudSync.put(piece);
+    }
+
+    @JavascriptInterface
+    public void cloudPutEnd(String id, String fileId, String rev) {
+        CloudSync.putEnd(act, id, fileId, rev);
+    }
+
+    /** What this device last synced: {rev, hash, rebase}, kept here so backups and restores leave it alone. */
+    @JavascriptInterface
+    public String cloudState() {
+        return Prefs.get(act, CloudSync.PREF_STATE, "{}");
+    }
+
+    @JavascriptInterface
+    public void cloudSetState(String json) {
+        Prefs.put(act, CloudSync.PREF_STATE, json);
+    }
+
     /**
      * The fan art the top screen is showing for this game, as an address the page can load, or "" when there is
      * none (no top screen, another game on show, or only box art). The profile puts it behind its panels.

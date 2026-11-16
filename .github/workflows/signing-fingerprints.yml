@@ -1,0 +1,33 @@
+name: Signing fingerprints
+
+# Prints the SHA-1 fingerprints of the release and debug signing keys, for the Android sign-in clients in Google
+# Cloud (cloud sync). Fingerprints are not secret; the key itself never leaves the runner and is deleted at the end.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fingerprints:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Debug key
+        run: |
+          echo "Debug app (com.gin649.gltdslauncher.debug):"
+          keytool -list -v -keystore app/debug.keystore -storepass android -alias androiddebugkey | grep -E "SHA1:"
+
+      - name: Release key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then echo "::error::No release keystore secret."; exit 1; fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "Release app (com.gin649.gltdslauncher):"
+          keytool -list -v -keystore "$RUNNER_TEMP/release.jks" -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" | grep -E "SHA1:"
+          echo "::notice::Release SHA-1: $(keytool -list -v -keystore "$RUNNER_TEMP/release.jks" -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" | grep -E 'SHA1:' | awk '{print $2}')"
+          rm -f "$RUNNER_TEMP/release.jks"

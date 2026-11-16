@@ -170,7 +170,10 @@ if(thorBridge){
     try{ running = thorBridge.gameRunning(); }catch(e){}
     if(running && typeof window.liveCheckProfile === 'function') window.liveCheckProfile();
     if(running) thorRefreshPlayed(false);
-    else if(wasRunning) thorRefreshPlayed();
+    else if(wasRunning){
+      thorRefreshPlayed();
+      if(typeof window.cloudSyncSoon === 'function') window.cloudSyncSoon(3000); // the game's playtime goes to the cloud
+    }
     wasRunning = running;
   }, 10000);
 }

@@ -319,12 +319,17 @@ public class MainActivity extends Activity {
 
     /** The top screen's picture changed: the open profile updates the fan art behind its panels. */
     static void artChanged() {
+        callPage("window.thorFanArtChanged&&window.thorFanArtChanged()");
+    }
+
+    /** Runs a bit of script in the page, from any thread. */
+    static void callPage(final String js) {
         final MainActivity a = current;
         if (a == null) return;
         a.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (a.webView != null) a.webView.evaluateJavascript("window.thorFanArtChanged&&window.thorFanArtChanged()", null);
+                if (a.webView != null) a.webView.evaluateJavascript(js, null);
             }
         });
     }
@@ -637,6 +642,10 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == CloudSync.REQ_SIGN_IN) {
+            CloudSync.onSignInResult(this, resultCode, data);
+            return;
+        }
         if (requestCode == REQ_FILE) {
             if (filePathCallback != null) {
                 filePathCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data));

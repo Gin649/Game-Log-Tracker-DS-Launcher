@@ -52,7 +52,9 @@ final class Backup {
 
     /** Settings a backup leaves out: logins and keys, and ones that only make sense for this install. */
     private static final Set<String> NOT_SAVED = new HashSet<String>(Arrays.asList(
-            "raKey", "sgdbKey", "credsRev", "wizardDraft", LAST_AUTO));
+            "raKey", "sgdbKey", "credsRev", "wizardDraft", LAST_AUTO,
+            // cloud sync belongs to this device's own Google sign-in
+            CloudSync.PREF_ON, CloudSync.PREF_EMAIL, CloudSync.PREF_STATE));
     /**
      * Settings a restore leaves as they are. The data folder is where the restored data is being written, so moving it
      * would lose that; and setup should still run on a new device, where folder permissions have to be given again.

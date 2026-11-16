@@ -89,5 +89,7 @@ dependencies {
     implementation 'androidx.room:room-runtime:2.6.1'
     implementation 'androidx.webkit:webkit:1.11.0'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    // Google sign-in for cloud sync (only the Drive app-folder permission is asked for)
+    implementation 'com.google.android.gms:play-services-auth:21.2.0'
     annotationProcessor 'androidx.room:room-compiler:2.6.1'
 }

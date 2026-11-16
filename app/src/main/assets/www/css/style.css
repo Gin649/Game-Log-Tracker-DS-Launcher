@@ -402,6 +402,13 @@
   .app-launch img{width:var(--app-icon,48px);height:var(--app-icon,48px);border-radius:10px;}
   .app-launch span{font-size:0.7188rem;line-height:1.25;text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;}
   .app-star{position:absolute;top:2px;right:2px;background:transparent;border:none;color:var(--gold);font-size:1rem;padding:4px 6px;cursor:pointer;}
+  /* Cloud sync, in Data Options */
+  .cloud-account{font-size:0.8438rem;color:var(--text);}
+  .cloud-account b{color:var(--gold);font-weight:600;}
+  .cloud-note{font-size:0.75rem;color:var(--muted);margin:6px 0 0;}
+  .cloud-note.bad{color:var(--gold);}
+  .cloud-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .cloud-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:320;background:var(--panel-2);color:var(--text);border:1px solid var(--gold-dim);border-radius:6px;padding:10px 14px;font-size:0.8125rem;box-shadow:0 6px 18px rgba(0,0,0,0.5);max-width:90vw;text-align:center;}
   .app-pop{position:fixed;inset:0;z-index:300;background:rgba(10,8,16,0.75);display:flex;align-items:center;justify-content:center;padding:20px;}
   .app-pop-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:18px;width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px;}
   .app-pop-title{font-weight:700;color:var(--gold);text-align:center;}
