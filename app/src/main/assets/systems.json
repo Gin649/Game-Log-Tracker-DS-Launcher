@@ -74,6 +74,9 @@
    "NES/Famicom"
   ],
   "core": "mesen",
+  "standalones": [
+   "zaxnes"
+  ],
   "cores": [
    "fceumm",
    "nestopia"
@@ -85,6 +88,9 @@
    "NES/Famicom"
   ],
   "core": "mesen",
+  "standalones": [
+   "zaxnes"
+  ],
   "cores": [
    "fceumm",
    "nestopia"

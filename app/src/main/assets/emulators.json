@@ -98,6 +98,21 @@
   "activity": "com.joeysretro.joey64.MainActivity"
  },
  {
+  "id": "zaxnes",
+  "label": "Zaxnes (3D)",
+  "packages": [
+   "io.github.gin649.zaxnes"
+  ],
+  "labels": [
+   "zaxnes"
+  ],
+  "action": "android.intent.action.VIEW",
+  "data": "saf",
+  "mime": "application/octet-stream",
+  "activity": "io.github.nixxou.zaxnes.ZaxnesActivity",
+  "optIn": true
+ },
+ {
   "id": "armsx2",
   "label": "ARMSX2",
   "packages": [
