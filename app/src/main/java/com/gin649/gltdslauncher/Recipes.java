@@ -40,6 +40,8 @@ final class Recipes {
         boolean clearTask;
         /** Emulator that shows both of a handheld's screens itself (DS, 3DS): it starts on the bottom screen. */
         boolean dual;
+        /** Only used when picked for a system, never on its own ("optIn" in emulators.json). */
+        boolean optIn;
         /** Other activity names to try, in order, when the first one is not in the installed version. */
         final List<String> activities = new ArrayList<String>();
         final List<String> packages = new ArrayList<String>();
@@ -126,6 +128,7 @@ final class Recipes {
             if (o.has("data")) r.data = o.getString("data");
             if (o.has("clearTask")) r.clearTask = o.getBoolean("clearTask");
             if (o.has("dual")) r.dual = o.getBoolean("dual");
+            if (o.has("optIn")) r.optIn = o.getBoolean("optIn");
             if (o.has("activities")) fill(r.activities, o.getJSONArray("activities"));
             if (o.has("arrayExtras")) {
                 r.arrayExtras.clear();

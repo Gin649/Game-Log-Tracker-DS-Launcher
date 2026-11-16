@@ -47,6 +47,9 @@
    "Game Boy Advance"
   ],
   "core": "mgba",
+  "standalones": [
+   "gbads"
+  ],
   "cores": [
    "vba_next"
   ]
@@ -57,6 +60,9 @@
    "Game Boy Advance"
   ],
   "core": "mgba",
+  "standalones": [
+   "gbads"
+  ],
   "hack": true,
   "cores": [
    "vba_next"

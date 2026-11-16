@@ -61,9 +61,13 @@ final class Launcher {
             List<String> ids = new ArrayList<String>();
             if (!saId.isEmpty()) ids.add(saId);
             else {
-                // with nothing picked, your own launch commands are never used on their own: only when chosen
+                // with nothing picked, your own launch commands and opt-in emulators are never used on their own:
+                // only when chosen
                 for (String id : sys.standalones) {
-                    if (!id.startsWith(CustomLaunch.ID_PREFIX)) ids.add(id);
+                    if (id.startsWith(CustomLaunch.ID_PREFIX)) continue;
+                    Recipes.Recipe r = Recipes.byId(act, id);
+                    if (r != null && r.optIn) continue;
+                    ids.add(id);
                 }
             }
             Recipes.Recipe first = null;

@@ -1062,7 +1062,18 @@ public class SetupActivity extends Activity {
                     }
                 }
             }
-            if (sel < 0) sel = 0;
+            if (sel < 0) {
+                // nothing picked yet: the first emulator that isn't opt-in, so an opt-in one is never the default
+                sel = 0;
+                for (int i = 0; i < values.size(); i++) {
+                    String v = values.get(i);
+                    Recipes.Recipe r = v.startsWith("standalone:") ? Recipes.byId(this, v.substring(11)) : null;
+                    if (r == null || !r.optIn) {
+                        sel = i;
+                        break;
+                    }
+                }
+            }
             emuValues.put(sys.folder, values);
             emuSpinners.put(sys.folder, spinner(items, sel));
         }
