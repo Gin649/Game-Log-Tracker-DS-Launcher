@@ -1,6 +1,7 @@
 // Pinch on the game tiles (tile view), the covers on the Beaten tab or the Apps tab to change how many fit in a
 // row. The pinch can be anywhere on that tab, not only on the tiles. Spreading two fingers makes them bigger, so fewer fit, and pinching them together makes them smaller.
 // The game tiles go from 2 to 6 in a row and the Beaten tab from 2 to 10. The choice is kept.
+// Achievement tiles in a game profile go from 3 to 6 (achTilesStep in achievements.js).
 (function(){
   const APPTILE_KEY = 'app-apps-tile', YEARCOLS_KEY = 'app-year-cols';
   const APP_SIZES = [64, 80, 96, 120, 150]; // the narrowest an app tile may be, in px. 96 is the usual size.
@@ -79,6 +80,18 @@
     return el.closest(GRIDS) || document.querySelector('.tab-panel.active ' + GRIDS.split(', ').join(', .tab-panel.active '));
   }
 
+  // Achievement tiles in a game profile: the pinch can be on the tiles or on their filter bar.
+  function achGridFor(el){
+    if(!el || !el.closest || !el.closest('#modal-card')) return null;
+    const g = el.closest('.ach-tiles');
+    if(g) return g;
+    for(let p = el; p && p.id !== 'modal-card'; p = p.parentElement){
+      const q = p.querySelector(':scope > .ach-tiles');
+      if(q) return q;
+    }
+    return null;
+  }
+
   function onMove(e){
     if(!pinch) return;
     if(e.touches.length !== 2){ end(); return; }
@@ -86,7 +99,7 @@
     const ratio = spread(e.touches) / pinch.dist;
     if(ratio < STEP_OUT && ratio > STEP_IN) return;
     const bigger = ratio >= STEP_OUT;
-    const changed = pinch.kind === 'apps' ? stepApps(bigger) : pinch.kind === 'year' ? stepYear(bigger, pinch.grid) : setTileCols(tileCols + (bigger ? -1 : 1));
+    const changed = pinch.kind === 'ach' ? achTilesStep(bigger) : pinch.kind === 'apps' ? stepApps(bigger) : pinch.kind === 'year' ? stepYear(bigger, pinch.grid) : setTileCols(tileCols + (bigger ? -1 : 1));
     pinch.dist = spread(e.touches);
     if(changed) pinch.changed = true;
   }
@@ -97,7 +110,8 @@
     document.removeEventListener('touchmove', onMove);
     if(!p.changed) return;
     try{
-      if(p.kind === 'apps') window.storage.set(APPTILE_KEY, String(appSize), false);
+      if(p.kind === 'ach') achTilesSave();
+      else if(p.kind === 'apps') window.storage.set(APPTILE_KEY, String(appSize), false);
       else if(p.kind === 'year') window.storage.set(YEARCOLS_KEY, String(yearCols), false);
       else window.storage.set(TILECOLS_KEY, String(tileCols), false);
     }catch(e){}
@@ -105,6 +119,12 @@
 
   document.addEventListener('touchstart', (e) => {
     if(e.touches.length !== 2){ end(); return; }
+    const achGrid = typeof achTilesStep === 'function' && achGridFor(e.touches[0].target);
+    if(achGrid && achGridFor(e.touches[1].target)){
+      pinch = { dist: spread(e.touches) || 1, grid: achGrid, kind: 'ach', changed: false };
+      document.addEventListener('touchmove', onMove, { passive: false });
+      return;
+    }
     const grid = gridFor(e.touches[0].target);
     if(!grid || !gridFor(e.touches[1].target)) return;
     pinch = { dist: spread(e.touches) || 1, grid, kind: grid.classList.contains('apps-grid') ? 'apps' : grid.classList.contains('year-icons') ? 'year' : 'tiles', changed: false };

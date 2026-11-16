@@ -60,6 +60,151 @@ function achRowHtml(a, isLocked, isHardcoreMode, reorderMode){
     `;
 }
 
+// Achievements as a list or as tiles. The choice is the same for every game and stays until you switch back.
+// A pinch on the tiles sets how many fit in a row, 3 to 6. At 3 each tile also shows the name and points;
+// smaller tiles are just the badge. Tapping a tile shows its details in a bubble under it.
+const ACH_TILES_KEY = 'app-ach-tiles', ACH_COLS_KEY = 'app-ach-cols';
+let achTileView = false;
+let achTileCols = 5;
+(async function(){
+  let changed = false;
+  try{
+    const v = await window.storage.get(ACH_TILES_KEY, false);
+    if(v && v.value === '1'){ achTileView = true; changed = true; }
+    const c = await window.storage.get(ACH_COLS_KEY, false);
+    const n = c ? parseInt(c.value, 10) : NaN;
+    if(n >= 3 && n <= 6){ changed = changed || n !== achTileCols; achTileCols = n; }
+  }catch(e){}
+  if(changed) achRerenderOpen();
+})();
+
+function achTileHtml(a, isLocked, isHardcoreMode){
+  const badge = imgUrl('/Badge/' + a.BadgeName + (isLocked ? '_lock' : '') + '.png');
+  const earnedDate = isHardcoreMode ? a.DateEarnedHardcore : a.DateEarned;
+  const id = a.ID ?? a.id;
+  return `
+      <button type="button" class="ach-tile ${isLocked ? 'locked' : ''}" data-id="${esc(id)}"
+        data-title="${esc(a.Title || 'Untitled')}" data-desc="${esc(a.Description || '')}" data-pts="${esc(a.Points ?? '')}"
+        data-when="${isLocked ? '' : esc(timeAgo(earnedDate))}"${isMissable(a) ? ' data-missable="1"' : ''} aria-label="${esc(a.Title || 'Achievement')}">
+        <img src="${esc(badge)}" alt="" draggable="false">
+        ${isMissable(a) ? '<span class="ach-missable-badge ach-tile-miss" aria-hidden="true">!</span>' : ''}
+        <span class="ach-tile-name">${esc(a.Title || 'Untitled')}</span>
+        <span class="ach-tile-pts">${esc(a.Points ?? '')}</span>
+      </button>
+    `;
+}
+function achItemHtml(a, isLocked, isHardcoreMode, reorderMode){
+  return achTileView ? achTileHtml(a, isLocked, isHardcoreMode) : achRowHtml(a, isLocked, isHardcoreMode, reorderMode);
+}
+function achTilesClass(reorderMode){
+  return 'ach-tiles' + (achTileCols <= 3 ? ' named' : '') + (reorderMode ? ' reordering' : '');
+}
+
+const ACH_ICON_TILES = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>';
+const ACH_ICON_LIST = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg>';
+
+// Every open achievements panel is drawn again: the game's own list, its beaten list and any open subsets.
+function achRerenderOpen(){
+  try{
+    if(typeof openAchievementsGameId !== 'undefined' && openAchievementsGameId != null){
+      const w = document.getElementById('modal-achievements');
+      if(w) renderAchWrapContent(w, openAchievementsGameId);
+    }
+    if(typeof openBeatenAchievementsGameId !== 'undefined' && openBeatenAchievementsGameId != null){
+      const list = achievementsListCache[openBeatenAchievementsGameId];
+      const w = document.getElementById('modal-beaten-achievements');
+      if(w && list) w.innerHTML = renderBeatenAchievementsList(list, statsMode === 'hardcore');
+    }
+    if(typeof refreshOpenSubsetPanels === 'function') refreshOpenSubsetPanels();
+  }catch(e){}
+}
+
+// Called by pinch-tiles.js. The grids on screen are changed where they are, so the pinch isn't lost.
+function achTilesStep(bigger){
+  const n = Math.min(6, Math.max(3, achTileCols + (bigger ? -1 : 1)));
+  if(n === achTileCols) return false;
+  achTileCols = n;
+  hideAchBubble();
+  document.querySelectorAll('.ach-tiles').forEach(g => {
+    g.style.setProperty('--ach-cols', n);
+    g.classList.toggle('named', n <= 3);
+  });
+  return true;
+}
+function achTilesSave(){
+  try{ window.storage.set(ACH_COLS_KEY, String(achTileCols), false); }catch(e){}
+}
+
+// The details bubble. It lives inside the grid, so it scrolls with it and goes when the grid is redrawn.
+function hideAchBubble(){
+  document.querySelectorAll('.ach-bubble').forEach(b => { const g = b.parentElement; b.remove(); if(g) g.style.paddingBottom = ''; });
+  document.querySelectorAll('.ach-tile.on').forEach(t => t.classList.remove('on'));
+}
+function showAchBubble(tile){
+  const grid = tile.closest('.ach-tiles');
+  if(!grid) return;
+  const wasOn = tile.classList.contains('on');
+  hideAchBubble();
+  if(wasOn) return; // tapping the same tile again closes it
+  tile.classList.add('on');
+  const d = tile.dataset;
+  const locked = tile.classList.contains('locked');
+  const bubble = document.createElement('div');
+  bubble.className = 'ach-bubble';
+  bubble.innerHTML = `
+      <div class="ach-bubble-head">
+        <p class="t">${esc(d.title)}</p>
+        <span class="pts${locked ? ' locked' : ''}">${esc(d.pts)}</span>
+      </div>
+      ${d.desc ? `<p class="d">${esc(d.desc)}</p>` : ''}
+      <div class="ach-bubble-foot">
+        <span class="${locked ? 'locked' : 'when'}">${locked ? 'Locked' : 'Unlocked ' + esc(d.when)}</span>
+        ${d.missable ? '<span class="ach-bubble-miss"><span class="ach-missable-badge ach-filter-icon" aria-hidden="true">!</span> Missable</span>' : ''}
+        ${d.id ? `<a class="ach-ra-link" href="https://retroachievements.org/achievement/${encodeURIComponent(d.id)}" target="_blank" rel="noopener" aria-label="Open ${esc(d.title)} on RetroAchievements">RA</a>` : ''}
+      </div>`;
+  grid.appendChild(bubble);
+  // Under the tile, kept inside the grid, with the little arrow pointing at the tile.
+  const gw = grid.clientWidth;
+  const bw = Math.min(gw - 8, 300);
+  const centre = tile.offsetLeft + tile.offsetWidth / 2;
+  const left = Math.max(4, Math.min(gw - bw - 4, centre - bw / 2));
+  bubble.style.width = bw + 'px';
+  bubble.style.left = left + 'px';
+  bubble.style.setProperty('--arrow-x', Math.round(centre - left) + 'px');
+  // The list cuts off anything past its edge, so a bubble under the bottom row goes above the tile instead,
+  // or, when there's no room there either (a single row), the grid grows a little to fit it.
+  const bh = bubble.offsetHeight;
+  const below = tile.offsetTop + tile.offsetHeight + 8;
+  const room = grid.clientHeight - 4;
+  if(below + bh <= room){
+    bubble.style.top = below + 'px';
+  }else if(tile.offsetTop - bh - 8 >= 4){
+    bubble.classList.add('above');
+    bubble.style.top = (tile.offsetTop - bh - 8) + 'px';
+  }else{
+    bubble.style.top = below + 'px';
+    grid.style.paddingBottom = (below + bh + 12 - grid.clientHeight + 8) + 'px';
+  }
+}
+
+// One set of handlers for every list: the List / Tiles switch, tapping a tile, and tapping away from a bubble.
+document.addEventListener('click', (e) => {
+  const t = e.target;
+  if(!t || !t.closest) return;
+  const toggle = t.closest('.ach-view-toggle');
+  if(toggle){
+    const want = toggle.dataset.view ? toggle.dataset.view === 'tiles' : !achTileView;
+    if(want === achTileView) return;
+    achTileView = want;
+    try{ window.storage.set(ACH_TILES_KEY, want ? '1' : '0', false); }catch(err){}
+    achRerenderOpen();
+    return;
+  }
+  const tile = t.closest('.ach-tile');
+  if(tile && !tile.closest('.reordering')){ showAchBubble(tile); return; }
+  if(!t.closest('.ach-bubble')) hideAchBubble();
+});
+
 // Custom achievement order, per game: an array of achievement IDs under its own key, so backups
 // include it. Achievements added to the set later go at the end; IDs that no longer exist are ignored.
 const achOrderCache = {}; // gameId -> array of IDs, or null
@@ -179,10 +324,10 @@ function renderAchievementsList(list, isHardcoreMode, order, reorderMode){
   // Hardcore only counts hardcore unlocks; casual counts any (DateEarned is set on every unlock).
   const isEarned = (a) => isHardcoreMode ? a.DateEarnedHardcore : a.DateEarned;
   if(order){
-    return applyAchOrder(list, order).map(a => achRowHtml(a, !isEarned(a), isHardcoreMode, reorderMode)).join('');
+    return applyAchOrder(list, order).map(a => achItemHtml(a, !isEarned(a), isHardcoreMode, reorderMode)).join('');
   }
   const { earned, locked } = splitEarnedLocked(list, isHardcoreMode);
-  return earned.map(a => achRowHtml(a, false, isHardcoreMode, reorderMode)).join('') + locked.map(a => achRowHtml(a, true, isHardcoreMode, reorderMode)).join('');
+  return earned.map(a => achItemHtml(a, false, isHardcoreMode, reorderMode)).join('') + locked.map(a => achItemHtml(a, true, isHardcoreMode, reorderMode)).join('');
 }
 
 // The list with its filter bar (Reorder, Missable, Locked) and the export / import footer.
@@ -194,10 +339,11 @@ function renderAchievementsPanel(list, isHardcoreMode, missableOnly, lockedOnly,
   const showLocked = lockedCount > 0 && !reorderMode;
   const leftBtns = reorderMode
     ? `<button class="ach-filter-btn active" id="ach-reorder-toggle" type="button">✓ Done</button>`
-    : `<button class="ach-filter-btn" id="ach-reorder-toggle" type="button">⇅ Reorder</button>`
-      + (order ? `<button class="ach-filter-btn" id="ach-reorder-reset" type="button">Reset order</button>` : '');
+    : `<button class="ach-filter-btn" id="ach-reorder-toggle" type="button">⇅ Reorder</button>`;
+  const viewBtn = `<button class="ach-filter-btn ach-view-toggle${achTileView ? ' active' : ''}" type="button" aria-label="${achTileView ? 'Show as a list' : 'Show as tiles'}" title="${achTileView ? 'Show as a list' : 'Show as tiles'}">${ACH_ICON_TILES}</button>`;
+  const resetBtn = (!reorderMode && order) ? `<button class="ach-filter-btn" id="ach-reorder-reset" type="button">Reset order</button>` : '';
   const filterBar = `<div class="ach-filter-row">
-        <div class="ach-filter-left">${leftBtns}</div>
+        <div class="ach-filter-left">${leftBtns}${viewBtn}${resetBtn}</div>
         <div class="ach-filter-right">
         ${showMissable ? `<button class="ach-filter-btn ${missableOnly ? 'active' : ''}" id="ach-missable-toggle" type="button">
              <span class="ach-missable-badge ach-filter-icon" aria-hidden="true">!</span> Missable (<span class="ach-filter-count">${missableCount}</span>)
@@ -207,7 +353,7 @@ function renderAchievementsPanel(list, isHardcoreMode, missableOnly, lockedOnly,
            </button>` : ''}
         </div>
       </div>
-      ${reorderMode ? '<div class="ach-reorder-hint">Press and hold a row, then drag it. Or use ▲▼. Your order saves automatically.</div>' : ''}`;
+      ${reorderMode ? `<div class="ach-reorder-hint">${achTileView ? 'Press and hold a tile, then drag it.' : 'Press and hold a row, then drag it. Or use ▲▼.'} Your order saves automatically.</div>` : ''}`;
   let rows = list;
   if(!reorderMode){
     if(missableOnly && showMissable) rows = rows.filter(isMissable);
@@ -219,7 +365,9 @@ function renderAchievementsPanel(list, isHardcoreMode, missableOnly, lockedOnly,
   const filterLabel = (missableOnly && lockedOnly) ? 'locked missable' : lockedOnly ? 'locked' : 'missable';
   const body = rows.length === 0
     ? `<div class="achievements-list-loading">No ${filterLabel} achievements in this set.</div>`
-    : `<div class="ach-rows${reorderMode ? ' reordering' : ''}" id="ach-rows">${renderAchievementsList(rows, isHardcoreMode, order, reorderMode)}</div>`;
+    : achTileView
+      ? `<div class="${achTilesClass(reorderMode)}" id="ach-rows" style="--ach-cols:${achTileCols}">${renderAchievementsList(rows, isHardcoreMode, order, reorderMode)}</div>`
+      : `<div class="ach-rows${reorderMode ? ' reordering' : ''}" id="ach-rows">${renderAchievementsList(rows, isHardcoreMode, order, reorderMode)}</div>`;
 
   const shareFooterBtns = (order ? `<button class="ach-share-footer-btn" id="ach-share-download" type="button">⇪ Export order (file)</button>` : '')
     + `<button class="ach-share-footer-btn" id="ach-import-file-btn" type="button">⇩ Import order (file)</button>`;
@@ -296,7 +444,120 @@ function renderAchWrapContent(achWrap, gameId, gameTitle){
       });
     });
   }
-  if(state.reorderMode) wireAchReorder(achWrap, gameId);
+  if(state.reorderMode){
+    if(achTileView) wireAchTileReorder(achWrap, gameId);
+    else wireAchReorder(achWrap, gameId);
+  }
+}
+
+// Tile view reordering: press and hold a tile, then drag it. The other tiles slide into the slots they would
+// end up in, and the tiles are only moved for real when you let go (as with the rows).
+function wireAchTileReorder(achWrap, gameId){
+  const grid = achWrap.querySelector('#ach-rows');
+  if(!grid) return;
+  const scroller = document.getElementById('modal-backdrop');
+  const tilesEl = () => Array.from(grid.querySelectorAll('.ach-tile'));
+  const persist = () => saveAchOrder(gameId, tilesEl().map(t => t.dataset.id));
+  const HOLD_MS = 350;
+  const HOLD_SLOP = 10;
+  let dragActive = false;
+  grid.addEventListener('touchmove', (ev) => { if(dragActive) ev.preventDefault(); }, { passive: false });
+  grid.addEventListener('contextmenu', (ev) => ev.preventDefault());
+
+  tilesEl().forEach(tile => {
+    tile.addEventListener('pointerdown', (e) => {
+      if(dragActive) return;
+      if(e.pointerType === 'mouse' && e.button !== 0) return;
+      const pointerId = e.pointerId;
+      let px = e.clientX, py = e.clientY;
+      const downX = e.clientX, downY = e.clientY;
+      let timer = 0;
+      const cancelPending = () => {
+        clearTimeout(timer);
+        tile.removeEventListener('pointermove', pendingMove);
+        tile.removeEventListener('pointerup', cancelPending);
+        tile.removeEventListener('pointercancel', cancelPending);
+      };
+      const pendingMove = (ev) => {
+        px = ev.clientX; py = ev.clientY;
+        if(Math.abs(ev.clientX - downX) > HOLD_SLOP || Math.abs(ev.clientY - downY) > HOLD_SLOP) cancelPending();
+      };
+      tile.addEventListener('pointermove', pendingMove);
+      tile.addEventListener('pointerup', cancelPending);
+      tile.addEventListener('pointercancel', cancelPending);
+      timer = setTimeout(() => { cancelPending(); startDrag(tile, pointerId, px, py); }, e.pointerType === 'mouse' ? 0 : HOLD_MS);
+    });
+  });
+
+  function startDrag(tile, pointerId, x0, y0){
+    const tiles = tilesEl();
+    const startIdx = tiles.indexOf(tile);
+    // Where every slot is before anything moves (relative to the grid, so scrolling doesn't change it).
+    const slots = tiles.map(t => ({ x: t.offsetLeft, y: t.offsetTop, w: t.offsetWidth, h: t.offsetHeight }));
+    const g0 = grid.getBoundingClientRect();
+    const startX = x0 - g0.left, startY = y0 - g0.top;
+    let px = x0, py = y0, newIdx = startIdx, shownIdx = startIdx, raf = 0;
+
+    dragActive = true;
+    if(navigator.vibrate){ try{ navigator.vibrate(15); }catch(err){} }
+    tile.classList.add('dragging');
+    tiles.forEach(t => { if(t !== tile) t.classList.add('ach-shifting'); });
+    try{ tile.setPointerCapture(pointerId); }catch(err){}
+
+    const slideOthers = () => {
+      const order = tiles.filter(t => t !== tile);
+      order.splice(newIdx, 0, tile);
+      order.forEach((t, k) => {
+        if(t === tile) return;
+        const i = tiles.indexOf(t);
+        const dx = slots[k].x - slots[i].x, dy = slots[k].y - slots[i].y;
+        t.style.transform = (dx || dy) ? `translate(${dx}px, ${dy}px)` : '';
+      });
+    };
+
+    const tick = () => {
+      const edge = 90;
+      if(py < edge) scroller.scrollTop -= Math.ceil((edge - py) / 5);
+      else if(py > window.innerHeight - edge) scroller.scrollTop += Math.ceil((py - (window.innerHeight - edge)) / 5);
+
+      const g = grid.getBoundingClientRect();
+      const dx = (px - g.left) - startX, dy = (py - g.top) - startY;
+      tile.style.transform = `translate(${dx}px, ${dy}px)`;
+
+      // Its new slot is the one whose middle is nearest to the middle of the tile being dragged.
+      const s = slots[startIdx];
+      const cx = s.x + s.w / 2 + dx, cy = s.y + s.h / 2 + dy;
+      let best = startIdx, bestD = Infinity;
+      slots.forEach((o, i) => {
+        const d = Math.hypot(o.x + o.w / 2 - cx, o.y + o.h / 2 - cy);
+        if(d < bestD){ bestD = d; best = i; }
+      });
+      newIdx = best;
+      if(newIdx !== shownIdx){ shownIdx = newIdx; slideOthers(); }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    const onMove = (ev) => { px = ev.clientX; py = ev.clientY; };
+    const onEnd = () => {
+      cancelAnimationFrame(raf);
+      tile.removeEventListener('pointermove', onMove);
+      tile.removeEventListener('pointerup', onEnd);
+      tile.removeEventListener('pointercancel', onEnd);
+      dragActive = false;
+      tiles.forEach(t => { t.style.transform = ''; t.classList.remove('ach-shifting'); });
+      tile.classList.remove('dragging');
+      if(newIdx !== startIdx){
+        const others = tiles.filter(t => t !== tile);
+        if(newIdx >= others.length) grid.appendChild(tile);
+        else grid.insertBefore(tile, others[newIdx]);
+        persist();
+      }
+    };
+    tile.addEventListener('pointermove', onMove);
+    tile.addEventListener('pointerup', onEnd);
+    tile.addEventListener('pointercancel', onEnd);
+  }
 }
 
 // Drag to reorder (touch or mouse), or the ▲▼ buttons. Every change saves the whole order.
@@ -445,5 +706,10 @@ function renderBeatenAchievementsList(list, isHardcoreMode){
     return '<div class="achievements-list-loading">This game\'s achievement set hasn\'t been marked with progression/win-condition achievements on RetroAchievements yet.</div>';
   }
   const { earned, locked } = splitEarnedLocked(beaten, isHardcoreMode);
-  return earned.map(a => achRowHtml(a, false, isHardcoreMode)).join('') + locked.map(a => achRowHtml(a, true, isHardcoreMode)).join('');
+  const bar = `<div class="ach-filter-row"><div class="ach-filter-left">
+        <button class="ach-filter-btn ach-view-toggle${achTileView ? '' : ' active'}" data-view="list" type="button">${ACH_ICON_LIST} List</button>
+        <button class="ach-filter-btn ach-view-toggle${achTileView ? ' active' : ''}" data-view="tiles" type="button">${ACH_ICON_TILES} Tiles</button>
+      </div></div>`;
+  const items = earned.map(a => achItemHtml(a, false, isHardcoreMode)).join('') + locked.map(a => achItemHtml(a, true, isHardcoreMode)).join('');
+  return bar + (achTileView ? `<div class="${achTilesClass(false)}" style="--ach-cols:${achTileCols}">${items}</div>` : items);
 }

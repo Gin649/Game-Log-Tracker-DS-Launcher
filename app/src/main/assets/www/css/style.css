@@ -571,6 +571,38 @@
   .ach-filter-btn:hover{border-color:var(--gold);}
   .ach-filter-btn.active{background:var(--gold);border-color:var(--gold);color:var(--bg);}
   .ach-filter-btn.active .ach-missable-badge{border-color:var(--bg);color:var(--bg);}
+  /* Achievement tile view. --ach-cols is set by a pinch, 3 to 6. At 3 (.named) the name and points show too. */
+  .ach-view-toggle{padding:6px 9px;}
+  .ach-view-toggle svg{flex-shrink:0;}
+  .ach-tiles{display:grid;grid-template-columns:repeat(var(--ach-cols,5),minmax(0,1fr));gap:5px;padding:8px;background:var(--bg-alt);position:relative;align-items:start;}
+  .ach-tile{position:relative;display:flex;flex-direction:column;align-items:stretch;padding:0;margin:0;background:transparent;border:0;border-radius:var(--radius);cursor:pointer;font:inherit;color:var(--text);text-align:left;-webkit-tap-highlight-color:transparent;touch-action:manipulation;-webkit-user-select:none;user-select:none;}
+  .ach-tile img{width:100%;aspect-ratio:1;border-radius:var(--radius);image-rendering:pixelated;display:block;-webkit-touch-callout:none;}
+  .ach-tile.locked{opacity:0.55;}
+  .ach-tile-name,.ach-tile-pts{display:none;}
+  .ach-tiles.named .ach-tile{background:var(--panel);padding:6px;}
+  .ach-tiles.named .ach-tile-name{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:0.75rem;font-weight:600;line-height:1.25;margin-top:5px;}
+  .ach-tiles.named .ach-tile-pts{display:block;font-family:var(--font-mono);color:var(--gold);font-size:0.75rem;font-weight:700;margin-top:2px;}
+  .ach-tile.locked .ach-tile-pts{color:var(--muted);}
+  .ach-tile .ach-tile-miss{position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-width:1.5px;font-size:0.65rem;background:var(--bg);}
+  .ach-tile.on img{outline:2px solid var(--gold);outline-offset:1px;}
+  .ach-tile.on{opacity:1;}
+  .ach-tile.ach-shifting{transition:transform 0.15s ease;}
+  .ach-tile.dragging{z-index:3;transition:none;opacity:1;}
+  .ach-tile.dragging img{outline:2px solid var(--gold);box-shadow:0 4px 14px rgba(0,0,0,0.5);}
+  .ach-bubble{position:absolute;z-index:5;background:var(--panel-2);border:1px solid var(--gold-dim);border-radius:6px;padding:10px 12px;box-shadow:0 6px 18px rgba(0,0,0,0.5);}
+  .ach-bubble::before{content:'';position:absolute;top:-6px;left:var(--arrow-x,50%);width:10px;height:10px;background:var(--panel-2);border-left:1px solid var(--gold-dim);border-top:1px solid var(--gold-dim);transform:translateX(-50%) rotate(45deg);}
+  .ach-bubble.above::before{top:auto;bottom:-6px;transform:translateX(-50%) rotate(225deg);}
+  .ach-bubble-head{display:flex;align-items:flex-start;gap:10px;}
+  .ach-bubble-head .t{flex:1;min-width:0;margin:0;font-size:0.8938rem;font-weight:600;}
+  .ach-bubble-head .pts{font-family:var(--font-mono);color:var(--gold);font-size:0.825rem;font-weight:700;flex-shrink:0;}
+  .ach-bubble-head .pts.locked{color:var(--muted);}
+  .ach-bubble .d{margin:4px 0 0;font-size:0.7937rem;color:var(--muted);line-height:1.4;}
+  .ach-bubble-foot{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:0.725rem;}
+  .ach-bubble-foot .when{color:var(--teal);}
+  .ach-bubble-foot .locked{color:var(--muted);}
+  .ach-bubble-miss{display:inline-flex;align-items:center;gap:4px;color:var(--gold);}
+  .ach-bubble-miss .ach-missable-badge{width:15px;height:15px;border-width:1.5px;font-size:0.665rem;}
+  .ach-bubble-foot .ach-ra-link{margin-left:auto;}
   .ach-filter-count{font-family:var(--font-mono);font-size:0.6875rem;opacity:0.85;}
 
   /* Export / import an achievement order, below the list. */
