@@ -33,25 +33,38 @@ function thorClearViewing(){
   thorApplyPanelArt();
 }
 
-// The game's fan art behind its achievements, beaten achievements and Game Details, on devices with a top screen.
-// It's the picture the top screen is showing, so swiping there changes it here too. Turned on and off in
-// Display Options (on by default). A game with no fan art keeps the plain background.
-const PANEL_ART_KEY = 'app-panel-fanart';
+// A picture behind the profile's achievements, beaten achievements and Game Details, darkened so the text stays
+// readable. Devices with a top screen choose between the fan art the top screen is showing (swiping there changes
+// it here too) and the game's box art; fan art falls back to the box art when the game has none. Devices with one
+// screen use the box art. The box art is the cover shown in the profile (RetroAchievements' unless another was
+// picked). Turned on and off in Display Options (on by default).
+const PANEL_ART_KEY = 'app-panel-fanart', PANEL_ART_SRC_KEY = 'app-panel-art-src';
 let thorPanelArtOn = true;
+let thorPanelArtSrc = 'fanart'; // 'fanart' or 'boxart'
+function thorHasTop(){
+  try{ return !!(thorBridge && typeof thorBridge.hasTopScreen === 'function' && thorBridge.hasTopScreen()); }catch(e){ return false; }
+}
 function thorApplyPanelArt(){
   const card = document.getElementById('modal-card');
   if(!card) return;
   let url = '';
   const info = thorViewingInfo;
-  if(thorPanelArtOn && info && thorBridge && typeof thorBridge.viewingFanArt === 'function'){
-    try{ url = thorBridge.viewingFanArt(info.title || '', info.console || '') || ''; }catch(e){ url = ''; }
+  if(thorPanelArtOn && info){
+    if(thorPanelArtSrc === 'fanart' && thorHasTop() && typeof thorBridge.viewingFanArt === 'function'){
+      try{ url = thorBridge.viewingFanArt(info.title || '', info.console || '') || ''; }catch(e){ url = ''; }
+    }
+    if(!url){
+      const img = card.querySelector('.modal-art');
+      const src = img && img.getAttribute('src');
+      if(src && card.dataset.gameId === String(info.gameId)) url = img.src;
+    }
   }
   ['#modal-achievements', '#modal-beaten-achievements', '#modal-details'].forEach(sel => {
     const el = card.querySelector(sel);
     if(!el) return;
     if(url){
       el.classList.add('fa-panel');
-      el.style.setProperty('--panel-fanart', `url("${url}")`);
+      el.style.setProperty('--panel-fanart', `url("${url.replace(/"/g, '%22')}")`);
     }else{
       el.classList.remove('fa-panel');
       el.style.removeProperty('--panel-fanart');
@@ -59,6 +72,14 @@ function thorApplyPanelArt(){
   });
 }
 window.thorFanArtChanged = thorApplyPanelArt;
+// The profile's cover can change after it opens (a better copy found, or one picked), so the background follows it.
+(function(){
+  const card = document.getElementById('modal-card');
+  if(!card || !thorBridge) return;
+  new MutationObserver(list => {
+    if(list.some(m => m.target.classList && m.target.classList.contains('modal-art'))) thorApplyPanelArt();
+  }).observe(card, { subtree: true, attributes: true, attributeFilter: ['src'] });
+})();
 
 // Games started from here. When the app is back in front, one that is still a Backlog entry has now
 // been played, so it moves to the Library even if RetroAchievements has no playtime for it.
@@ -479,27 +500,46 @@ document.addEventListener('selectionchange', () => {
   });
 })();
 
-// Display Options: fan art behind the profile's panels (devices with a top screen only).
+// Display Options: the picture behind the profile's panels, and on devices with a top screen, which picture.
 (function(){
   const row = document.getElementById('panel-art-row'), sw = document.getElementById('panel-art-switch');
-  if(!row || !sw || !thorBridge || typeof thorBridge.viewingFanArt !== 'function') return;
-  try{ if(typeof thorBridge.hasTopScreen === 'function' && !thorBridge.hasTopScreen()) return; }catch(e){}
+  const srcRow = document.getElementById('panel-art-src-row');
+  if(!row || !sw || !thorBridge) return;
+  const top = thorHasTop() && typeof thorBridge.viewingFanArt === 'function';
   row.style.display = '';
-  const show = on => { sw.classList.toggle('on', on); sw.setAttribute('aria-checked', String(on)); };
-  show(thorPanelArtOn);
+  const show = () => {
+    sw.classList.toggle('on', thorPanelArtOn);
+    sw.setAttribute('aria-checked', String(thorPanelArtOn));
+    if(srcRow) srcRow.style.display = (top && thorPanelArtOn) ? '' : 'none';
+    document.querySelectorAll('.panel-art-btn').forEach(b => b.classList.toggle('on', b.dataset.src === thorPanelArtSrc));
+  };
+  const note = document.getElementById('panel-art-note');
+  if(note && !top) note.textContent = "The game's box art shows behind its achievements, beaten achievements and Game Details";
+  show();
   (async function(){
     try{
       const v = await window.storage.get(PANEL_ART_KEY, false);
-      if(v && v.value === '0'){ thorPanelArtOn = false; show(false); thorApplyPanelArt(); }
+      if(v && v.value === '0') thorPanelArtOn = false;
+      const s = await window.storage.get(PANEL_ART_SRC_KEY, false);
+      if(s && (s.value === 'fanart' || s.value === 'boxart')) thorPanelArtSrc = s.value;
     }catch(e){}
+    show();
+    thorApplyPanelArt();
   })();
   sw.addEventListener('click', (e) => {
     e.stopPropagation();
     thorPanelArtOn = !thorPanelArtOn;
-    show(thorPanelArtOn);
+    show();
     try{ window.storage.set(PANEL_ART_KEY, thorPanelArtOn ? '1' : '0', false); }catch(err){}
     thorApplyPanelArt();
   });
+  document.querySelectorAll('.panel-art-btn').forEach(b => b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    thorPanelArtSrc = b.dataset.src;
+    show();
+    try{ window.storage.set(PANEL_ART_SRC_KEY, thorPanelArtSrc, false); }catch(err){}
+    thorApplyPanelArt();
+  }));
 })();
 
 // Display Options: the game's cartridge or disc floating on the top screen (devices with a top screen only).
