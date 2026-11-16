@@ -42,6 +42,7 @@ final class ArtBus {
 
     static synchronized void set(final State s) {
         current = s;
+        MainActivity.artChanged(); // the profile's panels show the same fan art
         final Listener l = listener;
         if (l != null) {
             MAIN.post(new Runnable() {

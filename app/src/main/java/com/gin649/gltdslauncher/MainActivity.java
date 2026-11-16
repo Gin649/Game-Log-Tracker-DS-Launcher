@@ -317,6 +317,18 @@ public class MainActivity extends Activity {
         return true;
     }
 
+    /** The top screen's picture changed: the open profile updates the fan art behind its panels. */
+    static void artChanged() {
+        final MainActivity a = current;
+        if (a == null) return;
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (a.webView != null) a.webView.evaluateJavascript("window.thorFanArtChanged&&window.thorFanArtChanged()", null);
+            }
+        });
+    }
+
     static void stopStartupHere() {
         final MainActivity a = current;
         if (a == null) return;

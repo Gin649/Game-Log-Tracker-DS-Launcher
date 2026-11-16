@@ -20,13 +20,45 @@ if(thorBridge && typeof navigator.getBattery !== 'function'){
   navigator.getBattery = () => Promise.resolve(battery);
 }
 
+let thorViewingInfo = null; // the game whose profile is open, as the top screen was told
 function thorViewing(info){
+  thorViewingInfo = info;
   try{ thorBridge.setViewing(JSON.stringify(info)); }catch(e){}
+  thorApplyPanelArt();
 }
 
 function thorClearViewing(){
+  thorViewingInfo = null;
   try{ thorBridge.clearViewing(); }catch(e){}
+  thorApplyPanelArt();
 }
+
+// The game's fan art behind its achievements, beaten achievements and Game Details, on devices with a top screen.
+// It's the picture the top screen is showing, so swiping there changes it here too. Turned on and off in
+// Display Options (on by default). A game with no fan art keeps the plain background.
+const PANEL_ART_KEY = 'app-panel-fanart';
+let thorPanelArtOn = true;
+function thorApplyPanelArt(){
+  const card = document.getElementById('modal-card');
+  if(!card) return;
+  let url = '';
+  const info = thorViewingInfo;
+  if(thorPanelArtOn && info && thorBridge && typeof thorBridge.viewingFanArt === 'function'){
+    try{ url = thorBridge.viewingFanArt(info.title || '', info.console || '') || ''; }catch(e){ url = ''; }
+  }
+  ['#modal-achievements', '#modal-beaten-achievements', '#modal-details'].forEach(sel => {
+    const el = card.querySelector(sel);
+    if(!el) return;
+    if(url){
+      el.classList.add('fa-panel');
+      el.style.setProperty('--panel-fanart', `url("${url}")`);
+    }else{
+      el.classList.remove('fa-panel');
+      el.style.removeProperty('--panel-fanart');
+    }
+  });
+}
+window.thorFanArtChanged = thorApplyPanelArt;
 
 // Games started from here. When the app is back in front, one that is still a Backlog entry has now
 // been played, so it moves to the Library even if RetroAchievements has no playtime for it.
@@ -444,6 +476,29 @@ document.addEventListener('selectionchange', () => {
     on = !on;
     show(on);
     try{ thorBridge.setStartupAnim(on); }catch(err){}
+  });
+})();
+
+// Display Options: fan art behind the profile's panels (devices with a top screen only).
+(function(){
+  const row = document.getElementById('panel-art-row'), sw = document.getElementById('panel-art-switch');
+  if(!row || !sw || !thorBridge || typeof thorBridge.viewingFanArt !== 'function') return;
+  try{ if(typeof thorBridge.hasTopScreen === 'function' && !thorBridge.hasTopScreen()) return; }catch(e){}
+  row.style.display = '';
+  const show = on => { sw.classList.toggle('on', on); sw.setAttribute('aria-checked', String(on)); };
+  show(thorPanelArtOn);
+  (async function(){
+    try{
+      const v = await window.storage.get(PANEL_ART_KEY, false);
+      if(v && v.value === '0'){ thorPanelArtOn = false; show(false); thorApplyPanelArt(); }
+    }catch(e){}
+  })();
+  sw.addEventListener('click', (e) => {
+    e.stopPropagation();
+    thorPanelArtOn = !thorPanelArtOn;
+    show(thorPanelArtOn);
+    try{ window.storage.set(PANEL_ART_KEY, thorPanelArtOn ? '1' : '0', false); }catch(err){}
+    thorApplyPanelArt();
   });
 })();
 

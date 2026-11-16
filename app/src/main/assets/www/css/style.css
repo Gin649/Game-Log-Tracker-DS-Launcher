@@ -605,6 +605,21 @@
   .ach-bubble-foot .ach-ra-link{margin-left:auto;}
   .ach-filter-count{font-family:var(--font-mono);font-size:0.6875rem;opacity:0.85;}
 
+  /* The game's fan art behind the profile's achievements, beaten achievements and Game Details (Display Options).
+     It is darkened so the text stays readable, and on a long list it covers the top and fades out. */
+  .fa-panel{position:relative;isolation:isolate;background:var(--bg-alt);}
+  .fa-panel::before{
+    content:'';position:absolute;left:0;right:0;top:0;height:min(100%,520px);z-index:-1;pointer-events:none;
+    background:var(--panel-fanart) center/cover no-repeat;opacity:0.3;
+    -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 60px),transparent);
+    mask-image:linear-gradient(to bottom,#000 calc(100% - 60px),transparent);
+  }
+  .fa-panel .ach-row,.fa-panel .ach-filter-row,.fa-panel .ach-reorder-hint,.fa-panel .ach-tiles.named .ach-tile,.fa-panel .gd-box{
+    background:color-mix(in srgb,var(--panel) 62%,transparent);
+  }
+  .fa-panel .ach-tiles{background:transparent;}
+  .fa-panel .ach-row.dragging{background:var(--bg-alt);}
+
   /* Export / import an achievement order, below the list. */
   .ach-share-footer-row{
     display:flex;gap:8px;justify-content:center;flex-wrap:wrap;
