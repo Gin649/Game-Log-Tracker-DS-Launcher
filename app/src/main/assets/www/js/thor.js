@@ -100,10 +100,11 @@ window.thorResumed = function(){
 };
 document.addEventListener('visibilitychange', () => { if(!document.hidden) window.thorResumed(); });
 
-// While a game runs, the open profile looks for new unlocks every 10 seconds (see liveCheckProfile in gestures.js).
-// Only while the tracker is on screen, so a single-screen device stops when you are in the game.
-// The same check keeps Last Played's time on this device moving, and catches the game closing when the tracker
+// While a game runs, every 10 seconds the open profile looks for new unlocks (see liveCheckProfile in gestures.js)
+// and Last Played's time on this device is brought up to date. Only while the tracker is on screen, so a
+// single-screen device stops when you are in the game. The same check catches the game closing when the tracker
 // never left the screen (two screens), which is when the Library's playtime and last played are brought up to date.
+// Last Played and the Library only redraw when something on them has actually changed.
 function thorRefreshPlayed(library){
   try{ if(recentGamesData.length || libraryData.some(g => g.customConsole && g.lastPlayed)) renderRecentGames(recentGamesData); }catch(e){}
   try{ if(library !== false && libraryData.length) renderLibrary(); }catch(e){}
@@ -114,16 +115,10 @@ if(thorBridge){
     if(document.hidden) return;
     let running = false;
     try{ running = thorBridge.gameRunning(); }catch(e){}
+    if(running && typeof window.liveCheckProfile === 'function') window.liveCheckProfile();
     if(running) thorRefreshPlayed(false);
     else if(wasRunning) thorRefreshPlayed();
     wasRunning = running;
-  }, 60000);
-  // New unlocks are looked for more often, every 10 seconds, so they show up soon after they pop in the game.
-  setInterval(() => {
-    if(document.hidden) return;
-    let running = false;
-    try{ running = thorBridge.gameRunning(); }catch(e){}
-    if(running && typeof window.liveCheckProfile === 'function') window.liveCheckProfile();
   }, 10000);
 }
 

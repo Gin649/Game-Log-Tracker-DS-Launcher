@@ -132,9 +132,9 @@ function customPlaytimeHtml(g){
 function renderRecentGames(games){
   const el = $('#recent-games');
   const shown = recentWithCustom(games).filter(g => !isSubsetGame(g)); // subsets live in their base game's profile
-  if(shown.length === 0){ el.innerHTML = '<div class="empty">No recently played games found.</div>'; return; }
+  if(shown.length === 0){ el.recentHtml = ''; el.innerHTML = '<div class="empty">No recently played games found.</div>'; return; }
   const libById = new Map(libraryData.map(x => [x.GameID, x]));
-  el.innerHTML = shown.slice(0, 12).map(g => {
+  const html = shown.slice(0, 12).map(g => {
     const total = Number(g.NumPossibleAchievements || g.AchievementsTotal || 0);
     const earned = statsMode === 'hardcore' ? Number(g.NumAchievedHardcore || 0) : Number(g.NumAchieved || 0);
     const pct = total ? Math.round((earned/total)*100) : 0;
@@ -161,6 +161,10 @@ function renderRecentGames(games){
         </div>
       `;
   }).join('');
+  // Nothing has changed since the last time, so the cards are left alone (no flicker, pictures don't reload).
+  if(el.recentHtml === html && el.querySelector('.cart')) return;
+  el.recentHtml = html;
+  el.innerHTML = html;
   el.querySelectorAll('.cart').forEach(card => {
     card.addEventListener('click', () => openGameModal(Number(card.getAttribute('data-game-id'))));
   });
