@@ -100,7 +100,7 @@ window.thorResumed = function(){
 };
 document.addEventListener('visibilitychange', () => { if(!document.hidden) window.thorResumed(); });
 
-// While a game runs, the open profile looks for new unlocks once a minute (see liveCheckProfile in gestures.js).
+// While a game runs, the open profile looks for new unlocks every 10 seconds (see liveCheckProfile in gestures.js).
 // Only while the tracker is on screen, so a single-screen device stops when you are in the game.
 // The same check keeps Last Played's time on this device moving, and catches the game closing when the tracker
 // never left the screen (two screens), which is when the Library's playtime and last played are brought up to date.
@@ -114,11 +114,17 @@ if(thorBridge){
     if(document.hidden) return;
     let running = false;
     try{ running = thorBridge.gameRunning(); }catch(e){}
-    if(running && typeof window.liveCheckProfile === 'function') window.liveCheckProfile();
     if(running) thorRefreshPlayed(false);
     else if(wasRunning) thorRefreshPlayed();
     wasRunning = running;
   }, 60000);
+  // New unlocks are looked for more often, every 10 seconds, so they show up soon after they pop in the game.
+  setInterval(() => {
+    if(document.hidden) return;
+    let running = false;
+    try{ running = thorBridge.gameRunning(); }catch(e){}
+    if(running && typeof window.liveCheckProfile === 'function') window.liveCheckProfile();
+  }, 10000);
 }
 
 function thorPlayButtonHtml(){

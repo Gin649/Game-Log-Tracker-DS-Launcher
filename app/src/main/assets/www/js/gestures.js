@@ -95,10 +95,16 @@
     }
   }
 
-  // While a game started from here is running, the open profile checks RetroAchievements about once a minute
+  // While a game started from here is running, the open profile checks RetroAchievements every 10 seconds
   // and redraws only when an achievement has been unlocked. Called from thor.js.
   const liveSeen = {};
+  let liveBusy = false; // a slow answer from RA shouldn't have the next check start on top of it
   window.liveCheckProfile = async function(){
+    if(liveBusy) return;
+    liveBusy = true;
+    try{ await liveCheckOnce(); }finally{ liveBusy = false; }
+  };
+  async function liveCheckOnce(){
     const card = $('#modal-card');
     if(!card || !profileOpen()) return;
     const idText = card.dataset.gameId;
@@ -166,7 +172,7 @@
     }
     try{ renderRecentGames(recentGamesData); }catch(e){}
     renderLibraryViews();
-  };
+  }
 
   // The profile scrolls itself (#modal-backdrop), so pulls there use its scrollTop.
   let profileMode = false;
