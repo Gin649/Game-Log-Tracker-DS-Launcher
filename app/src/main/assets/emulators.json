@@ -84,6 +84,20 @@
   "activity": "paulscode.android.mupen64plusae.SplashActivity"
  },
  {
+  "id": "joey64",
+  "label": "Joey64",
+  "packages": [
+   "com.joeysretro.joey64"
+  ],
+  "labels": [
+   "joey64"
+  ],
+  "action": "android.intent.action.VIEW",
+  "data": "saf",
+  "mime": "application/octet-stream",
+  "activity": "com.joeysretro.joey64.MainActivity"
+ },
+ {
   "id": "armsx2",
   "label": "ARMSX2",
   "packages": [

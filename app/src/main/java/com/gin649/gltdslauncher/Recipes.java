@@ -125,6 +125,7 @@ final class Recipes {
             if (o.has("action")) r.action = o.getString("action");
             if (o.has("actions")) fill(r.actions, o.getJSONArray("actions"));
             if (o.has("category")) r.category = o.getString("category");
+            if (o.has("mime")) r.mime = o.getString("mime");
             if (o.has("data")) r.data = o.getString("data");
             if (o.has("clearTask")) r.clearTask = o.getBoolean("clearTask");
             if (o.has("dual")) r.dual = o.getBoolean("dual");

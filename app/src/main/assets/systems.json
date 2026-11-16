@@ -221,6 +221,10 @@
   ],
   "core": "mupen64plus_next",
   "standalone": "mupen64plusae",
+  "standalones": [
+   "mupen64plusae",
+   "joey64"
+  ],
   "cores": [
    "parallel_n64"
   ]
