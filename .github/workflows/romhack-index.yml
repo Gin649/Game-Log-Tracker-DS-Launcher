@@ -57,7 +57,7 @@ jobs:
 
       - name: Clone RAPatches (file list only)
         if: steps.check.outputs.skip != 'true'
-        run: git clone --depth 1 --filter=blob:none https://github.com/RetroAchievements/RAPatches RAPatches
+        run: git clone --depth 1 --filter=blob:none --no-checkout https://github.com/RetroAchievements/RAPatches RAPatches # the list of files is enough; no files are downloaded
 
       - name: Build the index
         if: steps.check.outputs.skip != 'true'
