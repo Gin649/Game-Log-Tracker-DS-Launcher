@@ -19,10 +19,11 @@
 
   let shown = null; // { wrap, head, watch }
 
-  // Tiles that fit: with as many to a row as you pinched to, the tiles are made smaller when their rows would run
-  // past the bottom of the screen, so the whole set shows at once. When that would make them tiny (a big set at
-  // few to a row), they keep the full width and the screen scrolls instead.
+  // Tiles that fit: with as many to a row as you pinched to, the tiles are made a little smaller when their rows
+  // would just run past the bottom of the screen, so the whole set shows at once. When it would take more than a
+  // small squeeze (you pinched to big tiles), they keep their size and the screen scrolls instead.
   const MIN_FIT_TILE = 28;
+  const MAX_SQUEEZE = 0.8; // tiles are made at most 20% smaller to fit
   function fit(){
     if(!shown) return;
     const wrap = shown.wrap;
@@ -43,7 +44,9 @@
       const room = wrap.clientHeight - top - padY - (parseFloat(getComputedStyle(wrap).paddingBottom) || 0);
       const tileH = (room - gap * (rows - 1)) / rows;
       const size = Math.floor(Math.min(tileW, tileH));
-      if(size >= MIN_FIT_TILE && size < tileW){
+      // Only a small squeeze: when the rows overflow by more than that, a pinch to bigger tiles must give
+      // bigger tiles, so they keep their size and the screen scrolls.
+      if(size >= MIN_FIT_TILE && size < tileW && size >= tileW * MAX_SQUEEZE){
         grid.classList.add('fs-fit');
         grid.style.gridTemplateColumns = `repeat(${n}, ${size}px)`;
       }
