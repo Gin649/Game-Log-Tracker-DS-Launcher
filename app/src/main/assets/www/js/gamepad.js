@@ -153,6 +153,7 @@
     el.classList.add('pad-focus');
     memory.set(getRoot(), el);
     el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if(window.thorTileFocus) window.thorTileFocus(el);
   }
 
   function initialFocus(list){
@@ -273,6 +274,12 @@
     }
     const cur = ensureFocus();
     if(!cur) return;
+    // One game per row: left and right go to the previous and next game.
+    if((dir === 'left' || dir === 'right') && cur.matches('.tile-grid.cols-1 > .cart') && !menuOpen() && !topOverlay()){
+      const next = dir === 'right' ? cur.nextElementSibling : cur.previousElementSibling;
+      if(next && next.classList.contains('cart')) setFocus(next);
+      return;
+    }
     if((dir === 'left' || dir === 'right') && cur.classList.contains('tab-btn') && !menuOpen() && !topOverlay()){
       // On the headings, left and right switch the tab at once (like L2 / R2) and the highlight goes with it.
       const tabs = Array.from(document.querySelectorAll('.tab-btn')).filter(isVisible);
@@ -484,6 +491,11 @@
     if(top){
       const play = top.el.querySelector('#modal-play-btn');
       if(play) play.click();
+      return;
+    }
+    // One game per row: X plays the highlighted game, as in its profile.
+    if(focusEl && focusEl.matches('.tile-grid.cols-1 > .cart') && window.thorQuickPlay){
+      window.thorQuickPlay(focusEl);
       return;
     }
     const find = () => document.querySelector('#tab-library.active #lib-search, #tab-backlog.active #backlog-search, #tab-apps.active #apps-search');

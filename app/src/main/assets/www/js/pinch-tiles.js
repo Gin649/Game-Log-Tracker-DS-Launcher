@@ -38,11 +38,11 @@
   // The grids on screen are changed where they are. Drawing them again would take the tiles out from under
   // your fingers and end the pinch.
   function setTileCols(n){
-    n = Math.min(6, Math.max(2, n));
+    n = Math.min(6, Math.max(1, n));
     if(n === tileCols) return false;
     tileCols = n;
     document.querySelectorAll('.tile-grid').forEach(g => {
-      g.classList.remove('cols-2', 'cols-3', 'cols-4', 'cols-5', 'cols-6');
+      g.classList.remove('cols-1', 'cols-2', 'cols-3', 'cols-4', 'cols-5', 'cols-6');
       g.classList.add('cols-' + n);
       g.style.setProperty('--tile-cols', n);
     });

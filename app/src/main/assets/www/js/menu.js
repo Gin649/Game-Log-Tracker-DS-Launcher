@@ -128,7 +128,7 @@ async function initGameView(){
     if(v && (v.value === 'tile' || v.value === 'list')) gameView = v.value;
     const c = await window.storage.get(TILECOLS_KEY, false);
     const n = c ? parseInt(c.value, 10) : NaN;
-    if(n >= 2 && n <= 6) tileCols = n;
+    if(n >= 1 && n <= 6) tileCols = n;
     const bar = await window.storage.get(CONSOLEBAR_KEY, false);
     if(bar && (bar.value === 'logos' || bar.value === 'names')) consoleBar = bar.value;
     const art = await window.storage.get(GAMEART_KEY, false);

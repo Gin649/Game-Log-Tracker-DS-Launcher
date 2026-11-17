@@ -178,6 +178,63 @@ function thorLivePlaytime(withRa){
   getEstimatedHours(gameId, true, true).then(show).catch(() => {}).finally(() => { thorPlaytimeBusy = false; });
 }
 
+// One game per row (pinch the Library or Backlog down to 1): the highlighted game shows on the top screen as its
+// profile would, and X plays it. Leaving the single view, or a tile that isn't one, puts the top screen back,
+// unless a profile is open, which tells the top screen itself.
+let thorTileShown = null;
+function thorTileInfo(tile){
+  const id = tile && tile.dataset.gameId;
+  if(!id) return null;
+  const local = typeof findGameLocal === 'function' ? findGameLocal(/^\d+$/.test(id) ? Number(id) : id) : null;
+  if(!local) return null;
+  const img = tile.querySelector('img.art');
+  return { gameId: String(id), title: local.Title || '', console: local.ConsoleName || '', art: img ? img.src : '', file: local.romPath || '' };
+}
+window.thorTileFocus = function(el){
+  if(!thorBridge) return;
+  const profileOpen = document.getElementById('modal-backdrop')?.classList.contains('open');
+  if(profileOpen) return;
+  const single = el && el.matches && el.matches('.tile-grid.cols-1 > .cart');
+  if(single){
+    const info = thorTileInfo(el);
+    if(info && (!thorTileShown || thorTileShown.gameId !== info.gameId)){
+      thorTileShown = info;
+      thorViewing(info);
+    }
+  }else if(thorTileShown){
+    thorTileShown = null;
+    thorClearViewing();
+  }
+};
+// X on a game in the single view: its profile's Play, without opening the profile (so discs, ports and messages
+// all work the same): the profile is opened out of sight, Play pressed, and the profile closed again.
+window.thorQuickPlay = function(tile){
+  const id = tile && tile.dataset.gameId;
+  if(!id || typeof openGameModal !== 'function') return;
+  const backdrop = document.getElementById('modal-backdrop');
+  backdrop.classList.add('quick-play');
+  openGameModal(/^\d+$/.test(id) ? Number(id) : id);
+  let tries = 0;
+  const press = () => {
+    const btn = document.getElementById('modal-play-btn');
+    if(btn){
+      btn.click();
+      setTimeout(() => {
+        // A question (which disc) or an error shows the profile with it; a game that started closes it again.
+        const msg = document.getElementById('modal-play-msg');
+        const asking = document.querySelector('.app-pop');
+        const failed = msg && msg.classList.contains('error') && msg.style.display !== 'none';
+        backdrop.classList.remove('quick-play');
+        if(!asking && !failed && typeof closeGameModal === 'function') closeGameModal();
+      }, 400);
+      return;
+    }
+    if(++tries < 40) setTimeout(press, 75);
+    else backdrop.classList.remove('quick-play');
+  };
+  setTimeout(press, 75);
+};
+
 function thorPlayButtonHtml(){
   if(!thorBridge) return '';
   return `<div class="play-row"><button class="btn-view-achievements btn-play-thor" id="modal-play-btn"><span class="arrow">▶</span> Play on this device</button>

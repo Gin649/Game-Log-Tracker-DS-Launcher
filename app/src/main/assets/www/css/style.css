@@ -1269,6 +1269,12 @@ html.top-panel #profile-hero{display:none;}
 .tile-sec{font-family:var(--font-mono);font-size:0.6875rem;letter-spacing:0.5px;color:var(--gold);margin:14px 0 8px;}
 .tile-sec.alt{color:var(--text);margin-top:20px;}
 .tile-grid .cart{position:relative;}
+/* At 1 and 2 per row a square tile would be taller than the screen: the columns are kept narrow enough for the
+   whole tile (art, title and progress) to fit under the pinned heading, and centred. --stk-sum is the pinned
+   heading's height (startup.js); 120px is the tile's text below the art plus a margin. */
+.tile-grid.cols-1{--fit:calc(100vh - var(--stk-sum, 160px) - 120px);grid-template-columns:minmax(0, min(100%, var(--fit)));justify-content:center;}
+.modal-backdrop.quick-play{opacity:0 !important;pointer-events:none;} /* X in the one-per-row view: see thorQuickPlay */
+.tile-grid.cols-2{--fit:calc(100vh - var(--stk-sum, 160px) - 120px);grid-template-columns:repeat(2, minmax(0, min(calc((100% - 10px) / 2), var(--fit))));justify-content:center;}
 .tile-grid.cols-5 .cart .title,.tile-grid.cols-5 .cart .console,.tile-grid.cols-5 .cart .prog-lbl,.tile-grid.cols-5 .cart .hours{font-size:0.5rem;}
 .tile-grid.cols-5 .cart .body{padding:5px;}
 .tile-grid.cols-5 .pill-corner{font-size:0.4375rem;padding:1px 3px;}
