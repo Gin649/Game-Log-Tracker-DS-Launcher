@@ -29,7 +29,7 @@ final class CartArt {
     static final int MAX_SIDE = 512;
     private static final long MISS_MS = 12L * 60 * 60 * 1000;
     /** Starts the name of every saved picture. Change it to have them all made again. */
-    private static final String VERSION = "5_";
+    private static final String VERSION = "6_";
     private static final long NO_COVER_MS = 10L * 60 * 1000;
 
     private static final Map<String, Object> LOCKS = new HashMap<String, Object>();
@@ -75,8 +75,10 @@ final class CartArt {
 
             // a real picture of the cartridge or disc (not for systems that always use their own shell)
             CacheDb db = CacheDb.get(ctx);
-            String missKey = "cart-miss3:" + key;
+            String missKey = "cart-miss4:" + key;
             if (!hack && !shellOnly(console, systems) && !recentMiss(db.read(missKey))) {
+                // the game's own folder says whether Japan's cartridge is the right one (Famicom yes, NES no)
+                boolean japan = rom != null && LaunchBoxArt.isJapanFolder(rom.sys.folder);
                 boolean unsure = false; // the network let us down, so "no picture" isn't certain
                 Bitmap b = null;
                 try {
@@ -85,7 +87,7 @@ final class CartArt {
                 }
                 if (b == null && Config.LAUNCHBOX_ART) {
                     try {
-                        b = fromLaunchBox(ctx, systems, title);
+                        b = fromLaunchBox(ctx, systems, title, japan);
                     } catch (IOException e) {
                         unsure = true;
                     } catch (Throwable ignored) {
@@ -93,7 +95,7 @@ final class CartArt {
                 }
                 if (b == null) {
                     try {
-                        b = fromScreenScraper(ctx, console, title);
+                        b = fromScreenScraper(ctx, console, title, japan);
                     } catch (IOException e) {
                         unsure = true;
                     } catch (Throwable ignored) {
@@ -303,11 +305,11 @@ final class CartArt {
     }
 
     /** LaunchBox's picture of the cartridge, else the disc. Throws when the network could not be reached. */
-    private static Bitmap fromLaunchBox(Context ctx, List<SystemMap.Sys> systems, String title) throws IOException {
+    private static Bitmap fromLaunchBox(Context ctx, List<SystemMap.Sys> systems, String title, boolean japan) throws IOException {
         String url = null;
         for (SystemMap.Sys s : systems) {
             if (s.hack) continue; // a hack folder stands for the same console as its plain folder
-            url = LaunchBoxArt.cartUrl(ctx, s.folder, title);
+            url = LaunchBoxArt.cartUrl(ctx, s.folder, title, japan);
             if (url != null) break;
         }
         if (url == null) return null;
@@ -325,7 +327,7 @@ final class CartArt {
     }
 
     /** ScreenScraper's picture of the cartridge or disc, through the app's Worker. Throws when the network let us down. */
-    private static Bitmap fromScreenScraper(Context ctx, String console, String title) throws IOException {
+    private static Bitmap fromScreenScraper(Context ctx, String console, String title, boolean japan) throws IOException {
         try {
             SCREENSCRAPER.acquire();
         } catch (InterruptedException e) {
@@ -334,7 +336,7 @@ final class CartArt {
         }
         try {
             ScreenScraperClient.Info info = ScreenScraperClient.lookup(ctx, title, console, true);
-            String url = ScreenScraperClient.bestCart(info);
+            String url = ScreenScraperClient.bestCart(info, japan);
             if (url == null) return null;
             byte[] data = ScreenScraperClient.download(url);
             return data == null ? null : MiximageCompositor.decode(data, 1024);

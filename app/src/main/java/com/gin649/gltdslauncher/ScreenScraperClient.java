@@ -131,11 +131,17 @@ final class ScreenScraperClient {
      * its countries), else any other, with Japan's last. Null when there is none.
      */
     static String bestCart(Info info) {
+        return bestCart(info, true);
+    }
+
+    /** allowJapan false: never Japan's cartridge, for a game that isn't kept in a Japanese folder (no Famicom cart for NES). */
+    static String bestCart(Info info, boolean allowJapan) {
         if (info == null) return null;
         String best = null;
         int bestRank = Integer.MAX_VALUE;
         for (String[] c : info.carts) {
             int r = cartRank(c[0]);
+            if (r == 7 && !allowJapan) continue;
             if (r < bestRank) {
                 bestRank = r;
                 best = c[1];

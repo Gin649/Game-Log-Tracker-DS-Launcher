@@ -50,7 +50,7 @@ final class LaunchBoxArt {
     private static Map<String, String> platforms;
     private static final Map<String, Index> INDEXES = new HashMap<String, Index>();
 
-    /** One console's games: normalized title to its row [title, fan, box, shot, logo, cart, disc]. */
+    /** One console's games: normalized title to its row [title, fan, box, shot, logo, cart, disc, Japan's cart]. */
     private static final class Index {
         /** False for an index built before cartridge and disc pictures were listed, or when it listed ones from any region. */
         boolean carts;
@@ -181,7 +181,7 @@ final class LaunchBoxArt {
      * Address of the game's cartridge picture (else its disc) on LaunchBox's image server, or null when it has none.
      * An index saved on the device before these pictures were listed is fetched again, once.
      */
-    static String cartUrl(Context ctx, String folder, String title) throws IOException {
+    static String cartUrl(Context ctx, String folder, String title, boolean japan) throws IOException {
         String platform = platformFor(ctx, folder);
         if (platform == null) return null;
         String key = Matcher.compact(platform);
@@ -190,8 +190,16 @@ final class LaunchBoxArt {
         if (idx == null) return null;
         String[] row = match(idx, title);
         if (row == null) return null;
-        String file = !row[5].isEmpty() ? row[5] : row[6];
+        // Japan's cartridge only for a game kept in a Japanese folder (Famicom, Super Famicom)
+        String jp = row[7];
+        String file = japan && !jp.isEmpty() ? jp : !row[5].isEmpty() ? row[5] : row[6];
         return file.isEmpty() ? null : IMAGE_URL + file;
+    }
+
+    /** Folders for Japan's versions of a console, whose cartridges look different from the ones sold elsewhere. */
+    static boolean isJapanFolder(String folder) {
+        String f = folder == null ? "" : folder.toLowerCase(java.util.Locale.ROOT);
+        return f.equals("famicom") || f.equals("fds") || f.equals("sfc");
     }
 
     private static final java.util.Set<String> CART_RETRIED = new java.util.HashSet<String>();
@@ -358,12 +366,12 @@ final class LaunchBoxArt {
         Index out = new Index();
         try {
             JSONObject root = new JSONObject(new String(data, "UTF-8"));
-            out.carts = root.optInt("carts") >= 3; // 3: the North American cartridge or disc first, then Europe's, then any
+            out.carts = root.optInt("carts") >= 4; // 4: Japan's cartridges kept in their own column, so none shows for a US game
             JSONArray games = root.getJSONArray("g");
             for (int i = 0; i < games.length(); i++) {
                 JSONArray r = games.getJSONArray(i);
-                String[] row = new String[7];
-                for (int j = 0; j < 7; j++) row[j] = r.optString(j, "");
+                String[] row = new String[8];
+                for (int j = 0; j < 8; j++) row[j] = r.optString(j, "");
                 out.rows.add(row);
                 String k = lbNorm(row[0]);
                 String[] cur = out.exact.get(k);

@@ -28,7 +28,8 @@ WANT = {
     'disc': ['Disc'],
 }
 # New fields go at the end: released versions of the app read the first four and ignore the rest.
-FIELDS = ['fan', 'box', 'shot', 'logo', 'cart', 'disc']
+# cartjp is Japan's cartridge, kept apart so a Famicom cartridge is never shown for an NES game (and the like).
+FIELDS = ['fan', 'box', 'shot', 'logo', 'cart', 'disc', 'cartjp']
 MAX_FAN = 6
 REGION_RANK = {'': 0, 'world': 0, 'north america': 1, 'united states': 1, 'canada': 2, 'europe': 3, 'united kingdom': 3,
                'australia': 4, 'japan': 5}
@@ -120,6 +121,8 @@ def build(zf, platforms):
             region = (text(el, 'Region') or '').strip().lower()
             r = CART_REGION_RANK.get(region, CART_REGION_JAPAN if region == 'japan' else CART_REGION_OTHER)
             rank = (hit[1], r)
+            if hit[0] == 'cart' and region == 'japan':
+                hit = ('cartjp', hit[1])
         if hit[0] == 'fan':
             fans.setdefault(gid, []).append((rank, fn))
         k = (gid, hit[0])
@@ -175,7 +178,7 @@ def main():
         if not games:
             continue
         games.sort(key=lambda r: r[0].lower())
-        data = json.dumps({'v': 1, 'carts': 3, 'g': games}, ensure_ascii=False, separators=(',', ':'))
+        data = json.dumps({'v': 1, 'carts': 4, 'g': games}, ensure_ascii=False, separators=(',', ':'))
         with open(os.path.join(a.out, 'launchbox', key + '.json'), 'w', encoding='utf-8') as f:
             f.write(data)
         index['platforms'][key] = {'games': len(games), 'bytes': len(data.encode('utf-8'))}
