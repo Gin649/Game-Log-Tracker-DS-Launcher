@@ -78,8 +78,9 @@ let achTileCols = 5;
   if(changed) achRerenderOpen();
 })();
 
-// Full screen (fullscreen-panels.js): the achievements are always small square tiles, as many to a row as you
-// pinch or step to (4 to 16, remembered), each framed teal when unlocked in casual and gold in hardcore.
+// Full screen (fullscreen-panels.js): List or Tiles as anywhere else. The tiles are small squares, as many to a
+// row as you pinch to (4 to 16, remembered apart from the profile's 3 to 6), each framed teal when unlocked in
+// casual and gold in hardcore.
 const ACH_FS_COLS_KEY = 'app-ach-fs-cols';
 let achFsCols = 8;
 (async function(){
@@ -99,23 +100,21 @@ function achFsStep(more){
   achFsCols = n;
   hideAchBubble();
   document.querySelectorAll('.fs-panel .ach-tiles').forEach(g => g.style.setProperty('--ach-cols', n));
-  document.querySelectorAll('.fs-panel .ach-fs-count').forEach(el => { el.textContent = n + '/row'; });
   return true;
 }
 function achFsSave(){
   try{ window.storage.set(ACH_FS_COLS_KEY, String(achFsCols), false); }catch(e){}
 }
-// The size steps and the award pill of the full-screen bar. Nothing outside full screen.
-function achFsControls(){
-  if(!achFsOn()) return { left: '', right: '' };
-  const left = `<span class="ach-fs-size"><button class="ach-filter-btn ach-fs-step" data-more="0" type="button" aria-label="Bigger icons">−</button><span class="ach-fs-count">${achFsCols}/row</span><button class="ach-filter-btn ach-fs-step" data-more="1" type="button" aria-label="Smaller icons">+</button></span>`;
+// The award pill at the right end of the full-screen bar (Mastered / Beaten, gold or teal as in the library).
+// Nothing outside full screen, or when the game has no award yet.
+function achFsPill(){
+  if(!achFsOn()) return '';
   const card = document.getElementById('modal-card');
   const info = card && typeof awardInfo === 'function' ? awardInfo(card.dataset.awardKind || null) : null;
-  const right = info ? `<span class="pill ${info.cls} ach-fs-pill">${info.label}</span>` : '';
-  return { left, right };
+  return info ? `<span class="pill ${info.cls} ach-fs-pill">${info.label}</span>` : '';
 }
 function achShowTiles(){
-  return achTileView || achFsOn();
+  return achTileView;
 }
 function achGridCols(){
   return achFsOn() ? achFsCols : achTileCols;
@@ -248,11 +247,6 @@ document.addEventListener('click', (e) => {
     achTileView = want;
     try{ window.storage.set(ACH_TILES_KEY, want ? '1' : '0', false); }catch(err){}
     achRerenderOpen();
-    return;
-  }
-  const step = t.closest('.ach-fs-step');
-  if(step){
-    if(achFsStep(step.dataset.more === '1')) achFsSave();
     return;
   }
   const tile = t.closest('.ach-tile');
@@ -390,32 +384,33 @@ function renderAchievementsPanel(list, isHardcoreMode, missableOnly, lockedOnly,
   if(!list || list.length === 0) return '<div class="achievements-list-loading">No achievement data available.</div>';
   const missableCount = list.filter(isMissable).length;
   const showMissable = missableCount > 0 && !reorderMode;
-  const lockedCount = splitEarnedLocked(list, isHardcoreMode).locked.length;
+  // Full screen counts an unlock in either mode, as its frames do, so a mastered game has no Locked button.
+  const fs = achFsOn();
+  const lockedList = fs ? list.filter(a => !a.DateEarned && !a.DateEarnedHardcore) : splitEarnedLocked(list, isHardcoreMode).locked;
+  const lockedCount = lockedList.length;
   const showLocked = lockedCount > 0 && !reorderMode;
   const leftBtns = reorderMode
     ? `<button class="ach-filter-btn active" id="ach-reorder-toggle" type="button">✓ Done</button>`
     : `<button class="ach-filter-btn" id="ach-reorder-toggle" type="button">⇅ Reorder</button>`;
   const viewBtn = `<button class="ach-filter-btn ach-view-toggle${achTileView ? ' active' : ''}" type="button" aria-label="${achTileView ? 'Show as a list' : 'Show as tiles'}" title="${achTileView ? 'Show as a list' : 'Show as tiles'}">${ACH_ICON_TILES}</button>`;
   const resetBtn = (!reorderMode && order) ? `<button class="ach-filter-btn" id="ach-reorder-reset" type="button">Reset order</button>` : '';
-  const fsc = achFsControls();
-  const filterBar = `<div class="ach-filter-row">
-        <div class="ach-filter-left">${leftBtns}${fsc.left ? '' : viewBtn}${fsc.left}${resetBtn}</div>
-        <div class="ach-filter-right">
-        ${showMissable ? `<button class="ach-filter-btn ${missableOnly ? 'active' : ''}" id="ach-missable-toggle" type="button">
+  const filterBtns = `${showMissable ? `<button class="ach-filter-btn ${missableOnly ? 'active' : ''}" id="ach-missable-toggle" type="button">
              <span class="ach-missable-badge ach-filter-icon" aria-hidden="true">!</span> Missable (<span class="ach-filter-count">${missableCount}</span>)
            </button>` : ''}
         ${showLocked ? `<button class="ach-filter-btn ${lockedOnly ? 'active' : ''}" id="ach-locked-toggle" type="button" title="Show only locked achievements">
              <svg class="ach-lock-icon ach-filter-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M17 9h-1V7a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2zm-7-2a2 2 0 0 1 4 0v2h-4V7z"/></svg> Locked (<span class="ach-filter-count">${lockedCount}</span>)
-           </button>` : ''}
-        ${fsc.right}
-        </div>
+           </button>` : ''}`;
+  // Full screen keeps the right end for the award pill, so the filters sit with the other buttons.
+  const filterBar = `<div class="ach-filter-row">
+        <div class="ach-filter-left">${leftBtns}${viewBtn}${resetBtn}${fs ? filterBtns : ''}</div>
+        <div class="ach-filter-right">${fs ? achFsPill() : filterBtns}</div>
       </div>
       ${reorderMode ? `<div class="ach-reorder-hint">${achShowTiles() ? 'Press and hold a tile, then drag it.' : 'Press and hold a row, then drag it. Or use ▲▼.'} Your order saves automatically.</div>` : ''}`;
   let rows = list;
   if(!reorderMode){
     if(missableOnly && showMissable) rows = rows.filter(isMissable);
     if(lockedOnly && showLocked){
-      const lockedIds = new Set(splitEarnedLocked(list, isHardcoreMode).locked);
+      const lockedIds = new Set(lockedList);
       rows = rows.filter(a => lockedIds.has(a));
     }
   }
@@ -763,13 +758,10 @@ function renderBeatenAchievementsList(list, isHardcoreMode){
     return '<div class="achievements-list-loading">This game\'s achievement set hasn\'t been marked with progression/win-condition achievements on RetroAchievements yet.</div>';
   }
   const { earned, locked } = splitEarnedLocked(beaten, isHardcoreMode);
-  const fsc = achFsControls();
-  const bar = fsc.left
-    ? `<div class="ach-filter-row"><div class="ach-filter-left">${fsc.left}</div><div class="ach-filter-right">${fsc.right}</div></div>`
-    : `<div class="ach-filter-row"><div class="ach-filter-left">
+  const bar = `<div class="ach-filter-row"><div class="ach-filter-left">
         <button class="ach-filter-btn ach-view-toggle${achTileView ? '' : ' active'}" data-view="list" type="button">${ACH_ICON_LIST} List</button>
         <button class="ach-filter-btn ach-view-toggle${achTileView ? ' active' : ''}" data-view="tiles" type="button">${ACH_ICON_TILES} Tiles</button>
-      </div></div>`;
+      </div><div class="ach-filter-right">${achFsPill()}</div></div>`;
   const items = earned.map(a => achItemHtml(a, false, isHardcoreMode)).join('') + locked.map(a => achItemHtml(a, true, isHardcoreMode)).join('');
   return bar + (achShowTiles() ? `<div class="${achTilesClass(false)}" style="--ach-cols:${achGridCols()}">${items}</div>` : items);
 }

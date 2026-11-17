@@ -24,6 +24,7 @@
     const { wrap, head } = shown;
     shown = null;
     wrap.classList.remove('fs-panel');
+    wrap.style.top = '';
     head.remove();
     document.documentElement.classList.remove('fs-on');
     if(wrap.classList.contains('achievements-list') && typeof achRerenderOpen === 'function') achRerenderOpen();
@@ -44,6 +45,7 @@
     head.querySelector('.fs-shrink').addEventListener('click', (e) => { e.stopPropagation(); exit(); });
     wrap.parentElement.insertBefore(head, wrap);
     wrap.classList.add('fs-panel');
+    wrap.style.top = Math.round(head.getBoundingClientRect().height) + 'px'; // right under the header
     document.documentElement.classList.add('fs-on');
     shown = { wrap, head };
     wrap.scrollTop = 0;
