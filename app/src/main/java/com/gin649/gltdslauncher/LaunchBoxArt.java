@@ -37,7 +37,8 @@ final class LaunchBoxArt {
     private static final String INDEX_URL = "https://raw.githubusercontent.com/Gin649/Game-Log-Tracker-DS-Launcher/data/launchbox/";
     private static final String IMAGE_URL = "https://images.launchbox-app.com/";
     private static final long MAX_DOWNLOAD = 12L * 1024 * 1024;
-    private static final long INDEX_MAX_AGE_MS = 14L * 24 * 60 * 60 * 1000;
+    // how often a saved index is checked for a newer one (only downloaded again when it has changed)
+    private static final long INDEX_MAX_AGE_MS = 7L * 24 * 60 * 60 * 1000;
 
     private static final OkHttpClient HTTP = new OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
@@ -273,30 +274,11 @@ final class LaunchBoxArt {
         Map<String, String> cached = DESCS.get(key);
         if (cached != null) return cached;
         File f = new File(DataStore.root(ctx), "launchbox/" + key + ".desc.json");
-        boolean fresh = f.isFile() && System.currentTimeMillis() - f.lastModified() < INDEX_MAX_AGE_MS;
-        byte[] data = fresh ? readFile(f) : null;
+        byte[] data = savedOrNewer(f, INDEX_URL + key + ".desc.json");
         if (data == null) {
-            try {
-                data = download(INDEX_URL + key + ".desc.json", 40L * 1024 * 1024);
-                if (data != null) {
-                    File parent = f.getParentFile();
-                    if (parent != null) parent.mkdirs();
-                    FileOutputStream fos = new FileOutputStream(f);
-                    try {
-                        fos.write(data);
-                    } finally {
-                        fos.close();
-                    }
-                }
-            } catch (IOException e) {
-                if (!f.isFile()) throw e;
-                data = readFile(f);
-            }
-            if (data == null) {
-                Map<String, String> none = new HashMap<String, String>();
-                DESCS.put(key, none);
-                return none;
-            }
+            Map<String, String> none = new HashMap<String, String>();
+            DESCS.put(key, none);
+            return none;
         }
         Map<String, String> out = new HashMap<String, String>();
         try {
@@ -337,30 +319,11 @@ final class LaunchBoxArt {
         if (cached != null) return cached;
 
         File f = new File(DataStore.root(ctx), "launchbox/" + key + ".json");
-        boolean fresh = f.isFile() && System.currentTimeMillis() - f.lastModified() < INDEX_MAX_AGE_MS;
-        byte[] data = fresh ? readFile(f) : null;
-        if (data == null) {
-            try {
-                data = download(INDEX_URL + key + ".json", 40L * 1024 * 1024);
-                if (data != null) {
-                    File parent = f.getParentFile();
-                    if (parent != null) parent.mkdirs();
-                    FileOutputStream fos = new FileOutputStream(f);
-                    try {
-                        fos.write(data);
-                    } finally {
-                        fos.close();
-                    }
-                }
-            } catch (IOException e) {
-                if (!f.isFile()) throw e;
-                data = readFile(f); // offline: an old copy is better than none
-            }
-            if (data == null) { // this console isn't in the index; don't ask again this session
-                Index none = new Index();
-                INDEXES.put(key, none);
-                return none;
-            }
+        byte[] data = savedOrNewer(f, INDEX_URL + key + ".json");
+        if (data == null) { // this console isn't in the index; don't ask again this session
+            Index none = new Index();
+            INDEXES.put(key, none);
+            return none;
         }
 
         Index out = new Index();
@@ -412,6 +375,82 @@ final class LaunchBoxArt {
      * The body, or null when the file doesn't exist or is too big. Any other refusal (the server is busy or having a
      * bad moment) throws like a lost connection does, so it isn't taken for "not there".
      */
+    /**
+     * The saved copy of an index file, checked for a newer one once a week. The check only asks whether the file
+     * changed (using the tag the server sent with it last time), so when nothing changed nothing is downloaded and
+     * the week starts again. Offline, the saved copy is used. Null when the server doesn't have the file.
+     */
+    private static byte[] savedOrNewer(File f, String url) throws IOException {
+        if (f.isFile() && System.currentTimeMillis() - f.lastModified() < INDEX_MAX_AGE_MS) {
+            byte[] saved = readFile(f);
+            if (saved != null) return saved;
+        }
+        File tagFile = new File(f.getPath() + ".etag");
+        String tag = null;
+        if (f.isFile() && tagFile.isFile()) {
+            try {
+                tag = new String(readFile(tagFile), "UTF-8").trim();
+            } catch (IOException ignored) {
+            }
+        }
+        Request.Builder rb = new Request.Builder().url(url).header("User-Agent", "GLTThor/1");
+        if (tag != null && !tag.isEmpty()) rb.header("If-None-Match", tag);
+        Response res;
+        try {
+            res = HTTP.newCall(rb.build()).execute();
+        } catch (IOException e) {
+            if (!f.isFile()) throw e;
+            return readFile(f); // offline: an old copy is better than none
+        }
+        try {
+            if (res.code() == 304) { // unchanged: keep the copy, check again in a week
+                f.setLastModified(System.currentTimeMillis());
+                return readFile(f);
+            }
+            if (res.code() == 404 || res.code() == 410) return null;
+            ResponseBody body = res.body();
+            if (!res.isSuccessful() || body == null) {
+                if (f.isFile()) return readFile(f);
+                throw new IOException("The server answered " + res.code());
+            }
+            long max = 40L * 1024 * 1024;
+            if (body.contentLength() > max) return null;
+            byte[] data = body.bytes();
+            if (data.length > max) return null;
+            File parent = f.getParentFile();
+            if (parent != null) parent.mkdirs();
+            // written beside it first, so a cut-off write never leaves half a file in its place
+            File part = new File(f.getPath() + ".part");
+            FileOutputStream fos = new FileOutputStream(part);
+            try {
+                fos.write(data);
+            } finally {
+                fos.close();
+            }
+            if (!part.renameTo(f)) {
+                f.delete();
+                part.renameTo(f);
+            }
+            String newTag = res.header("ETag");
+            if (newTag != null && !newTag.isEmpty()) {
+                FileOutputStream tf = new FileOutputStream(tagFile);
+                try {
+                    tf.write(newTag.getBytes("UTF-8"));
+                } finally {
+                    tf.close();
+                }
+            } else {
+                tagFile.delete();
+            }
+            return data;
+        } catch (IOException e) {
+            if (!f.isFile()) throw e;
+            return readFile(f);
+        } finally {
+            res.close();
+        }
+    }
+
     private static byte[] download(String url, long max) throws IOException {
         Request req = new Request.Builder().url(url).header("User-Agent", "GLTThor/1").build();
         Response res = HTTP.newCall(req).execute();
