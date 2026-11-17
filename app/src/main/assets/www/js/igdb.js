@@ -13,9 +13,27 @@ async function fetchIgdbScores(title){
   return { critic: valid(j.critic), user: valid(j.user), name: j.name || null };
 }
 
+// Other names IGDB may list a game under, tried in turn when a name finds no score. IGDB names licensed games
+// with their owner, as on the box ("Disney's Darkwing Duck"), where RetroAchievements has "Darkwing Duck"; and the
+// other way round.
+const IGDB_OWNER_PREFIXES = ["Disney's", "Disney", "Capcom's", "Tom Clancy's", "Sid Meier's", "Bram Stoker's"];
+function igdbNameVariants(title){
+  const clean = String(title).replace(/^(?:~[^~]*~\s*)+/, '').trim();
+  const out = [clean];
+  const owner = IGDB_OWNER_PREFIXES.find(p => clean.toLowerCase().startsWith(p.toLowerCase() + ' '));
+  if(owner) out.push(clean.slice(owner.length).trim());
+  else out.push("Disney's " + clean);
+  return out;
+}
+
 // One score per game: the average of IGDB's critic and user scores, whichever exist.
 async function fetchCombinedRating(title){
-  const igdb = await fetchIgdbScores(title);
+  let igdb = null;
+  for(const name of igdbNameVariants(title)){
+    const found = await fetchIgdbScores(name);
+    if(found.critic || found.user){ igdb = found; break; }
+  }
+  if(!igdb) return null;
   const scores = [igdb.critic, igdb.user].filter(n => typeof n === 'number' && n > 0);
   if(scores.length === 0) return null;
   return {
@@ -26,7 +44,8 @@ async function fetchCombinedRating(title){
 }
 
 async function getGameRating(title, forceRefresh){
-  const cacheKey = `rating-igdb:${title.toLowerCase()}`;
+  // rating-igdb2: looks under other names too, so a miss kept by the older lookup is asked again.
+  const cacheKey = `rating-igdb2:${title.toLowerCase()}`;
   if(!forceRefresh){
     try{
       const r = await window.storage.get(cacheKey, false);
