@@ -34,8 +34,15 @@ function thorClearViewing(){
 // Games started from here. When the app is back in front, one that is still a Backlog entry has now
 // been played, so it moves to the Library even if RetroAchievements has no playtime for it.
 const thorLaunched = new Set();
+// The game of the session running now, and its RetroAchievements playtime (in hours) when it started, so its
+// profile can add the time played since (thorLivePlaytime).
+let thorSession = null; // { id: '123', baseHours: number | null }
 function thorMarkLaunched(gameId){
   if(gameId) thorLaunched.add(Number(gameId));
+  if(gameId){
+    const known = typeof estHoursCache !== 'undefined' ? estHoursCache[gameId] || estHoursCache[Number(gameId)] : null;
+    thorSession = { id: String(gameId), baseHours: known && known.real && known.hours != null ? Number(known.hours) : null };
+  }
 }
 
 async function thorPromoteLaunched(){
@@ -130,9 +137,10 @@ if(thorBridge){
   }, 10000);
 }
 
-// While a game runs, the open profile's Playtime keeps up. Time counted on this device (games RetroAchievements
-// doesn't track) is read every 10 seconds; RetroAchievements' own playtime once a minute (withRa), since RA only
-// adds to it every couple of minutes. Only the number changes, and only when it is different.
+// While a game runs, the open profile's Playtime keeps up, checked every 10 seconds. Time counted on this device
+// (games RetroAchievements doesn't track) is read as it is. For RetroAchievements games, RA only adds to its
+// playtime every few minutes, so the profile shows RA's total from when the game started plus the time played
+// since, as counted here (ArtWatch), and RA's own number once it is ahead. RA is asked again once a minute (withRa).
 let thorPlaytimeBusy = false;
 function thorLivePlaytime(withRa){
   const card = document.getElementById('modal-card');
@@ -142,18 +150,32 @@ function thorLivePlaytime(withRa){
   if(info && card.querySelector('#manual-playtime-val')) thorFillPlaytime(card, info.title || '', info.console || '');
   const valEl = card.querySelector('#modal-playtime-val');
   const idText = card.dataset.gameId;
-  if(!withRa || !valEl || !idText || thorPlaytimeBusy || typeof getEstimatedHours !== 'function') return;
-  thorPlaytimeBusy = true;
+  if(!valEl || !idText) return;
   const hit = libraryData.find(g => String(g.GameID) === idText) || recentGamesData.find(g => String(g.GameID) === idText);
   const gameId = hit ? hit.GameID : (/^\d+$/.test(idText) ? Number(idText) : idText);
-  getEstimatedHours(gameId, true, true).then(fresh => {
+  const show = (fresh) => {
     if(!fresh || card.dataset.gameId !== idText) return;
-    const text = formatDuration(fresh);
-    if(valEl.textContent === text) return;
-    valEl.textContent = text;
+    let entry = fresh;
+    const session = thorSession && thorSession.id === idText ? thorSession : null;
+    if(session && fresh.real && fresh.hours != null){
+      if(session.baseHours == null) session.baseHours = Number(fresh.hours);
+      let played = 0;
+      try{ played = Number(thorBridge.sessionSeconds()) || 0; }catch(e){}
+      const hours = Math.max(Number(fresh.hours), session.baseHours + played / 3600);
+      entry = { ...fresh, hours };
+    }
+    const text = formatDuration(entry);
+    if(valEl.textContent !== text) valEl.textContent = text;
     const labelEl = card.querySelector('#modal-playtime-label');
-    if(labelEl) labelEl.textContent = fresh.real ? 'Playtime' : (fresh.beaten ? 'Time to beat' : 'Est. playtime');
-  }).catch(() => {}).finally(() => { thorPlaytimeBusy = false; });
+    const label = entry.real ? 'Playtime' : (entry.beaten ? 'Time to beat' : 'Est. playtime');
+    if(labelEl && labelEl.textContent !== label) labelEl.textContent = label;
+  };
+  // Between RA checks, the last answer plus the time played since.
+  const last = typeof estHoursCache !== 'undefined' ? estHoursCache[gameId] : null;
+  if(last) show(last);
+  if(!withRa || thorPlaytimeBusy || typeof getEstimatedHours !== 'function') return;
+  thorPlaytimeBusy = true;
+  getEstimatedHours(gameId, true, true).then(show).catch(() => {}).finally(() => { thorPlaytimeBusy = false; });
 }
 
 function thorPlayButtonHtml(){

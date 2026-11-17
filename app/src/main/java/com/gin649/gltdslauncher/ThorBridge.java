@@ -629,6 +629,12 @@ final class ThorBridge {
         return "";
     }
 
+    /** Seconds the running game has been played this session (see ArtWatch), so its profile's playtime can count up live. */
+    @JavascriptInterface
+    public long sessionSeconds() {
+        return ArtWatch.sessionSeconds();
+    }
+
     /** True while a game started from here is still running (needs Usage access). */
     @JavascriptInterface
     public boolean gameRunning() {

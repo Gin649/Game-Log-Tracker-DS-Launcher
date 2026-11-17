@@ -34,6 +34,7 @@ final class ArtWatch {
     private static int goneStreak;
     private static boolean active;
     private static String playKey;      // where this session's time is added, or null
+    private static long sessionMs;      // time this session's game has been on screen, for every game
     private static long lastTickElapsed;
     private static String lastForegroundPkg = "";
     // What the emulator's screens were last seen doing, kept between checks so each one only reads recent events
@@ -82,6 +83,7 @@ final class ArtWatch {
         startedAtElapsed = SystemClock.elapsedRealtime();
         lastTickElapsed = startedAtElapsed;
         playKey = timeKey;
+        sessionMs = 0;
         game = isGame;
         startedAtWall = System.currentTimeMillis();
         sawCovered = false;
@@ -196,7 +198,13 @@ final class ArtWatch {
         }
     }
 
+    /** Seconds the game started from here has been on screen this session, while it runs; 0 otherwise. */
+    static synchronized long sessionSeconds() {
+        return active && game ? sessionMs / 1000 : 0;
+    }
+
     private static void addPlay(long ms) {
+        if (ms > 0) sessionMs += ms;
         if (playKey != null && app != null) Playtime.add(app, playKey, ms);
     }
 
