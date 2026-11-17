@@ -503,8 +503,12 @@
   .fs-shrink{width:44px;height:44px;border-radius:8px;background:var(--bg-alt);color:var(--text);display:flex;align-items:center;justify-content:center;border:1px solid var(--border);}
   .fs-shrink svg{width:24px;height:24px;}
   /* top: set to the header's height by fullscreen-panels.js; this is only the first guess */
-  .fs-panel{position:fixed !important;left:0;right:0;bottom:0;top:calc(69px + var(--status-h));z-index:300;margin:0 !important;
-    overflow-y:auto;background:var(--bg);padding:8px 10px 24px;border-radius:0;}
+  /* Doubled class: it must win over .achievements-list's own overflow:hidden, which stopped the scrolling. */
+  .fs-panel.fs-panel{position:fixed !important;left:0;right:0;bottom:0;top:calc(69px + var(--status-h));z-index:300;margin:0 !important;
+    overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;background:var(--bg);padding:8px 10px 24px;border-radius:0;border:none;}
+  .fs-panel > *{flex-shrink:0;}
+  /* Tiles sized by fullscreen-panels.js so the whole set fits the screen when it can. */
+  .fs-panel .ach-tiles.fs-fit{justify-content:center;}
   .fs-panel .ach-tiles{gap:4px;}
   .fs-panel .ach-tile img{border-radius:4px;}
   .fs-panel .ach-tile.earned-sc img{outline:2px solid var(--teal);outline-offset:-2px;}

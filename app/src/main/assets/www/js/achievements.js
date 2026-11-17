@@ -100,6 +100,7 @@ function achFsStep(more){
   achFsCols = n;
   hideAchBubble();
   document.querySelectorAll('.fs-panel .ach-tiles').forEach(g => g.style.setProperty('--ach-cols', n));
+  if(window.glFsFit) window.glFsFit();
   return true;
 }
 function achFsSave(){
@@ -402,7 +403,7 @@ function renderAchievementsPanel(list, isHardcoreMode, missableOnly, lockedOnly,
            </button>` : ''}`;
   // Full screen keeps the right end for the award pill, so the filters sit with the other buttons.
   const filterBar = `<div class="ach-filter-row">
-        <div class="ach-filter-left">${leftBtns}${viewBtn}${resetBtn}${fs ? filterBtns : ''}</div>
+        <div class="ach-filter-left">${leftBtns}${fs ? filterBtns + viewBtn : viewBtn}${resetBtn}</div>
         <div class="ach-filter-right">${fs ? achFsPill() : filterBtns}</div>
       </div>
       ${reorderMode ? `<div class="ach-reorder-hint">${achShowTiles() ? 'Press and hold a tile, then drag it.' : 'Press and hold a row, then drag it. Or use ▲▼.'} Your order saves automatically.</div>` : ''}`;

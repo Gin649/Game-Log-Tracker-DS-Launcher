@@ -17,12 +17,46 @@
     new MutationObserver(() => fillIcons(card)).observe(card, { childList: true, subtree: true });
   }
 
-  let shown = null; // { wrap, head }
+  let shown = null; // { wrap, head, watch }
+
+  // Tiles that fit: with as many to a row as you pinched to, the tiles are made smaller when their rows would run
+  // past the bottom of the screen, so the whole set shows at once. When that would make them tiny (a big set at
+  // few to a row), they keep the full width and the screen scrolls instead.
+  const MIN_FIT_TILE = 28;
+  function fit(){
+    if(!shown) return;
+    const wrap = shown.wrap;
+    wrap.querySelectorAll('.ach-tiles').forEach(grid => {
+      if(grid.querySelector('.ach-bubble')) return; // a details bubble pads the grid: keep the sizes as they are
+      grid.classList.remove('fs-fit');
+      grid.style.gridTemplateColumns = '';
+      const n = parseInt(getComputedStyle(grid).getPropertyValue('--ach-cols'), 10) || 8;
+      const count = grid.querySelectorAll('.ach-tile').length;
+      if(!count) return;
+      const rows = Math.ceil(count / n);
+      const cs = getComputedStyle(grid);
+      const gap = parseFloat(cs.columnGap) || 4;
+      const padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+      const padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+      const tileW = (grid.clientWidth - padX - gap * (n - 1)) / n;
+      const top = grid.getBoundingClientRect().top - wrap.getBoundingClientRect().top + wrap.scrollTop;
+      const room = wrap.clientHeight - top - padY - (parseFloat(getComputedStyle(wrap).paddingBottom) || 0);
+      const tileH = (room - gap * (rows - 1)) / rows;
+      const size = Math.floor(Math.min(tileW, tileH));
+      if(size >= MIN_FIT_TILE && size < tileW){
+        grid.classList.add('fs-fit');
+        grid.style.gridTemplateColumns = `repeat(${n}, ${size}px)`;
+      }
+    });
+  }
+  window.glFsFit = () => requestAnimationFrame(fit);
 
   function exit(){
     if(!shown) return false;
-    const { wrap, head } = shown;
+    const { wrap, head, watch } = shown;
     shown = null;
+    watch.disconnect();
+    wrap.querySelectorAll('.ach-tiles').forEach(g => { g.classList.remove('fs-fit'); g.style.gridTemplateColumns = ''; });
     wrap.classList.remove('fs-panel');
     wrap.style.top = '';
     head.remove();
@@ -31,6 +65,7 @@
     return true;
   }
   window.glFsExit = exit;
+  window.addEventListener('resize', () => window.glFsFit());
 
   function enter(btn){
     const wrap = btn.nextElementSibling;
@@ -47,9 +82,13 @@
     wrap.classList.add('fs-panel');
     wrap.style.top = Math.round(head.getBoundingClientRect().height) + 'px'; // right under the header
     document.documentElement.classList.add('fs-on');
-    shown = { wrap, head };
+    // The section is drawn again when achievements unlock or the view changes: fit the new tiles each time.
+    const watch = new MutationObserver(() => window.glFsFit());
+    watch.observe(wrap, { childList: true, subtree: true });
+    shown = { wrap, head, watch };
     wrap.scrollTop = 0;
     if(wrap.classList.contains('achievements-list') && typeof achRerenderOpen === 'function') achRerenderOpen();
+    window.glFsFit();
   }
 
   // Captured before the bar's own click, so the expand icon doesn't also close the section.
