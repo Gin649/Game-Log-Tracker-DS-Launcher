@@ -277,26 +277,6 @@ final class ThorBridge {
         Prefs.put(act, CloudSync.PREF_STATE, json);
     }
 
-    /**
-     * The fan art the top screen is showing for this game, as an address the page can load, or "" when there is
-     * none (no top screen, another game on show, or only box art). The profile puts it behind its panels.
-     */
-    @JavascriptInterface
-    public String viewingFanArt(String title, String console) {
-        try {
-            if (!hasTopScreen()) return "";
-            ArtBus.State s = ArtBus.get();
-            if (s == null || !s.game || s.fanCount < 1 || s.localPath == null) return "";
-            if (!Matcher.display(title).equals(s.title) || !(console == null ? "" : console).equals(s.console)) return "";
-            File f = new File(s.localPath);
-            if (!f.isFile()) return "";
-            String token = Base64.encodeToString(s.localPath.getBytes("UTF-8"), Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
-            return "https://" + Config.APP_HOST_BUILTIN + "/art/" + token + "?v=" + f.lastModified();
-        } catch (Exception e) {
-            return "";
-        }
-    }
-
     /** The app theme (retro, nes, snes, psx or xbox), kept here so the top screen can follow it. */
     @JavascriptInterface
     public void setTheme(String id) {

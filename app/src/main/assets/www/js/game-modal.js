@@ -133,7 +133,7 @@ function renderCustomGameModal(gameId, local, card){
 
       ${thorPlayButtonHtml()}
 
-      <button class="btn-view-achievements" id="modal-details-btn"><span class="arrow">▸</span> Game Details</button>
+      <button class="btn-view-achievements" id="modal-details-btn"><span class="arrow">▸</span> Game Details<span class="fs-expand" role="button" tabindex="-1" aria-label="Full screen" title="Full screen"></span></button>
       <div class="gd-wrap" id="modal-details" style="display:none;"></div>
 
       <button class="btn-view-achievements" id="modal-guide-btn"><span class="arrow">▸</span> Game Guide</button>
@@ -373,7 +373,9 @@ async function openGameModal(gameId, opts){
   const restorePanels = (opts && opts.restorePanels) || [];
   const card = $('#modal-card');
   const local = findGameLocal(gameId);
+  if(window.glFsExit) window.glFsExit(); // a section left full screen closes with its game
   card.dataset.gameId = gameId;
+  card.dataset.awardKind = (local && local.HighestAwardKind) || ''; // the pill of the full-screen achievements
   openAchievementsGameId = null;
   openBeatenAchievementsGameId = null;
   clearSubsetPanels();
@@ -457,13 +459,13 @@ async function openGameModal(gameId, opts){
 
       ${thorPlayButtonHtml()}
 
-      <button class="btn-view-achievements" id="modal-details-btn"><span class="arrow">▸</span> Game Details</button>
+      <button class="btn-view-achievements" id="modal-details-btn"><span class="arrow">▸</span> Game Details<span class="fs-expand" role="button" tabindex="-1" aria-label="Full screen" title="Full screen"></span></button>
       <div class="gd-wrap" id="modal-details" style="display:none;"></div>
 
-      <button class="btn-view-achievements" id="modal-view-ach-btn"><span class="arrow">▸</span> View Achievements</button>
+      <button class="btn-view-achievements" id="modal-view-ach-btn"><span class="arrow">▸</span> View Achievements<span class="fs-expand" role="button" tabindex="-1" aria-label="Full screen" title="Full screen"></span></button>
       <div class="achievements-list" id="modal-achievements" style="display:none;"></div>
 
-      <button class="btn-view-achievements" id="modal-view-beaten-ach-btn"><span class="arrow">▸</span> View Beaten Achievements</button>
+      <button class="btn-view-achievements" id="modal-view-beaten-ach-btn"><span class="arrow">▸</span> View Beaten Achievements<span class="fs-expand" role="button" tabindex="-1" aria-label="Full screen" title="Full screen"></span></button>
       <div class="achievements-list" id="modal-beaten-achievements" style="display:none;"></div>
 
       <button class="btn-view-achievements" id="modal-subsets-btn" style="display:none;"><span class="arrow">▸</span> Subsets</button>

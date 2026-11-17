@@ -390,7 +390,9 @@
         return true;
       }
       if(top.el.id === 'modal-backdrop'){
-        // in a game profile, Back first closes the open section (achievements, guides, ROM hacks...), then the profile
+        // in a game profile, Back first leaves a section shown full screen, then closes the open section
+        // (achievements, guides, ROM hacks...), then the profile
+        if(window.glFsExit && window.glFsExit()) return true;
         const open = top.el.querySelector('#modal-card .btn-view-achievements.open');
         if(open){
           open.click();

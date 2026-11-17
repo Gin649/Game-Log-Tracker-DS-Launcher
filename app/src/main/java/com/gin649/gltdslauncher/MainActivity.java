@@ -317,11 +317,6 @@ public class MainActivity extends Activity {
         return true;
     }
 
-    /** The top screen's picture changed: the open profile updates the fan art behind its panels. */
-    static void artChanged() {
-        callPage("window.thorFanArtChanged&&window.thorFanArtChanged()");
-    }
-
     /** Runs a bit of script in the page, from any thread. */
     static void callPage(final String js) {
         final MainActivity a = current;
