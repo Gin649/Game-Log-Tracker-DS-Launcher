@@ -114,18 +114,46 @@ function thorRefreshPlayed(library){
 }
 if(thorBridge){
   let wasRunning = false;
+  let playTicks = 0;
   setInterval(() => {
     if(document.hidden) return;
     let running = false;
     try{ running = thorBridge.gameRunning(); }catch(e){}
     if(running && typeof window.liveCheckProfile === 'function') window.liveCheckProfile();
     if(running) thorRefreshPlayed(false);
+    if(running) thorLivePlaytime(++playTicks % 6 === 0);
     else if(wasRunning){
       thorRefreshPlayed();
       if(typeof window.cloudSyncSoon === 'function') window.cloudSyncSoon(3000); // the game's playtime goes to the cloud
     }
     wasRunning = running;
   }, 10000);
+}
+
+// While a game runs, the open profile's Playtime keeps up. Time counted on this device (games RetroAchievements
+// doesn't track) is read every 10 seconds; RetroAchievements' own playtime once a minute (withRa), since RA only
+// adds to it every couple of minutes. Only the number changes, and only when it is different.
+let thorPlaytimeBusy = false;
+function thorLivePlaytime(withRa){
+  const card = document.getElementById('modal-card');
+  const backdrop = document.getElementById('modal-backdrop');
+  if(!card || !backdrop || !backdrop.classList.contains('open')) return;
+  const info = thorViewingInfo;
+  if(info && card.querySelector('#manual-playtime-val')) thorFillPlaytime(card, info.title || '', info.console || '');
+  const valEl = card.querySelector('#modal-playtime-val');
+  const idText = card.dataset.gameId;
+  if(!withRa || !valEl || !idText || thorPlaytimeBusy || typeof getEstimatedHours !== 'function') return;
+  thorPlaytimeBusy = true;
+  const hit = libraryData.find(g => String(g.GameID) === idText) || recentGamesData.find(g => String(g.GameID) === idText);
+  const gameId = hit ? hit.GameID : (/^\d+$/.test(idText) ? Number(idText) : idText);
+  getEstimatedHours(gameId, true, true).then(fresh => {
+    if(!fresh || card.dataset.gameId !== idText) return;
+    const text = formatDuration(fresh);
+    if(valEl.textContent === text) return;
+    valEl.textContent = text;
+    const labelEl = card.querySelector('#modal-playtime-label');
+    if(labelEl) labelEl.textContent = fresh.real ? 'Playtime' : (fresh.beaten ? 'Time to beat' : 'Est. playtime');
+  }).catch(() => {}).finally(() => { thorPlaytimeBusy = false; });
 }
 
 function thorPlayButtonHtml(){
