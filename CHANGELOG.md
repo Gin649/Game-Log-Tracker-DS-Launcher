@@ -2,6 +2,31 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
+## v1.2.2
+
+### Added
+- Cloud sync: keep your launcher data the same on every device signed in to the same Google account. It's in the Data window, which now opens at the top with Cloud sync first. When both devices have changed, you're asked which copy to keep, and a safety backup is made first.
+- Achievement tiles: a button next to Reorder switches achievements and beaten achievements to a tile view. Pinch to change how many fit in a row; at 3 per row each tile also shows its name and points. Tap a tile to see its name, unlock time and description. Tiles keep your custom order and can be dragged to reorder, and unlocked tiles have a gold frame for hardcore and teal for casual. Tile view stays on for every game until you switch back.
+- Full screen: achievements, beaten achievements and Game Details have an expand button to fill the screen. The Beaten or Mastered pill shows on the right, and the List/Tiles button sits next to the Locked and Missable filters. Locked is hidden when nothing is locked. Tiles shrink a little to fit on one screen, and pinch still makes them bigger.
+- Live updates while you play: the open profile checks for new achievements every 10 seconds, and Playtime keeps counting up as you play. Last Played and the Library only redraw when something has changed.
+- One game per row: pinch the Library or Backlog down to a single game per row, centred. Left and right go to the previous or next game, the highlighted game's art shows on the top screen, and X starts the game straight away.
+- Joey64 for N64 as a standalone emulator. Mupen64Plus AE stays the default.
+- Xnes3D+ for NES, a new emulator I made by forking Zaxnes. It plays NES games in 3D, and the launcher can start games in it directly.
+  - 3D profiles: over 100 games already have one. For instructions on getting them, send me a message on Discord (username Gin649) or ask in the community server: https://discord.gg/6dgZA4yD2
+  - Smart 3D scanning: works out the 3D on its own for games without a profile, status bars included.
+  - Controller inputs: RetroArch-style hotkeys. L2 rewinds and R2 fast-forwards, R1 saves a state and L1 loads one, and L3 and R3 together open the menu.
+- More Android ports in the game profile's Android Ports Available section.
+
+### Changed
+- The Library, Backlog and Apps tabs have one condensed bar (search, Hide Beaten, then the game count), so more games fit on screen. Two games per row now fit the screen fully.
+- Data window: Backups on this device has List all backups and Back up now, and Import and export is folded away until you open it. Fetch game art (fetch everything at once) is removed, so it can't use up your ScreenScraper limit; art is still fetched for each game as you browse.
+- Backups on this device keep the last 3 days you used the app, not the last 3 backups.
+
+### Fixed
+- Review ratings are found for games listed with the owner's name in front, such as Disney's Darkwing Duck.
+- NES and SNES games no longer show a Famicom or Super Famicom cartridge in Cart view (Little Nemo, for one). Games in your Famicom or Super Famicom folders still get Japan's cartridges.
+- Playtime no longer drops to zero after a failed RetroAchievements check, and it counts for a new game from its first session.
+
 ## v1.2.1
 
 ### Added

@@ -19,7 +19,7 @@ For all app related discussions and my Game of the Month Competition. Play some 
 **The tracker** is the full Game Log Tracker web app, bundled along with many improvements. 
 
 - **Last Played** with your RetroAchievements profile, recently played games and your latest unlocks.
-- **Game Library** with every game you've played on RA. Search it, filter by system, and see progress, awards and playtime. The three games you played most recently sit at the top under a Recently Played heading, then everything else is listed by name under All Games A–Z. All stays pinned at the left of the console row while the other consoles scroll beside it. Tap a column heading to sort by anything else. Pick a console and the top three are the last ones you played on that console. Game Library and Backlog can also be shown as tiles instead of a list: turn on Tile View under Display Options, Game view, and choose 3, 4 or 5 tiles per row.
+- **Game Library** with every game you've played on RA. Search it, filter by system, and see progress, awards and playtime. The three games you played most recently sit at the top under a Recently Played heading, then everything else is listed by name under All Games A–Z. All stays pinned at the left of the console row while the other consoles scroll beside it. Tap a column heading to sort by anything else. Pick a console and the top three are the last ones you played on that console. Game Library and Backlog can also be shown as tiles instead of a list: turn on Tile View under Display Options, Game view, then pinch to choose from 1 to 6 tiles per row. With one game per row, left and right go to the previous or next game, the top screen shows the highlighted game's art, and X starts it straight away.
 - **Console tabs** can be put in your own order and renamed. Hold a tab in Game Library or Backlog, drag a tab to move it, tap it to rename it, and press the teal OK button to finish. Game Library and Backlog share one order, Beaten uses your names, and the app remembers them.
 - **Backlog** is for games you plan to play, including games from systems RA doesn't track. It's sorted by name. Besides searching by title, Add game can pick games straight from your ROM files (several at once), or add every game in a system folder. Each is matched to its RetroAchievements entry by name, and one RA doesn't list is added as a plain entry, and its picture is filled in from your frontend's media, then LaunchBox, SteamGridDB (with a key), then IGDB. A game leaves the Backlog and goes to the Library as soon as you press Play. A game RA doesn't list gets Now Playing ticked for you at that moment. Games RA doesn't list, or that have no achievements, show in Recently played too, with their playtime counted by the app while the game is on screen (this uses the same usage access as the top-screen watcher).
 - **Play log** for games on PlayStation 5, Xbox Series X|S, Nintendo Switch 2 and PC, which have no emulator to count your time. In the game's profile, open Play log (collapsed by default) and add each session with the date and the time in hours and minutes. Edit or delete one later. The total is kept as the game's Playtime, the newest session date decides where it sits in Last Played, and your first session ticks Now Playing.
@@ -33,8 +33,8 @@ The web version has the full details: https://github.com/Gin649/Game-Log-Tracker
 
 ### Inside a game
 
-- **Retro Achievements** list with points and unlock dates, missable achievements marked with a "!", and a Missable Only filter. Put achievements in your own order, and export or import an order as a file. Also included are Subsets, if the game has any, each with its own achievement list.
-- **Live achievements.** While a game you started from the app is running, the open profile checks RetroAchievements about once a minute. When you unlock something, the progress and the achievement lists update without reloading the page. It needs Usage access and only checks while the tracker is on screen.
+- **Retro Achievements** list with points and unlock dates, missable achievements marked with a "!", and a Missable Only filter. The button next to Reorder switches to tiles (pinch to resize, tap one for its details), and the expand button shows the achievements, beaten achievements or Game Details full screen. Put achievements in your own order, and export or import an order as a file. Also included are Subsets, if the game has any, each with its own achievement list.
+- **Live achievements.** While a game you started from the app is running, the open profile checks RetroAchievements every 10 seconds. When you unlock something, the progress and the achievement lists update without reloading the page, and Playtime keeps counting up as you play. It needs Usage access and only checks while the tracker is on screen.
 - **Game Details** More information about a game, including its time to beat and master (from RA, or from IGDB for games RA doesn't list), and a description. The description comes from your ES-DE gamelist, then ScreenScraper, then LaunchBox, then IGDB. Box art comes from your ES-DE media, then ScreenScraper, then LaunchBox, then RetroAchievements. ScreenScraper is asked through the app's own service as you browse, so it works without ES-DE and nothing needs setting up; what it finds is saved on the device.
 - **Game manuals.** Find and download a manual for the game, then read it in the built-in viewer. It's saved on your device and works with the controller too.
 - **Guides and Walkthroughs.** Find a walkthrough opens a browser inside the app. Back, or a swipe from the edge, returns to the tracker, and Save video keeps the link in the game's profile.
@@ -45,14 +45,14 @@ The web version has the full details: https://github.com/Gin649/Game-Log-Tracker
 
 The top screen shows the game you have open, with its title and system underneath. It also carries your profile card and the menu, so the bottom screen stays free for the tracker.
 
-Art you already have is never downloaded again. Opening a game that has no art fetches it in the background, and Fetch game art (in the menu under Data) does the games in your Library and Backlog.
+Art you already have is never downloaded again. Opening a game that has no art fetches it in the background.
 
 When a game has several fan arts online (up to six), swipe left or right on the top screen to pick one; the choice is remembered. 
 
 ### Playing your games
 
 - **RetroArch** starts the game with the right core for the system.
-- **Standalone emulators:** Dolphin (GameCube, Wii), DuckStation (PS1), PPSSPP (PSP), Mupen64Plus and Joey64 (N64), ARMSX2 (PS2), ARMSX3 and aPS3e (PS3), WatermelonDS (DS), Azahar (3DS), GBA DS (GBA, with a map or HUD on the second screen) (coming soon), Eden (Switch), Cemu (Wii U), Vita3K and Vita3K+ (Vita), Flycast (Dreamcast), HakuX (Xbox) and XenDroid (Xbox 360). DuckStation has a newer version too, and Dolphin CS is available for GameCube and Wii.
+- **Standalone emulators:** Dolphin (GameCube, Wii), DuckStation (PS1), PPSSPP (PSP), Mupen64Plus and Joey64 (N64), ARMSX2 (PS2), ARMSX3 and aPS3e (PS3), Xnes3D+ (NES in 3D), WatermelonDS (DS), Azahar (3DS), GBA DS (GBA, with a map or HUD on the second screen) (coming soon), Eden (Switch), Cemu (Wii U), Vita3K and Vita3K+ (Vita), Flycast (Dreamcast), HakuX (Xbox) and XenDroid (Xbox 360). DuckStation has a newer version too, and Dolphin CS is available for GameCube and Wii.
 - You choose which emulator or RetroArch core each system uses, and you can change it any time from Launcher settings.
 - **A different emulator for one game.** The controller button next to Play on this device opens a list of the emulators and RetroArch cores that can play that game. Pick one and only that game uses it, for example the 32-bit RetroArch for a game that won't run in the 64-bit one. Choose Default to go back to the system's emulator.
 - **Android ports.** Some games have a native Android version, made from the game's code. When a game has one, its profile shows a Download and Install the Android Port button. The app downloads the port and installs it (Android asks you to confirm), and the same button then becomes Play installed Android port, which opens it on the top screen. If a game has more than one port, each is named on its button. Ports are only shown if they have an Android build and your device can run them, and the list updates itself, so new ports appear without an app update. You need your own copy of the game.
@@ -72,7 +72,7 @@ When a game has several fan arts online (up to six), swipe left or right on the 
 | A | Confirm (can be swapped with B in the menu under Controller) |
 | B | Back: closes the open section of a game profile, then the profile, pop-ups, the manual, the menu or the on-screen keyboard |
 | Select | Open or close the menu |
-| X | Refresh the game profile or the main screen |
+| X | Refresh the game profile or the main screen. With one game per row, start the highlighted game |
 | L1 / R1 | Previous / next console (wraps around at either end) |
 | L2 / R2 | Previous / next tab (wraps around at either end) |
 | Left / right on the tabs or the console row | Switch tab or console straight away, like L2 / R2 and L1 / R1 |
@@ -118,7 +118,11 @@ A game profile on the Thor, with the fan art and title on the top screen and the
 
 ## Your data
 
-Everything is stored on your device: your RA login, keys, added games, playtime, custom achievement orders, guides, manuals and saved videos. Nothing syncs between devices.
+Everything is stored on your device: your RA login, keys, added games, playtime, custom achievement orders, guides, manuals and saved videos.
+
+- **Cloud sync** (optional, in Menu, then Data) keeps your launcher data the same on every device signed in to the same Google account. The copy goes in a hidden app folder in your own Google Drive, and your logins and keys are never included. When both devices have changed, the app asks which copy to keep and makes a safety backup first.
+- **Backups on this device** are made automatically each day you use the app, and backups from the last 3 days you used it are kept. Back up now makes one straight away.
+- **Import and export** saves everything to a file or loads it from one.
 
 The app keeps its own files (that saved data, plus fetched game art) in a folder you choose in the setup wizard, under Your folders. The default is a GameLogTracker folder in shared storage, so it survives uninstalling the app and switching between debug and release builds. Changing the folder moves what is already saved. Without file access the app falls back to its private folder.
 
@@ -138,6 +142,7 @@ Other sites the app contacts, and why:
 - gamesdatabase.org, for game manuals. Those requests go through a private proxy I run on Cloudflare Workers that stores nothing.
 - cdnjs.cloudflare.com, to load the manual viewer the first time you open a manual.
 - GitHub, to check for new app versions and to find ROM patches and guides.
+- Google Drive, only if you turn on Cloud sync, to keep your copy in your own Drive. See [PRIVACY.md](PRIVACY.md).
 
 ## Credits
 
