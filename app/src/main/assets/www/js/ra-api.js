@@ -386,7 +386,13 @@ async function getEstimatedHours(gameId, force, background){
       try{ await promoteManualGameToReal(gameId, data); }
       catch(e){ console.error('promoteManualGameToReal failed:', e); }
     }
-  }catch(e){ hours = null; }
+  }catch(e){
+    // RetroAchievements couldn't be reached (a background check gives up at once, e.g. when rate limited): keep
+    // what was known instead of replacing it with nothing, which showed a playtime of zero.
+    const known = estHoursCache[gameId];
+    if(known && known.hours != null) return known;
+    hours = null;
+  }
 
   estHoursCache[gameId] = { hours, beaten, real };
   try{ await window.storage.set(cacheKey, JSON.stringify({ hours, real, beaten, ts: Date.now(), libAwarded: libraryAwardedFor(gameId) }), false); }catch(e){}

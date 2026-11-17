@@ -154,16 +154,20 @@ function thorLivePlaytime(withRa){
   const hit = libraryData.find(g => String(g.GameID) === idText) || recentGamesData.find(g => String(g.GameID) === idText);
   const gameId = hit ? hit.GameID : (/^\d+$/.test(idText) ? Number(idText) : idText);
   const show = (fresh) => {
-    if(!fresh || card.dataset.gameId !== idText) return;
+    if(card.dataset.gameId !== idText) return;
     let entry = fresh;
     const session = thorSession && thorSession.id === idText ? thorSession : null;
-    if(session && fresh.real && fresh.hours != null){
-      if(session.baseHours == null) session.baseHours = Number(fresh.hours);
+    if(session){
+      // The game playing now counts up from RA's real playtime when the game started, or from nothing for a game
+      // RA has no playtime for yet (its first session), and shows RA's own number once that is ahead.
+      const raHours = fresh && fresh.real && fresh.hours != null ? Number(fresh.hours) : 0;
+      if(session.baseHours == null) session.baseHours = raHours;
       let played = 0;
       try{ played = Number(thorBridge.sessionSeconds()) || 0; }catch(e){}
-      const hours = Math.max(Number(fresh.hours), session.baseHours + played / 3600);
-      entry = { ...fresh, hours };
+      const hours = Math.max(raHours, session.baseHours + played / 3600);
+      entry = { hours, beaten: false, real: true };
     }
+    if(!entry || entry.hours == null) return;
     const text = formatDuration(entry);
     if(valEl.textContent !== text) valEl.textContent = text;
     const labelEl = card.querySelector('#modal-playtime-label');
@@ -172,7 +176,7 @@ function thorLivePlaytime(withRa){
   };
   // Between RA checks, the last answer plus the time played since.
   const last = typeof estHoursCache !== 'undefined' ? estHoursCache[gameId] : null;
-  if(last) show(last);
+  show(last || null);
   if(!withRa || thorPlaytimeBusy || typeof getEstimatedHours !== 'function') return;
   thorPlaytimeBusy = true;
   getEstimatedHours(gameId, true, true).then(show).catch(() => {}).finally(() => { thorPlaytimeBusy = false; });
