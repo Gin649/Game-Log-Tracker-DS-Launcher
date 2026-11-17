@@ -45,7 +45,6 @@ final class Backup {
 
     static final String FOLDER = "Backups";
     private static final int KEEP_AUTO = 3;
-    private static final int KEEP_BEFORE_RESTORE = 3;
     private static final long AUTO_EVERY_MS = 20L * 60 * 60 * 1000; // about once a day, whatever time the app is opened
     private static final int CHUNK = 512 * 1024; // characters per bridge call, as in DataStore
     private static final String LAST_AUTO = "lastAutoBackup";
@@ -338,16 +337,38 @@ final class Backup {
         return o;
     }
 
-    /** Drops the oldest automatic backups, and the oldest copies made before a restore, beyond the number kept. */
+    /**
+     * Keeps only the backups from the last 3 days the app was used, of every kind (automatic, made by you, made
+     * before a restore). An automatic backup is made on each day of use, so their days are the days of use: the
+     * third newest of them is the oldest day kept, and anything from before that day goes. Until there are 3,
+     * nothing is deleted.
+     */
     private static void prune(Context ctx) {
-        List<File> auto = new ArrayList<File>();
-        List<File> before = new ArrayList<File>();
-        for (File f : files(ctx)) {
-            if (f.getName().startsWith("auto-")) auto.add(f);
-            else if (f.getName().startsWith("before-restore-")) before.add(f);
+        List<File> all = files(ctx);
+        java.util.TreeSet<Long> days = new java.util.TreeSet<Long>(java.util.Collections.reverseOrder());
+        for (File f : all) {
+            if (f.getName().startsWith("auto-")) days.add(dayOf(f.lastModified()));
         }
-        for (int i = KEEP_AUTO; i < auto.size(); i++) auto.get(i).delete();
-        for (int i = KEEP_BEFORE_RESTORE; i < before.size(); i++) before.get(i).delete();
+        if (days.size() < KEEP_AUTO) return;
+        long oldestKept = 0;
+        int i = 0;
+        for (Long d : days) {
+            if (++i == KEEP_AUTO) { oldestKept = d; break; }
+        }
+        for (File f : all) {
+            if (dayOf(f.lastModified()) < oldestKept) f.delete();
+        }
+    }
+
+    /** The start of the local day of {@code millis}. */
+    private static long dayOf(long millis) {
+        java.util.Calendar c = java.util.Calendar.getInstance();
+        c.setTimeInMillis(millis);
+        c.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        c.set(java.util.Calendar.MINUTE, 0);
+        c.set(java.util.Calendar.SECOND, 0);
+        c.set(java.util.Calendar.MILLISECOND, 0);
+        return c.getTimeInMillis();
     }
 
     /** Finished backup files, newest first. */

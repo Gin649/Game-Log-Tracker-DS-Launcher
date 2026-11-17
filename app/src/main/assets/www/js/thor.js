@@ -416,53 +416,8 @@ onDomReady(() => {
   b.addEventListener('click', () => { try{ thorBridge.openSettings(); }catch(e){} });
 });
 
-// "Fetch game art": the app finds or builds top-screen art for every game in the ROM library, in the
-// background. This starts it and shows progress.
-onDomReady(() => {
-  const b = document.getElementById('btn-thor-art');
-  if(!thorBridge || !b) return;
-  let timer = null;
-  let idleReads = 0;
-
-  const show = (label, note) => {
-    const l = document.getElementById('thor-art-label');
-    const n = document.getElementById('thor-art-note');
-    if(l) l.textContent = label;
-    if(n) n.textContent = note || '';
-  };
-
-  const poll = () => {
-    clearTimeout(timer);
-    let s = null;
-    try{ s = JSON.parse(thorBridge.scrapeStatus()); }catch(e){ show('Fetch game art', 'The app could not be reached.'); return; }
-    if(!s.configured){
-      show('Fetch game art', 'No art source is on. Turn on the free LaunchBox art in Launcher settings, or add a SteamGridDB key.');
-      return;
-    }
-    if(s.running){
-      idleReads = 0;
-      show('Fetching art…', s.withArt + ' of ' + s.games + ' games have art' + (s.failed ? ', ' + s.failed + ' not found' : ''));
-      timer = setTimeout(poll, 3000);
-      return;
-    }
-    // "running" drops briefly between batches, so wait for a few quiet reads before calling it done.
-    if(++idleReads < 3){ timer = setTimeout(poll, 1500); return; }
-    show('Fetch game art', (s.message ? s.message + ' ' : '') + s.withArt + ' of ' + s.games + ' games have art'
-      + (s.usingEsdeMedia ? ' (art you already have is used where it exists)' : '')
-      + (!s.steamgriddb && s.launchbox ? ' Online art comes from the free LaunchBox database.' : '')
-      + (s.notes && s.notes.length ? ' Not found: ' + s.notes.join(' | ') : ''));
-  };
-
-  const field = document.getElementById('thor-art-field');
-  if(field) field.style.display = '';
-  b.addEventListener('click', () => {
-    const games = libraryData.map(g => ({ title: g.Title, console: g.ConsoleName }));
-    try{ thorBridge.scrapeAll(JSON.stringify(games)); }catch(e){ return; }
-    idleReads = 0;
-    show('Fetching art…', 'Starting…');
-    timer = setTimeout(poll, 1500);
-  });
-});
+// Game art is found game by game as each profile opens (no "fetch all": it would use up the art sources'
+// daily limits).
 
 // Pins the hamburger menu button to the top right of the screen (see .thor-app in the stylesheet).
 onDomReady(() => { if(thorBridge) document.body.classList.add('thor-app'); });

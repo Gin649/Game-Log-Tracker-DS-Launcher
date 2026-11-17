@@ -2,9 +2,27 @@
 
 function openDataModal(){
   $('#data-backdrop').classList.add('open');
+  $('#data-backdrop').scrollTop = 0; // always opens at the top, on Cloud sync
   $('#data-status').innerHTML = '';
+  // The backup list and Import / Export stay folded until asked for.
+  $('#data-backup-list').style.display = 'none';
+  $('#data-backup-list-btn').textContent = 'List all backups';
+  $('#data-io').style.display = 'none';
+  $('#data-io-btn').textContent = 'Import and export ▸';
   renderDeviceBackups();
 }
+$('#data-backup-list-btn').addEventListener('click', () => {
+  const box = $('#data-backup-list');
+  const show = box.style.display === 'none';
+  box.style.display = show ? '' : 'none';
+  $('#data-backup-list-btn').textContent = show ? 'Hide backups' : 'List all backups';
+});
+$('#data-io-btn').addEventListener('click', () => {
+  const box = $('#data-io');
+  const show = box.style.display === 'none';
+  box.style.display = show ? '' : 'none';
+  $('#data-io-btn').textContent = show ? 'Import and export ▾' : 'Import and export ▸';
+});
 function closeDataModal(){
   $('#data-backdrop').classList.remove('open');
 }
