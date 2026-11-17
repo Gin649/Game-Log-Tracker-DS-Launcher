@@ -88,7 +88,9 @@ class RangeFile:
                 with urllib.request.urlopen(req, timeout=60) as r:
                     return r.status, r.headers.get("Content-Range"), r.read()
             except urllib.error.HTTPError as e:
-                if e.code == 416:  # smaller than the range asked for: take the whole file
+                # 416: smaller than the range asked for. 501: the server won't take this kind of range
+                # (raw.githubusercontent.com stopped taking "the last N bytes" ranges). Either way, take the whole file.
+                if e.code in (416, 501):
                     req = urllib.request.Request(self.url, headers=UA)
                     with urllib.request.urlopen(req, timeout=60) as r:
                         return 200, None, r.read()
@@ -101,13 +103,22 @@ class RangeFile:
         raise last
 
     def _load_tail(self):
-        status, crange, body = self._request("bytes=-%d" % self.TAIL)
-        if status == 200 or not crange:
+        # ask for the start first, which also tells us the file's size, then for the end with exact numbers
+        status, crange, body = self._request("bytes=0-%d" % (self.TAIL - 1))
+        if status == 200 or not crange or crange.endswith("/*"):
             self.size = len(body)
             self.win_start, self.win = 0, body
+            return
+        self.size = int(crange.rsplit("/", 1)[1])
+        if self.size <= len(body):
+            self.win_start, self.win = 0, body
+            return
+        start = max(0, self.size - self.TAIL)
+        status, crange, tail = self._request("bytes=%d-%d" % (start, self.size - 1))
+        if status == 200 or not crange:
+            self.win_start, self.win = 0, tail
         else:
-            self.size = int(crange.rsplit("/", 1)[1])
-            self.win_start, self.win = self.size - len(body), body
+            self.win_start, self.win = start, tail
 
     def seekable(self):
         return True
@@ -243,9 +254,11 @@ def build(repo, out_dir, source, only=None, workers=12):
                 print("  read %d/%d" % (done, len(todo)))
 
     patches = []
+    unread = 0
     for rec, sha in entries:
         inner = cache.get(sha)
         if inner is None:
+            unread += 1
             inner = []  # unreadable right now; still listed by name, read again next run
         if inner:
             rec["i"] = inner
@@ -262,9 +275,9 @@ def build(repo, out_dir, source, only=None, workers=12):
     with open(os.path.join(out_dir, "ra-patches", "index.json"), "w", encoding="utf-8") as f:
         json.dump({"v": 1, "branch": "main", "commit": head,
                    "generated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                   "patches": patches}, f, separators=(",", ":"), ensure_ascii=False)
+                   "unread": unread, "patches": patches}, f, separators=(",", ":"), ensure_ascii=False)
     withcrc = sum(1 for p in patches if any(i[2] for i in p.get("i", [])))
-    print("wrote %d patches (%d with a source checksum)" % (len(patches), withcrc))
+    print("wrote %d patches (%d with a source checksum, %d could not be read)" % (len(patches), withcrc, unread))
 
 
 def main():

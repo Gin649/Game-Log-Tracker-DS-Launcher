@@ -31,6 +31,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 120 # a full rebuild takes well under this; stops a run that has gone wrong from holding the data branch for hours
     steps:
       - uses: actions/checkout@v4
 
@@ -47,7 +48,9 @@ jobs:
             fi
           fi
           old=$(python3 -c "import json;print(json.load(open('old-index.json')).get('commit',''))" 2>/dev/null || echo "")
-          if [ "$old" = "$head" ] && [ "${{ github.event_name }}" = "schedule" ]; then
+          # how many archives the last build couldn't read (-1: it didn't say); a lot means it should try again
+          unread=$(python3 -c "import json;print(json.load(open('old-index.json')).get('unread',-1))" 2>/dev/null || echo "-1")
+          if [ "$old" = "$head" ] && [ "$unread" -ge 0 ] && [ "$unread" -lt 50 ] && [ "${{ github.event_name }}" = "schedule" ]; then
             echo "RAPatches is unchanged since the last build."
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
