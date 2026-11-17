@@ -1292,7 +1292,10 @@ html.top-panel #profile-hero{display:none;}
 .tabs{top:calc(var(--status-h) + env(safe-area-inset-top, 0px));z-index:22;padding-top:6px;}
 .chip-row.visible{top:calc(var(--status-h) + env(safe-area-inset-top, 0px) + var(--stk-tabs, 0px));z-index:21;padding-top:12px;margin-bottom:0;}
 .panel-head{top:calc(var(--status-h) + env(safe-area-inset-top, 0px) + var(--stk-tabs, 0px) + var(--stk-chips, 0px));z-index:20;display:flow-root;padding-bottom:1px;}
-.panel-head .lib-search-row{margin-bottom:0;padding-bottom:12px;}
+.panel-head .lib-search-row{margin-bottom:0;padding-bottom:10px;padding-top:10px;align-items:center;}
+/* One condensed bar on the Library, Backlog and Apps tabs (the tab above already names them): search, its button,
+   then the count. */
+.lib-search-row .count{flex-shrink:0;white-space:nowrap;color:var(--gold);font-family:var(--font-mono);font-weight:700;font-size:0.8125rem;}
 .tab-panel > .section-title:first-child{margin-top:18px;}
 .panel-head .section-title{margin:14px 0 10px;}
 html{scroll-padding-top:var(--stk-all, 0px);}
