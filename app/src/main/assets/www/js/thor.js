@@ -226,6 +226,7 @@ window.thorQuickPlay = function(tile){
         const failed = msg && msg.classList.contains('error') && msg.style.display !== 'none';
         backdrop.classList.remove('quick-play');
         if(!asking && !failed && typeof closeGameModal === 'function') closeGameModal();
+        thorTileShown = null; // the profile told the top screen itself; the next highlight tells it again
       }, 400);
       return;
     }
