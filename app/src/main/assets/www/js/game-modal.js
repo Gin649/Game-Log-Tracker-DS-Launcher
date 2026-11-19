@@ -29,7 +29,17 @@ function findGameLocal(gameId){
   return libraryData.find(g => g.GameID === gameId) || recentGamesData.find(g => g.GameID === gameId) || null;
 }
 
-// The review score badge: the average of every source's score (see igdb.js). A score from only one source gets a *.
+// A score resting on only a few reviews gets a *: fewer than this many votes in all, counting the sources that say
+// how many people voted. A single source that doesn't say (ScreenScraper) gets one too.
+const RATING_FEW_VOTES = 20;
+function ratingIsThin(rating){
+  if(!rating || !rating.sources.length) return false;
+  const counted = rating.sources.filter(s => s.votes != null);
+  if(counted.length === rating.sources.length) return counted.reduce((n, s) => n + s.votes, 0) < RATING_FEW_VOTES;
+  return rating.sources.length === 1;
+}
+
+// The review score badge: the average of every source's score (see igdb.js), with a * when it rests on few reviews.
 // Tapping the badge shows each source's score in a bubble, with a button to look the score up again.
 function attachRatingLookup(gameId, title, consoleName, card){
   const badge = card.querySelector('#rating-badge');
@@ -46,10 +56,10 @@ function attachRatingLookup(gameId, title, consoleName, card){
           + `${s.votes ? `<span class="v">${s.votes.toLocaleString()} ${s.votes === 1 ? 'vote' : 'votes'}</span>` : ''}`
           + `<span class="s">${s.score}</span></div>`).join('')
       : '<p class="rating-none">No review site has a score for this game.</p>';
-    const one = rating && rating.sources.length === 1 ? '<p class="rating-note">* From one source only.</p>' : '';
+    const one = ratingIsThin(rating) ? '<p class="rating-note">* Based on only a few reviews.</p>' : '';
     const bubble = document.createElement('div');
     bubble.className = 'rating-bubble';
-    bubble.innerHTML = `<p class="rating-head">Review score${rating ? `: ${rating.score}${rating.sources.length === 1 ? '*' : ''}` : ''}</p>`
+    bubble.innerHTML = `<p class="rating-head">Review score${rating ? `: ${rating.score}${ratingIsThin(rating) ? '*' : ''}` : ''}</p>`
       + `${lines}${one}<button class="rating-again" type="button">Look up again</button>`;
     bubble.addEventListener('click', e => e.stopPropagation());
     bubble.querySelector('.rating-again').addEventListener('click', () => { closeBubble(); runLookup(true); });
@@ -64,7 +74,7 @@ function attachRatingLookup(gameId, title, consoleName, card){
       const badgeEl = card.querySelector('#rating-badge');
       if(!badgeEl) return;
 
-      const label = rating ? `${rating.score}${rating.sources.length === 1 ? '*' : ''}` : 'NR'; // not rated
+      const label = rating ? `${rating.score}${ratingIsThin(rating) ? '*' : ''}` : 'NR'; // not rated
       const tier = !rating ? 'tier-muted' : rating.score >= 80 ? 'tier-green' : rating.score >= 50 ? 'tier-yellow' : 'tier-red';
       badgeEl.innerHTML = `<span class="rawg-score ${tier}" id="rating-retry" role="button" title="Tap to see where the score comes from">${label}</span>`;
 
