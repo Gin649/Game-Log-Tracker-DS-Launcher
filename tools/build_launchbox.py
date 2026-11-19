@@ -86,6 +86,7 @@ def build(zf, platforms):
     wanted = {compact(p): p for p in platforms}
     games = {}  # DatabaseID -> (name, platform key)
     overview = {}  # DatabaseID -> description
+    ratings = {}   # DatabaseID -> (community stars out of 5, number of votes)
     seen = {}
     for g in stream(zf, member, {'Game'}):
         key = compact(text(g, 'Platform'))
@@ -97,6 +98,13 @@ def build(zf, platforms):
             ov = clip(text(g, 'Overview'))
             if ov:
                 overview[gid] = ov
+            try:
+                stars = float(text(g, 'CommunityRating') or 0)
+                votes = int(float(text(g, 'CommunityRatingCount') or text(g, 'CommunityStarRatingTotalVotes') or 0))
+            except ValueError:
+                stars, votes = 0, 0
+            if 0 < stars <= 5 and votes > 0:
+                ratings[gid] = (round(stars, 2), votes)
             seen[key] = seen.get(key, 0) + 1
 
     alts = {}   # DatabaseID -> [alternate names]
@@ -153,7 +161,11 @@ def build(zf, platforms):
     for gid, (name, key) in games.items():
         if gid in overview:
             descs[key].append([name, overview[gid]])
-    return out, descs
+    rates = {key: [] for key in wanted}
+    for gid, (name, key) in games.items():
+        if gid in ratings:
+            rates[key].append([name, ratings[gid][0], ratings[gid][1]])
+    return out, descs, rates
 
 
 def main():
@@ -171,7 +183,7 @@ def main():
     import os
     os.makedirs(os.path.join(a.out, 'launchbox'), exist_ok=True)
     with zipfile.ZipFile(a.zip) as zf:
-        rows, descs = build(zf, platforms)
+        rows, descs, rates = build(zf, platforms)
 
     index = {'v': 1, 'generated': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), 'source': a.stamp, 'platforms': {}}
     for key, games in rows.items():
@@ -190,6 +202,14 @@ def main():
         items.sort(key=lambda r: r[0].lower())
         with open(os.path.join(a.out, 'launchbox', key + '.desc.json'), 'w', encoding='utf-8') as f:
             json.dump({'v': 1, 'd': items}, f, ensure_ascii=False, separators=(',', ':'))
+    # community ratings, read by the app for the review score
+    for key, items in rates.items():
+        if not items:
+            continue
+        items.sort(key=lambda r: r[0].lower())
+        with open(os.path.join(a.out, 'launchbox', key + '.rate.json'), 'w', encoding='utf-8') as f:
+            json.dump({'v': 1, 'r': items}, f, ensure_ascii=False, separators=(',', ':'))
+        print('%-40s %6d rated games' % (key, len(items)))
     with open(os.path.join(a.out, 'launchbox', 'index.json'), 'w', encoding='utf-8') as f:
         json.dump(index, f, separators=(',', ':'))
 

@@ -324,6 +324,8 @@ final class ThorBridge {
                     else if ("hack-desc".equals(kind)) text = hackDescription(title, console);
                     else if ("hack-shot".equals(kind)) text = hackScreenshot(title, console);
                     else if ("shot".equals(kind)) text = screenscraperScreenshot(title, console);
+                    else if ("ss-rate".equals(kind)) text = screenscraperRating(title, console);
+                    else if ("lb-rate".equals(kind)) text = launchboxRating(title, console);
                     else text = screenscraperDescription(title, console);
                 } catch (Exception ignored) {
                 }
@@ -612,6 +614,30 @@ final class ThorBridge {
         } catch (Exception ignored) {
         }
         return "";
+    }
+
+    /** LaunchBox's community rating for a game as "stars|votes" (stars out of 5), or "" when it has none. */
+    public String launchboxRating(String title, String console) {
+        try {
+            SystemMap map = Shared.systems();
+            if (map == null) return "";
+            for (SystemMap.Sys sys : map.forConsole(console)) {
+                double[] r = LaunchBoxArt.rating(act, sys.folder, title);
+                if (r != null) return r[0] + "|" + (long) r[1];
+            }
+        } catch (Exception ignored) {
+        }
+        return "";
+    }
+
+    /** ScreenScraper's rating for a game out of 20, as text, or "" when it has none. Blocks on the network. */
+    public String screenscraperRating(String title, String console) {
+        try {
+            ScreenScraperClient.Info i = ScreenScraperClient.lookup(act, title, console, false, true);
+            return i == null || i.rating <= 0 ? "" : String.valueOf(i.rating);
+        } catch (Exception ignored) {
+            return "";
+        }
     }
 
     /** LaunchBox's description for a game (used when RetroAchievements has none), or "". Blocks on the network. */

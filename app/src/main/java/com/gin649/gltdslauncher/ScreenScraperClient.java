@@ -36,6 +36,8 @@ final class ScreenScraperClient {
 
     static final class Info {
         String name = "", synopsis = "", box, screenshot, wheel, fanart;
+        /** ScreenScraper's rating out of 20, or -1 when it has none (or the answer is from before the Worker sent it). */
+        double rating = -1;
         /** Every regional cover the Worker listed, as {region label, address}; empty on an older cached answer. */
         java.util.List<String[]> boxes = new java.util.ArrayList<String[]>();
         /** Pictures of the cartridge or disc, as {region code, address}; empty when the Worker sent none. */
@@ -54,6 +56,11 @@ final class ScreenScraperClient {
      * can use them. Everything else keeps using the saved answer.
      */
     static Info lookup(Context ctx, String title, String system, boolean wantCarts) throws IOException {
+        return lookup(ctx, title, system, wantCarts, false);
+    }
+
+    /** wantRating: same idea for the rating, for a saved answer from before the Worker sent it. */
+    static Info lookup(Context ctx, String title, String system, boolean wantCarts, boolean wantRating) throws IOException {
         if (title == null || title.trim().isEmpty() || system == null || system.trim().isEmpty()) return null;
         // "3": answers saved before the Worker listed regional covers held one cover only, so they are asked for again
         String key = "ss-info3:" + Matcher.compact(system) + ":" + Matcher.norm(title);
@@ -67,6 +74,8 @@ final class ScreenScraperClient {
                 // an answer with no cartridge list is from before the Worker sent them: ask again, at most once a day
                 boolean stale = wantCarts && found && !o.has("carts")
                         && System.currentTimeMillis() - o.optLong("cartsAsked", 0) > MISS_MS;
+                if (wantRating && found && !o.has("rating")
+                        && System.currentTimeMillis() - o.optLong("ratingAsked", 0) > MISS_MS) stale = true;
                 if (!stale && age < (found ? FOUND_MS : MISS_MS)) return found ? parse(o) : null;
             } catch (JSONException ignored) {
             }
@@ -88,6 +97,7 @@ final class ScreenScraperClient {
             JSONObject o = new JSONObject(text);
             o.put("ts", System.currentTimeMillis());
             if (wantCarts) o.put("cartsAsked", System.currentTimeMillis());
+            if (wantRating) o.put("ratingAsked", System.currentTimeMillis());
             db.write(key, o.toString());
             return o.optBoolean("found") ? parse(o) : null;
         } catch (JSONException e) {
@@ -105,6 +115,8 @@ final class ScreenScraperClient {
         i.screenshot = addr(o, "screenshot");
         i.wheel = addr(o, "wheel");
         i.fanart = addr(o, "fanart");
+        double r = o.optDouble("rating", -1);
+        i.rating = (Double.isNaN(r) || r <= 0 || r > 20) ? -1 : r;
         org.json.JSONArray bs = o.optJSONArray("boxes");
         if (bs != null) {
             for (int k = 0; k < bs.length(); k++) {

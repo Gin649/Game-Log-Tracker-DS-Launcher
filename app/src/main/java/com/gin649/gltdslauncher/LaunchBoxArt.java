@@ -267,6 +267,58 @@ final class LaunchBoxArt {
         return bestScore >= 85 ? best : null;
     }
 
+    /**
+     * LaunchBox's community rating for a game as {stars out of 5, number of votes}, or null when the console or game
+     * isn't listed or nobody has rated it. Matched the same way as the write-up.
+     */
+    static double[] rating(Context ctx, String folder, String title) throws IOException {
+        String platform = platformFor(ctx, folder);
+        if (platform == null) return null;
+        Map<String, double[]> r = rates(ctx, Matcher.compact(platform));
+        if (r == null || r.isEmpty()) return null;
+        double[] hit = r.get(lbNorm(title));
+        if (hit != null) return hit;
+        double[] best = null;
+        int bestScore = 0;
+        for (Map.Entry<String, double[]> e : r.entrySet()) {
+            int score = Matcher.artSimilarity(title, e.getKey());
+            if (score > bestScore) {
+                bestScore = score;
+                best = e.getValue();
+            }
+        }
+        return bestScore >= 85 ? best : null;
+    }
+
+    private static final Map<String, Map<String, double[]>> RATES = new HashMap<String, Map<String, double[]>>();
+
+    // normalized title to {stars, votes} for one console, kept on disk and checked weekly like the other index files
+    private static synchronized Map<String, double[]> rates(Context ctx, String key) throws IOException {
+        Map<String, double[]> cached = RATES.get(key);
+        if (cached != null) return cached;
+        File f = new File(DataStore.root(ctx), "launchbox/" + key + ".rate.json");
+        byte[] data = savedOrNewer(f, INDEX_URL + key + ".rate.json");
+        Map<String, double[]> out = new HashMap<String, double[]>();
+        if (data != null) {
+            try {
+                JSONArray arr = new JSONObject(new String(data, "UTF-8")).getJSONArray("r");
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONArray row = arr.getJSONArray(i);
+                    String k = lbNorm(row.getString(0));
+                    double[] v = {row.getDouble(1), row.getDouble(2)};
+                    double[] cur = out.get(k);
+                    // two games under one name: the one more people rated
+                    if (cur == null || v[1] > cur[1]) out.put(k, v);
+                }
+            } catch (Exception e) {
+                f.delete();
+                return null;
+            }
+        }
+        RATES.put(key, out);
+        return out;
+    }
+
     private static final Map<String, Map<String, String>> DESCS = new HashMap<String, Map<String, String>>();
 
     // normalized title to write-up for one console, cached on disk like the art index

@@ -1,16 +1,20 @@
-// IGDB (through the Worker, which holds the Twitch login): review scores, game search and details.
+// IGDB (through the Worker, which holds the Twitch login): game search and details, and the review score, which also
+// takes in ScreenScraper, LaunchBox's community rating and, for PC games, Steam.
 
 const IGDB_WORKER = 'https://ra-proxy.gin649.workers.dev';
 
-// IGDB's critic and user ratings (out of 100) through the Worker.
-// Resolves to { critic, user, name }, null where IGDB has nothing.
-async function fetchIgdbScores(title){
+// IGDB's critic and user ratings (out of 100) through the Worker. The console is sent so the Worker can pick that
+// system's release. Resolves to { critic, user, criticCount, userCount, name }, null where IGDB has nothing (a count
+// is null when the Worker doesn't send it).
+async function fetchIgdbScores(title, consoleName){
   const clean = String(title).replace(/^(?:~[^~]*~\s*)+/, '').trim(); // drop "~Hack~" style tags
-  const res = await fetchWithTimeout(`${IGDB_WORKER}/igdb/score?name=${encodeURIComponent(clean)}`, 12000);
+  const sys = consoleName ? `&system=${encodeURIComponent(consoleName)}` : '';
+  const res = await fetchWithTimeout(`${IGDB_WORKER}/igdb/score?name=${encodeURIComponent(clean)}${sys}`, 12000);
   if(!res.ok) throw new Error(`IGDB: HTTP ${res.status}`);
   const j = await res.json();
   const valid = n => (typeof n === 'number' && n > 0 && n <= 100) ? n : null;
-  return { critic: valid(j.critic), user: valid(j.user), name: j.name || null };
+  const count = n => (typeof n === 'number' && n >= 0) ? n : null;
+  return { critic: valid(j.critic), user: valid(j.user), criticCount: count(j.criticCount), userCount: count(j.userCount), name: j.name || null };
 }
 
 // Other names IGDB may list a game under, tried in turn when a name finds no score. IGDB names licensed games
@@ -26,42 +30,101 @@ function igdbNameVariants(title){
   return out;
 }
 
-// One score per game: the average of IGDB's critic and user scores, whichever exist.
-async function fetchCombinedRating(title){
+// A score with fewer votes than this is left out, so a handful of people can't swing it.
+const RATING_MIN_VOTES = 5;
+const isPcConsole = c => /microsoft windows|^\s*(pc|windows)\s*$/i.test(String(c || ''));
+const cleanTitle = t => String(t).replace(/^(?:~[^~]*~\s*)+/, '').trim();
+
+// IGDB's critic and user scores, each its own source.
+async function igdbRatingSources(title, consoleName){
   let igdb = null;
   for(const name of igdbNameVariants(title)){
-    const found = await fetchIgdbScores(name);
+    const found = await fetchIgdbScores(name, consoleName);
     if(found.critic || found.user){ igdb = found; break; }
   }
-  if(!igdb) return null;
-  const scores = [igdb.critic, igdb.user].filter(n => typeof n === 'number' && n > 0);
-  if(scores.length === 0) return null;
-  return {
-    score: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
-    metacritic: false,
-    matchedName: igdb.name || title,
-  };
+  if(!igdb) return [];
+  const out = [];
+  if(igdb.critic) out.push({ label: 'IGDB critics', score: igdb.critic, votes: igdb.criticCount });
+  if(igdb.user) out.push({ label: 'IGDB players', score: igdb.user, votes: igdb.userCount });
+  return out;
 }
 
-async function getGameRating(title, forceRefresh){
-  // rating-igdb2: looks under other names too, so a miss kept by the older lookup is asked again.
-  const cacheKey = `rating-igdb2:${title.toLowerCase()}`;
+// ScreenScraper's rating (out of 20). Inside the launcher the app asks and remembers it with the rest of the game's
+// ScreenScraper entry; in the browser the Worker is asked.
+async function screenscraperRatingSources(title, consoleName){
+  if(!consoleName) return [];
+  const clean = cleanTitle(title);
+  let note = null;
+  if(typeof thorBridge !== 'undefined' && thorBridge && thorBridge.describeAsync){
+    note = parseFloat(await nativeDescribe('ss-rate', clean, consoleName));
+  }else{
+    const res = await fetchWithTimeout(`${IGDB_WORKER}/ss/info?title=${encodeURIComponent(clean)}&system=${encodeURIComponent(consoleName)}`, 15000);
+    if(res.status === 503) return [];
+    if(!res.ok) throw new Error(`ScreenScraper: HTTP ${res.status}`);
+    const j = await res.json();
+    note = j && j.found ? Number(j.rating) : null;
+  }
+  if(!(note > 0 && note <= 20)) return [];
+  return [{ label: 'ScreenScraper', score: Math.round(note * 5), votes: null }];
+}
+
+// LaunchBox's community stars (out of 5), from the index the app keeps on the device. Only inside the launcher.
+async function launchboxRatingSources(title, consoleName){
+  if(typeof thorBridge === 'undefined' || !thorBridge || !thorBridge.describeAsync || !consoleName) return [];
+  const raw = await nativeDescribe('lb-rate', cleanTitle(title), consoleName);
+  const [stars, votes] = String(raw || '').split('|').map(Number);
+  if(!(stars > 0 && stars <= 5)) return [];
+  return [{ label: 'LaunchBox', score: Math.round(stars * 20), votes: votes >= 0 ? votes : null }];
+}
+
+// Steam players' reviews (% positive), for PC games only, through the Worker.
+async function steamRatingSources(title, consoleName){
+  if(!isPcConsole(consoleName)) return [];
+  const res = await fetchWithTimeout(`${IGDB_WORKER}/steam/score?name=${encodeURIComponent(cleanTitle(title))}`, 12000);
+  if(res.status === 404) return []; // a Worker without the Steam lookup yet
+  if(!res.ok) throw new Error(`Steam: HTTP ${res.status}`);
+  const j = await res.json();
+  const total = Number(j && j.total), positive = Number(j && j.positive);
+  if(!j || !j.found || !(total > 0) || !(positive >= 0)) return [];
+  return [{ label: 'Steam', score: Math.round(positive / total * 100), votes: total }];
+}
+
+// One score per game: every source counts the same, and the score is their average. Resolves to
+// { score, sources: [{ label, score, votes }] } or null when no source has a score. failed is set when a source
+// couldn't be reached, so the answer is only kept a day.
+async function fetchCombinedRating(title, consoleName){
+  const lookups = [igdbRatingSources, screenscraperRatingSources, launchboxRatingSources, steamRatingSources]
+    .map(f => f(title, consoleName).then(list => ({ list }), () => ({ list: [], failed: true })));
+  const results = await Promise.all(lookups);
+  const failed = results.some(r => r.failed);
+  if(results.every(r => r.failed)) throw new Error('No review source could be reached');
+  const sources = results.flatMap(r => r.list)
+    .filter(s => s.score > 0 && s.score <= 100 && (s.votes == null || s.votes >= RATING_MIN_VOTES));
+  if(sources.length === 0) return { data: null, failed };
+  const score = Math.round(sources.reduce((n, s) => n + s.score, 0) / sources.length);
+  return { data: { score, sources }, failed };
+}
+
+async function getGameRating(title, consoleName, forceRefresh){
+  const sys = consoleName && consoleName !== '—' ? consoleName : '';
+  // rating-mix1: the score from every source, kept per console since a game's score can differ between systems
+  const cacheKey = `rating-mix1:${sys.toLowerCase()}:${title.toLowerCase()}`;
   if(!forceRefresh){
     try{
       const r = await window.storage.get(cacheKey, false);
       if(r && r.value){
         const parsed = JSON.parse(r.value);
-        const ttl = parsed.data ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000; // a miss is tried again after a day
+        const ttl = (parsed.data && !parsed.failed ? 30 : 1) * 24 * 60 * 60 * 1000; // a miss is tried again after a day
         if(Date.now() - parsed.ts < ttl) return parsed.data;
       }
     }catch(e){}
   }
 
-  let data = null;
-  try{ data = await fetchCombinedRating(title); }
+  let found;
+  try{ found = await fetchCombinedRating(title, sys); }
   catch(e){ return null; } // couldn't be reached: not kept, so the next look tries again
-  try{ await window.storage.set(cacheKey, JSON.stringify({ data, ts: Date.now() }), false); }catch(e){}
-  return data;
+  try{ await window.storage.set(cacheKey, JSON.stringify({ data: found.data, failed: found.failed, ts: Date.now() }), false); }catch(e){}
+  return found.data;
 }
 
 // Games matching a title, for "Add a game" (games RetroAchievements doesn't list). Resolves to
