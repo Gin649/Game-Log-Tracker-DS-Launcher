@@ -34,6 +34,7 @@
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             android:noHistory="true"
             android:excludeFromRecents="true"
+            android:resizeableActivity="true"
             android:taskAffinity="${applicationId}.launch">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -42,6 +43,13 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <!-- Home pressed on the other screen: Android asks the home app for a "secondary home" there. Without this it
+                 opens its own app drawer instead of the launcher. -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.SECONDARY_HOME" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
