@@ -96,9 +96,11 @@ async function cloudDownload(fileId){
 // Puts the cloud copy in: a backup of this device first, then anything synced here that the copy no longer has is
 // removed (so something deleted on the other device goes here too), then the copy goes in and the page reloads.
 async function cloudApply(meta){
+  // the safety backup is made while the cloud copy downloads, rather than one after the other
+  const backup = typeof saveBackupToDevice === 'function' ? saveBackupToDevice('before-restore') : Promise.resolve();
   const remote = await cloudDownload(meta.fileId);
+  await backup;
   if(!remote || !Array.isArray(remote.entries)) throw new Error('The cloud copy isn\'t a Game Log Tracker backup.');
-  if(typeof saveBackupToDevice === 'function') await saveBackupToDevice('before-restore');
   const keep = new Set(remote.entries.map(e => String(e.key)));
   const here = (await window.storage._getAllRaw()).filter(cloudSyncable);
   for(const e of here){
@@ -111,8 +113,9 @@ async function cloudApply(meta){
   await importPayload(remote);
   // the next start works out this device's fingerprint again (its own ROM folders etc. make it differ a little)
   cloudSetState({ rev: meta.rev, hash: '', rebase: true, at: Date.now() });
-  cloudToast('Updated from ' + (meta.device || 'your other device') + '. Reloading…');
-  setTimeout(() => window.location.reload(), 1500);
+  // reload straight away; the note says where the copy came from once the page is back
+  try{ sessionStorage.setItem('cloud-updated-from', meta.device || 'your other device'); }catch(e){}
+  window.location.reload();
 }
 
 // The main step. "ask" says a "both changed" question may be put even if one was put already this session.
@@ -192,17 +195,21 @@ function cloudToast(text){
   setTimeout(() => t.remove(), 4000);
 }
 
-// When it runs: a little after the app opens, when it comes back on screen or goes off it, every 5 minutes while on
-// screen, 10 seconds after anything is saved, and when a game closes (thor.js calls cloudSyncSoon).
+// When it runs: a second after the app opens, when it comes back on screen or goes off it, every 5 minutes while on
+// screen, 3 seconds after anything is saved, and when a game closes (thor.js calls cloudSyncSoon).
 let cloudSoonTimer = 0;
 function cloudSyncSoon(delay){
   clearTimeout(cloudSoonTimer);
-  cloudSoonTimer = setTimeout(() => cloudSync(false), delay == null ? 10000 : delay);
+  cloudSoonTimer = setTimeout(() => cloudSync(false), delay == null ? 3000 : delay);
 }
 window.cloudSyncSoon = cloudSyncSoon;
 
 if(cloudBridge()){
-  setTimeout(() => cloudSync(false), 4000);
+  try{
+    const from = sessionStorage.getItem('cloud-updated-from');
+    if(from){ sessionStorage.removeItem('cloud-updated-from'); setTimeout(() => cloudToast('Updated from ' + from + '.'), 300); }
+  }catch(e){}
+  setTimeout(() => cloudSync(false), 1000);
   document.addEventListener('visibilitychange', () => cloudSyncSoon(document.hidden ? 0 : 1500));
   setInterval(() => { if(!document.hidden) cloudSync(false); }, 5 * 60 * 1000);
   // anything saved schedules a sync, except saved lookups, which aren't synced

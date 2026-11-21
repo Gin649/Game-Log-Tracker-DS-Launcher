@@ -147,6 +147,10 @@ final class CloudSync {
             reply(id, fail("Google didn't give access to Drive."));
             return;
         }
+        synchronized (CloudSync.class) {
+            cachedToken = token;
+            cachedTokenUntil = android.os.SystemClock.elapsedRealtime() + TOKEN_KEEP_MS;
+        }
         IO.execute(() -> {
             String email = "";
             try {
@@ -166,15 +170,34 @@ final class CloudSync {
         });
     }
 
+    // Google's tokens last an hour; one is kept for 40 minutes so each sync doesn't wait on Play services again
+    private static String cachedToken;
+    private static long cachedTokenUntil;
+    private static final long TOKEN_KEEP_MS = 40L * 60 * 1000;
+
     /** A token without showing anything, or null when the person has to sign in again. Not on the main thread. */
     private static String silentToken(Context c) {
+        synchronized (CloudSync.class) {
+            if (cachedToken != null && android.os.SystemClock.elapsedRealtime() < cachedTokenUntil) return cachedToken;
+        }
         try {
             AuthorizationResult r = Tasks.await(Identity.getAuthorizationClient(c).authorize(request()), 30, TimeUnit.SECONDS);
             if (r.hasResolution()) return null;
-            return r.getAccessToken();
+            String t = r.getAccessToken();
+            synchronized (CloudSync.class) {
+                cachedToken = t;
+                cachedTokenUntil = android.os.SystemClock.elapsedRealtime() + TOKEN_KEEP_MS;
+            }
+            return t;
         } catch (Exception e) {
             return null;
         }
+    }
+
+    // A token Google turned down (signed out elsewhere, access removed) isn't kept, so the next try asks afresh.
+    private static synchronized void forgetToken() {
+        cachedToken = null;
+        cachedTokenUntil = 0;
     }
 
     static boolean isOn(Context c) {
@@ -195,6 +218,7 @@ final class CloudSync {
 
     /** Turns sync off on this device; with deleteCopy the cloud copy goes too. Access is handed back to Google. */
     static void signOut(final Context c, final String id, final boolean deleteCopy) {
+        forgetToken();
         IO.execute(() -> {
             String token = silentToken(c);
             if (token != null) {
@@ -261,6 +285,7 @@ final class CloudSync {
             try (Response r = HTTP.newCall(new Request.Builder()
                     .url(DRIVE + "files/" + fileId + "?alt=media")
                     .header("Authorization", "Bearer " + token).build()).execute()) {
+                if (r.code() == 401) forgetToken();
                 if (!r.isSuccessful() || r.body() == null) throw new Exception("HTTP " + r.code());
                 downloaded = r.body().string();
                 reply(id, new JSONObject().put("ok", true).put("chunks", chunkCount()));
@@ -358,6 +383,7 @@ final class CloudSync {
     private static String send(String token, Request.Builder b) throws Exception {
         try (Response r = HTTP.newCall(b.header("Authorization", "Bearer " + token).build()).execute()) {
             String s = r.body() != null ? r.body().string() : "";
+            if (r.code() == 401) forgetToken();
             if (!r.isSuccessful()) throw new Exception("HTTP " + r.code());
             return s.isEmpty() ? "{}" : s;
         }
