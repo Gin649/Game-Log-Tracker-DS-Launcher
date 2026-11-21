@@ -221,6 +221,8 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
     @SuppressWarnings("SetJavaScriptEnabled")
     private void buildPanel(FrameLayout root) {
         panel = new WebView(this);
+        // Android washes a focused view in grey/white when a controller is used; the page draws its own highlight
+        panel.setDefaultFocusHighlightEnabled(false);
         panel.setBackgroundColor(Color.TRANSPARENT);
         panel.setVisibility(View.INVISIBLE);
         // Display only: taps go to the tracker through TopBridge, so the panel never needs focus or

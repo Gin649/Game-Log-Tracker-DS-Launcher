@@ -198,6 +198,8 @@ public class WebViewerActivity extends Activity {
         page.addView(bar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         web = new WebView(this);
+        // Android washes a focused view in grey/white when a controller is used; the page draws its own highlight
+        web.setDefaultFocusHighlightEnabled(false);
         web.setBackgroundColor(BG);
         WebSettings ws = web.getSettings();
         ws.setJavaScriptEnabled(true);

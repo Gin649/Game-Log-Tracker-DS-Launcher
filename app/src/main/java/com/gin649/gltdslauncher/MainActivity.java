@@ -399,6 +399,8 @@ public class MainActivity extends Activity {
         if (webView != null) return;
 
         webView = new WebView(this);
+        // Android washes a focused view in grey/white when a controller is used; the page draws its own highlight
+        webView.setDefaultFocusHighlightEnabled(false);
         webView.setBackgroundColor(BG);
 
         WebSettings ws = webView.getSettings();
