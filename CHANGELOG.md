@@ -5,12 +5,15 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 ## v1.2.3
 
 ### Added
-- Home app: Launcher settings has a Set as home app button, under File access and Back to tracker after a game. With the launcher as your home app, the Home button and starting the device open it on both screens, and a game running on the top screen stays there. Close App is hidden while it's your home app, and Change home app switches back.
+- Home app: Launcher settings has a Set as home app button, under File access and Back to tracker after a game. With the launcher as your home app, pressing Home on either screen and starting the device open it on both screens, and a game running on the top screen stays there. Close App is hidden while it's your home app, and Change home app switches back.
 - More review sources: the review score now averages IGDB's critics and players, ScreenScraper, LaunchBox's community rating and, for PC games, Steam players. Every source counts the same, and a source with fewer than 5 votes is left out.
 - Tap the review score to see each source's score and number of votes, with a Look up again button. A score based on only a few reviews is marked with a *.
 
 ### Changed
 - Review scores are looked up for the game's own console, so a game released on more than one system gets that system's score.
+
+### Fixed
+- The bottom screen no longer turns white, as if everything were selected, when using a controller.
 
 ## v1.2.2
 
