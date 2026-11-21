@@ -821,6 +821,12 @@ final class ThorBridge {
         Prefs.put(act, "credsRev", String.valueOf(System.currentTimeMillis()));
     }
 
+    /** True when the launcher is the device's home app (the menu then hides Close App: Android would just reopen it). */
+    @JavascriptInterface
+    public boolean isHomeApp() {
+        return HomeApp.isHome(act);
+    }
+
     /** Closes the whole app: the tracker, the top screen and the setup window. */
     @JavascriptInterface
     public void exitApp() {

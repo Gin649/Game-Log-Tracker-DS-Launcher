@@ -27,7 +27,7 @@
             android:windowSoftInputMode="adjustResize"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density|keyboardHidden|keyboard|navigation|uiMode" />
 
-        <!-- The app icon: brings both screens to the front, then closes -->
+        <!-- The app icon, and the Home button when the launcher is the home app: brings both screens to the front, then closes -->
         <activity
             android:name=".LaunchActivity"
             android:exported="true"
@@ -38,6 +38,11 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 

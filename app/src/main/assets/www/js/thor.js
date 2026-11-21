@@ -484,11 +484,22 @@ onDomReady(() => {
 // Pins the hamburger menu button to the top right of the screen (see .thor-app in the stylesheet).
 onDomReady(() => { if(thorBridge) document.body.classList.add('thor-app'); });
 
-// "Exit app" closes the launcher completely.
+// "Exit app" closes the launcher completely. It's hidden while the launcher is the home app, since Android would
+// only open it again; checked again on coming back, in case the home app was changed in Launcher settings.
 onDomReady(() => {
   const b = document.getElementById('btn-thor-exit');
   if(!thorBridge || !b) return;
-  b.style.display = '';
+  const update = () => {
+    let home = false;
+    try{ home = !!(thorBridge.isHomeApp && thorBridge.isHomeApp()); }catch(e){}
+    const want = home ? 'none' : '';
+    if(b.style.display === want) return;
+    b.style.display = want;
+    if(typeof colorMenuItems === 'function') colorMenuItems(); // keep the gold/white stripes in step
+  };
+  update();
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) update(); });
+  window.addEventListener('focus', update);
   b.addEventListener('click', () => { try{ thorBridge.exitApp(); }catch(e){} });
   if(typeof colorMenuItems === 'function') colorMenuItems();
 });

@@ -73,6 +73,7 @@ public class SetupActivity extends Activity {
     private static final int REQ_ROMS = 10;
     private static final int REQ_ES = 11;
     private static final int REQ_DATA = 13;
+    private static final int REQ_HOME = 14;
 
     private static final int BG = Color.rgb(21, 18, 31);
     private static final int GOLD = Color.rgb(228, 169, 63);
@@ -477,12 +478,36 @@ public class SetupActivity extends Activity {
         }
     }
 
+    /** Lets the launcher be the device's home app, so the Home button and starting the device open it. */
+    private void homeAppRow() {
+        if (HomeApp.isHome(this)) {
+            text("Home app: Game Log Tracker", 15, TEAL);
+            action("Change home app", new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    HomeApp.openHomeSettings(SetupActivity.this);
+                }
+            });
+        } else {
+            text("Home app: not set", 15, MUTED);
+            text("Make the launcher your home app so the Home button and starting the device open it. "
+                    + "You can switch back any time.", 13, MUTED);
+            action("Set as home app", new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    HomeApp.ask(SetupActivity.this, REQ_HOME);
+                }
+            });
+        }
+    }
+
     private void stepWelcome() {
         text("Let's set up Game Log Tracker on this device.", 17, TEXT);
         text("It takes a minute. Everything can be changed later from the tracker's menu, under Launcher settings.", 14, MUTED);
         text("First, the app needs access to your files so it can find your games and their artwork.", 14, MUTED);
         fileAccessRow();
         usageAccessRow();
+        homeAppRow();
     }
 
     private void stepAccounts() {
