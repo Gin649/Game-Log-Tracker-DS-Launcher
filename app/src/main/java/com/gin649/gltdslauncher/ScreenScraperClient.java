@@ -36,7 +36,7 @@ final class ScreenScraperClient {
 
     static final class Info {
         String name = "", synopsis = "", box, screenshot, wheel, fanart;
-        /** ScreenScraper's rating out of 20, or -1 when it has none (or the answer is from before the Worker sent it). */
+        /** ScreenScraper's rating, scaled by the Worker to out of 100, or -1 when it has none. */
         double rating = -1;
         /** Every regional cover the Worker listed, as {region label, address}; empty on an older cached answer. */
         java.util.List<String[]> boxes = new java.util.ArrayList<String[]>();
@@ -116,7 +116,7 @@ final class ScreenScraperClient {
         i.wheel = addr(o, "wheel");
         i.fanart = addr(o, "fanart");
         double r = o.optDouble("rating", -1);
-        i.rating = (Double.isNaN(r) || r <= 0 || r > 20) ? -1 : r;
+        i.rating = (Double.isNaN(r) || r <= 0 || r > 100) ? -1 : r;
         org.json.JSONArray bs = o.optJSONArray("boxes");
         if (bs != null) {
             for (int k = 0; k < bs.length(); k++) {

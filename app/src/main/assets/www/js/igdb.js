@@ -49,7 +49,7 @@ async function igdbRatingSources(title, consoleName){
   return out;
 }
 
-// ScreenScraper's rating (out of 20). Inside the launcher the app asks and remembers it with the rest of the game's
+// ScreenScraper's rating (the Worker turns it into a score out of 100). Inside the launcher the app asks and remembers it with the rest of the game's
 // ScreenScraper entry; in the browser the Worker is asked.
 async function screenscraperRatingSources(title, consoleName){
   if(!consoleName) return [];
@@ -64,8 +64,8 @@ async function screenscraperRatingSources(title, consoleName){
     const j = await res.json();
     note = j && j.found ? Number(j.rating) : null;
   }
-  if(!(note > 0 && note <= 20)) return [];
-  return [{ label: 'ScreenScraper', score: Math.round(note * 5), votes: null }];
+  if(!(note > 0 && note <= 100)) return [];
+  return [{ label: 'ScreenScraper', score: Math.round(note), votes: null }];
 }
 
 // LaunchBox's community stars (out of 5), from the index the app keeps on the device. Only inside the launcher.

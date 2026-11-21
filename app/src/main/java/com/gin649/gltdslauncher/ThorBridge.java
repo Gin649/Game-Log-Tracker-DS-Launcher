@@ -630,7 +630,7 @@ final class ThorBridge {
         return "";
     }
 
-    /** ScreenScraper's rating for a game out of 20, as text, or "" when it has none. Blocks on the network. */
+    /** ScreenScraper's rating for a game out of 100, as text, or "" when it has none. Blocks on the network. */
     public String screenscraperRating(String title, String console) {
         try {
             ScreenScraperClient.Info i = ScreenScraperClient.lookup(act, title, console, false, true);
