@@ -115,8 +115,8 @@ final class ScreenScraperClient {
         i.screenshot = addr(o, "screenshot");
         i.wheel = addr(o, "wheel");
         i.fanart = addr(o, "fanart");
-        double r = o.optDouble("rating", -1);
-        i.rating = (Double.isNaN(r) || r <= 0 || r > 100) ? -1 : r;
+        double rate = o.optDouble("rating", -1);
+        i.rating = (Double.isNaN(rate) || rate <= 0 || rate > 100) ? -1 : rate;
         org.json.JSONArray bs = o.optJSONArray("boxes");
         if (bs != null) {
             for (int k = 0; k < bs.length(); k++) {
