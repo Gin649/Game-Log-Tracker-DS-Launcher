@@ -221,8 +221,8 @@ public class MainActivity extends Activity {
     private void applyViewport(WebView view) {
         int css = Prefs.getInt(this, "cssWidth", 720);
         if (css <= 0) css = 720;
-        // "Tracker on top screen": the big screen shows everything at half the size, so more fits
-        if (onTopScreen()) css *= 2;
+        // "Tracker on top screen": the big screen shows everything smaller (5/8 of the size), so more fits
+        if (onTopScreen()) css = Math.round(css * 1.6f);
         String js = "(function(){var m=document.querySelector('meta[name=viewport]');"
                 + "if(!m){m=document.createElement('meta');m.name='viewport';"
                 + "(document.head||document.documentElement).appendChild(m);}"
