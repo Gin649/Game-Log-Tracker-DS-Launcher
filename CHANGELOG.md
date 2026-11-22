@@ -2,6 +2,14 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
+## v1.2.4
+
+### Added
+- Tracker on top screen: a new switch in Display Options for two-screen devices. With it on, the tracker is on the top screen and the fan art, cartridge and header are on the bottom one while you browse. When you start a game or an Android port, the screens swap back so the game plays on the top screen with the tracker underneath, and when the game closes they swap again. The tracker is shown smaller on the top screen so more fits. Off by default, so nothing changes unless you turn it on.
+
+### Changed
+- Cloud sync is faster. It checks for changes a second after the app opens, and sends your changes 3 seconds after you save something, down from 10. It doesn't wait on Google sign-in every time it syncs. When a copy from your other device comes in, the app reloads straight away and then says which device it came from.
+
 ## v1.2.3
 
 ### Added
