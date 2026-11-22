@@ -124,6 +124,7 @@ final class ArtWatch {
         long age = SystemClock.elapsedRealtime() - startedAtElapsed;
         if (age > MAX_WATCH_MS) {
             stop();
+            ScreenSwap.forget();
             return;
         }
 
@@ -137,6 +138,7 @@ final class ArtWatch {
             // Showing again: either it came back by itself, or the game never took the screen.
             if (sawCovered || age > NO_TAKEOVER_MS) {
                 stop();
+                ScreenSwap.toMenuLayout(app); // "Tracker on top screen": back to the menu layout
                 return;
             }
             MAIN.postDelayed(TICK, POLL_MS);
@@ -164,7 +166,12 @@ final class ArtWatch {
             stop();
             // Another app in front (Chrome, Files...) means you moved on yourself: leave the screen alone. The art comes
             // back only when the game closed to the home screen or to a frontend.
-            if (!otherAppInFront()) TopPanel.bringArtFront();
+            if (!otherAppInFront()) {
+                ScreenSwap.toMenuLayout(app);
+                TopPanel.bringArtFront();
+            } else {
+                ScreenSwap.forget();
+            }
             return;
         }
         MAIN.postDelayed(TICK, POLL_MS);

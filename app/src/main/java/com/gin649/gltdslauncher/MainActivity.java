@@ -52,14 +52,30 @@ public class MainActivity extends Activity {
     private boolean hadStorage;
     private WebViewAssetLoader assetLoader;
     private boolean relaunching;
+    /** Marks the intent that moves the running tracker to the other screen. */
+    private static final String EXTRA_SCREEN_MOVE = "screenMove";
+    /** How long a move is given before it is checked, and the tracker is reopened on that screen instead. */
+    private static final long MOVE_CHECK_MS = 700;
+    /** Where you were in the tracker (tab, open game, scroll), carried over when it has to be reopened on the other screen. */
+    private static String pendingView;
     /** The running tracker screen, so the in-app web viewer can hand a link back to it. */
     private static MainActivity current;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ScreenSwap.init(this);
 
-        // The tracker always lives on the bottom screen, whichever screen it was opened from.
+        // Asked to move the tracker to the other screen, but Android made a second one instead of moving it: the
+        // running one moves itself (see moveTracker), so this copy just goes away.
+        if (getIntent().getBooleanExtra(EXTRA_SCREEN_MOVE, false) && current != null) {
+            relaunching = true;
+            finish();
+            return;
+        }
+
+        // The tracker lives on the bottom screen (the top one with "Tracker on top screen"), whichever screen it was
+        // opened from.
         int bottom = DisplayPicker.trackerDisplayId(this);
         if (bottom >= 0 && DisplayPicker.displayOf(this) != bottom
                 && !getIntent().getBooleanExtra("movedToBottom", false)) {
@@ -440,6 +456,11 @@ public class MainActivity extends Activity {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 applyViewport(view);
+                String v = pendingView;
+                pendingView = null;
+                if (v != null && !"null".equals(v)) {
+                    view.evaluateJavascript("window.thorRestoreView&&window.thorRestoreView(" + v + ")", null);
+                }
             }
 
             @Override
@@ -588,12 +609,112 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         if (current == this) current = null;
+        if (relaunching && webView != null) {
+            // reopened on the other screen: stop this copy of the page so its timers don't keep running
+            try {
+                root.removeView(webView);
+                webView.destroy();
+            } catch (Exception ignored) {
+            }
+            webView = null;
+        }
         if (!relaunching) {
             PadRouter.detach(this);
             TopPanel.detachHost(this);
             SetupActivity.setListener(null);
         }
         super.onDestroy();
+    }
+
+    /**
+     * Moves the running tracker to this screen. Android normally moves the window as it is, so nothing reloads. If it
+     * doesn't move, the tracker is reopened on that screen and put back where you were.
+     */
+    static void moveTracker(final int displayId) {
+        final MainActivity a = current;
+        if (a == null || displayId < 0) return;
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (a.isFinishing() || a.isDestroyed() || DisplayPicker.displayOf(a) == displayId) return;
+                Intent i = new Intent(a, MainActivity.class);
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                i.putExtra(EXTRA_SCREEN_MOVE, true);
+                try {
+                    ActivityOptions options = ActivityOptions.makeBasic();
+                    options.setLaunchDisplayId(displayId);
+                    a.startActivity(i, options.toBundle());
+                } catch (Exception ignored) {
+                }
+                a.root.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (current != a || a.isFinishing() || a.isDestroyed()) return;
+                        if (DisplayPicker.trackerDisplayId(a) != displayId) return; // swapped again since
+                        if (DisplayPicker.displayOf(a) != displayId) a.reopenOn(displayId);
+                    }
+                }, MOVE_CHECK_MS);
+            }
+        });
+    }
+
+    /** The window couldn't be moved: open a new tracker on that screen, back where you were, and close this one. */
+    private void reopenOn(final int displayId) {
+        if (webView == null) return;
+        webView.evaluateJavascript("window.thorSaveView?window.thorSaveView():null", new ValueCallback<String>() {
+            @Override
+            public void onReceiveValue(String value) {
+                if (isFinishing() || isDestroyed()) return;
+                pendingView = value; // a quoted string, ready to hand back to the page
+                Intent again = new Intent(MainActivity.this, MainActivity.class);
+                again.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+                again.putExtra("movedToBottom", true);
+                try {
+                    ActivityOptions options = ActivityOptions.makeBasic();
+                    options.setLaunchDisplayId(displayId);
+                    startActivity(again, options.toBundle());
+                    relaunching = true;
+                    if (current == MainActivity.this) current = null;
+                    finish();
+                } catch (Exception e) {
+                    pendingView = null; // stay where it is
+                }
+            }
+        });
+    }
+
+    /** Moves the art screen to this screen, or reopens it there if it won't move. */
+    static void moveArt(final int displayId) {
+        final MainActivity a = current;
+        if (a == null || displayId < 0) return;
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (a.isFinishing() || a.isDestroyed() || SetupActivity.running) return;
+                if (!ArtActivity.alive) {
+                    a.ensureArtScreen();
+                    return;
+                }
+                if (ArtActivity.displayNow() == displayId) return;
+                a.showArtScreen(); // the art screen is singleTask: this moves it to its screen
+                a.root.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (a.isFinishing() || a.isDestroyed()) return;
+                        if (DisplayPicker.artDisplayId(a) != displayId) return;
+                        if (ArtActivity.alive && ArtActivity.displayNow() != displayId) {
+                            ArtActivity.closeNow(); // it opens again on the right screen when it has gone
+                            a.root.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (!a.isFinishing() && !a.isDestroyed()) a.ensureArtScreen();
+                                }
+                            }, 300);
+                        }
+                    }
+                }, MOVE_CHECK_MS);
+            }
+        });
     }
 
     /** If the tracker is running, puts the top screen's art in front of whatever covers it. */
@@ -608,10 +729,10 @@ public class MainActivity extends Activity {
         });
     }
 
-    /** Brings the art screen to the front of the top display, starting it if it is gone. */
+    /** Brings the art screen to the front of its display (normally the top one), starting it if it is gone. */
     void showArtScreen() {
         if (isFinishing() || isDestroyed() || SetupActivity.running) return;
-        int id = DisplayPicker.topDisplayId(this);
+        int id = DisplayPicker.artDisplayId(this);
         if (id < 0) return;
         Intent i = new Intent(this, ArtActivity.class);
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
@@ -625,7 +746,7 @@ public class MainActivity extends Activity {
 
     private void ensureArtScreen() {
         if (ArtActivity.alive || SetupActivity.running) return;
-        int id = DisplayPicker.topDisplayId(this);
+        int id = DisplayPicker.artDisplayId(this);
         if (id < 0) return;
         Intent i = new Intent(this, ArtActivity.class);
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

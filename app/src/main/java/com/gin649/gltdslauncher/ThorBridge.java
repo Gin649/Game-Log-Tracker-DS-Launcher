@@ -208,6 +208,23 @@ final class ThorBridge {
         ArtBus.set(ArtBus.get()); // the top screen draws again, with or without the cartridge
     }
 
+    /** "Tracker on top screen" (Display Options). */
+    @JavascriptInterface
+    public boolean trackerOnTop() {
+        return "1".equals(Prefs.get(act, "trackerOnTop", "0"));
+    }
+
+    @JavascriptInterface
+    public void setTrackerOnTop(boolean on) {
+        ScreenSwap.setWanted(act, on);
+    }
+
+    /** The setting is only offered when both screens are in use (not with "use one screen only"). */
+    @JavascriptInterface
+    public boolean canSwapScreens() {
+        return DisplayPicker.hasTwoScreens(act) && !DisplayPicker.singleScreen(act);
+    }
+
     /** Only a device with a second screen has a top screen for the cartridge to float on. */
     @JavascriptInterface
     public boolean hasTopScreen() {

@@ -31,6 +31,11 @@ final class DisplayPicker {
     /** The display an activity is on. */
     @SuppressWarnings("deprecation")
     static int displayOf(Activity a) {
+        try {
+            Display d = a.getDisplay(); // follows the activity when it is moved to the other screen
+            if (d != null) return d.getDisplayId();
+        } catch (Exception ignored) {
+        }
         return a.getWindowManager().getDefaultDisplay().getDisplayId();
     }
 
@@ -39,7 +44,7 @@ final class DisplayPicker {
      * wins; otherwise the larger screen is the top one. HDMI, cast and overlay displays don't count.
      */
     @SuppressWarnings("deprecation")
-    private static int[] pair(Activity a) {
+    private static int[] pair(Context a) {
         List<Display> real = builtIn(a);
         if (real == null || real.size() < 2) return null;
 
@@ -79,7 +84,7 @@ final class DisplayPicker {
     }
 
     /** The two screens as {top, bottom}, or null with one screen or when "use one screen only" is on. */
-    private static int[] screens(Activity a) {
+    private static int[] screens(Context a) {
         return singleScreen(a) ? null : pair(a);
     }
 
@@ -105,12 +110,12 @@ final class DisplayPicker {
     }
 
     /** True when this device has two screens, whatever the single-screen setting says. */
-    static boolean hasTwoScreens(Activity a) {
+    static boolean hasTwoScreens(Context a) {
         return pair(a) != null;
     }
 
     /** The screen the app lives on when it runs on one screen of a two-screen device, else -1. */
-    static int singleDisplayId(Activity a) {
+    static int singleDisplayId(Context a) {
         if (!singleScreen(a)) return -1;
         int[] p = pair(a);
         if (p == null) return -1;
@@ -122,7 +127,7 @@ final class DisplayPicker {
      * both). With "use one screen only", the app's own screen is taken, so games go to the other screen
      * (or stay on this one for an emulator that draws both).
      */
-    static int gameDisplayId(Activity a, boolean bothScreens) {
+    static int gameDisplayId(Context a, boolean bothScreens) {
         if (singleScreen(a)) {
             int[] p = pair(a);
             if (p == null) return -1;
@@ -133,7 +138,7 @@ final class DisplayPicker {
     }
 
     /** The physical top (wantTop) or bottom screen for an app, even when the app itself runs on one screen. */
-    static int appDisplayId(Activity a, boolean wantTop) {
+    static int appDisplayId(Context a, boolean wantTop) {
         if (singleScreen(a)) {
             int[] p = pair(a);
             return p == null ? -1 : (wantTop ? p[0] : p[1]);
@@ -141,20 +146,29 @@ final class DisplayPicker {
         return wantTop ? topDisplayId(a) : bottomDisplayId(a);
     }
 
-    /** Where the tracker should open: the bottom screen, or the screen chosen for single-screen use. */
-    static int trackerDisplayId(Activity a) {
+    /**
+     * Where the tracker should open: the bottom screen, or the screen chosen for single-screen use. With "Tracker on top
+     * screen" on it is the top screen, except while a game is starting or running.
+     */
+    static int trackerDisplayId(Context a) {
+        if (ScreenSwap.swapped(a)) return topDisplayId(a);
         int bottom = bottomDisplayId(a);
         return bottom >= 0 ? bottom : singleDisplayId(a);
     }
 
-    /** The screen the art and header go on, or -1 when there is only one screen. */
-    static int topDisplayId(Activity a) {
+    /** Where the art screen goes right now: the top screen, or the bottom one while "Tracker on top screen" has them swapped. */
+    static int artDisplayId(Context a) {
+        return ScreenSwap.swapped(a) ? bottomDisplayId(a) : topDisplayId(a);
+    }
+
+    /** The physical top screen: games, and the art and header when the screens aren't swapped. -1 with one screen. */
+    static int topDisplayId(Context a) {
         int[] s = screens(a);
         return s == null ? -1 : s[0];
     }
 
-    /** The screen the tracker itself lives on, or -1 when there is only one screen. */
-    static int bottomDisplayId(Activity a) {
+    /** The physical bottom screen, where the tracker normally lives. -1 with one screen. */
+    static int bottomDisplayId(Context a) {
         int[] s = screens(a);
         return s == null ? -1 : s[1];
     }

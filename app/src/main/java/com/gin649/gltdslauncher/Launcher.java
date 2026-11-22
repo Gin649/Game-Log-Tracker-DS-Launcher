@@ -347,15 +347,40 @@ final class Launcher {
         // screen on the other display; everything else runs on the top screen.
         int display = DisplayPicker.gameDisplayId(act, standalone && plan.recipe.dual);
 
+        // "Tracker on top screen": the tracker goes back underneath and the art on top first, then all goes on as usual.
+        final long swapMs = ScreenSwap.toGameLayout(act);
+        if (swapMs > 0) {
+            final Activity sact = act;
+            final List<Intent> sintents = intents;
+            final int sdisplay = display;
+            final String sstarted = started;
+            final RomIndex.Rom srom = rom;
+            final boolean sdual = standalone && plan.recipe.dual;
+            final String spkg = standalone ? plan.pkg : plan.raPkg;
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    JSONObject r = startGame(sact, sintents, sdisplay, sstarted, spkg, srom, sdual, fhint);
+                    if (!r.optBoolean("ok")) Toast.makeText(sact, r.optString("message"), Toast.LENGTH_LONG).show();
+                }
+            }, swapMs);
+            return result(true, "Starting " + rom.name + " in " + started + "..." + fhint);
+        }
+        return startGame(act, intents, display, started, standalone ? plan.pkg : plan.raPkg, rom,
+                standalone && plan.recipe.dual, fhint);
+    }
+
+    /** Plays the start-up animation if it is on, then starts the emulator and watches it. */
+    private static JSONObject startGame(Activity act, List<Intent> intents, int display, String started, String emuPkg,
+                                        RomIndex.Rom rom, boolean dual, final String fhint) {
         final Activity fact = act;
         final List<Intent> fintents = intents;
         final int fdisplay = display;
         final String fstarted = started;
-        final String pkg = standalone ? plan.pkg : plan.raPkg;
+        final String pkg = emuPkg;
         final RomIndex.Rom from = rom;
 
         // The old-TV animation plays on the top screen first, then the emulator opens over it.
-        boolean dual = standalone && plan.recipe.dual;
         boolean wantAnim = !"0".equals(Prefs.get(act, "startupAnim", "1"));
         // The top screen always gets it. The screen the launcher is on gets it too when the game uses both screens,
         // or when there is only the one.
@@ -372,6 +397,7 @@ final class Launcher {
                     if (e != null) {
                         ArtActivity.stopStartup();
                         MainActivity.stopStartupHere();
+                        ScreenSwap.toMenuLayout(fact);
                         Toast.makeText(fact, "Could not start " + fstarted + ": " + e.getMessage(), Toast.LENGTH_LONG).show();
                         return;
                     }
@@ -383,7 +409,10 @@ final class Launcher {
         }
 
         Exception last = startIntents(act, intents, display);
-        if (last != null) return result(false, "Could not start " + started + ": " + last.getMessage());
+        if (last != null) {
+            ScreenSwap.toMenuLayout(act);
+            return result(false, "Could not start " + started + ": " + last.getMessage());
+        }
 
         ArtWatch.start(act, pkg, Playtime.key(act, rom));
         LibrarySync.markPlayed(act, rom);

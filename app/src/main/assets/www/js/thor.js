@@ -531,6 +531,49 @@ document.addEventListener('selectionchange', () => {
   });
 })();
 
+// Display Options: "Tracker on top screen" swaps the screens while you are in the menus (two-screen devices only).
+// It is a setting of this device, kept by the app rather than the page, so cloud sync never carries it to a phone.
+(function(){
+  const row = document.getElementById('tracker-top-row'), sw = document.getElementById('tracker-top-switch');
+  if(!row || !sw || typeof thorBridge === 'undefined' || !thorBridge || typeof thorBridge.trackerOnTop !== 'function') return;
+  try{ if(!thorBridge.canSwapScreens()) return; }catch(e){ return; }
+  row.style.display = '';
+  const show = on => { sw.classList.toggle('on', on); sw.setAttribute('aria-checked', String(on)); };
+  let on = false;
+  try{ on = !!thorBridge.trackerOnTop(); }catch(e){}
+  show(on);
+  sw.addEventListener('click', (e) => {
+    e.stopPropagation();
+    on = !on;
+    show(on);
+    try{ thorBridge.setTrackerOnTop(on); }catch(err){}
+  });
+})();
+
+// When the tracker can't be moved to the other screen as it is, the app opens it again there. These carry over the
+// tab, the open game and how far down the page was.
+window.thorSaveView = function(){
+  const card = document.getElementById('modal-card');
+  const open = document.getElementById('modal-backdrop').classList.contains('open');
+  return JSON.stringify({ tab: activeTab, game: open && card ? (card.dataset.gameId || '') : '', y: window.scrollY || 0 });
+};
+window.thorRestoreView = function(json){
+  let v = null;
+  try{ v = JSON.parse(json); }catch(e){ return; }
+  if(!v) return;
+  const btn = document.querySelector('.tab-btn[data-tab="' + v.tab + '"]');
+  if(btn && v.tab !== activeTab) btn.click();
+  const started = Date.now();
+  // the games load a moment after the page does, so wait for the open game to be there
+  (function tryRestore(){
+    if(!v.game){ window.scrollTo(0, v.y || 0); return; }
+    const all = (typeof libraryData !== 'undefined' ? libraryData : []).concat(typeof recentGamesData !== 'undefined' ? recentGamesData : []);
+    const hit = all.find(g => String(g.GameID) === String(v.game));
+    if(hit){ window.scrollTo(0, v.y || 0); openGameModal(hit.GameID); return; }
+    if(Date.now() - started < 15000) setTimeout(tryRestore, 300);
+  })();
+};
+
 // Display Options: the game's cartridge or disc floating on the top screen (devices with a top screen only).
 (function(){
   const row = document.getElementById('float-cart-row'), sw = document.getElementById('float-cart-switch');

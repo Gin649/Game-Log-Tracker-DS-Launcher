@@ -41,8 +41,9 @@ final class TopPanel {
         listener = l;
     }
 
+    /** The header copy, or nothing while "Tracker on top screen" has the art on the bottom (the tracker keeps its own). */
     static synchronized String html() {
-        return html;
+        return ScreenSwap.swapped() ? "" : html;
     }
 
     static synchronized String body() {
@@ -51,7 +52,27 @@ final class TopPanel {
 
     /** True while the panel is both up and in front. When a game covers it, the tracker keeps its own header and menu. */
     static synchronized boolean viewAlive() {
-        return viewAlive && viewShown;
+        return viewAlive && viewShown && !ScreenSwap.swapped();
+    }
+
+    /** The screens were swapped: tell the tracker whether to show its own header, and redraw the art screen's copy. */
+    static void refresh() {
+        final MainActivity h;
+        final Listener l;
+        synchronized (TopPanel.class) {
+            h = host;
+            l = listener;
+        }
+        if (h != null) h.runMirror("setActive(" + viewAlive() + ")");
+        if (l != null) {
+            final String hh = html(), b = body();
+            MAIN.post(new Runnable() {
+                @Override
+                public void run() {
+                    l.onPanel(hh, b);
+                }
+            });
+        }
     }
 
     /** The panel came to the front or was covered (a game started on the top screen). */
@@ -59,7 +80,7 @@ final class TopPanel {
         if (viewShown == shown) return;
         viewShown = shown;
         MainActivity h = host;
-        if (h != null) h.runMirror("setActive(" + (viewAlive && viewShown) + ")");
+        if (h != null) h.runMirror("setActive(" + viewAlive() + ")");
     }
 
     /** The top screen's panel is up (or gone). The tracker hides its own header while it is up. */
@@ -71,7 +92,7 @@ final class TopPanel {
             body = "";
         }
         MainActivity h = host;
-        if (h != null) h.runMirror("setActive(" + (alive && viewShown) + ")");
+        if (h != null) h.runMirror("setActive(" + viewAlive() + ")");
     }
 
     /** New markup from the tracker page. */
@@ -80,7 +101,7 @@ final class TopPanel {
         body = newBody == null ? "" : newBody;
         final Listener l = listener;
         if (l != null) {
-            final String h = html, b = body;
+            final String h = html(), b = body;
             MAIN.post(new Runnable() {
                 @Override
                 public void run() {

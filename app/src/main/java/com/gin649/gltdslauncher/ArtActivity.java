@@ -131,8 +131,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         logo = new ImageView(this);
         logo.setImageResource(R.drawable.logo);
         logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        int logoSize = Math.round(getResources().getDisplayMetrics().heightPixels * 0.5f);
-        FrameLayout.LayoutParams logoParams = new FrameLayout.LayoutParams(logoSize, logoSize);
+        FrameLayout.LayoutParams logoParams = new FrameLayout.LayoutParams(1, 1);
         logoParams.gravity = Gravity.CENTER;
         root.addView(logo, logoParams);
 
@@ -141,11 +140,10 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         cart.setScaleType(ImageView.ScaleType.FIT_END);
         cart.setAdjustViewBounds(true);
         cart.setVisibility(View.GONE);
-        int cartSide = Math.round(getResources().getDisplayMetrics().heightPixels * 0.36f);
-        FrameLayout.LayoutParams cartParams = new FrameLayout.LayoutParams(cartSide, cartSide);
+        FrameLayout.LayoutParams cartParams = new FrameLayout.LayoutParams(1, 1);
         cartParams.gravity = Gravity.BOTTOM | Gravity.END;
-        cartParams.rightMargin = Math.round(getResources().getDisplayMetrics().widthPixels * 0.025f);
         root.addView(cart, cartParams);
+        sizeForScreen();
 
         buildPanel(root);
 
@@ -215,6 +213,43 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         setContentView(root);
         applyThemeNow();
         TopPanel.setViewAlive(true);
+    }
+
+    /** The logo and the floating cartridge are sized from the screen, so they are sized again when moved to the other one. */
+    private void sizeForScreen() {
+        android.util.DisplayMetrics m = getResources().getDisplayMetrics();
+        FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) logo.getLayoutParams();
+        lp.width = lp.height = Math.round(m.heightPixels * 0.5f);
+        logo.setLayoutParams(lp);
+        FrameLayout.LayoutParams cp = (FrameLayout.LayoutParams) cart.getLayoutParams();
+        cp.width = cp.height = Math.round(m.heightPixels * 0.36f);
+        cp.rightMargin = Math.round(m.widthPixels * 0.025f);
+        cart.setLayoutParams(cp);
+    }
+
+    @Override
+    public void onConfigurationChanged(android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (logo != null && cart != null) sizeForScreen();
+    }
+
+    /** The screen the art screen is on now, or -1 when it isn't open. */
+    static int displayNow() {
+        ArtActivity a = instance;
+        if (a == null) return -1;
+        return DisplayPicker.displayOf(a);
+    }
+
+    /** Closes the art screen (it couldn't be moved), so it can be opened again on the other screen. */
+    static void closeNow() {
+        final ArtActivity a = instance;
+        if (a == null) return;
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                a.finish();
+            }
+        });
     }
 
     /** The header and profile card, drawn from markup the tracker sends (top.html). */
@@ -323,6 +358,7 @@ public class ArtActivity extends Activity implements ArtBus.Listener, TopPanel.L
         panelHtml = TopPanel.html();
         applyPanel();
         render(ArtBus.get());
+        ScreenSwap.artResumed(this);
     }
 
     @Override

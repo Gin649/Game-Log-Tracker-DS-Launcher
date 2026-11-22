@@ -101,8 +101,30 @@ final class Ports {
         Intent i = act.getPackageManager().getLaunchIntentForPackage(pkg);
         if (i == null) return "{\"ok\":false,\"message\":\"Could not open the port.\"}";
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        // "Tracker on top screen": the tracker goes back underneath first, as for a game
+        long swapMs = ScreenSwap.toGameLayout(act);
+        if (swapMs > 0) {
+            final Activity fact = act;
+            final Intent fi = i;
+            final String fpkg = pkg;
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    if (!openPort(fact, fi, fpkg)) {
+                        ScreenSwap.toMenuLayout(fact);
+                        android.widget.Toast.makeText(fact, "Could not open the port.", android.widget.Toast.LENGTH_LONG).show();
+                    }
+                }
+            }, swapMs);
+            return "{\"ok\":true,\"message\":\"Starting the port…\"}";
+        }
+        if (openPort(act, i, pkg)) return "{\"ok\":true,\"message\":\"Starting the port…\"}";
+        return "{\"ok\":false,\"message\":\"Could not open the port.\"}";
+    }
+
+    /** Opens the port where games open (the top screen, or the other screen when "use one screen only" is on) and watches it. */
+    private static boolean openPort(Activity act, Intent i, String pkg) {
         try {
-            // opens where games open: the top screen (the other screen when "use one screen only" is on)
             int display = DisplayPicker.gameDisplayId(act, false);
             if (display >= 0) {
                 android.app.ActivityOptions options = android.app.ActivityOptions.makeBasic();
@@ -112,9 +134,9 @@ final class Ports {
                 act.startActivity(i);
             }
             ArtWatch.start(act, pkg);
-            return "{\"ok\":true,\"message\":\"Starting the port…\"}";
+            return true;
         } catch (Exception e) {
-            return "{\"ok\":false,\"message\":\"Could not open the port.\"}";
+            return false;
         }
     }
 
