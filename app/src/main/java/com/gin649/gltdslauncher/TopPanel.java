@@ -41,9 +41,8 @@ final class TopPanel {
         listener = l;
     }
 
-    /** The header copy, or nothing while "Tracker on top screen" has the art on the bottom (the tracker keeps its own). */
     static synchronized String html() {
-        return ScreenSwap.swapped() ? "" : html;
+        return html;
     }
 
     static synchronized String body() {
@@ -52,10 +51,10 @@ final class TopPanel {
 
     /** True while the panel is both up and in front. When a game covers it, the tracker keeps its own header and menu. */
     static synchronized boolean viewAlive() {
-        return viewAlive && viewShown && !ScreenSwap.swapped();
+        return viewAlive && viewShown;
     }
 
-    /** The screens were swapped: tell the tracker whether to show its own header, and redraw the art screen's copy. */
+    /** The screens were swapped: tell the tracker again whether to show its own header, and redraw the art screen's copy. */
     static void refresh() {
         final MainActivity h;
         final Listener l;

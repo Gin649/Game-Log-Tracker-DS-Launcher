@@ -221,11 +221,26 @@ public class MainActivity extends Activity {
     private void applyViewport(WebView view) {
         int css = Prefs.getInt(this, "cssWidth", 720);
         if (css <= 0) css = 720;
+        // "Tracker on top screen": the big screen shows everything at half the size, so more fits
+        if (onTopScreen()) css *= 2;
         String js = "(function(){var m=document.querySelector('meta[name=viewport]');"
                 + "if(!m){m=document.createElement('meta');m.name='viewport';"
                 + "(document.head||document.documentElement).appendChild(m);}"
                 + "m.setAttribute('content','width=" + css + ",viewport-fit=cover');})();";
         view.evaluateJavascript(js, null);
+    }
+
+    /** True while the tracker is on the top screen of a two-screen device. */
+    private boolean onTopScreen() {
+        int top = DisplayPicker.topDisplayId(this);
+        return top >= 0 && DisplayPicker.displayOf(this) == top;
+    }
+
+    /** Moved to the other screen: lay the page out again for that screen's size. */
+    @Override
+    public void onConfigurationChanged(android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (webView != null) applyViewport(webView);
     }
 
     /**
@@ -652,6 +667,7 @@ public class MainActivity extends Activity {
                         if (current != a || a.isFinishing() || a.isDestroyed()) return;
                         if (DisplayPicker.trackerDisplayId(a) != displayId) return; // swapped again since
                         if (DisplayPicker.displayOf(a) != displayId) a.reopenOn(displayId);
+                        else if (a.webView != null) a.applyViewport(a.webView); // in case the size change came early
                     }
                 }, MOVE_CHECK_MS);
             }
