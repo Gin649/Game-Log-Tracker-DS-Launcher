@@ -1,6 +1,6 @@
 /* Game Log Tracker styles */
 
-  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&family=Metal+Mania&family=Rubik+Distressed&family=Comic+Neue:wght@700&family=Press+Start+2P&family=Nunito:wght@400;600;700;800&family=Exo+2:wght@400;600;700&family=Open+Sans:wght@400;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&family=Metal+Mania&family=Rubik+Distressed&family=Comic+Neue:wght@700&family=Pixelify+Sans:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Exo+2:wght@400;600;700&family=Open+Sans:wght@400;600;700&display=swap');
 
   :root{
     --bg:#15121f;
@@ -1355,7 +1355,7 @@ html[data-theme="nintendo"]{
   --bg:#0d0d0d;--bg-alt:#1f1f1f;--panel:#2a2a2a;--panel-2:#333;--border:#6b6b6b;
   --gold:#e60012;--gold-dim:#8f000b;--teal:#e8d0a0;--text:#f4f0e6;--muted:#a8a095;--danger:#ff7a5c;
   --gold-rgb:230,0,18;--teal-rgb:232,208,160;--bg-rgb:13,13,13;--on-gold:#fff;
-  --radius:0px;--font-mono:'Press Start 2P',monospace;--font-ui:'Press Start 2P',monospace;--btn-shadow:3px 3px 0 #7a000a;
+  --radius:0px;--font-mono:'Pixelify Sans',monospace;--font-ui:'Pixelify Sans',sans-serif;--btn-shadow:3px 3px 0 #7a000a;
 }
 html[data-theme="playstation"]{
   --bg:#0a0e1f;--bg-alt:#101731;--panel:#141d3d;--panel-2:#1a2650;--border:#26356b;
