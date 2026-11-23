@@ -6,9 +6,11 @@ Help window uses, so after changing the guide just run this again:
 
     python3 tools/build_help_page.py
 
-The page is a single file with nothing to download apart from the fonts, so it can be posted anywhere.
+The page goes in docs/ with its pictures beside it (docs/help/img, copied from the app), which is what GitHub Pages
+serves.
 """
 import base64
+import shutil
 import pathlib
 import re
 
@@ -79,6 +81,10 @@ document.querySelectorAll('.web-themes button').forEach(b => b.addEventListener(
 </html>
 """
     OUT.parent.mkdir(parents=True, exist_ok=True)
+    img_out = OUT.parent / "help/img"
+    if img_out.exists():
+        shutil.rmtree(img_out)
+    shutil.copytree(WWW / "help/img", img_out)
     OUT.write_text(page, encoding="utf-8")
     print(f"Wrote {OUT.relative_to(ROOT)} ({len(page) // 1024} KB)")
 

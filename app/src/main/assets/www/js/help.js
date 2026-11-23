@@ -13,43 +13,64 @@
   const escHtml = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const fold = s => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
-  // The buttons, roughly where they are on the Thor (not to scale). Each label says what the button does most of the time.
+  // The photo of the Thor with a numbered marker by each button, and the list of what they do underneath, like the
+  // "names of parts" page of an old manual. Marker spots are in the photos' own pixels (thor.jpg was 1666 x 2212 and
+  // the shoulder photo 2576 x 620): [number, button x, button y, marker x, marker y].
+  const THOR_MARKS = [
+    [5, 330, 390, 250, 300],
+    [6, 610, 1330, 540, 1260],
+    [7, 370, 1210, 370, 1100],
+    [8, 1318, 1207, 1318, 1100],
+    [9, 262, 1380, 110, 1250],
+    [10, 262, 1680, 105, 1540],
+    [11, 1432, 1297, 1570, 1215],
+    [12, 1345, 1383, 1265, 1290],
+    [13, 1522, 1383, 1600, 1480],
+    [14, 1437, 1468, 1520, 1570],
+    [15, 1420, 1690, 1580, 1830],
+    [16, 355, 1903, 215, 1985],
+    [17, 1330, 1903, 1470, 1985],
+  ];
+  const SHOULDER_MARKS = [
+    [1, 330, 80, 650, 75],
+    [2, 290, 170, 650, 210],
+    [3, 2250, 95, 1930, 75],
+    [4, 2290, 175, 1930, 210],
+  ];
+  const PARTS = [
+    ['L2', 'Previous tab'],
+    ['L1', 'Previous console (previous chapter in Help, page up in a manual)'],
+    ['R2', 'Next tab'],
+    ['R1', 'Next console (next chapter in Help, page down in a manual)'],
+    ['Top screen', 'Fan art, the floating cartridge and the header. Games play here.'],
+    ['Bottom screen', 'The tracker. Touch works everywhere.'],
+    ['Select (\u25a1)', 'Open or close the menu'],
+    ['Start (\u25b7)', 'Used by your games'],
+    ['Left stick', 'Move the highlight'],
+    ['D-pad', 'Move the highlight'],
+    ['X', 'Search, or Play in a game profile'],
+    ['Y', 'Refresh'],
+    ['A', 'Go back'],
+    ['B', 'Confirm'],
+    ['Right stick', 'Scroll quickly'],
+    ['Home', "Android's Home (opens the launcher when it is your home app)"],
+    ['Back', 'Go back, the same as A'],
+  ];
+  function marks(list, r){
+    return list.map(([n, bx, by, mx, my]) =>
+      `<line class="hm-line" x1="${bx}" y1="${by}" x2="${mx}" y2="${my}"/><circle class="hm-dot" cx="${bx}" cy="${by}" r="${r * 0.22}"/>` +
+      `<g class="hm-mark"><circle cx="${mx}" cy="${my}" r="${r}"/><text x="${mx}" y="${my + r * 0.36}" font-size="${r}">${n}</text></g>`).join('');
+  }
   function diagram(){
-    const face = (cx, cy, l, cls) => `<g class="hd-face ${cls || ''}"><circle cx="${cx}" cy="${cy}" r="15"/><text x="${cx}" y="${cy + 5}">${l}</text></g>`;
-    const note = (x, y, anchor, title, what) =>
-      `<text class="hd-note" x="${x}" y="${y}" text-anchor="${anchor}"><tspan class="hd-note-b">${title}</tspan> ${what}</text>`;
-    return `<figure class="hp-diagram">
-      <svg viewBox="0 0 640 330" role="img" aria-label="Controller buttons and what they do">
-        <g class="hd-shoulder"><rect x="172" y="20" width="84" height="26" rx="13"/><text x="214" y="38">L2</text></g>
-        <g class="hd-shoulder"><rect x="172" y="52" width="84" height="26" rx="13"/><text x="214" y="70">L1</text></g>
-        <g class="hd-shoulder"><rect x="384" y="20" width="84" height="26" rx="13"/><text x="426" y="38">R2</text></g>
-        <g class="hd-shoulder"><rect x="384" y="52" width="84" height="26" rx="13"/><text x="426" y="70">R1</text></g>
-        <rect class="hd-body" x="60" y="88" width="520" height="210" rx="34"/>
-        <rect class="hd-screen" x="214" y="104" width="212" height="150" rx="6"/>
-        <text class="hd-screen-t" x="320" y="184">Touch screen</text>
-        <g class="hd-dpad"><path d="M126 118h22v22h22v22h-22v22h-22v-22h-22v-22h22z"/></g>
-        <g class="hd-stick"><circle cx="137" cy="232" r="27"/><circle class="hd-stick-top" cx="137" cy="232" r="16"/></g>
-        ${face(503, 120, 'X', 'hd-x')}
-        ${face(472, 151, 'Y', 'hd-y')}
-        ${face(534, 151, 'A', 'hd-a')}
-        ${face(503, 182, 'B', 'hd-b')}
-        <g class="hd-stick"><circle cx="503" cy="242" r="25"/><circle class="hd-stick-top" cx="503" cy="242" r="15"/></g>
-        <g class="hd-small"><rect x="262" y="266" width="44" height="16" rx="8"/><text x="284" y="278">Select</text></g>
-        <g class="hd-small"><rect x="334" y="266" width="44" height="16" rx="8"/><text x="356" y="278">Start</text></g>
-        ${note(162, 38, 'end', '', 'previous tab')}
-        ${note(162, 70, 'end', '', 'previous console')}
-        ${note(478, 38, 'start', '', 'next tab')}
-        ${note(478, 70, 'start', '', 'next console')}
-        ${note(10, 318, 'start', 'D-pad / left stick', 'move')}
-        ${note(320, 318, 'middle', 'Select', 'menu')}
-        ${note(630, 318, 'end', 'Right stick', 'scroll')}
-      </svg>
-      <figcaption>
-        <span><span class="hk">B</span> Confirm</span>
-        <span><span class="hk">A</span> Back</span>
-        <span><span class="hk">X</span> Search / Play</span>
-        <span><span class="hk">Y</span> Refresh</span>
-      </figcaption>
+    const legend = PARTS.map(([name, what], i) =>
+      `<li><span class="hm-no">${i + 1}</span><span><b>${escHtml(name)}</b> ${escHtml(what)}</span></li>`).join('');
+    return `<figure class="hp-thor">
+      <div class="hp-photo"><img src="help/img/thor-shoulders.webp" alt="The top edge of the Thor with the L1, L2, R1 and R2 buttons" loading="lazy">
+        <svg viewBox="0 0 2576 620" aria-hidden="true">${marks(SHOULDER_MARKS, 56)}</svg></div>
+      <div class="hp-photo"><img src="help/img/thor.webp" alt="The AYN Thor, open, with every button numbered" loading="lazy">
+        <svg viewBox="0 0 1666 2212" aria-hidden="true">${marks(THOR_MARKS, 44)}</svg></div>
+      <figcaption>Names of parts</figcaption>
+      <ol class="hp-parts">${legend}</ol>
     </figure>`;
   }
 

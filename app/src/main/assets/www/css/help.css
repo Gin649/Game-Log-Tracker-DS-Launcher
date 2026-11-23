@@ -95,29 +95,27 @@
 .hp-keys td:first-child{width:38%;color:var(--muted);}
 .hp-keys td:first-child .hk{margin:0 2px 3px 0;}
 
-/* The controller drawing */
-.hp-diagram{margin:4px 0 14px;padding:10px 6px 8px;background:var(--bg-alt);border:1px solid var(--border);border-radius:calc(var(--radius) + 4px);}
-.hp-diagram svg{display:block;width:100%;height:auto;}
-.hp-diagram text{font-family:var(--font-mono);}
-.hd-shoulder text,.hd-face text,.hd-small text,.hd-screen-t{text-anchor:middle;}
-.hd-body{fill:var(--panel-2);stroke:var(--border);stroke-width:2;}
-.hd-screen{fill:rgba(var(--teal-rgb),0.12);stroke:var(--teal);stroke-width:2;stroke-dasharray:6 5;}
-.hd-screen-t{fill:var(--muted);font-size:13px;}
-.hd-shoulder rect{fill:var(--panel);stroke:var(--teal);stroke-width:2;}
-.hd-shoulder text{fill:var(--teal);font-size:14px;font-weight:700;}
-.hd-dpad path{fill:var(--panel);stroke:var(--text);stroke-width:2;stroke-linejoin:round;}
-.hd-stick circle{fill:var(--panel);stroke:var(--text);stroke-width:2;}
-.hd-stick .hd-stick-top{fill:var(--bg);}
-.hd-face circle{fill:var(--panel);stroke:var(--gold);stroke-width:2.5;}
-.hd-face text{fill:var(--gold);font-size:15px;font-weight:700;}
-.hd-face.hd-b circle{fill:var(--gold);}
-.hd-face.hd-b text{fill:var(--on-gold);}
-.hd-small rect{fill:var(--panel);stroke:var(--muted);stroke-width:1.5;}
-.hd-small text{fill:var(--muted);font-size:9px;}
-.hd-note{fill:var(--muted);font-size:13px;}
-.hd-note-b{fill:var(--text);font-weight:700;}
-.hp-diagram figcaption{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;margin-top:6px;font-size:0.9em;}
-.hp-diagram figcaption > span{display:inline-flex;align-items:center;gap:6px;}
+/* The labelled photo of the Thor */
+.hp-thor{margin:4px 0 14px;padding:10px;background:var(--bg-alt);border:1px solid var(--border);border-radius:calc(var(--radius) + 4px);}
+.hp-photo{position:relative;line-height:0;border-radius:var(--radius);overflow:hidden;margin-bottom:8px;}
+.hp-photo img{display:block;width:100%;height:auto;}
+.hp-photo svg{position:absolute;inset:0;width:100%;height:100%;}
+.hm-line{stroke:#fff;stroke-width:5;filter:drop-shadow(0 0 3px rgba(0,0,0,0.8));}
+.hm-dot{fill:#fff;stroke:rgba(0,0,0,0.6);stroke-width:3;}
+.hm-mark circle{fill:var(--gold);stroke:#fff;stroke-width:6;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.55));}
+.hm-mark text{fill:var(--on-gold);font-family:var(--font-mono);font-weight:700;text-anchor:middle;}
+.hp-thor figcaption{font-family:var(--font-mono);font-weight:700;color:var(--gold);letter-spacing:3px;text-transform:uppercase;
+  text-align:center;font-size:0.85em;padding:6px 0 8px;border-bottom:3px double var(--gold-dim);margin-bottom:8px;}
+.hp-parts{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));gap:4px 14px;font-size:0.92em;}
+.hp-parts li{display:flex;align-items:baseline;gap:8px;padding:4px 0;border-bottom:1px dashed var(--border);}
+.hm-no{flex:0 0 auto;display:inline-grid;place-items:center;width:1.6em;height:1.6em;border-radius:50%;background:var(--gold);color:var(--on-gold);
+  font-family:var(--font-mono);font-weight:700;font-size:0.8em;}
+
+/* Screenshots */
+.hp-shot{margin:6px 0 14px;}
+.hp-shot img{display:block;width:100%;height:auto;border-radius:var(--radius);border:1px solid var(--border);box-shadow:0 8px 20px rgba(0,0,0,0.35);background:var(--bg);}
+.hp-shot.narrow img{max-width:420px;margin:0 auto;}
+.hp-shot figcaption{margin-top:6px;font-size:0.85em;color:var(--muted);text-align:center;font-style:italic;}
 
 .hp-empty{text-align:center;color:var(--muted);padding:40px 10px;}
 .hp-book.hp-searching .hp-cover,.hp-book.hp-searching .hp-contents,.hp-book.hp-searching .hp-folio{display:none;}

@@ -22,6 +22,7 @@ window.HELP_GUIDE = {
       <p>On a two-screen device the tracker sits on the bottom screen, and the top screen shows the game's fan art, its
       cartridge or disc, and the game itself once it starts.</p>` },
     { h: 'The setup wizard', html: `
+      <figure class="hp-shot"><img src="help/img/setup-folders.webp" alt="Step 3 of the setup wizard: Your folders" loading="lazy"><figcaption>Step 3 of the setup wizard: Your folders</figcaption></figure>
       <p>The first time you open the app, a short setup wizard walks you through six steps. Everything can be changed
       later from the menu under <b>Launcher Settings</b>.</p>
       <ol>
@@ -84,6 +85,7 @@ window.HELP_GUIDE = {
         <tr><td><span class="hk sh">L1</span> <span class="hk sh">R1</span></td><td>Previous / next console</td></tr>
         <tr><td><span class="hk sh">L2</span> <span class="hk sh">R2</span></td><td>Previous / next tab</td></tr>
       </table>
+      
       <div class="hp-tip">Touching the screen hides the highlight. Press any direction to bring it back.</div>` },
     { h: 'Tabs and the console bar', html: `
       <table class="hp-keys">
@@ -173,14 +175,19 @@ window.HELP_GUIDE = {
       <p>Every game you've played. The search box, the <b>Hide Beaten</b> button and the game count sit at the top.</p>
       <p>In <b>List View</b>, tap a column heading to sort by it, and tap again to sort the other way. The Game column
       has a third tap that goes back to the usual order (your three most recently played games, then A to Z).</p>
-      <p>In <b>Tile View</b> the games show as covers, or as cartridges and discs with Cart view.</p>` },
+      <figure class="hp-shot"><img src="help/img/library-list.webp" alt="The Game Library in List View, with the PlayStation chosen on the console bar" loading="lazy"><figcaption>The Game Library in List View, with the PlayStation chosen on the console bar</figcaption></figure>
+      <p>In <b>Tile View</b> the games show as covers, or as cartridges and discs with Cart view.</p>
+      <figure class="hp-shot"><img src="help/img/library-tiles.webp" alt="Tile View with Cart view: each game shows its real cartridge" loading="lazy"><figcaption>Tile View with Cart view: each game shows its real cartridge</figcaption></figure>` },
     { h: 'Backlog', html: `
+      <figure class="hp-shot"><img src="help/img/add-game.webp" alt="The Add a game window" loading="lazy"><figcaption>The Add a game window</figcaption></figure>
       <p>The games you've added but haven't played yet. Use <b>+ Add game</b> to add more
       (see <a href="#hp-adding">Adding and Tracking Games</a>). Play a game and it moves to the Game Library by itself.</p>` },
     { h: 'Beaten', html: `
+      <figure class="hp-shot"><img src="help/img/beaten.webp" alt="The Beaten tab: every game you beat this year" loading="lazy"><figcaption>The Beaten tab: every game you beat this year</figcaption></figure>
       <p>Every game you've beaten, grouped by year. Mastered games get a <b>Mastered</b> pill. Hold a cover to see the
       game's title, and pinch to fit more covers in a row.</p>` },
     { h: 'Apps', html: `
+      <figure class="hp-shot"><img src="help/img/apps.webp" alt="The Apps tab showing your Favourites" loading="lazy"><figcaption>The Apps tab showing your Favourites</figcaption></figure>
       <p>Your installed Android apps, on devices where the launcher runs. Tap the star on an app to keep it in your
       <b>Favourites</b>, which show by default. <b>All apps</b> shows everything.</p>
       <p>Apps open on the top screen when there are two. Hold an app to choose its screen, and the choice is remembered.
@@ -190,6 +197,7 @@ window.HELP_GUIDE = {
       console <b>Logos</b> or <b>Names</b> (Display Options, Console bar).</p>
       <p>Hold a console to put the bar in your own order or rename a console. Your order is shared by all three tabs.</p>` },
     { h: 'The top screen', html: `
+      <figure class="hp-shot"><img src="help/img/top-screen.webp" alt="The top screen with fan art and the floating cartridge" loading="lazy"><figcaption>The top screen with fan art and the floating cartridge</figcaption></figure>
       <p>While you browse, the top screen shows the open game's <b>fan art</b>. Tap it to load every fan art picture
       for the game and swipe to choose one. When you leave the game, the picture on show is kept and the rest are
       deleted to save space.</p>
@@ -200,12 +208,14 @@ window.HELP_GUIDE = {
   // ------------------------------------------------------------------------------------------------------------
   { id: 'profile', title: 'Game Profiles', sections: [
     { h: 'What a profile shows', html: `
+      <figure class="hp-shot"><img src="help/img/profile.webp" alt="A game profile: fan art and cartridge on top, the profile underneath, with the review score on the cover" loading="lazy"><figcaption>A game profile: fan art and cartridge on top, the profile underneath, with the review score on the cover</figcaption></figure>
       <p>Tap any game to open its profile: the cover, genre, release date, developer and publisher, your progress,
       its status (beaten or mastered, and when) and the playtime. Tap <b>⟳</b> next to the playtime to check it again
       with RetroAchievements.</p>
       <p>While a game started from the launcher is running, the open profile checks for new achievements every 10
       seconds, and the playtime keeps counting up.</p>` },
     { h: 'Play on this device', html: `
+      <figure class="hp-shot"><img src="help/img/profile-play.webp" alt="Play on this device, with the emulator button beside it" loading="lazy"><figcaption>Play on this device, with the emulator button beside it</figcaption></figure>
       <p><b>Play on this device</b> starts the game in its emulator, on the top screen. If the game isn't found in
       your ROM folders, the button says <b>Not located on this device</b>. The app also tries the game's other
       regional names before it gives up.</p>
@@ -238,13 +248,17 @@ window.HELP_GUIDE = {
         <li>The <b>expand icon</b> on the section's bar fills the screen with it. Game Details and View Beaten
         Achievements have one too.</li>
       </ul>
+      
+      <figure class="hp-shot"><img src="help/img/achievements.webp" alt="Achievements in tile view, full screen" loading="lazy"><figcaption>Achievements in tile view, full screen</figcaption></figure>
       <p><b>View Beaten Achievements</b> shows the ones that count towards beating the game. <b>Subsets</b> lists any
       extra achievement sets for the game.</p>` },
     { h: 'Game Details', html: `
+      <figure class="hp-shot"><img src="help/img/game-details.webp" alt="Game Details, full screen" loading="lazy"><figcaption>Game Details, full screen</figcaption></figure>
       <p>Other players' average playtime, your own times, a write-up about the game (from ES-DE, LaunchBox or IGDB) with
       <b>See more</b> for a screenshot, and the game's <b>manual</b> when one can be found. Manuals open in a built-in
       viewer and are saved on the device.</p>` },
     { h: 'Game Guide', html: `
+      <figure class="hp-shot"><img src="help/img/guide.webp" alt="A text guide open in the reader" loading="lazy"><figcaption>A text guide open in the reader</figcaption></figure>
       <p>Finds text guides for the game from GameFAQs (through archive.org) and RetroAchievements' own guides. You can
       also import your own guide file (PDF, text or HTML), or find a walkthrough video on YouTube and paste its link
       to keep it with the game.</p>
@@ -255,6 +269,7 @@ window.HELP_GUIDE = {
       <p><b>Need Cheats?</b> opens the game's cheats page on GameFAQs. <b>Search YouTube</b> looks the game up on
       YouTube.</p>` },
     { h: 'ROM Hacks', html: `
+      <figure class="hp-shot"><img src="help/img/rom-hacks.webp" alt="The ROM Hacks section" loading="lazy"><figcaption>The ROM Hacks section</figcaption></figure>
       <p>Find patches for the game on RAPatches, or use your own patch file. BPS, IPS, UPS, PPF, APS and xdelta
       patches are supported, disc images included. The patched game is saved as a copy, so the original stays as it
       is. Hold Play to start a patched copy.</p>` },
@@ -327,6 +342,7 @@ window.HELP_GUIDE = {
   // ------------------------------------------------------------------------------------------------------------
   { id: 'display', title: 'Display Options', sections: [
     { h: 'Text size and theme', html: `
+      <figure class="hp-shot"><img src="help/img/display-options.webp" alt="Display Options, opened from the menu" loading="lazy"><figcaption>Display Options, opened from the menu</figcaption></figure>
       <p><b>Text size</b> makes all the text smaller or larger (A− and A+), and Reset puts it back to 100%.</p>
       <p><b>Theme</b> changes the colours and fonts: <b>Retro</b> (the default), <b>Nintendo</b>, <b>Playstation</b> or
       <b>Xbox</b>.</p>` },
@@ -374,6 +390,7 @@ window.HELP_GUIDE = {
   // ------------------------------------------------------------------------------------------------------------
   { id: 'data', title: 'Data and Cloud Sync', sections: [
     { h: 'Cloud sync', html: `
+      <figure class="hp-shot"><img src="help/img/data.webp" alt="The Data window" loading="lazy"><figcaption>The Data window</figcaption></figure>
       <p>Open the menu, then <b>Data</b>. <b>Cloud sync</b> keeps the launcher the same on every device signed in to
       the same Google account. Your games are kept in a hidden folder in your own Google Drive that only this app can
       see.</p>
