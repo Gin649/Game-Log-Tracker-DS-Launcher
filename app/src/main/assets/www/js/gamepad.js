@@ -3,7 +3,7 @@
 //   D-pad / left stick  move the highlight      confirm / back: the Thor's bottom button (labelled B) confirms,
 //                                               the right one (labelled A) goes back; Android names them the other way round
 //   Right stick         scroll quickly          Select  hamburger menu
-//   In a guide: L2 / R2 text size, X search, Y full screen
+//   In a guide: L2 / R2 text size, X search, Y full screen (Help works the same, and L1 / R1 change chapter)
 //   Y (labelled on the Thor; Android calls it X)   refresh    X (Android's Y)  play / search
 //                   L1 / R1  previous / next console
 //                                                       L2 / R2  previous / next tab
@@ -396,6 +396,7 @@
         $('#guide-reader-close').click();
         return true;
       }
+      if(top.el.id === 'help-backdrop' && window.HelpBook && window.HelpBook.back()) return true;
       if(top.el.id === 'modal-backdrop'){
         // in a game profile, Back first leaves a section shown full screen, then closes the open section
         // (achievements, guides, ROM hacks...), then the profile
@@ -554,6 +555,7 @@
     if(!padMode){ padMode = true; document.body.classList.add('pad-mode'); }
     const confirmKey = swapAB ? 'b' : 'a';
     if(!menuOpen() && guideKey(name)) return;
+    if(!menuOpen() && window.HelpBook && window.HelpBook.key(name)) return; // Help's own keys (help.js)
     if(zoomKey(name, confirmKey)) return;
     if(DIRS.includes(name)){
       if(!wasShowing) ensureFocus(); // first press just shows where the highlight is

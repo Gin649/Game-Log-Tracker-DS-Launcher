@@ -1,0 +1,126 @@
+/* Help: the instruction booklet (help.js). Colours and fonts come from the theme, so it matches Retro, Nintendo,
+   Playstation and Xbox. The web version of the guide uses this file too. */
+
+/* In the app it fills the screen, like Social. */
+#help-backdrop{padding:0;padding-top:var(--status-h);background:var(--bg);}
+#help-card{max-width:none;margin:0;min-height:calc(100vh - var(--status-h));border:none;border-radius:0;background:transparent;overflow:visible;}
+
+.hp-book{--hp-scale:1;font-size:calc(15px * var(--hp-scale));line-height:1.6;color:var(--text);}
+
+/* The search bar stays at the top while you scroll. */
+.hp-bar{
+  position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;
+  padding:10px 14px;background:rgba(var(--bg-rgb),0.94);border-bottom:2px solid var(--gold-dim);
+  backdrop-filter:blur(6px);
+}
+.hp-book.hp-bar-hidden .hp-bar{display:none;}
+.hp-search{flex:1;display:flex;align-items:center;gap:8px;min-width:0;
+  background:var(--panel);border:1px solid var(--border);border-radius:999px;padding:6px 12px;color:var(--muted);}
+.hp-search:focus-within{border-color:var(--gold);}
+.hp-search-input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--text);
+  font:inherit;font-size:15px;padding:2px 0;}
+.hp-search-input::-webkit-search-cancel-button{display:none;}
+.hp-search-clear{background:none;border:none;color:var(--muted);font-size:20px;line-height:1;padding:0 2px;cursor:pointer;}
+.hp-book:not(.hp-searching) .hp-search-clear{visibility:hidden;}
+.hp-count{flex:0 0 auto;font-family:var(--font-mono);font-size:12px;color:var(--gold);white-space:nowrap;}
+.hp-bar .hp-close{position:static;flex:0 0 auto;}
+
+.hp-pages{max-width:760px;margin:0 auto;padding:18px 14px 60px;}
+
+/* Cover */
+.hp-cover{margin:6px 0 22px;padding:10px;border:3px solid var(--gold);border-radius:calc(var(--radius) + 6px);
+  background:linear-gradient(160deg, rgba(var(--gold-rgb),0.18), rgba(var(--teal-rgb),0.08) 60%, transparent), var(--panel);}
+.hp-cover-frame{border:1px dashed rgba(var(--gold-rgb),0.6);border-radius:calc(var(--radius) + 2px);padding:26px 18px 22px;text-align:center;}
+.hp-cover-logo{width:min(46%, 190px);height:auto;border-radius:18%;filter:drop-shadow(0 6px 14px rgba(0,0,0,0.45));}
+.hp-cover-title{font-family:var(--font-mono);font-weight:700;font-size:1.45em;line-height:1.25;margin-top:12px;color:var(--text);}
+.hp-cover-sub{display:inline-block;margin-top:10px;padding:4px 14px;background:var(--gold);color:var(--on-gold);
+  font-family:var(--font-mono);font-weight:700;font-size:0.8em;letter-spacing:3px;text-transform:uppercase;border-radius:var(--radius);
+  box-shadow:var(--btn-shadow);}
+.hp-cover-note{margin:16px auto 0;max-width:460px;font-size:0.85em;color:var(--muted);}
+
+/* Contents */
+.hp-contents{background:var(--panel);border:1px solid var(--border);border-radius:calc(var(--radius) + 4px);padding:16px 18px 10px;margin-bottom:26px;}
+.hp-contents h2,.hp-ch-head h2{font-family:var(--font-mono);margin:0;color:var(--gold);letter-spacing:1px;}
+.hp-contents h2{font-size:1.1em;text-transform:uppercase;letter-spacing:4px;text-align:center;padding-bottom:8px;border-bottom:3px double var(--gold-dim);}
+.hp-contents ol{list-style:none;margin:8px 0 0;padding:0;}
+.hp-contents a{display:flex;align-items:baseline;gap:10px;padding:8px 2px;color:var(--text);text-decoration:none;border-radius:var(--radius);}
+.hp-contents a:active{background:var(--panel-2);}
+.hp-toc-no{flex:0 0 auto;min-width:1.6em;font-family:var(--font-mono);font-weight:700;color:var(--gold);}
+.hp-toc-t{flex:0 1 auto;}
+.hp-toc-dots{flex:1 1 auto;border-bottom:2px dotted var(--border);transform:translateY(-4px);min-width:16px;}
+.hp-toc-pg{flex:0 0 auto;font-size:0.75em;color:var(--muted);font-family:var(--font-mono);}
+
+/* A chapter is a page */
+.hp-chapter{position:relative;background:var(--panel);border:1px solid var(--border);border-radius:calc(var(--radius) + 4px);
+  padding:0 18px 12px;margin-bottom:26px;box-shadow:0 10px 24px rgba(0,0,0,0.25);}
+.hp-ch-head{display:flex;align-items:center;gap:12px;margin:0 -18px 6px;padding:14px 18px;
+  background:linear-gradient(90deg, rgba(var(--gold-rgb),0.22), transparent 85%);border-bottom:3px double var(--gold-dim);
+  border-radius:calc(var(--radius) + 4px) calc(var(--radius) + 4px) 0 0;}
+.hp-ch-no{flex:0 0 auto;display:grid;place-items:center;width:2.1em;height:2.1em;border-radius:50%;
+  background:var(--gold);color:var(--on-gold);font-family:var(--font-mono);font-weight:700;font-size:1.05em;box-shadow:var(--btn-shadow);}
+.hp-ch-head h2{font-size:1.2em;}
+.hp-folio{text-align:center;font-family:var(--font-mono);font-size:0.75em;color:var(--muted);letter-spacing:3px;padding-top:8px;}
+
+.hp-sec{padding:12px 0 6px;border-bottom:1px solid var(--border);}
+.hp-sec:last-of-type{border-bottom:none;}
+.hp-sec h3{display:flex;align-items:baseline;gap:8px;margin:0 0 6px;font-size:1.02em;color:var(--text);}
+.hp-sec-no{font-family:var(--font-mono);font-size:0.78em;color:var(--teal);}
+.hp-sec p{margin:0 0 10px;}
+.hp-sec ul,.hp-sec ol{margin:0 0 10px;padding-left:1.3em;}
+.hp-sec li{margin-bottom:5px;}
+.hp-sec b{color:var(--text);}
+.hp-sec a{color:var(--gold);}
+.hp-sec code{font-family:var(--font-mono);font-size:0.88em;background:var(--panel-2);border:1px solid var(--border);border-radius:3px;padding:0 4px;}
+.hp-cols{color:var(--muted);}
+.hp-book mark{background:var(--gold);color:var(--on-gold);border-radius:2px;padding:0 1px;}
+
+/* Buttons drawn in the text */
+.hk{display:inline-grid;place-items:center;min-width:1.7em;height:1.7em;padding:0 0.15em;border-radius:50%;
+  background:var(--panel-2);border:2px solid var(--gold);color:var(--gold);font-family:var(--font-mono);font-weight:700;
+  font-size:0.78em;line-height:1;vertical-align:0.1em;white-space:nowrap;}
+.hk.sh{border-radius:999px;padding:0 0.6em;border-color:var(--teal);color:var(--teal);}
+
+/* Tip and Note boxes, like the hint panels in old manuals */
+.hp-tip,.hp-note{position:relative;margin:4px 0 12px;padding:10px 12px 10px 14px;border-radius:var(--radius);font-size:0.94em;}
+.hp-tip{background:rgba(var(--teal-rgb),0.1);border-left:4px solid var(--teal);}
+.hp-note{background:rgba(var(--gold-rgb),0.1);border-left:4px solid var(--gold);}
+.hp-tip::before,.hp-note::before{display:block;font-family:var(--font-mono);font-weight:700;font-size:0.75em;letter-spacing:2px;margin-bottom:2px;}
+.hp-tip::before{content:'TIP';color:var(--teal);}
+.hp-note::before{content:'NOTE';color:var(--gold);}
+
+/* Button tables */
+.hp-keys{width:100%;border-collapse:collapse;margin:2px 0 12px;font-size:0.95em;}
+.hp-keys td{padding:7px 8px;border-bottom:1px dashed var(--border);vertical-align:top;}
+.hp-keys tr:last-child td{border-bottom:none;}
+.hp-keys td:first-child{width:38%;color:var(--muted);}
+.hp-keys td:first-child .hk{margin:0 2px 3px 0;}
+
+/* The controller drawing */
+.hp-diagram{margin:4px 0 14px;padding:10px 6px 8px;background:var(--bg-alt);border:1px solid var(--border);border-radius:calc(var(--radius) + 4px);}
+.hp-diagram svg{display:block;width:100%;height:auto;}
+.hp-diagram text{font-family:var(--font-mono);}
+.hd-shoulder text,.hd-face text,.hd-small text,.hd-screen-t{text-anchor:middle;}
+.hd-body{fill:var(--panel-2);stroke:var(--border);stroke-width:2;}
+.hd-screen{fill:rgba(var(--teal-rgb),0.12);stroke:var(--teal);stroke-width:2;stroke-dasharray:6 5;}
+.hd-screen-t{fill:var(--muted);font-size:13px;}
+.hd-shoulder rect{fill:var(--panel);stroke:var(--teal);stroke-width:2;}
+.hd-shoulder text{fill:var(--teal);font-size:14px;font-weight:700;}
+.hd-dpad path{fill:var(--panel);stroke:var(--text);stroke-width:2;stroke-linejoin:round;}
+.hd-stick circle{fill:var(--panel);stroke:var(--text);stroke-width:2;}
+.hd-stick .hd-stick-top{fill:var(--bg);}
+.hd-face circle{fill:var(--panel);stroke:var(--gold);stroke-width:2.5;}
+.hd-face text{fill:var(--gold);font-size:15px;font-weight:700;}
+.hd-face.hd-b circle{fill:var(--gold);}
+.hd-face.hd-b text{fill:var(--on-gold);}
+.hd-small rect{fill:var(--panel);stroke:var(--muted);stroke-width:1.5;}
+.hd-small text{fill:var(--muted);font-size:9px;}
+.hd-note{fill:var(--muted);font-size:13px;}
+.hd-note-b{fill:var(--text);font-weight:700;}
+.hp-diagram figcaption{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;margin-top:6px;font-size:0.9em;}
+.hp-diagram figcaption > span{display:inline-flex;align-items:center;gap:6px;}
+
+.hp-empty{text-align:center;color:var(--muted);padding:40px 10px;}
+.hp-book.hp-searching .hp-cover,.hp-book.hp-searching .hp-contents,.hp-book.hp-searching .hp-folio{display:none;}
+
+/* The controller's highlight on the booklet's links */
+body.pad-mode .hp-contents a.pad-focus{background:var(--panel-2);}
