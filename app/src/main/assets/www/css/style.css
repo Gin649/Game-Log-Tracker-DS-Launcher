@@ -986,7 +986,7 @@
   #addgame-results{max-height:none;}
   .addgame-roms{margin-top:22px;padding-top:18px;border-top:1px solid var(--border);}
   .addgame-roms-actions{display:flex;gap:10px;}
-  .addgame-roms-actions .btn-ghost{flex:1 1 0;min-width:0;padding:11px 10px;color:var(--text);}
+  .addgame-roms-actions .btn-primary{flex:1 1 0;min-width:0;width:auto;padding:11px 10px;}
   .ag-ra-tag{flex-shrink:0;font-family:var(--font-mono);font-size:0.625rem;font-weight:700;letter-spacing:0.5px;
     color:var(--on-gold);background:var(--gold);border-radius:3px;padding:2px 5px;line-height:1.2;}
   .ag-ra-tag[hidden]{display:none;}
@@ -1289,6 +1289,9 @@ body.pad-mode .pad-focus{
   box-shadow:0 0 0 4px rgba(var(--gold-rgb),0.28);
   scroll-margin:110px 20px;
 }
+/* On a gold button the gold highlight disappears, so a light ring sits outside it instead, with a gold glow */
+body.pad-mode .btn-primary.pad-focus,body.pad-mode #addgame-search-btn.btn-clear.pad-focus,body.pad-mode .ag-add-btn.pad-focus{
+  outline:3px solid var(--text);outline-offset:3px;box-shadow:0 0 0 8px rgba(var(--gold-rgb),0.45);transform:scale(1.02);}
 body.pad-mode .pad-focus.display-switch,
 body.pad-mode .pad-focus.chip{outline-offset:2px;}
 .pad-help{margin:6px 14px 10px;font-size:0.6562rem;line-height:1.7;color:var(--muted);}
