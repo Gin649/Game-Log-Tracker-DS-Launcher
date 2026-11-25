@@ -908,8 +908,26 @@ public class MainActivity extends Activity {
                 public void run() {
                     if (webView == null) return;
                     webView.requestFocus();
-                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                    if (imm != null) imm.showSoftInput(webView, InputMethodManager.SHOW_IMPLICIT);
+                    final InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    if (imm == null) return;
+                    // Asked for with a controller button, not a tap: Android ignores an "implicit" request then, and
+                    // the page needs a moment to hand the focused text box to the keyboard. So wait for that, then
+                    // reconnect the keyboard to the box and ask for it outright (flag 0).
+                    webView.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (webView == null) return;
+                            imm.restartInput(webView);
+                            if (!imm.showSoftInput(webView, 0)) {
+                                webView.postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        if (webView != null) imm.showSoftInput(webView, 0);
+                                    }
+                                }, 200);
+                            }
+                        }
+                    }, 120);
                 }
             });
         }
