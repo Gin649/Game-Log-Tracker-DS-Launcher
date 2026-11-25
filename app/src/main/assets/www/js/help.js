@@ -278,8 +278,11 @@
     if(!view || !backdrop || !backdrop.classList.contains('open')) return false;
     if(name === 'y'){
       if(view.book.classList.contains('hp-bar-hidden')) view.toggleBar();
-      view.input.focus();
-      try{ if(window.PadNative) window.PadNative.showKeyboard(); }catch(e){}
+      if(window.PadKeyboard) window.PadKeyboard.open(view.input);
+      else{
+        view.input.focus();
+        try{ if(window.PadNative) window.PadNative.showKeyboard(); }catch(e){}
+      }
       return true;
     }
     if(name === 'x'){ view.toggleBar(); return true; }

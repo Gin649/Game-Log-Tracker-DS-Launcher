@@ -1502,3 +1502,30 @@ html:not([data-theme]) .brand .mark{width:130px;height:130px;margin:-20px;}
 /* With logos the outline means the console you are on, so All does not keep one of its own here. */
 .chip-row.blades.logos .chip.first{border-color:var(--border);}
 .blade-count{flex:none;font-size:0.75rem;color:var(--muted);}
+
+/* The controller keyboard (pad-keyboard.js): across the bottom of the screen, above everything else */
+#pad-kb{display:none;position:fixed;left:0;right:0;bottom:0;z-index:100000;background:var(--bg-alt);
+  border-top:2px solid var(--gold);box-shadow:0 -10px 30px rgba(0,0,0,0.5);padding:10px 12px calc(8px + env(safe-area-inset-bottom));}
+#pad-kb.open{display:block;}
+html.pad-kb-on body{padding-bottom:52vh;}
+.pkb-preview{max-width:760px;margin:0 auto 8px;padding:8px 12px;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+  font-family:var(--font-ui);font-size:1rem;color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere;min-height:1.6em;}
+.pkb-ph{color:var(--muted);}
+.pkb-cur{display:inline-block;width:2px;height:1.1em;margin:0 1px -0.18em;background:var(--gold);animation:pkb-blink 1s steps(1) infinite;}
+@keyframes pkb-blink{50%{opacity:0;}}
+.pkb-keys{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:6px;}
+.pkb-row{display:flex;gap:6px;}
+.pkb-key{flex:1 1 0;min-width:0;height:2.6rem;padding:0;background:var(--panel);color:var(--text);border:1px solid var(--border);
+  border-radius:var(--radius);font-family:var(--font-ui);font-size:1.05rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;}
+.pkb-key small{font-family:var(--font-mono);font-size:0.6rem;font-weight:700;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:0 4px;}
+.pkb-key.on{background:var(--gold);color:var(--on-gold);border-color:var(--gold);transform:scale(1.06);}
+.pkb-key.on small{color:var(--on-gold);border-color:var(--on-gold);}
+.pkb-key.lit{color:var(--gold);border-color:var(--gold);}
+.pkb-key.on.lit{color:var(--on-gold);}
+.pkb-wide .pkb-key{font-size:0.9rem;}
+.pkb-wide .pkb-space{flex-grow:3;}
+.pkb-wide .pkb-done{flex-grow:1.6;}
+.pkb-help{max-width:760px;margin:8px auto 0;text-align:center;font-size:0.72rem;color:var(--muted);}
+.pkb-help .hk{display:inline-block;height:auto;min-width:0;line-height:1.5;font-family:var(--font-mono);font-size:0.62rem;font-weight:700;color:var(--text);border:1px solid var(--border);
+  border-radius:9px;padding:0 5px;margin:0 2px 0 8px;}
+.pkb-help .hk + .hk{margin-left:0;}

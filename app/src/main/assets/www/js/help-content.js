@@ -328,7 +328,7 @@ window.HELP_GUIDE = {
         <li>Press <b>Add to Backlog</b> at the bottom. It shows how many games you've ticked.</li>
       </ol>
       <figure class="hp-shot"><img src="help/img/add-game-pick.webp" alt="Pick ROM files: three SNES games and one NES game ticked" loading="lazy"><figcaption>Pick ROM files: three SNES games and one NES game ticked</figcaption></figure>
-      <div class="hp-tip">Games already in your Backlog are greyed out and marked <b>in Backlog</b>, so nothing gets added twice.</div>
+      <div class="hp-tip">Games you already have are greyed out and marked <b>in Backlog</b> or <b>in Library</b>, so nothing gets added twice.</div>
       <p><b>Add a whole console folder</b> lists your console folders with how many games each holds. Tap a folder,
       or press <span class="hk">B</span> on it, and every game in it goes to your Backlog. A message tells you how
       many were added.</p>

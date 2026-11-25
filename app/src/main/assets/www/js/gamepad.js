@@ -43,6 +43,17 @@
     try{ if(nativePad) on ? nativePad.showKeyboard() : nativePad.hideKeyboard(); }catch(e){}
   };
 
+  // Typing in a text box with the controller: the controller keyboard (pad-keyboard.js), or Android's if it's missing.
+  function typeInto(el){
+    if(!el) return;
+    if(window.PadKeyboard){
+      window.PadKeyboard.open(el, (box) => { if(box.isConnected && padMode) setFocus(box); });
+      return;
+    }
+    el.focus();
+    showKeyboard(true);
+  }
+
   // What is on screen
   const isVisible = (el) => {
     const r = el.getBoundingClientRect();
@@ -366,7 +377,7 @@
       focusFirstGame();
       return;
     }
-    if(isTextField(el)){ el.focus(); showKeyboard(true); return; }
+    if(isTextField(el)){ typeInto(el); return; }
     if(el.tagName === 'SELECT'){ // the native picker can't be opened from here, so step through the options
       if(!el.options.length) return;
       el.selectedIndex = (el.selectedIndex + 1) % el.options.length;
@@ -379,9 +390,12 @@
 
   // Closes or steps back out of whatever is open. Returns true if it did something.
   function goBack(){
+    if(window.PadKeyboard && window.PadKeyboard.isOpen()){ window.PadKeyboard.close(); return true; }
     const ae = document.activeElement;
     if(isTextField(ae)){ ae.blur(); showKeyboard(false); return true; }
     const top = topOverlay();
+    // After a search, Back first clears it (the words and what was found), then works as usual
+    if(!menuOpen() && clearSearch(top)) return true;
     if(top){
       if(top.type === 'zoom'){ $('#img-zoom-close').click(); return true; }
       if(top.type === 'manual'){
@@ -418,6 +432,28 @@
     if(chipOk){ chipOk.click(); return true; }
     if(menuOpen()){ closeDropdownMenu(); return true; }
     return false;
+  }
+
+  // The search box of what's on screen: Add your game(s), or the Library, Backlog or Apps tab.
+  function clearSearch(top){
+    if(top){
+      if(top.el.id !== 'addgame-backdrop') return false;
+      const box = $('#addgame-title'), results = $('#addgame-results');
+      if(!box.value && !results.children.length) return false;
+      box.value = '';
+      results.innerHTML = '';
+      if(typeof addGameSelections !== 'undefined'){
+        addGameSelections.clear();
+        if(typeof renderAddGameSelectionBar === 'function') renderAddGameSelectionBar();
+      }
+      if(padMode) setFocus(box);
+      return true;
+    }
+    const box = document.querySelector('#tab-library.active #lib-search, #tab-backlog.active #backlog-search, #tab-apps.active #apps-search');
+    if(!box || !box.value) return false;
+    box.value = '';
+    box.dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
   }
 
   function toggleMenu(){
@@ -508,8 +544,7 @@
     }
     if(!input) return;
     input.scrollIntoView({ block: 'center' });
-    input.focus();
-    showKeyboard(true);
+    typeInto(input);
   }
 
   // Inside a game guide: L2 / R2 shrink and enlarge the text, the button labelled X opens the search box and the
@@ -526,7 +561,7 @@
       if(el.classList.contains('menu-hidden')) setReaderMenuHidden(false);
       if(!$('#guide-find-bar').classList.contains('open')) click('#guide-find-btn');
       const input = $('#guide-find-input');
-      if(input){ input.focus(); showKeyboard(true); }
+      if(input) typeInto(input);
       return true;
     }
     return false;
@@ -554,6 +589,7 @@
     const wasShowing = padMode;
     if(!padMode){ padMode = true; document.body.classList.add('pad-mode'); }
     const confirmKey = swapAB ? 'b' : 'a';
+    if(window.PadKeyboard && window.PadKeyboard.key(name, confirmKey)) return; // the controller keyboard is open
     if(!menuOpen() && guideKey(name)) return;
     if(!menuOpen() && window.HelpBook && window.HelpBook.key(name)) return; // Help's own keys (help.js)
     if(!menuOpen() && window.RomPick && window.RomPick.key(name)) return; // L1/R1 change console in the ROM picker
@@ -646,7 +682,7 @@
     setRightStick(0);
   }
 
-  window.GLTPad = { b, rs: setRightStick, reset, back: goBack };
+  window.GLTPad = { b, rs: setRightStick, reset, back: goBack, focused: () => focusEl, focus: (el) => setFocus(el) };
 
   // A refresh redraws the game profile. These let it note where the highlight is, keep it from jumping to the
   // first button while the page is rebuilt, and put it back afterwards.
