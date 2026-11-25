@@ -2,6 +2,27 @@
 
 Notable changes to Game Log Tracker DS Launcher, newest first.
 
+## v1.2.5
+
+### Added
+- Help: a full instruction booklet at the bottom of the menu. It covers every controller shortcut, with a labelled photo of the Thor, and how to do everything in the app, with pictures of each screen. Search it from the box at the top (X jumps to it), change chapter with L1/R1 and text size with L2/R2. The same guide is online at https://gin649.github.io/Game-Log-Tracker-DS-Launcher/user-guide.html.
+- Controller keyboard: press B on any text box, or X for a search box, and a console-style keyboard opens at the bottom of the screen in your theme's colours. D-pad to move, B to type, A to delete, X for space, Y for capitals, R2 for symbols, L1/R1 to move the cursor and Start to search. Hold B on a letter (or press and hold it on the screen) for its accents, like the é in Pokémon. Touch works too, and tapping a text box still opens Android's keyboard.
+- Pick individual ROM files: a new picker that lists your ROMs folder by console. Tick as many games as you like across as many consoles as you like (L1/R1 change console), then add them all at once. Games you already have are greyed out and marked in Backlog or in Library. This replaces the Android file picker, which closed after one file.
+- RA tag: when you search Any console/system, results on RetroAchievements for the chosen console get a gold RA tag and are added with their achievements straight away.
+
+### Changed
+- Add game is now Add your game(s), and fills the screen. Game title comes first, then Which console?, and Other system is now Any console/system. ROM files have their own section, Add game(s) by ROM file.
+- You stay on Add your game(s) after adding a game, with your search still there. Added games are ticked and greyed out, games you already have say in Backlog or in Library, and the Search button becomes Clear search.
+- Add a whole console folder: tap a folder and every game in it goes to your Backlog. No more dropdown and second Add all button.
+- Back clears a search first, on Add your game(s) and in the Library, Backlog and Apps tabs.
+- Pressing B on a text box brings up a keyboard every time.
+- A highlighted yellow button now has a light ring and a gold glow, so it's easy to see what's selected.
+- The menu on the top screen has 20% larger text and reaches the bottom of the screen.
+- With Tracker on top screen, the menu on the bottom screen is drawn much larger so it's easy to read.
+- The Nintendo theme uses the Pixelify Sans font, sized to read like the other themes.
+- Ports list: 184 new ports, now 825 in all. The list checks itself every week, fixing ports whose GitHub pages moved and marking ones that have been taken down.
+- New Discord invite link in About, the Help guide and the README.
+
 ## v1.2.4
 
 ### Added
