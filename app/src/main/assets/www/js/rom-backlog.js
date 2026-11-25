@@ -157,8 +157,7 @@ async function addRomsToBacklog(items){
       await saveManualGames([...manual, ...entries]);
       renderLibraryViews();
     }
-    closeAddGameModal();
-    showToast(`${entries.length} game${entries.length === 1 ? '' : 's'} added to backlog`);
+    showToast(`${entries.length} game${entries.length === 1 ? '' : 's'} added to your Backlog`);
     setTimeout(fillMissingCustomArt, 500);
     return entries.length;
   });

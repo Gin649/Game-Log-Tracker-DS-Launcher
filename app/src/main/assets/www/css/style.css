@@ -1059,6 +1059,11 @@
     background:transparent;color:var(--gold);font-size:1rem;line-height:1;cursor:pointer;
   }
   .ag-add-btn:hover{background:var(--gold);color:var(--bg);}
+  .ag-add-btn:disabled{background:var(--gold);color:var(--on-gold);cursor:default;}
+  .ag-result.added{opacity:0.55;cursor:default;}
+  .ag-result.added:hover{background:transparent;}
+  .ag-where{font-size:0.6562rem;color:var(--muted);font-family:var(--font-mono);white-space:nowrap;}
+  #addgame-search-btn.btn-clear{background:transparent;color:var(--gold);border:1px solid var(--gold);}
 
   .g-title{position:relative;}
   .manual-remove{
@@ -1523,8 +1528,11 @@ html.pad-kb-on body{padding-bottom:52vh;}
 .pkb-key.lit{color:var(--gold);border-color:var(--gold);}
 .pkb-key.on.lit{color:var(--on-gold);}
 .pkb-wide .pkb-key{font-size:0.9rem;}
-.pkb-wide .pkb-space{flex-grow:3;}
+.pkb-wide .pkb-space{flex-grow:2.6;}
 .pkb-wide .pkb-done{flex-grow:1.6;}
+.pkb-accents{position:absolute;z-index:2;display:flex;gap:6px;padding:6px;background:var(--panel-2);border:1px solid var(--gold);
+  border-radius:var(--radius);box-shadow:0 6px 18px rgba(0,0,0,0.5);}
+.pkb-accents .pkb-key{flex:0 0 auto;width:2.8rem;}
 .pkb-help{max-width:760px;margin:8px auto 0;text-align:center;font-size:0.72rem;color:var(--muted);}
 .pkb-help .hk{display:inline-block;height:auto;min-width:0;line-height:1.5;font-family:var(--font-mono);font-size:0.62rem;font-weight:700;color:var(--text);border:1px solid var(--border);
   border-radius:9px;padding:0 5px;margin:0 2px 0 8px;}

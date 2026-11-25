@@ -46,7 +46,7 @@
   // Typing in a text box with the controller: the controller keyboard (pad-keyboard.js), or Android's if it's missing.
   function typeInto(el){
     if(!el) return;
-    if(window.PadKeyboard){
+    if(window.PadKeyboard && window.PadKeyboard.canType(el)){
       window.PadKeyboard.open(el, (box) => { if(box.isConnected && padMode) setFocus(box); });
       return;
     }
@@ -440,12 +440,8 @@
       if(top.el.id !== 'addgame-backdrop') return false;
       const box = $('#addgame-title'), results = $('#addgame-results');
       if(!box.value && !results.children.length) return false;
-      box.value = '';
-      results.innerHTML = '';
-      if(typeof addGameSelections !== 'undefined'){
-        addGameSelections.clear();
-        if(typeof renderAddGameSelectionBar === 'function') renderAddGameSelectionBar();
-      }
+      if(typeof clearAddGameSearch === 'function') clearAddGameSearch();
+      else{ box.value = ''; results.innerHTML = ''; }
       if(padMode) setFocus(box);
       return true;
     }
@@ -649,6 +645,7 @@
     }else{
       held[name] = false;
       clearTimeout(timers[name]);
+      if(window.PadKeyboard && window.PadKeyboard.isOpen()) window.PadKeyboard.up(name);
       if(name === holdKey){
         holdKey = null;
         if(holdTimer){ // let go before it counted as a hold

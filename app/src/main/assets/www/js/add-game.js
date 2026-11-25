@@ -24,6 +24,7 @@ async function openAddGameModal(){
   $('#addgame-results').innerHTML = '';
   addGameSelections.clear();
   renderAddGameSelectionBar();
+  setSearchButton(false);
   const sel = $('#addgame-system');
   sel.innerHTML = '<option>Loading systems…</option>';
   try{
@@ -64,6 +65,12 @@ function closeAddGameModal(){
 }
 
 async function searchAddGame(){
+  await runAddGameSearch();
+  // a search has been made: the button now clears it
+  if($('#addgame-title').value.trim()) setSearchButton(true);
+}
+
+async function runAddGameSearch(){
   const sel = $('#addgame-system');
   const consoleId = sel.value;
   const query = $('#addgame-title').value.trim();
@@ -108,12 +115,15 @@ async function searchAddGame(){
         const showTag = () => { tag.hidden = !(row._ra && row._ra.get(select.value)); };
         select.addEventListener('change', showTag);
         row._showTag = showTag;
-        row.querySelector('.ag-add-btn').addEventListener('click', () => {
-          if(!match) return;
+        const addBtn = row.querySelector('.ag-add-btn');
+        addBtn.addEventListener('click', async () => {
+          if(!match || row.classList.contains('added')) return;
           const ra = row._ra && row._ra.get(select.value);
+          addBtn.disabled = true;
           // a game RetroAchievements has goes in as that game, with its achievements, straight away
-          if(ra) addManualGamesBulk([{ g: ra.g, consoleId: ra.consoleId, consoleName: ra.consoleName }]);
-          else addManualGameFromSearch(match, select.value || 'Unknown');
+          if(ra) await addManualGamesBulk([{ g: ra.g, consoleId: ra.consoleId, consoleName: ra.consoleName }]);
+          else await addManualGameFromSearch(match, select.value || 'Unknown');
+          markRowAdded(row);
         });
       });
       tagRaResults(rows, results, () => sel.value === '__custom__' && resultsEl.contains(rows[0]));
@@ -142,6 +152,15 @@ async function searchAddGame(){
       const icon = g.ImageIcon ?? g.imageIcon;
       const numAch = g.NumAchievements ?? g.numAchievements ?? 0;
       const checked = addGameSelections.has(id);
+      const where = whereInApp(id);
+      if(where) return `
+          <div class="ag-result added" data-game-id="${id}" aria-disabled="true">
+            <input type="checkbox" class="ag-checkbox" checked disabled tabindex="-1">
+            <img src="${imgUrl(icon)}" alt="">
+            <span class="t">${title}</span>
+            <span class="ag-where">in ${where}</span>
+          </div>
+        `;
       return `
           <div class="ag-result ${checked ? 'selected' : ''}" data-game-id="${id}">
             <input type="checkbox" class="ag-checkbox" ${checked ? 'checked' : ''} aria-label="Select ${title}">
@@ -151,7 +170,7 @@ async function searchAddGame(){
           </div>
         `;
     }).join('');
-    resultsEl.querySelectorAll('.ag-result').forEach(row => {
+    resultsEl.querySelectorAll('.ag-result:not(.added)').forEach(row => {
       const id = Number(row.getAttribute('data-game-id'));
       const match = matches.find(g => Number(g.ID ?? g.id) === id);
       const checkbox = row.querySelector('.ag-checkbox');
@@ -268,17 +287,60 @@ async function addManualGamesBulk(selections){
       await saveManualGames([...manual, ...newEntries]);
     }
     renderLibraryViews();
-    closeAddGameModal();
+    // You stay on Add your game(s), with the same search: what was added is marked, and the ticks are cleared
+    addGameSelections.clear();
+    renderAddGameSelectionBar();
+    selections.forEach(({ g }) => {
+      const row = document.querySelector(`#addgame-results .ag-result[data-game-id="${Number(g.ID ?? g.id)}"]:not(.ag-result-custom)`);
+      if(row) markRowAdded(row);
+    });
+    if(newEntries.length && typeof showToast === 'function'){
+      showToast(newEntries.length === 1 ? `${newEntries[0].Title} added to your Backlog` : `${newEntries.length} games added to your Backlog`);
+    }
   });
+}
+
+// Where a game is in the app: 'Backlog', 'Library', or '' when it isn't there.
+function whereInApp(gameId){
+  const g = libraryData.find(x => x.GameID === gameId);
+  if(!g) return '';
+  return (typeof isBacklogGame === 'function' && isBacklogGame(g)) ? 'Backlog' : 'Library';
+}
+
+// A search result that has just been added: ticked, greyed out and marked, so it can't be added twice.
+function markRowAdded(row){
+  row.classList.remove('selected');
+  row.classList.add('added');
+  row.setAttribute('aria-disabled', 'true');
+  const box = row.querySelector('.ag-checkbox');
+  if(box){ box.checked = true; box.disabled = true; box.tabIndex = -1; }
+  const btn = row.querySelector('.ag-add-btn');
+  if(btn){ btn.textContent = '✓'; btn.disabled = true; }
+  const sel = row.querySelector('.ag-platform-select');
+  if(sel) sel.disabled = true;
+  const n = row.querySelector('.n');
+  if(n && !row.classList.contains('ag-result-custom')) n.outerHTML = '<span class="ag-where">in Backlog</span>';
+}
+
+// After a search the Search button becomes Clear search; typing something new turns it back.
+function setSearchButton(searched){
+  const btn = $('#addgame-search-btn');
+  btn.textContent = searched ? 'Clear search' : 'Search';
+  btn.classList.toggle('btn-clear', searched);
+  btn.dataset.searched = searched ? '1' : '';
+}
+function clearAddGameSearch(){
+  $('#addgame-title').value = '';
+  $('#addgame-results').innerHTML = '';
+  addGameSelections.clear();
+  renderAddGameSelectionBar();
+  setSearchButton(false);
 }
 
 async function addManualGameFromSearch(found, customConsole){
   return enqueueTask(async () => {
     const gameId = -Date.now(); // negative, so it never clashes with a real RA GameID
-    if(libraryData.some(x => x.GameID === gameId)){
-      closeAddGameModal();
-      return;
-    }
+    if(libraryData.some(x => x.GameID === gameId)) return;
     const genre = (found.genres && found.genres.length) ? found.genres.join(', ') : null;
     const entry = {
       GameID: gameId,
@@ -307,7 +369,7 @@ async function addManualGameFromSearch(found, customConsole){
     const manual = await loadManualGames();
     await saveManualGames([...manual, entry]);
     renderLibraryViews();
-    closeAddGameModal();
+    if(typeof showToast === 'function') showToast(`${entry.Title} added to your Backlog`);
   });
 }
 
@@ -335,7 +397,12 @@ $('#addgame-close-btn').addEventListener('click', closeAddGameModal);
 $('#addgame-backdrop').addEventListener('click', (e) => {
   if(e.target.id === 'addgame-backdrop') closeAddGameModal();
 });
-$('#addgame-search-btn').addEventListener('click', searchAddGame);
+$('#addgame-search-btn').addEventListener('click', () => {
+  if($('#addgame-search-btn').dataset.searched) clearAddGameSearch();
+  else searchAddGame();
+});
+$('#addgame-title').addEventListener('input', () => setSearchButton(false));
+$('#addgame-system').addEventListener('change', () => { if($('#addgame-search-btn').dataset.searched) setSearchButton(false); });
 $('#addgame-add-selected-btn').addEventListener('click', () => {
   if(addGameSelections.size === 0) return;
   addManualGamesBulk([...addGameSelections.values()]);

@@ -333,6 +333,25 @@ window.HELP_GUIDE = {
         <tr><td><span class="hk">Y</span></td><td>Hide or show the top bar for a full-screen read</td></tr>
         <tr><td><span class="hk">A</span></td><td>Close the search, then Help</td></tr>
       </table>` },
+    { h: 'Typing with the controller', html: `
+      <p>Press <span class="hk">B</span> on any text box, or <span class="hk">X</span> to jump to a search box, and a
+      keyboard opens across the bottom of the screen, in the colours of your theme. Tapping a text box still brings up
+      Android's own keyboard, and you can tap the keys of this one too.</p>
+      <table class="hp-keys">
+        <tr><td><span class="hk sh">D-pad</span></td><td>Move between keys</td></tr>
+        <tr><td><span class="hk">B</span></td><td>Type the highlighted key. Hold it on a letter for its accents, like the é in Pokémon: <span class="hk sh">Left</span> <span class="hk sh">Right</span> choose one and <span class="hk">B</span> types it.</td></tr>
+        <tr><td><span class="hk">A</span></td><td>Delete a letter. With the box empty, close the keyboard.</td></tr>
+        <tr><td><span class="hk">X</span></td><td>Space</td></tr>
+        <tr><td><span class="hk">Y</span></td><td>Capitals on or off</td></tr>
+        <tr><td><span class="hk sh">R2</span></td><td>Symbols, like / : @ #, on or off</td></tr>
+        <tr><td><span class="hk sh">L1</span> <span class="hk sh">R1</span></td><td>Move the cursor</td></tr>
+        <tr><td><span class="hk sh">Start</span></td><td>Search, or Done</td></tr>
+      </table>
+      <figure class="hp-shot"><img src="help/img/pad-keyboard.webp" alt="The controller keyboard, holding B on e for its accents" loading="lazy"><figcaption>The controller keyboard: holding <b>B</b> on e shows é è ê ë</figcaption></figure>
+      <p>Press and hold a letter on the screen for its accents too. Passwords and API keys show as dots on the keyboard.
+      Date boxes keep Android's own date picker.</p>
+      <div class="hp-tip">After a search, <span class="hk">A</span> clears it. On Add your game(s) the Search button turns into
+      <b>Clear search</b>, which does the same.</div>` },
     { h: 'Touch gestures', html: `
       <table class="hp-keys">
         <tr><td>Pull down</td><td>Refresh your data (not the whole page)</td></tr>
@@ -494,12 +513,15 @@ window.HELP_GUIDE = {
       <ol>
         <li>Type the name of the game in <b>Game title</b>. Part of the name is enough: <i>chrono</i> finds every Chrono game.</li>
         <li>Under <b>Which console?</b> leave <b>Any console/system</b>, or choose one console to search only its games.</li>
-        <li>Press <b>Search</b>. The results show right under the button.</li>
+        <li>Press <b>Search</b>. The results show right under the button, and the button becomes <b>Clear search</b>.</li>
       </ol>
+      <p>You stay on this screen after adding a game, with your search still there, so you can add more. Each game
+      you add is ticked and greyed out, and a message at the bottom says it went to your Backlog. When you're done,
+      press <b>Clear search</b> (or <span class="hk">A</span>) to start a new search, or <b>✕</b> to leave.</p>
       <p><b>With Any console/system</b>, every game that matches is listed, on every console, including consoles
       RetroAchievements doesn't track. Each result has a console menu: choose the console you play it on, then press
       <b>+</b> to add it.</p>
-      <figure class="hp-shot"><img src="help/img/add-game-search.webp" alt="Searching Any console/system: the RA tag marks games on RetroAchievements" loading="lazy"><figcaption>Searching Any console/system: the RA tag marks games on RetroAchievements</figcaption></figure>
+      <figure class="hp-shot"><img src="help/img/add-game-search.webp" alt="Searching Any console/system: the RA tags mark games on RetroAchievements, and Chrono Cross has just been added" loading="lazy"><figcaption>Searching Any console/system: the RA tags mark games on RetroAchievements, and Chrono Cross has just been added</figcaption></figure>
       <ul>
         <li>A gold <b>RA</b> tag means the game is on RetroAchievements for the console chosen in its menu. It's added
         with its achievements, and the menu starts on that console for you.</li>
@@ -508,7 +530,8 @@ window.HELP_GUIDE = {
         <li>The tag follows the menu: choose a different console and the tag shows or hides to match.</li>
       </ul>
       <p><b>With one console chosen</b>, you search RetroAchievements' own list for that console, with how many
-      achievements each game has. Tick as many results as you like, then press <b>Add selected</b> to add them all at once.</p>` },
+      achievements each game has. Tick as many results as you like, then press <b>Add selected</b> to add them all at once.
+      Games you already have are greyed out and marked <b>in Backlog</b> or <b>in Library</b>.</p>` },
     { h: 'Adding from your ROM files', html: `
       <p>Under <b>Add game(s) by ROM file</b>, add the games you already have in your ROMs folder. They go straight to
       your Backlog and are matched to RetroAchievements by the file itself, or by the title.</p>
