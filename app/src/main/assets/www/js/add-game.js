@@ -21,7 +21,6 @@ function rankGames(games, query){
 async function openAddGameModal(){
   $('#addgame-backdrop').classList.add('open');
   $('#addgame-title').value = '';
-  $('#addgame-custom-console-field').style.display = 'none';
   $('#addgame-results').innerHTML = '';
   addGameSelections.clear();
   renderAddGameSelectionBar();
@@ -33,10 +32,10 @@ async function openAddGameModal(){
       .map(c => ({ id: c.ID ?? c.id, name: c.Name ?? c.name }))
       .filter(c => c.id != null && c.name)
       .sort((a, b) => a.name.localeCompare(b.name));
-    sel.innerHTML = `<option value="__custom__">Other system (not on RetroAchievements)…</option>`
+    sel.innerHTML = `<option value="__custom__">Any console/system</option>`
       + sorted.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
   }catch(e){
-    sel.innerHTML = '<option value="__custom__">Other system (not on RetroAchievements)…</option><option value="">Could not load systems</option>';
+    sel.innerHTML = '<option value="__custom__">Any console/system</option><option value="">Could not load systems</option>';
   }
   sel.value = '__custom__';
   syncAddGameSystem();
@@ -44,7 +43,6 @@ async function openAddGameModal(){
 
 function syncAddGameSystem(){
   const isCustom = $('#addgame-system').value === '__custom__';
-  $('#addgame-custom-console-field').style.display = isCustom ? 'block' : 'none';
   const multiHint = $('#addgame-multi-hint');
   if(multiHint) multiHint.style.display = isCustom ? 'none' : 'block'; // ticking several is RA search only
 }
@@ -94,19 +92,31 @@ async function searchAddGame(){
               <img src="${g.cover || ''}" alt="">
               <span class="t">${g.name}</span>
               <span class="n">${g.released ? g.released.slice(0,4) : ''}</span>
+              <span class="ag-ra-tag" title="On RetroAchievements on this console" hidden>RA</span>
               <select class="ag-platform-select">${platOptions}</select>
               <button class="ag-add-btn" type="button" title="Add game" aria-label="Add game">+</button>
             </div>
           `;
       }).join('');
-      resultsEl.querySelectorAll('.ag-result-custom').forEach(row => {
+      const rows = [...resultsEl.querySelectorAll('.ag-result-custom')];
+      rows.forEach(row => {
         const id = Number(row.getAttribute('data-game-id'));
         const match = results.find(g => g.id === id);
         const select = row.querySelector('.ag-platform-select');
+        const tag = row.querySelector('.ag-ra-tag');
+        // the RA tag follows the platform picked: it shows when that console's RetroAchievements list has the game
+        const showTag = () => { tag.hidden = !(row._ra && row._ra.get(select.value)); };
+        select.addEventListener('change', showTag);
+        row._showTag = showTag;
         row.querySelector('.ag-add-btn').addEventListener('click', () => {
-          if(match) addManualGameFromSearch(match, select.value || 'Unknown');
+          if(!match) return;
+          const ra = row._ra && row._ra.get(select.value);
+          // a game RetroAchievements has goes in as that game, with its achievements, straight away
+          if(ra) addManualGamesBulk([{ g: ra.g, consoleId: ra.consoleId, consoleName: ra.consoleName }]);
+          else addManualGameFromSearch(match, select.value || 'Unknown');
         });
       });
+      tagRaResults(rows, results, () => sel.value === '__custom__' && resultsEl.contains(rows[0]));
     }catch(e){
       resultsEl.innerHTML = `<div class="error-box">Search failed: ${/abort/i.test(String(e && e.message)) ? 'The search took too long to answer. Try again in a moment.' : e.message}</div>`;
     }
@@ -169,6 +179,58 @@ async function searchAddGame(){
 }
 
 // A manually added RA game that hasn't been played yet.
+// The RetroAchievements console id for a platform name from the search (IGDB's spelling), or null.
+function raConsoleIdForPlatform(name){
+  const hit = PLATFORM_TO_RA_CONSOLE[String(oneConsoleName(name) || '').toLowerCase()];
+  return hit ? hit[0] : null;
+}
+
+// Marks the "Any console/system" results that RetroAchievements has, platform by platform. Each console's list is
+// read once (and kept for a week), after the results are already on screen.
+async function tagRaResults(rows, results, stillShown){
+  let consoles = [];
+  try{ consoles = (await getConsoleList()) || []; }catch(e){ return; }
+  const lists = new Map(); // console id -> Map(title key -> game), or null when it could not be read
+  const listFor = async (cid) => {
+    if(!lists.has(cid)){
+      let m = null;
+      try{
+        m = new Map();
+        (await getGameListForConsole(cid) || []).forEach(g => {
+          const raw = String(g.Title ?? g.title ?? '');
+          const k = romMatchKey(raw);
+          if(k && !/~hack~/i.test(raw) && !m.has(k)) m.set(k, g);
+        });
+      }catch(e){ m = null; }
+      lists.set(cid, m);
+    }
+    return lists.get(cid);
+  };
+  for(const row of rows){
+    if(!stillShown()) return;
+    const g = results.find(x => x.id === Number(row.getAttribute('data-game-id')));
+    if(!g) continue;
+    const ra = new Map();
+    for(const p of (Array.isArray(g.platforms) ? g.platforms.filter(Boolean) : [])){
+      const cid = raConsoleIdForPlatform(p);
+      if(cid == null) continue;
+      const list = await listFor(cid);
+      const hit = list && list.get(romMatchKey(g.name));
+      if(hit){
+        const c = consoles.find(x => Number(x.ID ?? x.id) === cid);
+        ra.set(p, { g: hit, consoleId: cid, consoleName: c ? (c.Name ?? c.name) : p });
+      }
+    }
+    row._ra = ra;
+    if(ra.size){
+      // start on a platform RetroAchievements has, so the game is added with its achievements
+      const select = row.querySelector('.ag-platform-select');
+      if(select && !ra.has(select.value)) select.value = ra.keys().next().value;
+      row._showTag();
+    }
+  }
+}
+
 function buildManualRaEntry(g, consoleId, consoleName){
   return {
     GameID: Number(g.ID ?? g.id),

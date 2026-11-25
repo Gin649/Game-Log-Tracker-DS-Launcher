@@ -329,41 +329,14 @@ function setupRomBacklogSection(){
   const box = document.getElementById('addgame-roms');
   if(!box || !thorBridge || typeof thorBridge.pickRoms !== 'function') return;
   box.style.display = 'block';
-
-  const pickBtn = box.querySelector('#addgame-pick-roms');
-  const allBtn = box.querySelector('#addgame-all-toggle');
-  const allRow = box.querySelector('#addgame-all-row');
-  const sysSel = box.querySelector('#addgame-all-system');
-  const goBtn = box.querySelector('#addgame-all-go');
-  let systems = [];
-
-  pickBtn.addEventListener('click', () => { try{ thorBridge.pickRoms(); }catch(e){} });
-
-  const syncGo = () => {
-    const s = systems[sysSel.selectedIndex];
-    goBtn.textContent = s ? `Add all ${s.count} game${s.count === 1 ? '' : 's'}` : 'Add all';
-    goBtn.disabled = !s;
-  };
-  sysSel.addEventListener('change', syncGo);
-
-  allBtn.addEventListener('click', () => {
-    if(allRow.style.display === 'flex'){ allRow.style.display = 'none'; return; }
-    try{ systems = JSON.parse(thorBridge.romSystems()); }catch(e){ systems = []; }
-    sysSel.innerHTML = systems.length
-      ? systems.map(s => `<option>${esc(s.folder)} (${s.count})</option>`).join('')
-      : '<option>No ROMs found. Choose your ROMs folder in Launcher settings.</option>';
-    allRow.style.display = 'flex';
-    syncGo();
+  const inApp = () => window.RomPick && typeof thorBridge.romSystems === 'function';
+  // both open the app's own list of your ROMs folder (rom-picker.js); the system file picker is the fallback
+  box.querySelector('#addgame-pick-roms').addEventListener('click', () => {
+    if(inApp()) window.RomPick.open('pick');
+    else{ try{ thorBridge.pickRoms(); }catch(e){} }
   });
-
-  goBtn.addEventListener('click', async () => {
-    const s = systems[sysSel.selectedIndex];
-    if(!s) return;
-    goBtn.disabled = true;
-    let items = [];
-    try{ items = JSON.parse(thorBridge.romsIn(s.folder)); }catch(e){}
-    await addRomsToBacklog(items);
-    goBtn.disabled = false;
+  box.querySelector('#addgame-all-toggle').addEventListener('click', () => {
+    if(inApp()) window.RomPick.open('folder');
   });
 }
 setupRomBacklogSection();

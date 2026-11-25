@@ -179,7 +179,7 @@ window.HELP_GUIDE = {
       <p>In <b>Tile View</b> the games show as covers, or as cartridges and discs with Cart view.</p>
       <figure class="hp-shot"><img src="help/img/library-tiles.webp" alt="Tile View with Cart view: each game shows its real cartridge" loading="lazy"><figcaption>Tile View with Cart view: each game shows its real cartridge</figcaption></figure>` },
     { h: 'Backlog', html: `
-      <figure class="hp-shot"><img src="help/img/add-game.webp" alt="The Add a game window" loading="lazy"><figcaption>The Add a game window</figcaption></figure>
+      <figure class="hp-shot"><img src="help/img/add-game.webp" alt="The Add your game(s) screen" loading="lazy"><figcaption>The Add your game(s) screen</figcaption></figure>
       <p>The games you've added but haven't played yet. Use <b>+ Add game</b> to add more
       (see <a href="#hp-adding">Adding and Tracking Games</a>). Play a game and it moves to the Game Library by itself.</p>` },
     { h: 'Beaten', html: `
@@ -296,13 +296,18 @@ window.HELP_GUIDE = {
     { h: 'Adding games', html: `
       <p>Go to <b>Backlog</b> and press <b>+ Add game</b>.</p>
       <ul>
-        <li><b>Search:</b> pick the system, type the title and press Search. Tick several results to add them all at
-        once with <b>Add selected</b>.</li>
-        <li><b>Systems RetroAchievements doesn't track:</b> the game is found on IGDB instead. It won't count towards
-        your RetroAchievements stats.</li>
-        <li><b>From your ROM files:</b> <b>Pick ROM files…</b> adds the games you choose. <b>Add all from a system…</b>
-        adds every game in a system folder. Each one is matched to RetroAchievements by its title.</li>
-      </ul>` },
+        <li><b>Search:</b> type the title, choose the console under <b>Which console?</b> and press Search. With a
+        console chosen, tick several results to add them all at once with <b>Add selected</b>.</li>
+        <li><b>Any console/system:</b> searches every game on every console, including ones RetroAchievements doesn't
+        track. Pick the console from the menu on the result and press <b>+</b>. Results marked <b>RA</b> are on
+        RetroAchievements for that console and are added with their achievements; the rest won't count towards your
+        RetroAchievements stats.</li>
+        <li><b>Pick individual ROM files:</b> your consoles are down the left and their games on the right. Tick as many
+        as you like, on as many consoles as you like (<span class="hk sh">L1</span> <span class="hk sh">R1</span>
+        change console), then press <b>Add to Backlog</b>. Games already in your Backlog are greyed out.</li>
+        <li><b>Add a whole console folder:</b> tap a console folder and every game in it goes to your Backlog.</li>
+      </ul>
+      <p>Games added from your ROM files are matched to RetroAchievements by the file itself, or by the title.</p>` },
     { h: 'Removing a game', html: `
       <p>Games you added by hand have a small <b>✕</b>. In a list it's at the end of the game's row (press
       <span class="hk sh">Right</span> on the game to reach it with the controller); on a tile it's for touch only.</p>` },

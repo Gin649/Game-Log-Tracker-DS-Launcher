@@ -258,41 +258,49 @@
   <div class="modal-card" id="addgame-card">
     <button class="modal-close" id="addgame-close-btn">✕</button>
     <div class="modal-body">
-      <h2 style="margin-bottom:4px;">Add a game</h2>
-      <p class="sub" style="margin-bottom:18px;">Search RetroAchievements' game list, or add a game from a system RA doesn't track.</p>
+      <h2>Add your game(s)</h2>
+      <p class="sub">Search a game below by Title and/or specific system.</p>
 
-      <div class="field">
-        <label>System</label>
-        <select id="addgame-system"><option>Loading systems…</option></select>
-      </div>
-      <div class="field" id="addgame-custom-console-field" style="display:none;">
-        <div class="hint">Not on RetroAchievements: pick the platform once you find a match below. Box art and details come from IGDB, and the game won't count toward RetroAchievements stats.</div>
-      </div>
       <div class="field">
         <label>Game title</label>
         <input id="addgame-title" type="text" placeholder="e.g. Chrono Trigger" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Which console?</label>
+        <select id="addgame-system"><option>Loading systems…</option></select>
         <div class="hint" id="addgame-multi-hint">Tick several results to add them all at once.</div>
       </div>
       <button class="btn-primary" id="addgame-search-btn">Search</button>
-
-      <div id="addgame-roms" class="addgame-roms" style="display:none;">
-        <div class="addgame-roms-title">Or add from your ROM files</div>
-        <div class="hint">Pick games in your ROMs folder and they go straight to your Backlog. You can tick several in the same folder.</div>
-        <div class="addgame-roms-actions">
-          <button class="btn-ghost" id="addgame-pick-roms" type="button">Pick ROM files…</button>
-          <button class="btn-ghost" id="addgame-all-toggle" type="button">Add all from a system…</button>
-        </div>
-        <div id="addgame-all-row" class="addgame-all-row" style="display:none;">
-          <select id="addgame-all-system"></select>
-          <button class="btn-primary" id="addgame-all-go" type="button">Add all</button>
-        </div>
-      </div>
 
       <div id="addgame-results"></div>
       <div id="addgame-selection-bar" class="addgame-selection-bar" style="display:none;">
         <span id="addgame-selection-count"></span>
         <button class="btn-primary" id="addgame-add-selected-btn">Add selected</button>
       </div>
+
+      <div id="addgame-roms" class="addgame-roms" style="display:none;">
+        <h2>Add game(s) by ROM file</h2>
+        <p class="sub">Pick games from your ROMs folder and they go straight to your Backlog.</p>
+        <div class="addgame-roms-actions">
+          <button class="btn-ghost" id="addgame-pick-roms" type="button">Pick individual ROM files</button>
+          <button class="btn-ghost" id="addgame-all-toggle" type="button">Add a whole console folder</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Picking ROMs from the ROMs folder (rom-picker.js): several games, or a whole console folder -->
+<div id="rompick-backdrop" class="modal-backdrop">
+  <div class="modal-card" id="rompick-card">
+    <div class="rp-head">
+      <button class="rp-back" id="rompick-back" type="button" aria-label="Back">‹</button>
+      <div class="rp-head-text"><div class="rp-title" id="rompick-title"></div><div class="rp-sub" id="rompick-sub"></div></div>
+    </div>
+    <div class="rp-body" id="rompick-body"></div>
+    <div class="rp-bar" id="rompick-bar">
+      <span class="rp-count" id="rompick-count"></span>
+      <button class="btn-primary" id="rompick-add" type="button"></button>
     </div>
   </div>
 </div>
@@ -396,6 +404,7 @@
 <script src="js/game-modal.js"></script>
 <script src="js/add-game.js"></script>
 <script src="js/rom-backlog.js"></script>
+<script src="js/rom-picker.js"></script>
 <script src="js/social.js"></script>
 <script src="js/settings.js"></script>
 <script src="js/ach-tracker.js"></script>

@@ -407,7 +407,7 @@
           return true;
         }
       }
-      const back = top.el.querySelector('.soc-back, #patch-back-btn');
+      const back = top.el.querySelector('.soc-back, #patch-back-btn, #rompick-back');
       if(back && isVisible(back)){ back.click(); return true; }
       const close = top.el.querySelector('.modal-close');
       if(close){ close.click(); return true; }
@@ -556,6 +556,7 @@
     const confirmKey = swapAB ? 'b' : 'a';
     if(!menuOpen() && guideKey(name)) return;
     if(!menuOpen() && window.HelpBook && window.HelpBook.key(name)) return; // Help's own keys (help.js)
+    if(!menuOpen() && window.RomPick && window.RomPick.key(name)) return; // L1/R1 change console in the ROM picker
     if(zoomKey(name, confirmKey)) return;
     if(DIRS.includes(name)){
       if(!wasShowing) ensureFocus(); // first press just shows where the highlight is

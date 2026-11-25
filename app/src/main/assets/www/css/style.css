@@ -978,11 +978,57 @@
   .ag-checkbox{flex-shrink:0;width:16px;height:16px;accent-color:var(--gold);cursor:pointer;}
   .ag-empty{font-size:0.7812rem;color:var(--muted);margin-top:14px;}
 
-  .addgame-roms{margin-top:18px;padding-top:14px;border-top:1px solid var(--border);}
-  .addgame-roms-title{font-size:0.8125rem;color:var(--text);margin-bottom:4px;}
-  .addgame-roms-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
-  .addgame-all-row{display:none;margin-top:10px;gap:8px;align-items:center;}
-  .addgame-all-row select{flex:1;min-width:0;}
+  /* Add your game(s) fills the screen */
+  #addgame-backdrop{padding:0;padding-top:var(--status-h);}
+  #addgame-card{max-width:none;margin:0;min-height:calc(100vh - var(--status-h));border-radius:0;border:none;}
+  #addgame-card .modal-body{max-width:960px;margin:0 auto;padding:18px 22px 40px;}
+  #addgame-card .modal-body .sub{margin-bottom:16px;}
+  #addgame-results{max-height:none;}
+  .addgame-roms{margin-top:22px;padding-top:18px;border-top:1px solid var(--border);}
+  .addgame-roms-actions{display:flex;gap:10px;}
+  .addgame-roms-actions .btn-ghost{flex:1 1 0;min-width:0;padding:11px 10px;color:var(--text);}
+  .ag-ra-tag{flex-shrink:0;font-family:var(--font-mono);font-size:0.625rem;font-weight:700;letter-spacing:0.5px;
+    color:var(--on-gold);background:var(--gold);border-radius:3px;padding:2px 5px;line-height:1.2;}
+  .ag-ra-tag[hidden]{display:none;}
+
+  /* The ROM picker (rom-picker.js): full screen, a header, the lists and a bar with the Add button */
+  #rompick-backdrop{padding:0;padding-top:var(--status-h);overflow:hidden;z-index:110;}
+  #rompick-card{max-width:none;margin:0;height:calc(100vh - var(--status-h));border-radius:0;border:none;display:flex;flex-direction:column;}
+  .rp-head{flex-shrink:0;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg-alt);}
+  .rp-back{flex-shrink:0;width:40px;height:40px;border-radius:8px;background:var(--panel);color:var(--text);border:1px solid var(--border);font-size:1.4rem;line-height:1;}
+  .rp-head-text{min-width:0;}
+  .rp-title{font-family:var(--font-mono);font-weight:700;font-size:1.05rem;}
+  .rp-sub{font-size:0.75rem;color:var(--muted);}
+  .rp-body{flex:1;min-height:0;overflow-y:auto;}
+  .rp-empty{padding:24px 16px;font-size:0.8125rem;color:var(--muted);}
+  .rp-cols{display:flex;height:100%;}
+  .rp-syslist{flex:0 0 180px;overflow-y:auto;border-right:1px solid var(--border);padding:6px 0;}
+  .rp-sys{display:flex;width:100%;justify-content:space-between;align-items:center;gap:6px;padding:10px 14px;background:none;
+    color:var(--muted);font-family:var(--font-ui);font-weight:500;font-size:0.8125rem;text-align:left;border-radius:0;}
+  .rp-sys b{font-weight:400;font-family:var(--font-mono);font-size:0.7rem;}
+  .rp-sys b i{font-style:normal;color:var(--on-gold);background:var(--gold);border-radius:8px;padding:0 5px;margin-right:6px;}
+  .rp-sys.on{color:var(--gold);background:var(--panel-2);box-shadow:inset 3px 0 0 var(--gold);}
+  .rp-list{flex:1;min-width:0;overflow-y:auto;padding:6px 10px;}
+  .rp-rom{display:flex;width:100%;align-items:center;gap:10px;padding:9px 8px;background:none;color:var(--text);text-align:left;
+    font-family:var(--font-ui);font-weight:400;font-size:0.8125rem;border-radius:4px;}
+  .rp-rom.sel{background:var(--bg-alt);box-shadow:inset 2px 0 0 var(--gold);}
+  .rp-box{flex-shrink:0;width:18px;height:18px;border:2px solid var(--muted);border-radius:3px;display:flex;align-items:center;justify-content:center;
+    font-size:0.75rem;font-weight:700;color:var(--on-gold);}
+  .rp-rom.sel .rp-box{background:var(--gold);border-color:var(--gold);}
+  .rp-name{flex:1;min-width:0;overflow-wrap:anywhere;}
+  .rp-ext{flex-shrink:0;font-family:var(--font-mono);font-size:0.65rem;color:var(--muted);}
+  .rp-rom.have{opacity:0.45;cursor:default;}
+  .rp-rom.have .rp-box{background:var(--muted);border-color:var(--muted);color:var(--bg);}
+  .rp-bar{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;background:var(--panel-2);border-top:1px solid var(--border);}
+  .rp-count{font-size:0.8125rem;color:var(--gold);font-weight:700;}
+  .rp-bar .btn-primary{width:auto;padding:10px 18px;}
+  .rp-folder{display:flex;width:100%;align-items:center;gap:12px;padding:13px 16px;background:none;border-radius:0;border-bottom:1px solid var(--border);
+    color:var(--text);font-family:var(--font-ui);font-weight:400;font-size:0.875rem;text-align:left;}
+  .rp-fpath{color:var(--muted);font-size:0.75rem;}
+  .rp-fcount{margin-left:auto;font-family:var(--font-mono);font-size:0.75rem;color:var(--muted);white-space:nowrap;}
+  .rp-fgo{flex-shrink:0;font-family:var(--font-mono);font-size:0.7rem;font-weight:700;color:var(--gold);border:1px solid var(--gold);padding:4px 10px;border-radius:var(--radius);}
+  .rp-folder:hover,.rp-folder.pad-focus{background:var(--panel-2);}
+  .rp-folder.busy .rp-fgo{color:var(--on-gold);background:var(--gold);}
 
   .glt-toast{
     position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);z-index:9999;

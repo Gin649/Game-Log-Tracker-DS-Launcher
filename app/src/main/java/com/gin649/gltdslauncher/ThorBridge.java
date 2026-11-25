@@ -1057,7 +1057,19 @@ final class ThorBridge {
         return out.toString();
     }
 
-    private static final java.util.Set<String> HASH_EXT = new java.util.HashSet<String>(java.util.Arrays.asList(
+    /** The RetroAchievements hash of one ROM file picked in the app's own ROM picker, or "" (see romMd5). */
+    @JavascriptInterface
+    public String romHash(String path) {
+        if (path == null || path.isEmpty()) return "";
+        try {
+            File f = new File(path);
+            return f.isFile() ? romMd5(f) : "";
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private static final java.util.Set<String> HASH_EXT =new java.util.HashSet<String>(java.util.Arrays.asList(
             "gb", "gbc", "gba", "nes", "sfc", "smc", "fig", "swc", "md", "gen", "smd", "bin", "sms", "gg", "pce", "sg", "sc",
             "z64", "v64", "n64", "lnx", "a78", "a26", "ngp", "ngc", "ws", "wsc", "vb", "col", "int", "32x", "nds", "mx1", "mx2"));
 
