@@ -52,9 +52,7 @@ const TEXTSIZE_KEY = 'app-text-size-pct';
 let textSizePct = TEXTSIZE_DEFAULT;
 
 function applyTextSize(){
-  // NES's pixel font is very wide, so its text is scaled down to sit like the others.
-  const themeScale = document.documentElement.getAttribute('data-theme') === 'nintendo' ? 0.7 : 1;
-  document.documentElement.style.fontSize = (TEXTSIZE_BASE_PX * textSizePct / 100 * themeScale) + 'px';
+  document.documentElement.style.fontSize = (TEXTSIZE_BASE_PX * textSizePct / 100) + 'px';
   $('#textsize-label').textContent = textSizePct + '%';
   $('#textsize-dec').disabled = textSizePct <= TEXTSIZE_MIN;
   $('#textsize-inc').disabled = textSizePct >= TEXTSIZE_MAX;

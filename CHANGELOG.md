@@ -34,7 +34,7 @@ Notable changes to Game Log Tracker DS Launcher, newest first.
 - Joey64 for N64 as a standalone emulator. Mupen64Plus AE stays the default.
 - GBA DS for Game Boy Advance as a standalone emulator, with a map or HUD on the second screen.
 - Xnes3D+ for NES, a new emulator I made by forking Zaxnes. It plays NES games in 3D, and the launcher can start games in it directly.
-  - 3D profiles: over 100 games already have one. For instructions on getting them, send me a message on Discord (username Gin649) or ask in the community server: https://discord.gg/6dgZA4yD2
+  - 3D profiles: over 100 games already have one. For instructions on getting them, send me a message on Discord (username Gin649) or ask in the community server: https://discord.gg/ur3vpxPyP
   - Smart 3D scanning: works out the 3D on its own for games without a profile, status bars included.
   - Controller inputs: RetroArch-style hotkeys. L2 rewinds and R2 fast-forwards, R1 saves a state and L1 loads one, and L3 and R3 together open the menu.
 - More Android ports in the game profile's Android Ports Available section.

@@ -428,7 +428,7 @@ window.HELP_GUIDE = {
     { h: 'Text is too small or too large', html: `
       <p>Use <b>Text size</b> in Display Options, or <b>Display size</b> in Launcher Settings.</p>` },
     { h: 'Getting more help', html: `
-      <p>Ask in the community Discord (<a href="https://discord.gg/6dgZA4yD2" target="_blank" rel="noopener">discord.gg/6dgZA4yD2</a>)
+      <p>Ask in the community Discord (<a href="https://discord.gg/ur3vpxPyP" target="_blank" rel="noopener">discord.gg/ur3vpxPyP</a>)
       or email <a href="mailto:ginsretrogamehub@gmail.com">ginsretrogamehub@gmail.com</a>.</p>` },
   ]},
 

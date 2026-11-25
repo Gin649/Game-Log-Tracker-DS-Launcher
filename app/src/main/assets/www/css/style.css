@@ -1369,7 +1369,6 @@ html[data-theme="xbox"]{
   --gold-rgb:136,192,80;--teal-rgb:95,168,58;--bg-rgb:0,0,0;--on-gold:#06130a;
   --radius:4px;--font-mono:'Open Sans',sans-serif;--font-ui:'Open Sans',sans-serif;--btn-shadow:none;
 }
-html[data-theme="nintendo"] body{line-height:1.7;}
 html[data-theme="nintendo"] .card,html[data-theme="nintendo"] .chip.active,html[data-theme="nintendo"] .btn,html[data-theme="nintendo"] .btn-primary{box-shadow:var(--btn-shadow);}
 html[data-theme="playstation"] .chip.active{box-shadow:var(--btn-shadow);}
 html[data-theme="playstation"] .brand .name{letter-spacing:3px;text-transform:uppercase;}

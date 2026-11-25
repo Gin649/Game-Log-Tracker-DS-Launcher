@@ -61,7 +61,7 @@ body{{background-image:radial-gradient(circle at 20% 0%, rgba(var(--gold-rgb),0.
     <button data-t="retro" class="on">Retro</button><button data-t="nintendo">Nintendo</button><button data-t="playstation">Playstation</button><button data-t="xbox">Xbox</button>
   </div>
   <p><a href="https://github.com/Gin649/Game-Log-Tracker-DS-Launcher/releases" target="_blank" rel="noopener">Download the launcher</a>
-  · <a href="https://discord.gg/6dgZA4yD2" target="_blank" rel="noopener">Community Discord</a></p>
+  · <a href="https://discord.gg/ur3vpxPyP" target="_blank" rel="noopener">Community Discord</a></p>
 </footer>
 <script>
 {content_js}
