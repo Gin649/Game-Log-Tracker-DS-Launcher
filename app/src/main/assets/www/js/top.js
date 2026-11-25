@@ -5,7 +5,11 @@
   const stage = document.getElementById('stage');
   const DESIGN_WIDTH = 720; // the width the tracker lays this out at
 
-  const MENU_ZOOM = 0.7;  // keep in step with the zoom on .dropdown-menu in top.html
+  // How big the open menu is drawn. On the top screen it's 84% of the header's size. With "Tracker on top screen"
+  // this page is on the small bottom screen instead (a squarer window), where the menu is drawn larger to stay readable.
+  const MENU_ZOOM_TOP = 0.84, MENU_ZOOM_BOTTOM = 1.2;
+  const onBottomScreen = () => window.innerWidth / Math.max(1, window.innerHeight) < 1.4;
+  const menuZoom = () => onBottomScreen() ? MENU_ZOOM_BOTTOM : MENU_ZOOM_TOP;
   let stageZoom = 1;
 
   const openMenu = () => stage.querySelector('#dropdown-menu.open');
@@ -17,16 +21,20 @@
     const menu = openMenu();
     let menuTop = 0;
     if(menu){
+      menu.style.zoom = menuZoom();
       menu.style.maxHeight = 'none';
+      menu.style.height = 'auto';
       menuTop = menu.getBoundingClientRect().top;
     }
     const scale = Math.min(window.innerWidth * 0.97 / DESIGN_WIDTH, window.innerHeight * 0.97 / natural);
     stageZoom = Math.max(0.5, scale);
     stage.style.zoom = stageZoom;
     if(menu){
-      // Room left under the button, in the menu's own units. The list scrolls inside this.
+      // The menu reaches from under the button to the bottom of the screen. The list scrolls inside this.
       const room = window.innerHeight / stageZoom - menuTop - 8 / stageZoom;
-      menu.style.maxHeight = Math.max(60, room / MENU_ZOOM) + 'px';
+      const h = Math.max(60, room / menuZoom()) + 'px';
+      menu.style.height = h;
+      menu.style.maxHeight = h;
     }
   }
 
@@ -41,7 +49,7 @@
     const key = Array.prototype.indexOf.call(menu.querySelectorAll('*'), el) + ':' + (el.id || el.textContent.slice(0, 20));
     if(key === lastFocusKey) return;
     lastFocusKey = key;
-    const k = stageZoom * MENU_ZOOM;
+    const k = stageZoom * menuZoom();
     for(let i = 0; i < 3; i++){
       const m = menu.getBoundingClientRect(), r = el.getBoundingClientRect();
       if(r.top < m.top) menu.scrollTop -= (m.top - r.top) / k + 2;
@@ -58,7 +66,7 @@
   // Scrolls the menu until this heading is at its top. How far the list moves for a given scrollTop depends on how
   // the screen reports zoom, so this measures what each step really did and corrects (a few steps at most).
   function headToTop(menu, head){
-    let k = stageZoom * MENU_ZOOM; // screen pixels per scrollTop unit, to start with
+    let k = stageZoom * menuZoom(); // screen pixels per scrollTop unit, to start with
     for(let i = 0; i < 5; i++){
       const diff = head.getBoundingClientRect().top - menu.getBoundingClientRect().top - 2;
       if(Math.abs(diff) < 3) break;

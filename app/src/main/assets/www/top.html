@@ -17,11 +17,11 @@
   /* Retro theme only: its logo is drawn larger than its box, so on this screen it must not reach down onto the profile card. */
   html:not([data-theme]) #stage .brand .mark{margin-bottom:-14px;}
   #stage .profile-hero{margin-bottom:0;}
-  /* Hamburger button and its menu are drawn at 70% (30% smaller) on this screen. top.js sizes the menu's
+  /* The hamburger button is drawn at 70% on this screen and its menu at 84% (larger on the bottom screen, see top.js). top.js sizes the menu's
      max-height so it always fits between the button and the bottom of the screen, and the list scrolls. */
   #stage .about-top .modal-card{display:block;margin:10px auto;max-width:600px;}
   #stage .btn-hamburger{zoom:0.7;}
-  #stage .dropdown-menu{zoom:0.7;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;}
+  #stage .dropdown-menu{zoom:0.84;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;}
   /* Start-up animation (see crt-start.js): full-screen static that waves into a dark picture. */
   #crt-root{display:none;position:fixed;inset:0;z-index:99999;background:#000;overflow:hidden;}
   #crt-full{position:absolute;left:50%;top:50%;width:960px;height:540px;margin:-270px 0 0 -480px;transform-origin:50% 50%;overflow:hidden;background:#000;}
