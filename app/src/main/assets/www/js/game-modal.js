@@ -115,7 +115,8 @@ function updateManualGame(gameId, changes){
 function updateManualBeatenStatus(gameId, beaten, dateStr){
   return updateManualGame(gameId, { manualBeaten: beaten, manualBeatenDate: beaten ? dateStr : null });
 }
-// "Now Playing" moves a non-RA game from the Backlog into the library, before it's beaten.
+// "Now Playing" is ticked while you're playing a non-RA game, which puts it in the library. A beaten game is in the
+// library either way, so beating it unticks Now Playing (tick it again when you replay it).
 function updateManualStartedStatus(gameId, started){
   return updateManualGame(gameId, { manualStarted: started });
 }
@@ -154,7 +155,7 @@ function renderCustomGameModal(gameId, local, card){
 
       <div class="field" style="text-align:left;margin-bottom:14px;">
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-family:inherit; font-size:0.8125rem; color:var(--text);">
-          <input type="checkbox" id="manual-started-checkbox" ${(local.manualStarted || local.manualBeaten) ? 'checked' : ''} style="width:16px;height:16px;">
+          <input type="checkbox" id="manual-started-checkbox" ${local.manualStarted ? 'checked' : ''} style="width:16px;height:16px;">
           <span>Now Playing</span>
         </label>
       </div>
@@ -208,7 +209,7 @@ function renderCustomGameModal(gameId, local, card){
     if(el) el.innerHTML = manualStatusHtml(local);
   };
 
-  // Unticking Now Playing also clears Beaten, moving the game back to the Backlog.
+  // Unticking Now Playing on a game that isn't beaten moves it back to the Backlog; a beaten game stays in the library.
   // Play log (PS5, Xbox Series X|S, Switch 2): the total is the game's Playtime and the newest session is when it was last played.
   const showPlayLog = () => {
     if(!usesPlayLog(local.ConsoleName)) return;
@@ -236,12 +237,6 @@ function renderCustomGameModal(gameId, local, card){
 
   startedCheckbox.addEventListener('change', async () => {
     const nowStarted = startedCheckbox.checked;
-    if(!nowStarted && checkbox.checked){
-      checkbox.checked = false;
-      dateWrap.style.display = 'none';
-      await updateManualBeatenStatus(gameId, false, null);
-      local.manualBeaten = false; local.manualBeatenDate = null;
-    }
     await updateManualStartedStatus(gameId, nowStarted);
     local.manualStarted = nowStarted;
     refreshManualStatus();
@@ -252,11 +247,13 @@ function renderCustomGameModal(gameId, local, card){
     if(checkbox.checked && !dateInput.value){
       dateInput.value = playLogToday(); // today here, not in UTC
     }
-    // Beaten implies played.
-    if(checkbox.checked && !startedCheckbox.checked){
-      startedCheckbox.checked = true;
-      await updateManualStartedStatus(gameId, true);
-      local.manualStarted = true;
+    // Beaten: no longer playing, and still in the library. Unticked again: back to playing, so it stays in the
+    // library rather than dropping to the Backlog.
+    const playing = !checkbox.checked;
+    if(startedCheckbox.checked !== playing){
+      startedCheckbox.checked = playing;
+      await updateManualStartedStatus(gameId, playing);
+      local.manualStarted = playing;
     }
     await updateManualBeatenStatus(gameId, checkbox.checked, dateInput.value || null);
     local.manualBeaten = checkbox.checked; local.manualBeatenDate = dateInput.value || null;

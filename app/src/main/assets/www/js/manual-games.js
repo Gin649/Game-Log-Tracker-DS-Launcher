@@ -8,7 +8,7 @@ function manualGamesKey(){
 async function loadManualGames(){
   try{
     const r = await window.storage.get(manualGamesKey(), false);
-    if(r && r.value) return JSON.parse(r.value);
+    if(r && r.value) return await splitBeatenFromPlaying(JSON.parse(r.value));
   }catch(e){}
 
   // Older saves used the username exactly as typed.
@@ -26,6 +26,20 @@ async function loadManualGames(){
 
   return [];
 }
+// Once: beaten games used to keep Now Playing ticked (it was what kept them in the library). Beating a game now
+// unticks it, so the games already marked beaten are unticked to match. After this, a tick on a beaten game is a replay.
+const BEATEN_SPLIT_KEY = 'manual-beaten-not-playing-v1';
+async function splitBeatenFromPlaying(list){
+  let done = false;
+  try{ done = localStorage.getItem(BEATEN_SPLIT_KEY) === '1'; }catch(e){}
+  if(done || !Array.isArray(list) || !list.length) return list;
+  let changed = false;
+  list.forEach(g => { if(g && g.manualBeaten && g.manualStarted){ g.manualStarted = false; changed = true; } });
+  if(changed) await saveManualGames(list);
+  try{ localStorage.setItem(BEATEN_SPLIT_KEY, '1'); }catch(e){}
+  return list;
+}
+
 async function saveManualGames(list){
   try{ await window.storage.set(manualGamesKey(), JSON.stringify(list), false); }catch(e){}
 }

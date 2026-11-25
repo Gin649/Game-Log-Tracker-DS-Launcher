@@ -297,7 +297,9 @@ window.HELP_GUIDE = {
       The total becomes the game's playtime, and your newest session decides where it shows in Last Played.</p>` },
     { h: 'Games that are not on RetroAchievements', html: `
       <p>Games added from IGDB have a simpler profile. Tick <b>Now Playing</b> to move one to the Library, and
-      <b>Mark as beaten</b> when you finish it. If the game is added to RetroAchievements later, use
+      <b>Mark as beaten</b> when you finish it. Beating it unticks Now Playing, and the game stays in your Library marked
+      Beaten. Tick Now Playing again if you replay it. Unticking Now Playing on a game you haven't beaten moves it back
+      to your Backlog. If the game is added to RetroAchievements later, use
       <b>Link to RetroAchievements</b> to connect it. Playtime before then is kept.</p>` },
   ]},
 
