@@ -49,10 +49,14 @@ function wireSubmenu(name){
 // Text size: every font size is in rem, so the size on <html> scales them all (art keeps its size).
 const TEXTSIZE_MIN = 80, TEXTSIZE_MAX = 160, TEXTSIZE_STEP = 10, TEXTSIZE_DEFAULT = 100, TEXTSIZE_BASE_PX = 16;
 const TEXTSIZE_KEY = 'app-text-size-pct';
+const NINTENDO_TEXT_SCALE = 1.4;
 let textSizePct = TEXTSIZE_DEFAULT;
 
 function applyTextSize(){
-  document.documentElement.style.fontSize = (TEXTSIZE_BASE_PX * textSizePct / 100) + 'px';
+  // Pixelify Sans (the Nintendo theme's font) draws its letters about 70% the size of the other themes' fonts,
+  // so its text is made 1.4x larger to read the same. Keep in step with the Nintendo rule in style.css.
+  const themeScale = document.documentElement.getAttribute('data-theme') === 'nintendo' ? NINTENDO_TEXT_SCALE : 1;
+  document.documentElement.style.fontSize = (TEXTSIZE_BASE_PX * textSizePct / 100 * themeScale) + 'px';
   $('#textsize-label').textContent = textSizePct + '%';
   $('#textsize-dec').disabled = textSizePct <= TEXTSIZE_MIN;
   $('#textsize-inc').disabled = textSizePct >= TEXTSIZE_MAX;
